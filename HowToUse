@@ -34,6 +34,12 @@
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
 
+  [Version 3.3]
+    int       qcDecoder(void);
+    char      *qcValue(char *name);
+    void      qcPrint(void);
+    void      qcFree(void);
+
   [Version 3.2.2]
     int       qUpdateCounter(char *filename);
     void      qPuts(int mode, char *buf);
@@ -165,6 +171,31 @@
   사용 : int count;
          count = qUpdateCounter("number.dat");
   
+  ****************************************
+  ** COOKIE 관련 함수군
+  ****************************************
+
+  int    qcDecoder(void);
+  기능 : COOKIE를 해석하여 Linked List에 저장
+  복귀 : 성공시 전달받은 인자의 갯수, 에러시 -1
+  사용 : int num;
+         num = qcDecoder();
+  
+  char   *qcValue(char *name);
+  기능 : Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌
+         qcDecoder()이 사전에 호출이 안되었으면, 자동으로 수행
+  복귀 : 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL
+  사용 : char *test;
+         test = qcValue("변수명");
+
+  void   qcPrint(void);
+  기능 : 프로그램의 Debugging용으로 COOKIE값을 모두 출력한다.
+  사용 : qcPrint();
+
+  void   qcFree(void);
+  기능 : qcDecoder()에 의해 할당된 Memory를 해제한다.
+  사용 : qcFree();
+
   ****************************************
   ** FILE 관련 함수군
   ****************************************

@@ -38,6 +38,11 @@ char      *qfValue(Entry *first, char *name);
 void      qfPrint(Entry *first);
 void      qfFree(Entry *first);
 
+int       qcDecoder(void);
+char      *qcValue(char *name);
+void      qcPrint(void);
+void      qcFree(void);
+
 void      qContentType(char *mimetype);
 int       qPrintf(int mode, char *format, ...);
 void      qPuts(int mode, char *buf);

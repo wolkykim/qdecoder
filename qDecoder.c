@@ -1,5 +1,5 @@
 /***********************************************
-** [Query String Decoder Version 3.2.2]
+** [Query String Decoder Version 3.3]
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
@@ -52,11 +52,12 @@ char *_strtok2(char *str, char *token, char *retstop);
 **********************************************/
 
 static Entry *_first_entry = NULL;
+static Entry *_cookie_first_entry = NULL;
 
 /**********************************************
 ** Usage : qDecoder();
 ** Return: Success number of values, Fail -1
-** Do    : Query Decode & Save it in linked list
+** Do    : Decode Query & Save it in linked list
 **         It doesn't care Method
 **********************************************/
 int qDecoder(void){
@@ -72,29 +73,29 @@ int qDecoder(void){
   query = _get_query("GET");
   _decode_query(query);
   for(amount = 0; query && *query; amount++){
-	entries = entries->next;
-	entries->value = _makeword(query, '&');
-	entries->name  = _makeword(entries->value, '=');
-	entries->next = (Entry *)malloc(sizeof(Entry));
+    entries = entries->next;
+    entries->value = _makeword(query, '&');
+    entries->name  = _makeword(entries->value, '=');
+    entries->next = (Entry *)malloc(sizeof(Entry));
   }
   if(query)free(query);
 
   query = _get_query("POST");
   _decode_query(query);
   for(; query && *query; amount++){
-	entries = entries->next;
-	entries->value = _makeword(query, '&');
-	entries->name  = _makeword(entries->value, '=');
-	entries->next = (Entry *)malloc(sizeof(Entry));
+    entries = entries->next;
+    entries->value = _makeword(query, '&');
+    entries->name  = _makeword(entries->value, '=');
+    entries->next = (Entry *)malloc(sizeof(Entry));
   }
   if(query)free(query);
   if(entries->next == _first_entry){
-	free(entries);
-	_first_entry = NULL;
+    free(entries);
+    _first_entry = NULL;
   }
   else{
-	free(entries->next);
-	entries->next = NULL;
+    free(entries->next);
+    entries->next = NULL;
   }
   return amount;
 }
@@ -102,7 +103,7 @@ int qDecoder(void){
 /**********************************************
 ** Usage : qValue(Name);
 ** Return: Success pointer of value string, Fail NULL
-** Do    : Get value string pointer
+** Do    : Find value string pointer
 **         It find value in linked list
 **********************************************/
 char *qValue(char *name){
@@ -111,7 +112,7 @@ char *qValue(char *name){
   if(_first_entry == NULL)qDecoder();
 
   for(entries = _first_entry; entries; entries = entries->next){
-	if(!strcmp(name, entries->name))return (entries->value);
+    if(!strcmp(name, entries->name))return (entries->value);
   }
   return NULL;
 }
@@ -128,7 +129,7 @@ void qPrint(void){
   qContentType("text/html");
 
   for(entries = _first_entry; entries; entries = entries->next){
-	printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
+    printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
   }
 }
 
@@ -140,10 +141,10 @@ void qFree(void){
   Entry *next;
 
   for(; _first_entry; _first_entry = next){
-	next = _first_entry->next;
-	free(_first_entry->name);
-	free(_first_entry->value);
-	free(_first_entry);
+    next = _first_entry->next;
+    free(_first_entry->name);
+    free(_first_entry->value);
+    free(_first_entry);
   }
   _first_entry = NULL;
 }
@@ -166,40 +167,39 @@ Entry *qfDecoder(char *filename){
   first = entries -> next = entries;
 
   while(fgets(buf, 1000 + 1, fp)){
-	entries = entries->next;
-	entries->value = (char *)malloc(sizeof(char) * (strlen(buf) + 1));
-        strcpy(entries->value, buf);
-	entries->name  = _makeword(entries->value, '=');
-	entries->next = (Entry *)malloc(sizeof(Entry));
+    entries = entries->next;
+    entries->value = (char *)malloc(sizeof(char) * (strlen(buf) + 1));
+    strcpy(entries->value, buf);
+    entries->name  = _makeword(entries->value, '=');
+    entries->next = (Entry *)malloc(sizeof(Entry));
 
-        qRemoveSpace(entries->name);
-        qRemoveSpace(entries->value);
+    qRemoveSpace(entries->name);
+    qRemoveSpace(entries->value);
   }
   if(entries->next == first){
-	free(entries);
-	first = NULL;
+    free(entries);
+    first = NULL;
   }
   else{
-	free(entries->next);
-	entries->next = NULL;
+    free(entries->next);
+    entries->next = NULL;
   }
 
   fclose(fp);
-
   return first;
 }
 
 /**********************************************
 ** Usage : qfValue(Pointer of the first Entry, Name);
 ** Return: Success pointer of value string, Fail NULL
-** Do    : Get value string pointer
+** Do    : Find value string pointer
 **         It find value in linked list
 **********************************************/
 char *qfValue(Entry *first, char *name){
   Entry *entries;
 
   for(entries = first; entries; entries = entries->next){
-	if(!strcmp(name, entries->name))return (entries->value);
+    if(!strcmp(name, entries->name))return (entries->value);
   }
   return NULL;
 }
@@ -214,7 +214,7 @@ void qfPrint(Entry *first){
   qContentType("text/html");
 
   for(entries = first; entries; entries = entries->next){
-	printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
+    printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
   }
 }
 
@@ -226,14 +226,102 @@ void qfFree(Entry *first){
   Entry *next;
 
   for(; first; first = next){
-	next = first->next;
-	free(first->name);
-	free(first->value);
-	free(first);
+    next = first->next;
+    free(first->name);
+    free(first->value);
+    free(first);
   }
   first = NULL;
 }
 
+/**********************************************
+** Usage : qcDecoder();
+** Return: Success number of values, Fail -1
+** Do    : Decode COOKIES & Save it in linked list
+**********************************************/
+int qcDecoder(void){
+  Entry *entries;
+  char *query;
+  int  amount;
+
+  if(_cookie_first_entry != NULL) return -1;
+
+  if(getenv("HTTP_COOKIE") == NULL) return 0;
+  query = (char *)malloc(sizeof(char) * (strlen(getenv("HTTP_COOKIE")) + 1));
+  strcpy(query, getenv("HTTP_COOKIE"));
+  _decode_query(query);
+
+  entries = (Entry *)malloc(sizeof(Entry));
+  _cookie_first_entry = entries -> next = entries;
+
+  for(amount = 0; *query; amount++){
+    entries = entries->next;
+    entries->value = _makeword(query, ';');
+    entries->name  = _makeword(entries->value, '=');
+    entries->next = (Entry *)malloc(sizeof(Entry));
+    qRemoveSpace(entries->name);
+  }
+  free(query);
+
+  if(entries->next == _cookie_first_entry){
+    free(entries);
+    _cookie_first_entry = NULL;
+  }
+  else{
+    free(entries->next);
+    entries->next = NULL;
+  }
+  return amount;
+}
+
+/**********************************************
+** Usage : qcValue(Name);
+** Return: Success pointer of value string, Fail NULL
+** Do    : Find COOKIE value string pointer
+**         It find value in linked list
+**********************************************/
+char *qcValue(char *name){
+  Entry *entries;
+
+  if(_cookie_first_entry == NULL)qcDecoder();
+
+  for(entries = _cookie_first_entry; entries; entries = entries->next){
+    if(!strcmp(name, entries->name))return (entries->value);
+  }
+  return NULL;
+}
+
+/**********************************************
+** Usage : qcPrint();
+** Do    : Print all parsed value & name for debugging
+**********************************************/
+void qcPrint(void){
+  Entry *entries;
+
+  if(_cookie_first_entry == NULL)qcDecoder();
+
+  qContentType("text/html");
+
+  for(entries = _cookie_first_entry; entries; entries = entries->next){
+    printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
+  }
+}
+
+/**********************************************
+** Usage : qcFree();
+** Do    : Make free of linked list memory
+**********************************************/
+void qcFree(void){
+  Entry *next;
+
+  for(; _cookie_first_entry; _cookie_first_entry = next){
+    next = _cookie_first_entry->next;
+    free(_cookie_first_entry->name);
+    free(_cookie_first_entry->value);
+    free(_cookie_first_entry);
+  }
+  _cookie_first_entry = NULL;
+}
 
 /**********************************************
 ** Usage : qContentType(Mime Type);
