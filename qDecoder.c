@@ -1,17 +1,17 @@
 /*************************************************************
-** qDecoder CGI Library v5.0.5                              **
+** qDecoder CGI Library v5.0.6                              **
 **                                                          **
 **  Official distribution site : ftp://ftp.hongik.com       **
 **           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
-**                        Last updated at Sep 17, 1999      **
+**                        Last updated at Nov 26, 1999      **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **
-**         Copyright (c) 1999 Hongik Internet, Inc.         **
-**         Copyright (c) 1998 Nobreak Technologies, Inc.    **
-**         Copyright (c) 1996,1997 Seung-young Kim          **
+**         Copyright (C) 1999 Hongik Internet, Inc.         **
+**         Copyright (C) 1998 Nobreak Technologies, Inc.    **
+**         Copyright (C) 1996,1997 Seung-young Kim          **
 **                                                          **
 ** qDecoder is a CGI library for C/C++ language programming **
 ** and a solution product for developers. The Query Fetch   **
@@ -940,8 +940,7 @@ char *qURLencode(char *str){
 
   for(i = j = 0; str[i]; i++){
     c = (unsigned char)str[i];
-         if (c == ' ') encstr[j++] = '+';
-    else if ((c >= '0') && (c <= '9')) encstr[j++] = c;
+         if ((c >= '0') && (c <= '9')) encstr[j++] = c;
     else if ((c >= 'A') && (c <= 'Z')) encstr[j++] = c;
     else if ((c >= 'a') && (c <= 'z')) encstr[j++] = c;
     else if ((c == '@') || (c == '.') || (c == '/') || (c == '_') || (c == '-')) encstr[j++] = c;
@@ -1215,9 +1214,7 @@ void qError(char *format, ...){
     qContentType("text/html");
 
     if(_error_contact_info != NULL) {
-      strcat(buf, " [Administrator:");
       strcat(buf, _error_contact_info);
-      strcat(buf, "]");
     }
     if(logstatus == -1) strcat(buf, " [ERROR LOGGING FAIL]");
 
@@ -1483,12 +1480,13 @@ char *qfGetLine(FILE *fp) {
 /**********************************************
 ** Usage : qDownload(filename);
 ** Do    : Pump file to stdout, do not call qContentType().
+** Return: Success 1, File not found 0
 **********************************************/
-void qDownload(char *filename) {
+int qDownload(char *filename) {
   char *file, *c;
 
   if(filename == NULL) qError("qDownload(): Null pointer can not be used.");
-  if(qCheckFile(filename) == 0) qError("qDownload(): File(%s) not found.", filename);
+  if(qCheckFile(filename) == 0) return 0;
 
   file = strdup(filename);
 
@@ -1504,6 +1502,7 @@ void qDownload(char *filename) {
   free(file);
 
   qCatFile(filename);
+  return 1;
 }
 
 /**********************************************
@@ -1548,7 +1547,6 @@ int qSaveCounter(char *filename, int number){
 ** Return: Success current value + number, Fail 0
 ** Do    : Update counter value
 **********************************************/
-
 int qUpdateCounter(char *filename, int number){
   FILE *fp;
   int counter = 0;
@@ -1558,7 +1556,8 @@ int qUpdateCounter(char *filename, int number){
     fseek(fp, 0, SEEK_SET);
   }
   else if((fp = fopen(filename, "wt")) == NULL) return 0;
-  fprintf(fp, "%d\n", counter + number);
+  counter += number;
+  fprintf(fp, "%d\n", counter);
   fclose(fp);
   return counter;
 }
@@ -1714,14 +1713,15 @@ int qStricmp(char *s1, char *s2) {
 ** Return: String pointer
 ** Do    : Convert integer to comma string
 **         printf("Output: %s", qitocomma(1234567));
-**         Output: 1,234,567
+**         Output: -1,234,567,000
 **********************************************/
 char *qitocomma(int value) {
-  static char str[10+1];
-  char buf[10+1], *strp, *bufp;
+  static char str[14+1];
+  char buf[10+1], *strp = str, *bufp;
 
-  sprintf(buf, "%d", value);
-  for (strp = str, bufp = buf; *bufp != '\0'; strp++, bufp++) {
+  if(value < 0) *strp++ = '-';
+  sprintf(buf, "%d", abs(value));
+  for (bufp = buf; *bufp != '\0'; strp++, bufp++) {
     *strp = *bufp;
     if((strlen(bufp)) % 3 == 1 && *(bufp + 1) != '\0') *(++strp) = ',';
   }

@@ -17,23 +17,28 @@ INCLUDE = -I../
 
 # Options for release
 CFLAGS  = -Wall
-LIB     = ../libqDecoder.a
+
+# qDecoder Library Path
+QLIB = ../libqDecoder.a
 
 ## Main
 all:	fetch.cgi multivalue.cgi upload.cgi streamedit.cgi
 
-fetch.cgi:	fetch.o
-	$(CC) $(INCLUDE) $(CFLAGS) -o fetch.cgi fetch.o $(LIB)
+fetch.cgi: $(QLIB) fetch.o
+	$(CC) $(INCLUDE) $(CFLAGS) -o fetch.cgi fetch.o $(QLIB)
 
-multivalue.cgi:	multivalue.o
-	$(CC) $(INCLUDE) $(CFLAGS) -o multivalue.cgi multivalue.o $(LIB)
+multivalue.cgi:	$(QLIB) multivalue.o
+	$(CC) $(INCLUDE) $(CFLAGS) -o multivalue.cgi multivalue.o $(QLIB)
 
-upload.cgi:	upload.o
-	$(CC) $(INCLUDE) $(CFLAGS) -o upload.cgi upload.o $(LIB)
+upload.cgi: $(QLIB) upload.o
+	$(CC) $(INCLUDE) $(CFLAGS) -o upload.cgi upload.o $(QLIB)
 	chmod 6755 upload.cgi
 
-streamedit.cgi:	streamedit.o
-	$(CC) $(INCLUDE) $(CFLAGS) -o streamedit.cgi streamedit.o $(LIB)
+streamedit.cgi: $(QLIB) streamedit.o
+	$(CC) $(INCLUDE) $(CFLAGS) -o streamedit.cgi streamedit.o $(QLIB)
+
+$(QLIB):
+	(cd ../; make all)
 
 ## Compile Module
 .c.o:

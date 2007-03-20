@@ -80,13 +80,13 @@ I-6. 저작권, 소유권
 II-1. 소프트웨어 정보 (Software Information)
 
   - 명    칭 : qDecoder
-  - 판 번 호 : 5.0.5
+  - 판 번 호 : 5.0.6
   - 종    류 : C/C++용 CGI Library
   - 사용환경 : All kind Unix (Solaris, HP/UX, FreeBSD, Linux, Etc.)
   - 제작회사 : (주)홍익인터넷 (Hongik Internet, Inc.)
   - 개 발 자 : Seung-young Kim(김승영) <nobreak@hongik.com>
   - 배 포 처 : ftp://ftp.hongik.com/pub/qDecoder/
-  - 배포일자 : 1999년 9월 17일
+  - 배포일자 : 1999년 11월 26일
 
 II-2. What's qDecoder?
 
@@ -109,6 +109,19 @@ II-2. What's qDecoder?
 +--------------------------------------------------------------------+
 | III. 버젼별 수정사항                                               |
 +--------------------------------------------------------------------+
+[Version 5.0.6]
+    * Patched functions
+    qitocomma()
+    - 음수의 출력이 '-,123,456'과 같이 나오던 문제 수정
+    qURLencode()
+    - 스페이스 ' '가 '+'가 아닌 '%20'으로 인코딩 되도록 수정
+    qUpdateCounter()
+    - '기존의값'을 복귀하던 문제를 '기존의값 + 업데이트' 수치로 수정
+    qDownload()
+    - 파일이 없을시 리턴값을 갖도록, 함수형을 void에서 int로 변경
+    qError(), qErrorContact()
+    - qErrorContact()으로 설정된 메시지가 앞뒤에 [Administrator: ...]가
+      삽입되던점 수정(삽입되지 않고, 원문이 그대로 출력되도록).
 [Version 5.0.5]
     * deleted functions
     qStrStr()
@@ -937,9 +950,10 @@ IV-8. 기타 함수군
   복귀 : 오류가 없으면 1, 문제가 발생하면 0
   사용 : qCheckURL("http://www.hongik.com");
 
-  void   qDownload(char *filename);
+  int    qDownload(char *filename);
   기능 : 클라이언트로 파일을 전송하는데, 파일의 종류에 상관없이
          브라우저에 다운로딩 상자가 나타나도록 한다.
+  복귀 : 성공 1, 파일 없음 0
   사용 : qDownload("/home/nobreak/myprg.exe");
 
   void   qRedirect(char *url);

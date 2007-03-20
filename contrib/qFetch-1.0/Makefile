@@ -9,38 +9,26 @@
 ##                               (c) Hongik Internet, Inc.  ##
 ##############################################################
 
-#
-# Define
-#
-LIBNAME = libqDecoder.a
-
 # Which compiler
 CC      = gcc
 
-# System library directory
-LIBDIR		= /usr/lib
-HEADERDIR	= /usr/include
-
 # Where are include files kept
-INCLUDE = -I./
+INCLUDE = -I./ -I../../
 
 # Options for release
 CFLAGS  = -Wall
 
-# Which library archiver
-AR	= ar
-ARFLAGS = -q
-
-# Which library indexer
-RANLIB	= ranlib
-
-# Objects list
-OBJ = qDecoder.o
+# qDecoder Library Path
+QLIB = ../../libqDecoder.a
 
 ## Make Library
-all: $(OBJ)
-	$(AR) $(ARFLAGS) $(LIBNAME) $(OBJ)
-	$(RANLIB) $(LIBNAME)
+all:	qFetch
+
+qFetch: $(QLIB) qFetch.o
+	$(CC) $(CFLAGS) $(INCLUDE) -o qFetch.cgi qFetch.o $(QLIB)
+
+$(QLIB):
+	(cd ../../; make all)
 
 reall: clean all
 
@@ -48,18 +36,7 @@ reall: clean all
 .c.o:
 	$(CC) $(INCLUDE) $(CFLAGS) -c -o $@ $<
 
-## Install Module
-install: all
-	cp qDecoder.h $(HEADERDIR)/qDecoder.h
-	chmod 0444 $(HEADERDIR)/qDecoder.h
-	cp $(LIBNAME) $(LIBDIR)/$(LIBNAME)
-	chmod 0444 $(LIBDIR)/$(LIBNAME)
-
-deinstall:
-	rm -f $(HEADERDIR)/qDecoder.h
-	rm -f $(LIBDIR)/$(LIBNAME)
-
 ## Clear Module
 clean:
-	rm -f $(OBJ) $(LIBNAME)
+	rm -f *.o qFetch.cgi
 

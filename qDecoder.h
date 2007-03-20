@@ -103,7 +103,7 @@ char      *qReadFile(char *filename, int *size);
 int       qSaveStr(char *sp, int spsize, char *filename, char *mode, mode_t perm);
 char      *qfGetLine(FILE *fp);
 
-void      qDownload(char *filename);
+int       qDownload(char *filename);
 void      qRedirect(char *url);
 
 int       qReadCounter(char *filename);
