@@ -1,7 +1,7 @@
 /***********************************************
-** [Query String Decoder Version 4.0]
+** [Query String Decoder Version 4.0.1]
 **
-** Last Modified : 1997/10/27
+** Last Modified : 1997/11/10
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
@@ -48,6 +48,7 @@ int  _parse_urlencoded(void);
 char *_get_query(char *method);
 int  _parse_multipart_data(void);
 char *_fgetstring(char *buf, int maxlen, FILE *fp);
+char *_fgetline(FILE *fp);
 
 char _x2c(char hex_up, char hex_low);
 char *_makeword(char *str, char stop);
@@ -265,7 +266,7 @@ int _parse_multipart_data(void) {
         value = (char *)malloc(sizeof(char) * (valuelen + 1));
         if(value == NULL) qError("_parse_multipart_data() : Memory allocation fail.");
       }
-      else if(c_count == valuelen) {
+      else if(c_count == valuelen - 1) {
         char *valuetmp;
         int  i;
 
@@ -408,14 +409,14 @@ void qFree(void){
 Entry *qfDecoder(char *filename){
   FILE  *fp;
   Entry *first, *entries, *back;
-  char  buf[1000 + 1];
+  char  *buf;
 
   fp = fopen(filename, "rt");
   if(fp == NULL) return NULL;    
 
   first = entries = back = NULL;
 
-  while(fgets(buf, sizeof(buf), fp) != NULL){
+  while((buf = _fgetline(fp)) != NULL){
     qRemoveSpace(buf);
     if((buf[0] == '#') || (buf[0] == '\0')) continue;
 
@@ -431,6 +432,8 @@ Entry *qfDecoder(char *filename){
 
     qRemoveSpace(entries->name);
     qRemoveSpace(entries->value);
+
+    free(buf);
   }
 
   fclose(fp);
@@ -1278,4 +1281,43 @@ char *_fgetstring(char *buf, int maxlen, FILE *fp) {
 
   buf[i] = '\0';
   return buf;
+}
+
+/*********************************************
+** Usage : This function is allocate memory for save string.
+**         And there is no limit about length.
+**********************************************/
+char *_fgetline(FILE *fp) {
+  int memsize;
+  int c, c_count;
+  char *string;
+
+
+  for(memsize = 1000, c_count = 0; (c = fgetc(fp)) != EOF;) {
+    if(c_count == 0) {
+      string = (char *)malloc(sizeof(char) * (memsize + 1));
+      if(string == NULL) qError("_fgetline() : Memory allocation fail.");
+    }
+    else if(c_count == memsize - 1) {
+      char *stringtmp;
+      int  i;
+
+      memsize *= 2;
+
+      /* Here, we do not use realloc(). Because sometimes it is unstable. */
+      stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
+      if(stringtmp == NULL) qError("_fgetline() : Memory allocation fail.");
+      for(i = 0; i < c_count; i++) stringtmp[i] = string[i];
+      free(string);
+      string = stringtmp;
+    }
+    string[c_count++] = (char)c;
+    if((char)c == '\n') break;
+  }
+
+  if(c_count == 0 && c == EOF) return NULL;
+
+  string[c_count] = '\0';
+
+  return string;
 }

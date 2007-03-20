@@ -1,0 +1,629 @@
+************************************************************
+**                                                        **
+** [Query String Decoder 'qDecoder']                      **
+**                                                        **
+**  Source  Code Name : qDecoder.c                        **
+**  Include Code Name : qDecoder.h                        **
+**                                                        **
+**  Official distribution site : http://www.cgiserver.net **
+**           Technical contact : nobreak@cgiserver.net    **
+**                                                        **
+**                       Programmed by 'Seung-young, Kim' **
+**                                                        **
+**    Designed by Perfectionist for Perfectionist!!!      **
+**                                                        **
+************************************************************
+**                                                        **
+**  This document is translated by 'Gyu-sang, Cho'.       **
+**                                                        **
+**                              cho@ibi-japan.com         **
+**                                                        **
+************************************************************
+
+** Index
+  0. «Œo
+  1. ˆ  Version® ‘–˜ ”sô
+  2. ˆ  function ‰‚ŠÇ ±Œë
+  3. X‘E
+  4. Compile
+  5. Example Makefile
+
+0. «Œo
+
+  Œë    ’¨ : qDecoder
+  ˆ± ~ Ø : ‰ˆ a T (nobreak@shinan.hongik.ac.kr)
+  Ğ    Ñ : Nobreak Technologies
+  ‡‹”­ˆä : Unix
+  Language : C Language
+  ˆ“õãĞ : http://www.cgiserver.net
+
+1. ˆ  Version® ‘–˜ ”sô (“¥ Version¸ ”n¥Å ˆË¹ “õ”s)
+  [Version 4.0.1]
+    ** Patch functions
+    qfDecoder()
+    - “ÂÍ@« ”p”€Å ‰†Ê‘EŞ¹ öØ.
+    qDecoder()
+    - multipart/form-data”œc ŠZÌ ÉˆëŒ¬‘’ ô‘C.
+
+  [Version 4.0]
+    ** Patch functions
+    qDecoder()
+    - File Uploading ‘–˜
+    qfDecoder()
+     ”€Å ’X‰zØˆŸ #ÍˆäŒ ‘u¬¶Œm ’RŒ¬
+    qURLencode()
+    - '@', '.'¹ Ì’Ø‹™ ”n‘– È‹TŒn ô‘C
+    _decode_query() ”sô qURLdecode()Œm ”sôŒë­ˆä
+    qCheckEmail()
+    - ID‘~@ . Œ¤ ”ƒ‹”s.
+    qPrintf(), qPuts()
+    - mode 10 - 16 Ê •Œm ‘–˜‹i.
+
+  [Version 3.5]
+    ** Patch functions
+    _get_query()
+    - ”­ˆä­ô k±‘C ”¬Ì’~ˆŸ
+    qCgienv()
+    - Netscapel Explore@« ˆö“‹ ‡‹‹fŠÀ ”­ˆä­ôŒm ’uù”«
+    qSetCookie()
+    - expire ŠN‘£ ‘–‘C char* @« int “WÒ¶Œm ­ˆä
+    qError()
+    - Œm‰v ‰‚ŠÇ ’~ˆŸ
+    qURLencode()
+    - ûØ, TMŒ¤ Ì’Ø‹™ ”n‘– È‹TŒn ô‘C
+
+    ** New functions
+    void      qErrLog(char *filename);
+
+  [Version 3.4.2]
+    ** Patch functions
+    qDecoder(), qfDecoder(), qcDecoder() :
+    - Linked List ÉˆëŒ¬‘’ ô‘C
+    ** qPuts() :
+    - ŒìŒì bY“z@« warning¹ Í¶“OŠö M‘E ô‘C 
+
+  [Version 3.4.1]
+    ** Patch functions
+    qPrintf(), qPuts() :
+    - MØL Œ´‘–Œµ@ ’‚Œa‹fŠÀ ˆö‰ ‘EˆÃ
+
+  [Version 3.4]
+    ** Patch functions
+    qCheckEmail() : '-' , '_'ˆŸ “õ”s‹g Email‹T ˆŸŠÇ“„Œn ô‘C
+    qPrintf(), qPuts() :
+    - MØLÅ ŠZ‹‘~ &lt , &gtŒ¤ '<' , '>'Œm ¶H‘uŠÀ‘@ ô‘C
+      (&amp;lt , &amp;gtŒm ’‚Œa”s)
+    - 'mailto:guest@hongik.ac.kr' ˆ®¸ MØLŒ¶¹ Ø‹^ Œ³“H”nS¶ŠI,
+      'guest@hongik.ac.kr' Å ”œ“a‹T Ø‹^ Œ³“H ô”€”s 
+
+    ** New functions
+    void      qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure);
+    char      *qURLencode(char *str);
+    time_t    qGetGMTTime(char *gmt, time_t plus_sec);
+
+  [Version 3.3.1]
+    ** Patch functions
+    qDecoder() : Query valueŠZÅ '&' MØŒ¤ ÎŒ¬ØŒm Ìc”nŠö‘@ ô‘C
+
+  [Version 3.3]
+     int       qcDecoder(void);
+    char      *qcValue(char *name);
+    void      qcPrint(void);
+    void      qcFree(void);
+
+  [Version 3.2.2]
+    int       qUpdateCounter(char *filename);
+    void      qPuts(int mode, char *buf);
+    int       qCheckURL(char *url);
+
+  [Version 3.2]
+    int       qReadCounter(char *filename);
+    int       qSaveCounter(char *filename, int number);
+    int       qStr09AZaz(char *str);
+
+  [Version 3.1]
+    int       qPrintf(int mode, char *format, ...);
+    int       qCheckEmail(char *email);
+    void      qError(char *format, ...);
+
+  [Version 3.0]
+    Entry     *qfDecoder(char *filename);
+    char      *qfValue(Entry *first, char *name);
+    void      qfPrint(Entry *first);
+    void      qError(char *format, ...);
+
+    char      *qRemoveSpace(char *str);
+
+  [Version 2.2]
+    int       qDecoder(void);
+    char      *qValue(char *name);
+    void      qPrint(void);
+    void      qFree(void);
+
+    void      qContentType(char *mimetype);
+
+    void      qCgienv(Cgienv *env);
+    struct tm *qGetTime(void);
+
+    int       qCheckFile(char *filename);
+    int       qSendFile(char *filename);
+
+2. ˆ  Function ‰‚ŠÇ ±Œë
+
+  ****************************************
+  ** CGI ˆúŒb ”sô‰Y
+  ****************************************
+
+  int    qDecoder(void);
+  ‰‚ŠÇ : Š×» ”œcÅ Ì’Ø‹™‹g Query String¹ ”w¬”nH Linked List@ øã.
+         - application/x-www-form-urlencoded (%xxŒm Ì’Ø‹™‹fŠÀ Í|”œ)
+         - multipart/form-data               (File Uploading@ ‡‹‹i)
+
+         [ X‘E : application/x-www-form-urlencoded ]
+         £“@« ‘—‘A ‡‹ØŒmÌ“l ÒŒa¹ }¹ˆäŒ ‘uŒm ‡‹”pŠ×.
+         Š×»ˆø ˆ®¸ URL Encoding ”œcÅ Í|ù [HTML] MÊ úŠÜ‹hˆäŒ
+         Œ³“H‹… Œ¬Y“¬@ŠÀ [ˆßˆø]l ˆ®Ê øã‹fˆë, [C]l ˆ®Ê ‡‹”pŠ×.
+
+         [HTML] 
+         <form method="post" action="input.cgi">
+           ‡‹Ø˜”¡ <input type="text" name="userID"><br>
+           <input type="submit">
+         </form>
+
+         [ˆßˆø]
+         name  = "userID"
+         value = "‡‹ØˆŸ ÒŒa”p MØL"
+
+         [C]
+         #include <stdio.h>
+         #include "qDecoder.h"
+         void main(void) {
+           char *id;
+           qContentType("text/html");
+           id = qValue("userID");
+           printf("%s", id);
+         }
+
+         [ X‘E : multipart/form-data ]
+         “ÂÍ õŒm‹™ ‹¹ ˜”q‹¥ ‘uŒm ‡‹‹gŠ×.
+         Š×»ˆø ˆ®¸ ”œcÅ [HTML] MÊ ‡‹‹fˆë, Œm’ÁPC@« 'a.gif'‹ó
+         128byte “ÂÍ¹ õŒm‹… ”qˆäŒ, ŠZÌù¶Œm [ˆßˆø]l ˆ®Ê øã‹fŒå
+         [C]l ˆ®Ê ‡‹”qô ÔŠ×.
+
+         [HTML]
+         <form method="post" action="upload.cgi" enctype='multipart/form-data'>
+           ‡‹Ø˜”¡ <input type="text" name="userID"><br>
+           õŒm‹…“ÂÍ <input type="file" name="binary>"<br>
+           <input type="submit">
+         </form>
+
+         [ˆßˆø]
+         name  = "userID"
+         value = "‡‹ØˆŸ ÒŒa”p MØL"
+
+         name  = "binary"
+         value = "a.gifÅ 2‘˜ ØŒ"
+         name  = "binary.length"
+         value = "128"
+         name  = "binary.filename"
+         value = "a.gif"
+
+         [C]
+         #include <stdio.h>
+         #include <stdlib.h>
+         #include "qDecoder.h"
+
+         void main(void) {
+           FILE *fp;
+           char *userID;
+           char *filedata, *filelen, *filename;
+           int  i, len;
+
+           qContentType("text/plain");
+
+           userID = qValue("userID");
+
+           filedata = qValue("binary");
+           filelen  = qValue("binary.length");     
+           filename = qValue("binary.filename");
+
+           len = atoi(filelen);
+
+           fp = fopen(filename, "wb");
+           for(i = 0; i < len; i++) fprintf(fp, "%c", filedata[i]);
+           fclose(fp);
+
+           printf("%s : %s(%sbytes) saved.", userID, filename, filelen);
+         }
+
+         HTML“@« type=text ÍˆäŒ ‡‹¸ ‹^Í”nŠ×.
+         type=file ÍˆäŒ@ŠÀ '­ôŒë.length'l '­ôŒë.name'Å ­ôˆŸ
+         Ø‹^¶Œm Ò‹gŠ×.
+         '­ôŒë.length'ŠÀ ØŒÅ xÊ“¬ôˆŸ øã‹fŒå, '­ôŒë.name'¸
+         ‡‹ØˆŸ úÙ”p “ÂÍŒëÊ øã‹gŠ×.
+         øã”q “ÂÍŒë¹ ®‹TŒm }ˆël¹ˆäŒ, ÒŒa¹ type=text Œm }Ä
+         ’RŒ¬”nŒç ‹f‘–Œ¶, ¹ ‹ñÊèŒNŒ¬@«ŠÀ ‡‹ØˆŸ Œm’Á PC@« 
+         è‹ñŒ‘Ÿ”p “ÂÍŒë Ø’[Œ¤ ÉŒ`‘wŠ×. “ÂÍŒë¸ \ ‹Å ‰‚”¡ˆŸ ‘EˆÃ
+         ‹fì ‹‰ìˆ¡Š×.("C:\Data\a.gif"ÍˆäŒ "a.gif"Œ¶Ê øã‹gŠ×)
+         ·‰lˆ¨Å ’©“lŠÀ type=file ÍˆäŒ ’p 3ˆ±Å Œ¬Y“¬ˆŸ ¸‹f‘–Œ¶
+         ÊˆË¸ 1ˆ±Å ØŒ@ Šé”p ’RŒ¬ÊfŒm 1ˆ±Œm ’RŒ¬”pŠ×.
+         ŠZÌù¶Œm øã‹fŠÀ Œ¬Y“¬ŠÀ qPrint() Œ¤ ”®‹”nH ”¬Ì”qô ÔŠ×.
+
+  ·‰l : ¸ˆöb úŠÜ}¸ ÌØÅ ˆ·ô, @ŒNb -1
+  ‡‹ : int num;
+         num = qDecoder();
+  
+  char   *qValue(char *name);
+  ‰‚ŠÇ : Linked List@« ­ôŒë@Šé”p ˆ¨(MØL)¹ ’BÄ “õÌ“lŒ¤ ŠpˆÚ‘{
+         qDecoder()Ê ‡ú@ ”¡’‚Ê Æ‹fø¶Œç, Ø‹^¶Œm ô”€
+  ·‰l : ­ôŒëÊ ‘Wå”nŒç ­ôˆ¨Å “õÌ“l, ­ôŒëÊ ö¶Œç NULL
+  ‡‹ : char *test;
+         test = qValue("­ôŒë");
+
+  void   qPrint(void);
+  ‰‚ŠÇ : ”`Œm‰vŒDÅ Debugging‹¶Œm úŠÜ‹g ÌØŒ¤ Œî‹m ’‚Œa”pŠ×.
+  ‡‹ : qPrint();
+
+  void   qFree(void);
+  ‰‚ŠÇ : qDecoder()@ Å”w ”qŠå‹g MemoryŒ¤ ”w‘E”pŠ×.
+  ‡‹ : qFree();
+
+  char   *qURLencode(char *str);
+  ‰‚ŠÇ : MØL¹ URL Encoding‰s’ ¶Œm ­”­”pŠ×.
+  ·‰l : Encoding‹g string pointer, ”w‘E(free)ŠÀ ‡‹ØˆŸ ”nHİ ”pŠ×.
+  ‡‹ : char *encstr;
+         encstr = qURLencode("ÆŠ‡”nº„?");
+
+  void   qURLdecode(char *str);
+  ‰‚ŠÇ : %xxŒm Ì’Ø‹™‹g ØŒŒ¤ ”w‹U”pŠ×.
+  ‡‹ : char *encstr;
+         qURLdecode(encstr);
+
+  * ‡‹ X‘E 1,(qDecoder(), qValue())
+  - 
+
+  void   qContentType(char *mimetype);
+  ‰‚ŠÇ : MimeType¹ ’‚Œa”pŠ×.
+         HŒN˜ ”¡’‚‹fì‹T ŠÚ ”p˜Œ¶ ô”€”pŠ×.
+  ‡‹ : qContentType("text/html");
+         qContentType("image/gif");
+
+  void   qCgienv(Cgienv *env);
+  ‰‚ŠÇ : CGIÅ ”­ˆä­ôl bˆ¡¹ ‰W‘U’[@ øã”pŠ×.
+         ‰W‘U’[Å Œà–‰W¸¸ qDecoder.hŒ¤ ‘ú‘U”n‰‚ x‹óŠ×.
+  ‡‹ : Cgienv *myenv;
+         qCgienv(myenv);
+
+  ****************************************
+  ** COOKIE ˆúŒb ”sô‰Y
+  ****************************************
+
+  void   qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure);
+  ‰‚ŠÇ : name=value@ ”wŠå”nŠÀ COOKIEŒ¤ ±‘C”s.
+  ‘uÅ : qContentType()Ê ”¡’‚‹f‰‚ ú@ ‡‹”nHİ ”pŠ×.
+  ‡‹ : char *name, *value;
+         name = "NAME", value = "Kim";
+         /* NAME=Kim Ê‹ó ‘C¶Œ¤ 30Íˆ¡ “K‹ñÊî“¬@ øã”pŠ× */
+         qSetCookie(name, value, 30, NULL, NULL, NULL);
+
+  int    qcDecoder(void);
+  ‰‚ŠÇ : COOKIEŒ¤ ”w¬”nH Linked List@ øã
+  ·‰l : ¸ˆöb úŠÜ}¸ ÌØÅ ˆ·ô, @ŒNb -1
+  ‡‹ : int num;
+         num = qcDecoder();
+  
+  char   *qcValue(char *name);
+  ‰‚ŠÇ : Linked List@« ­ôŒë@Šé”p ˆ¨(MØL)¹ ’BÄ “õÌ“lŒ¤ ŠpˆÚ‘{
+         qcDecoder()Ê ‡ú@ ”¡’‚Ê Æ‹fø¶Œç, Ø‹^¶Œm ô”€
+  ·‰l : ­ôŒëÊ ‘Wå”nŒç ­ôˆ¨Å “õÌ“l, ­ôŒëÊ ö¶Œç NULL
+  ‡‹ : char *test;
+         test = qcValue("­ôŒë");
+
+  void   qcPrint(void);
+  ‰‚ŠÇ : ”`Œm‰vŒDÅ Debugging‹¶Œm COOKIEˆ¨¹ Œî‹m ’‚Œa”pŠ×.
+  ‡‹ : qcPrint();
+
+  void   qcFree(void);
+  ‰‚ŠÇ : qcDecoder()@ Å”w ”qŠå‹g MemoryŒ¤ ”w‘E”pŠ×.
+  ‡‹ : qcFree();
+
+  ****************************************
+  ** ”œc”«‹g Configuration FILE¹ Š×Œ‡ŠÀ ”sô‰Y  
+  ****************************************
+
+  ## ÄŒ@l ˆ®¸ ”œcÅ ”«Í¹ Îì Linked List@ øã”pŠ×.
+  ---- test.conf ----
+  # this is comment.
+  name  = Kim
+  phone = 123-4567
+  addr  = ”p‰X
+  -------------------
+
+  Entry  *qfDecoder(char *filename);
+  ‰‚ŠÇ : ”«Í¹ Îì Linked List@ øã”pŠ×. (”«ÍÅ ”€‰†Ê ‘EŞö»)
+  ·‰l : Linked ListÅ ’X˜‘® ŒX’Ø‹… “õÌ“l, @ŒNb NULL
+  ‡‹ : Entry *FirstRecord;
+         FirstRecord = qfDecoder("test.conf");
+
+  char   *qfValue(Entry *first, char *name);
+  ‰‚ŠÇ : ­ôŒëÅ ­ôˆ¨¹ ğŠÀŠ×.
+  ·‰l : ¸ˆöb ­ôˆ¨Å “õÌ“l, f“Îb NULL
+  ‡‹ : char *name;
+         name = qfValue(FirstRecord, "name");
+
+  void   qfPrint(Entry *first);
+  ‰‚ŠÇ : ”`Œm‰vŒDÅ Debugging‹¶Œm ”w¬”p ÌØŒ¤ Œî‹m ’‚Œa”pŠ×.
+  ‡‹ : qfPrint(FirstRecord);
+
+  void   qfFree(Entry *first);
+  ‰‚ŠÇ : ”qŠå‹g MemoryŒ¤ |”­”pŠ×.
+  ‡‹ : qfFree(FirstRecord);
+
+  ## ÄŒ@l ˆ®¸ ”œcÅ ’©“l ”«Í¹ Š×Œ‰Š×.
+  ---- number.dat ----
+  74
+  -------------------
+
+  int    qReadCounter(char *filename);
+  ‰‚ŠÇ : ”«ÍŒëÅ ’©“l ”«Í¹ ÎŠÀŠ×.
+  ·‰l : ¸ˆöb ’©“lˆ¨, @ŒNb 0
+  ‡‹ : int count;
+         count = qReadCount("number.dat");
+
+  int    qSaveCounter(char *filename, int number);
+  ‰‚ŠÇ : ‘–‘C‹g ”«ÍŒë@ ’©“l ˆ¨¹ øã(ˆ¹d)”pŠ×.
+  ·‰l : ¸ˆöb 1, @ŒNb 0
+  ‡‹ : qSaveCounter("number.dat", 75);
+
+  int    qUpdateCounter(char *filename){
+  ‰‚ŠÇ : ‘–‘C‹g ”«ÍŒëÅ ’©“l ˆ¨¹ 1 ‘•ˆŸb“QŠ×.
+  ·‰l : ¸ˆöb ‰‚‘W ’©“lˆ¨ + 1, @ŒNb 0
+  ‡‹ : int count;
+         count = qUpdateCounter("number.dat");
+  
+  ****************************************
+  ** FILE ˆúŒb ”sô‰Y
+  ****************************************
+
+  int    qCheckFile(char *filename);
+  ‰‚ŠÇ : ”«ÍÅ ‘WåHÌŒ¤ “ÂÅ”pŠ×.
+  ·‰l : ”«ÍÊ ‘Wå ”nŒç 1, ”«ÍÊ ö¶Œç 0
+         Permission@ Å”w ‘A‰x ĞˆŸŠÇ”p ”«Í‹T ”«ÍÊ öŠ×ˆë “ÅŠÚ”pŠ×.
+  ‡‹ : if(qCheckFile("test.dat") == 0)qError("File not found");
+
+  int    qSendFile(char *filename);
+  ‰‚ŠÇ : ”«ÍÅ ŠZ‹¹ ’‚Œa”pŠ×.
+  ·‰l : ‘C“ ’‚Œa 1, @ŒNb 0
+  ‡‹ : qContentType("image/gif");
+         qSendFile("mypic.gif");
+
+         qContentType("text/html");
+         qSendFile("myhtml.html");
+
+  ****************************************
+  ** ”«Œç ’‚Œa ”sô‰Y
+  ****************************************
+
+  int    qPrintf(int mode, char *format, ...);
+  ‰‚ŠÇ : printf()l ‹^Í”p ‡‹†¶Œm HTML TAGÅ ù‹ ­al Ø‹^ LinkŒ¤ ”€”pŠ×.
+         (Max string size = 1000byte)
+         Mode 0 : printf()l ‹^Í”nŠ×, HTMLÊ ù‹‹i¹ ‹ä”pŠ×.
+         Mode 1 : HTML TAG Ø’[Œ¤ ’‚Œa”pŠ×. Link‹fŠÀ ÌÎ ö».
+         Mode 2 : Mode 1 + Ø‹^¶Œm link b“S.
+         Mode 3 : Mode 2 + linkŒ¤ “KŒ­”~¹b ú”«Œç(target=_top) ’‚Œa”pŠ×.
+         Mode 4 : HTML TAGŒ¤ Jb”pŠ×. ’‚Œa‹f‘– È».
+         Mode 5 : Mode 4 + Ø‹^¶Œm Link b“S.
+         Mode 6 : Mode 5 + linkŒ¤ “KŒ­”~¹b ú”«Œç(target=_top) ’‚Œa”pŠ×.         
+         Mode 10  :Mode 0 + Convert
+         Mode 11 : Print HTML TAG + Convert
+         Mode 12 : Mode 11 + Auto Link
+         Mode 13 : Mode 12 + Auto Link to _top frame
+         Mode 14 : Waste HTML TAG + Convert
+         Mode 15 : Mode 14 + Auto Link
+         Mode 16 : Mode 15 + Auto Link to _top frame
+
+         Convert : " "   -> " "
+                   "  "  -> " &nbsp;"
+                   "   " -> " &nbsp;&nbsp;"
+                   "\r"  -> Jb
+                   "\n"  -> "<br>\n"
+
+         10 Ê“Å Mode ˆ¨¸ <pre> “a‰vŒ¤ ‡‹”n‘– Èˆë, KÑ‹g ˆö‰¹
+         ”«Œç@ ¶H‘xô ÔŠ×. ‹Å”p, ”«Œç“öÅ ­”«@ ‹›‹ñ Ø‹^¶Œm ‘xx‰ÜÊ
+         ‹gŠ×.
+
+  ·‰l : ¸ˆöb ’‚Œa”p bytes ˆ·ô, @ŒNb EOF
+  ‡‹ : qPrintf(4, "%s", buf);
+  X‘E : qPrintf(i, "%s\n", "<font><b>\"http://shinan.hongik.ac.kr\"</b></font>");
+         Mode 0 : <font><b>"http://shinan.hongik.ac.kr"</b></font>
+         Mode 1 : &ltfont&gt&ltb&gt"http://shinan.hongik.ac.kr"&lt/b&gt&lt/font&gt
+         Mode 2 : &ltfont&gt&ltb&gt"<a href="http://shinan.hongik.ac.kr" target="">http://shinan.hongik.ac.kr</a>"&lt/b&gt&lt/font&gt
+         Mode 3 : &ltfont&gt&ltb&gt"<a href="http://shinan.hongik.ac.kr" target="_top">http://shinan.hongik.ac.kr</a>"&lt/b&gt&lt/font&gt
+         Mode 4 : "http://shinan.hongik.ac.kr"
+         Mode 5 : "<a href="http://shinan.hongik.ac.kr" target="">http://shinan.hongik.ac.kr</a>"
+         Mode 6 : "<a href="http://shinan.hongik.ac.kr" target="_top">http://shinan.hongik.ac.kr</a>"
+
+  void   qPuts(int mode, char *buf);
+  ‰‚ŠÇ : MØL¹ HTML”œc@ ŒÀ‹TŒn ’‚Œa”pŠ×. (qPrintf()l ‰‚ŠÇ ‹^Í)
+  ‘uÅ : ÌØŒm ú”w‘w MØLÊ ­”œ‹gŠ×.
+         qPuts(mode, "MØL"); ÊŒPcÅ ‡‹¸ _Œ™Œ¤ Ğ¶“Rô ÔŠ×.
+         Ê‹¥@ŠÀ ÄŒ@Å ‡‹’RŒR ÌØŒ¤ ·‡”p”Â ‡‹”pŠ×.
+  ‡‹ : char buf[100];
+         strcpy(buf, "http://shinan.hongik.ac.kr mailto:nobreak@shinan.hongik.ac.kr");
+         qPuts(2, buf);
+         
+
+  void   qError(char *format, ...);
+  ‰‚ŠÇ : _Œ™@Šé”p MessageŒ¤ ’‚Œa”pŠ×. printf() ”sôl ‡‹ ‹^Í.
+         _Œ™ ŒÜb‘– ”nŠÚÅ ˆ±~Ø ‘AÑ Œ³“HŠÀ qDecoder.hÅ CONTACT_INFOŒ¤
+         ô‘C”nH ­ˆä”qô ÔŠ×.
+         qErrLog()”sôŒm Œm‰v“ÂÍÊ ‘CÅ‹gˆäŒ _Œ™ŒÜb‘–ˆŸ “ÂÍbY“z@ ŠQŠÀŠ×.
+         (Max string size = 1000byte)
+  ‡‹ : qError("_Œ™ŒÜb‘–");
+         qError("%s@ _Œ™", buf);
+
+  void   qErrLog(char *filename);
+  ‰‚ŠÇ : qError() ”sôŒ¤ ÌŒ¤‹¥ úŠÜ‹fŠÀ _Œ™ ŒÜb‘–‹‰¹ ®‹TÅ Œm‰v“ÂÍŒm
+         ‰‚Œn”n‹TŒn ”pŠ×.
+         Œm‰vŒ¤ ‰‚Œn”q‹¥, ¹“ÂÍ¹ ‘—‘A ”¡’‚”nŠÀˆËÊ ÄŠÍ‹ñ, 
+         qErrLog("logs/error.log") lˆ®Ê ”`Œm‰vŒD ’i‰‚@ ”¡’‚”nŒç ‰v ”Â
+         qError()ˆŸ ”¡’‚‹h‹¥Œ´Š×, 'logs/error.log' “ÂÍ@ Œm‰vˆŸ Ø‹^ ‰‚Œn
+         ‹gŠ×.
+  ‡‹ : qErrLog("Œm‰v“ÂÍŒë");        // log enable
+         qErrLog(NULL);                // log disable (default)
+
+  ****************************************
+  ** ‰‚“W ”sô‰Y
+  ****************************************
+  int    qCheckEmail(char *email){
+  ‰‚ŠÇ : E-mail ‘uĞÅ _Œ™Œ¤ “Å®”pŠ×.
+  ·‰l : _Œ™ˆŸ ö¶Œç 1, M‘EˆŸ ~”nŒç 0
+  ‡‹ : qCheckEmail("nobreak@shinan.hongik.ac.kr");
+
+  int    qCheckURL(char *url);
+  ‰‚ŠÇ : URL ‘uĞÅ _Œ™Œ¤ “Å®”pŠ×.
+  ·‰l : _Œ™ˆŸ ö¶Œç 1, M‘EˆŸ ~”nŒç 0
+  ‡‹ : qCheckURL("http://shinan.hongik.ac.kr");
+
+  char   *qRemoveSpace(char *str);
+  ‰‚ŠÇ : MØLÅ Ó‹y ˆö‰ˆø CR, LFŒ¤ ‘EˆÃ”pŠ×.
+  ·‰l : ¸ˆöb MØLÅ “õÌ“l, f“Îb NULL
+  ‘uÅ : qRemoveSpace("MØL"); ÊŒPcÅ ‡‹¸ _Œ™Œ¤ Ğ¶“Rô ÔŠ×.
+         Ê‹¥@ŠÀ ÄŒ@Å ‡‹’RŒR ÌØŒ¤ ·‡”p”Â ‡‹”pŠ×.
+  ‡‹ : char teststr[100];
+         strcpy(teststr, " Hello, world    \r\n");
+         qRemoveSpace(teststr);
+         // ˆ‘E”Â teststr@ŠÀ "Hello, world"ˆŸ ‹‰ìˆ¡Š×.
+
+  struct tm *qGetTime(void);
+  ‰‚ŠÇ : bˆ¡¹ ‰W‘U’[ tm@ øã”pŠ×.
+  ·‰l : ‰W‘U’[ tmÅ “õÌ“l
+  ‡‹ : struct tm *mytime;
+         mytime = qGetTime();
+
+  time_t qGetGMTTime(char *gmt, time_t plus_sec);
+  ‰‚ŠÇ : '”–åbˆ¡+plus_sec'¹ Cookie@« ‡‹”nŠÀ GMT MØL bˆ¡¶Œm ­”­”pŠ×.
+  ·‰l : 1970/1/1(00:00:00)Ì“l ”–‘E‰‘–Å ’i + plus_sec
+  ‡‹ : time_t plus_sec;
+         char gmt[0xff];
+         plus_sec = (time_t)300; /* 5Î */
+         qGetGMTTime(gmt, plus_sec);
+         printf("%s", gmt);         /* "Fri, 22-Aug-1997 15:11:30 GMT" */
+
+  int    qStr09AZaz(char *str);
+  ‰‚ŠÇ : MØLÊ '0' - '9', 'A' - 'Z', 'a' - 'z'Œm ÊŒ‡ì‘RŠÀ‘– “Å®”pŠ×.
+  ·‰l : ‘UˆÅ@ Ì”t”nŒç 1, _Œ™b 0
+  ‡‹ : if(qStr09AZaz("abc1234") == 1) printf("True");
+
+3. X‘E
+
+    --------- Ex 1 ----------
+    úŠÜ‹g ÌØŒ¤ Œî‹m ’‚Œa”nŠÀ CGI
+
+    #include "qDecoder.h"
+
+    void main(void){
+      qPrint();
+    }
+
+    ¥Å ĞYŒ¤ test.cŒm øã”p”Â Š×»ˆø ˆ®Ê Compile”nØ.
+    (ˆ®¸ ‹ŒY“„Œ¬@ qDecoder.cl qDecoder.hˆŸ ‘Wå”wİ”s)
+
+    gcc -o test.cgi test.c qDecoder.c
+    
+    Browser“@« Š×»ˆø ˆ®Ê f”€”nH ˆßˆøŒ¤ ”¬Ì”pŠ×.
+
+    URL -> http://«–URL/test.cgiˆŸÔŠÀ‹ŒY“„Œ¬/test.cgi?a=b&c=de
+
+    ’‚ŒaˆßˆøŠÀ Š×»ˆø ˆ®Š×.
+
+    'a' = 'b'
+    'c' = 'de'  
+
+    --------- Ex 2 ----------
+    ˜”nŠÀ ÌØ('a')Œ¤ ¯“b”nH ”«Œç ’‚Œa
+
+    #include "stdio.h"
+    #include "qDecoder.h"
+
+     void main(void){
+       char *value;
+
+       qContentType("text/html");
+
+       value = qValue("a");
+       printf("test a = %s", value);
+     }
+   
+    X‘E 1ˆø ˆ®Ê Compile ”p”Â ˆ®¸ †¶Œm f”€”pŠ×.
+
+    ’‚ŒaˆßˆøŠÀ Š×»ˆø ˆ®Š×.
+
+    test a = b
+
+    --------- Ex 3 ----------
+    ‘C”¬”p ”sô ”¡’‚ û‘õ
+
+    #include "qDecoder.h"
+
+    void main(void){
+      qDecoder();
+      qContentType("text/html");
+
+      ‡‹Ø Code
+
+      qFree();
+    }
+
+    qDecoder(), qFree()ŠÀ ŒJˆŸŠÇ”nŠ×.
+   
+
+4. Compile
+
+  GCC ‡‹Ø
+    gcc -o f”€”«ÍŒë Ù¸”pĞY.c qDecoder.c
+    ex) gcc -o test.cgi main.c qDecoder.c
+    ex) gcc -o test.cgi main.c sub.c qDecoder.c
+
+  CC ‡‹Ø
+    cc -o f”€”«ÍŒë Ù¸”pĞY.c qDecoder.c
+    ex) cc -o test.cgi main.c qDecoder.c
+
+  Library ‘EÙ ‡‹
+    qDecoder ‹ŒY“„Œ¬@« makeŒ¤ f”€”pŠ×.
+    - cd qDecoder
+    - make
+    qDecoder.aˆŸ ¸‹gŠ×.
+
+    ex) gcc -o test.cgi main.c qDecoder.a
+
+
+5. Example Makefile
+
+---- Cut Here ----
+## Define
+CC      = gcc -Wall        # For GNU C Compiler(gcc)
+#CC      = cc               # For the other C Compiler
+
+OBJ  = $(OBJ1) $(OBJ2)
+OBJ1 = qDecoder.o
+OBJ2 = YourMain.o YourSub.o
+
+PRG_NAME = test.cgi
+
+## Main
+all:    $(PRG_NAME)
+
+## Link Module
+$(PRG_NAME): $(OBJ)
+        $(CC) -o $(PRG_NAME) $(OBJ)
+
+## Compile Module
+%.o:    %.c
+        $(CC) -c -o $@ $<
+
+## Clear Module
+clean:  rm -f $(OBJ) $(PRG_NAME)
+---- Cut Here ----
+
+--- END ---

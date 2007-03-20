@@ -27,9 +27,16 @@
   소    속 : Nobreak Technologies
   사용환경 : Unix
   Language : C Language
-  배포장소 : http://cgi.hongik.ac.kr
+  배포장소 : http://www.cgiserver.net
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
+  [Version 4.0.1]
+    ** Patch functions
+    qfDecoder()
+    - 파일에서 한행의 길이제약을 없앰.
+    qDecoder()
+    - multipart/form-data형식 내부 알고리즘 수정.
+
   [Version 4.0]
     ** Patch functions
     qDecoder()
@@ -325,7 +332,7 @@
   -------------------
 
   Entry  *qfDecoder(char *filename);
-  기능 : 화일을 읽어 Linked List에 저장한다. (화일의 한행은 최고 1000Byte)
+  기능 : 화일을 읽어 Linked List에 저장한다. (화일의 행길이 제약없음)
   복귀 : Linked List의 첫번째 레코드 포인터, 에러시 NULL
   사용 : Entry *FirstRecord;
          FirstRecord = qfDecoder("test.conf");
