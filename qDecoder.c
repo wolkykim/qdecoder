@@ -1,5 +1,5 @@
 /***********************************************
-** [Query String Decoder Version 3.0]
+** [Query String Decoder Version 3.1]
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
@@ -32,7 +32,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
 #include <time.h>
+
 #include "qDecoder.h"
 
 /**********************************************
@@ -42,6 +45,8 @@ char *_get_query(char *method);
 void _decode_query(char *str);
 char _x2c(char hex_up, char hex_low);
 char *_makeword(char *str, char stop);
+void _autolink(int mode, char one);
+char *_strtok2(char *str, char *token, char *retstop);
 
 /**********************************************
 ** Static Values Definition used only internal
@@ -53,7 +58,7 @@ static Entry *_first_entry = NULL;
 ** Usage : qDecoder();
 ** Return: Number of Values
 ** Do    : Query Decode & Save it in linked list
-		   It doesn't care Method
+**         It doesn't care Method
 **********************************************/
 int qDecoder(void){
   Entry *entries;
@@ -153,8 +158,7 @@ void qFree(void){
 Entry *qfDecoder(char *filename){
   FILE  *fp;
   Entry *first, *entries;
-  int   amount;
-  char  buf[1000];
+  char  buf[1000 + 1];
 
   fp = fopen(filename, "rt");
   if(fp == NULL) return NULL;    
@@ -162,7 +166,7 @@ Entry *qfDecoder(char *filename){
   entries = (Entry *)malloc(sizeof(Entry));
   first = entries -> next = entries;
 
-  while(fgets(buf, 1000, fp)){
+  while(fgets(buf, 1000 + 1, fp)){
 	entries = entries->next;
 	entries->value = (char *)malloc(sizeof(char) * (strlen(buf) + 1));
         strcpy(entries->value, buf);
@@ -246,19 +250,62 @@ void qContentType(char *mimetype){
 }
 
 /**********************************************
-** Usage : qError(String);
+** Usage : qprintf(Mode, Format, Arg);
+** Do    : Print message like printf
+**         Mode 0 : Same as printf(), it means Accept HTML
+**         Mode 1 : Print HTML TAG, Same as mode 0
+**         Mode 2 : Mode 1 + Auto Link
+**         Mode 3 : Mode 2 + _top frame link
+**         Mode 4 : Waste HTML TAG
+**         Mode 5 : Mode 4 + Auto Link
+**         Mode 6 : Mode 5 + _top frame link
+**********************************************/
+int qPrintf(int mode, char *format, ...){
+  char buf[1000 + 1];
+  int  status;
+  va_list arglist;
+
+  va_start(arglist, format);
+  status = vsprintf(buf, format, arglist);
+  if(status == EOF) return status;
+  if(strlen(buf) > 1000)qError("qprintf : Message is too long");
+
+  if(mode == 0) status = printf("%s", buf);
+  else {
+    int i;
+
+    for(i = 0; buf[i]; i++) _autolink(0, buf[i]);
+    _autolink(mode, ' ');
+  }
+
+  return status;
+}
+
+/**********************************************
+** Usage : qError(Format, Arg);
 ** Do    : Print error message
 **********************************************/
-void qError(char *str){
+void qError(char *format, ...){
+  char buf[1000 + 1];
+  int status;
+  va_list arglist;
+  va_start(arglist, format);
+
   qContentType("text/html");
+
+  status = vsprintf(buf, format, arglist);
+  if(strlen(buf) > 1000 || status == EOF){
+    printf("qError() : Message is too long or not valid");
+    exit(1);
+  }
 
   printf("<font color=red size=6><B>Error !!!</B></font>\n");
   printf("<br><br>\n");
-  printf("<font size=3>\n");
-  printf("<i>%s</i>\n", str);
+  printf("<font size=3 face=arial>\n");
+  printf("<i><b>%s</b></i>\n", buf);
   printf("</font>\n");
   printf("<br><br>\n");
-  printf("<center><font size=2>\n");
+  printf("<center><font size=2 face=arial>\n");
   printf("Made in Korea by 'Kim Seung-young', [Hongik Shinan Network Security]<br>\n");
   printf("홍익대학교 신안캠퍼스 전자전산공학과 94학번 김승영<br>\n");
   printf("<br><a href=\"javascript:history.back()\">BACK</a>");
@@ -349,9 +396,32 @@ int qSendFile(char *filename){
 }
 
 /**********************************************
+** Usage : qCheckEmail(E-mail Address);
+** Return: If it is valid return 1. Or return 0;
+** Do    : Check E-mail address
+**********************************************/
+int qCheckEmail(char *email){
+  char *ptr, *token, retstop, buf[60+1];
+  int i, flag;
+
+  if(strlen(email) > 60) return 0;
+  strcpy(buf, email);
+
+  token = " ~`!@#$%^&*()_-+=|\\:;\"',.?/<>{}[]\r\n";
+  ptr = _strtok2(buf, token, &retstop);
+  for(flag = i = 1; ptr != NULL; i++){
+    if((i == 1) && (retstop != '@'))flag = 0;
+    if((i >= 2) && !(retstop == '.' || retstop == '\0'))flag = 0;
+    ptr = _strtok2(NULL, token, &retstop);
+  }
+  if((i >=4) && (i <= 7)) return flag;
+  return 0;
+}
+
+/**********************************************
 ** Usage : qRemoveSpace(Source string);
 ** Do    : Remove Space before string & after string
-           Remove CR, LF
+**         Remove CR, LF
 **********************************************/
 void qRemoveSpace(char *str){
   int i, j;
@@ -362,14 +432,13 @@ void qRemoveSpace(char *str){
     if(str[i] == '\r' || str[i] == '\n') str[i] = '\0';
   }
 
-  for(j = 0; str[j] == ' '; j++);
+  for(j = 0; isspace(str[j]); j++);
   for(i = 0; str[j] != '\0'; i++, j++) str[i] = str[j];
   str[i] = '\0';
 
-  for(i--; (i >= 0) && (str[i] == ' '); i--);
+  for(i--; (i >= 0) && isspace(str[i]); i--);
   str[i+1] = '\0';
 }
-
 
 /**********************************************
 ***********************************************
@@ -454,7 +523,7 @@ char _x2c(char hex_up, char hex_low){
 ** Usage : _makeword(Source string, Stop character);
 ** Return: Pointer of Parsed string
 ** Do    : It copy source string before stop character
-           The pointer of source string direct after stop character
+**         The pointer of source string direct after stop character
 **********************************************/
 char *_makeword(char *str, char stop){
   char *word;
@@ -471,4 +540,108 @@ char *_makeword(char *str, char stop){
   str[i - len] = '\0';
 
   return (word);
+}
+
+/**********************************************
+** Usage : _autolink(Mode, character);
+** Do    : Buffering the character and print HTML link
+**         Mode 0 : Buffering character
+**         Mode 1 : Fresh buffer, Print HTML TAG
+**         Mode 2 : Mode 1 + Auto Link
+**         Mode 3 : Mode 2 + Auto Link to _top frame
+**         Mode 4 : Fresh Buffer, Waste HTML TAG
+**         Mode 5 : Mode 4 + Auto Link
+**         Mode 6 : Mode 5 + Auto Link to _top frame
+**********************************************/
+void _autolink(int mode, char one){
+  char *buf;
+  static int i, flag, bufsize;
+
+  if(mode == 0){
+    if(flag == 0){
+      flag = 1, i = 0, bufsize = 1000; 
+      buf = (char *)malloc(sizeof(char) * (bufsize + 1));
+    }
+    if(i >= bufsize){
+       bufsize *= 2;
+       buf = (char *)realloc(buf, sizeof(char) * (bufsize + 1));
+    }
+    buf[i] = one, buf[++i] = '\0';
+  }
+  else {
+    char *ptr, retstop, *target, *token;
+    int printhtml, autolink, linkflag, ignoreflag;
+
+    if(flag == 0) return;
+
+    switch(mode){
+      case 1 : {printhtml = 1, autolink = 0, target = ""; break;}
+      case 2 : {printhtml = 1, autolink = 1, target = ""; break;}
+      case 3 : {printhtml = 1, autolink = 1, target = "_top"; break;}
+      case 4 : {printhtml = 0, autolink = 0, target = ""; break;}
+      case 5 : {printhtml = 0, autolink = 1, target = ""; break;}
+      case 6 : {printhtml = 0, autolink = 1, target = "_top"; break;}
+      default: {qError("_autolink() : Invalid Mode (%d)", mode); break;}
+    }
+
+    if(autolink == 1) token = " `(){}[]<>\"',\r\n";
+    else token = "<>\r\n";
+
+    ptr = _strtok2(buf, token, &retstop);
+    for(linkflag = ignoreflag = 0; ptr != NULL;){
+      if(autolink == 1){
+        if(!strncmp(ptr, "http://", 7))linkflag = 1;
+        else if(!strncmp(ptr, "ftp://", 6))linkflag = 1;     
+        else if(!strncmp(ptr, "telnet://", 9))linkflag = 1;
+        else if(!strncmp(ptr, "mailto:", 7))linkflag = 1;
+        else if(!strncmp(ptr, "news:", 5))linkflag = 1;
+        else linkflag = 0;
+      }
+      if(linkflag == 1 && ignoreflag == 0)
+        printf("<a href=\"%s\" target=\"%s\">%s</a>", ptr, target, ptr);
+      else if(linkflag == 0 && ignoreflag == 0)
+        printf("%s", ptr);
+
+      if(printhtml == 1) printf("%c", retstop);
+      else {
+        if(retstop == '\r') printf("\r");
+        else if(retstop == '\n') printf("\n");
+        else if(retstop == '<') ignoreflag = 1;
+        else if(retstop == '>') ignoreflag = 0;
+        else if(ignoreflag  == 0) printf("%c", retstop);
+      }
+
+      ptr = _strtok2(NULL, token, &retstop);
+    }
+    flag = 0;
+    free(buf);
+  }
+}
+
+/*********************************************
+** Usage : _strtok2(String, TokenStopString, ReturnStopCharacter);
+** Do    : Find token string (usage like strtok())
+** Return: Pointer of token & character of stop
+**********************************************/
+char *_strtok2(char *str, char *token, char *retstop){
+  static char *tokensp, *tokenep;
+  int i, j;
+
+  if(str != NULL) tokensp = tokenep = str;
+  else tokensp = tokenep;
+
+  for(i = strlen(token);*tokenep;tokenep++){
+    for(j=0; j < i; j++){
+      if(*tokenep == token[j]){
+        *retstop = token[j];
+        *tokenep = '\0';
+        tokenep++;
+        return tokensp;
+      }
+    }
+  }
+
+  *retstop = '\0';
+  if(tokensp != tokenep) return tokensp;
+  return NULL;
 }

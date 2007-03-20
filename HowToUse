@@ -1,5 +1,5 @@
 *****************************************************
-** [Query String Decoder 'qDecoder' Version 3.0]   **
+** [Query String Decoder 'qDecoder']               **
 **                                                 **
 **  Source  Code Name : qDecoder.c                 **
 **  Include Code Name : qDecoder.h                 **
@@ -34,12 +34,17 @@
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
 
+  [Version 3.1]
+    int       qPrintf(int mode, char *format, ...);
+    int       qCheckEmail(char *email);
+    void      qError(char *format, ...);
+
   [Version 3.0]
 
     Entry     *qfDecoder(char *filename);
     char      *qfValue(Entry *first, char *name);
     void      qfPrint(Entry *first);
-    void      qfFree(Entry *first);
+    void      qError(char *format, ...);
 
     void      qRemoveSpace(char *str);
 
@@ -50,7 +55,7 @@
     void      qFree(void);
 
     void      qContentType(char *mimetype);
-    void      qError(char *str);
+    void      qError(char *str); -> 3.1 버젼에서 수정 갱신
 
     void      qCgienv(Cgienv *env);
     struct tm *qGetTime(void);
@@ -112,7 +117,7 @@
   -------------------
 
   Entry     *qfDecoder(char *filename);
-  기능 : 화일을 읽어 Linked List에 저장한다.
+  기능 : 화일을 읽어 Linked List에 저장한다. (화일의 한행은 최고 1000Byte)
   복귀 : Linked List의 첫번째 레코드 포인터
   사용 :
     Entry *FirstRecord;
@@ -153,9 +158,47 @@
     qContentType("text/html");
     qSendFile("myhtml.html");
 
+
+  ****************************************
+  ** 화면 출력 함수군
+  ****************************************
+
+  int       qPrintf(int mode, char *format, ...);
+  기능 : printf()와 동일한 사용방법으로 HTML TAG의 적용 유뮤와 자동 Link를 행한다.
+         (Max string size = 1000byte)
+         Mode 0 : printf()와 동일하다, HTML이 적용됨을 뜻한다.
+         Mode 1 : HTML TAG 자체를 출력한다. Link되는 부분 없다.
+         Mode 2 : Mode 1 + 자동으로 link 시킴.
+         Mode 3 : Mode 2 + link를 클릭했을시 전화면(target=_top) 출력한다.
+         Mode 4 : HTML TAG를 무시한다. 출력되지 않음.
+         Mode 5 : Mode 4 + 자동으로 Link 시킴.
+         Mode 6 : Mode 5 + link를 클릭했을시 전화면(target=_top) 출력한다.         
+  사용 : qPrintf(4, "%s", buf);
+  예제 : qPrintf(i, "%s\n", "<font><b>\"http://shinan.hongik.ac.kr\"</b></font>");
+    Mode 0 : <font><b>"http://shinan.hongik.ac.kr"</b></font>
+    Mode 1 : &ltfont&gt&ltb&gt"http://shinan.hongik.ac.kr"&lt/b&gt&lt/font&gt
+    Mode 2 : &ltfont&gt&ltb&gt"<a href="http://shinan.hongik.ac.kr" target="">http://shinan.hongik.ac.kr</a>"&lt/b&gt&lt/font&gt
+    Mode 3 : &ltfont&gt&ltb&gt"<a href="http://shinan.hongik.ac.kr" target="_top">http://shinan.hongik.ac.kr</a>"&lt/b&gt&lt/font&gt
+    Mode 4 : "http://shinan.hongik.ac.kr"
+    Mode 5 : "<a href="http://shinan.hongik.ac.kr" target="">http://shinan.hongik.ac.kr</a>"
+    Mode 6 : "<a href="http://shinan.hongik.ac.kr" target="_top">http://shinan.hongik.ac.kr</a>"
+
+  void      qError(char *format, ...);
+  기능 : 오류에대한 Message를 출력한다. printf() 함수와 사용법 동일.
+         qDecoder.c를 수정하여 출력 형태를 고칠수 있다.
+         (Max string size = 1000byte)
+  사용 : qError("오류메시지");
+         qError("%s에 오류", buf);
+
+
   ****************************************
   ** 기타 함수군
   ****************************************
+  int       qCheckEmail(char *email){
+  기능 : E-mail 주소의 오류를 판별한다.
+  복귀 : 오류가 없으면 1, 문제가 발생하면 0
+  사용 : qCheckEmail("nobreak@shinan.hongik.ac.kr");
+
   void      qRemoveSpace(char *str);
   기능 : 문자열의 앞뒤 공백을 제거한다.
          또한 문자열의 CR, LF를 제거한다.
@@ -172,10 +215,6 @@
     struct tm *mytime;
     mytime = qGetTime();
 
-  void      qError(char *str);
-  기능 : 오류에대한 Message를 출력한다.
-         qDecoder.c를 수정하여 출력 형태를 고칠수 있다.
-  사용 : qError("오류메시지");
 
 3. 예제
 

@@ -39,11 +39,13 @@ void      qfPrint(Entry *first);
 void      qfFree(Entry *first);
 
 void      qContentType(char *mimetype);
-void      qError(char *str);
+int       qPrintf(int mode, char *format, ...);
+void      qError(char *format, ...);
 
 void      qCgienv(Cgienv *env);
 struct tm *qGetTime(void);
 
 int       qCheckFile(char *filename);
 int       qSendFile(char *filename);
+int       qCheckEmail(char *email);
 void      qRemoveSpace(char *str);
