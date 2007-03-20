@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "qDecoder.h"
 
-void main(void) {
+int main(void) {
   char *list;
 
   qContentType("text/html");
@@ -15,4 +15,5 @@ void main(void) {
   }
 
   qFree();
+  return 0;
 }

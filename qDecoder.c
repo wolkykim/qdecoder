@@ -1,11 +1,11 @@
 /*************************************************************
-** qDecoder CGI Library v5.0.4                              **
+** qDecoder CGI Library v5.0.5                              **
 **                                                          **
 **  Official distribution site : ftp://ftp.hongik.com       **
 **           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
-**                        Last updated at Sep 9, 1999       **
+**                        Last updated at Sep 17, 1999      **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **
@@ -806,24 +806,19 @@ void qAwkClose(void) {
   _awkfp = NULL;
 }
 
-
 #define	SSI_INCLUDE_START	"<!--#include file=\""
 #define SSI_INCLUDE_END		"\"-->"
 /**********************************************
-** Usage : int qSed(fpin, fpout, arg) {
-** Return: Success 1, File open fail 0
+** Usage : int qSedStr(string pointer, fpout, arg) {
+** Return: Success 1, Fail 0
 ** Do    : Stream Editor.
 **********************************************/
-int qSed(char *filename, FILE *fpout, char **arg) {
+int qSedStr(char *srcstr, FILE *fpout, char **arg) {
   int argc, i, j, k;
   char *mode, **name, **value;
-  char sep;
+  char sep, *tmp;
 
-  FILE *fpin;
-  char *str, *tmp;
-  int flag;
-
-  if((fpin = fopen(filename, "rt")) == NULL) return 0;
+  if(srcstr == NULL) return 0;
 
   /* Arguments count */
   if(arg == NULL) argc = 0;
@@ -848,7 +843,7 @@ int qSed(char *filename, FILE *fpout, char **arg) {
     /* name */
     name[i] = (char *)malloc(strlen(arg[i]) + 1);
     for(j = 2, k = 0; arg[i][j] != sep; j++, k++) {
-      if (arg[i][j] == '\0') qError("qSed(): Premature end of argument '%s'.", arg[i]);
+      if (arg[i][j] == '\0') qError("qSedStr(): Premature end of argument '%s'.", arg[i]);
       name[i][k] = arg[i][j];
     }
     name[i][k] = '\0';
@@ -856,51 +851,51 @@ int qSed(char *filename, FILE *fpout, char **arg) {
     /* value */
     value[i] = (char *)malloc(strlen(arg[i]) + 1);
     for(j++, k = 0; arg[i][j] != sep; j++, k++) {
-      if (arg[i][j] == '\0') qError("qSed(): Premature end of argument '%s'.", arg[i]);
+      if (arg[i][j] == '\0') qError("qSedStr(): Premature end of argument '%s'.", arg[i]);
       value[i][k] = arg[i][j];
     }
     value[i][k] = '\0';
   }
 
   /* Parsing */
-  while((str = qfGetLine(fpin)) != NULL) {
-    for(tmp = str; *tmp != '\0'; tmp++) {
-      /* SSI invocation */
-      if(!strncmp(tmp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
-        char ssi_inc_file[1024], *endp;
-        if((endp = strstr(tmp, SSI_INCLUDE_END)) != NULL) {
-          tmp += strlen(SSI_INCLUDE_START);
-          strncpy(ssi_inc_file, tmp, endp - tmp);
-          ssi_inc_file[endp-tmp] = '\0';
-          tmp = (endp + strlen(SSI_INCLUDE_END)) - 1;
+  for(tmp = srcstr; *tmp != '\0'; tmp++) {
+    int flag;
 
-          if(qCheckFile(ssi_inc_file) == 1) qSed(ssi_inc_file, fpout, arg);
-          else printf("[qSed: an error occurred while processing 'include' directive - file(%s) open fail]", ssi_inc_file);
-        }
-        else printf("[qSed: an error occurred while processing 'include' directive - ending tag not found]");
-        continue;
-      }
+    /* SSI invocation */
+    if(!strncmp(tmp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
+      char ssi_inc_file[1024], *endp;
+      if((endp = strstr(tmp, SSI_INCLUDE_END)) != NULL) {
+        tmp += strlen(SSI_INCLUDE_START);
+        strncpy(ssi_inc_file, tmp, endp - tmp);
+        ssi_inc_file[endp-tmp] = '\0';
+        tmp = (endp + strlen(SSI_INCLUDE_END)) - 1;
 
-      /* Pattern Matching */
-      for(i = flag = 0; i < argc && flag == 0; i++) {
-        switch(mode[i]) {
-          case 's': {
-            if(!strncmp(tmp, name[i], strlen(name[i]))) {
-              fprintf(fpout, "%s", value[i]);
-              tmp += strlen(name[i]) - 1;
-              flag = 1;
-            }
-            break;
-          }
-          default : {
-            qError("qSed(): Unknown mode '%c'.", mode[i]);
-            break;
-          }
-        }
-        if(flag == 1) break;  /* No more comparison is necessary. */
+        if(qCheckFile(ssi_inc_file) == 1) qSedFile(ssi_inc_file, fpout, arg);
+        else printf("[qSedStr: an error occurred while processing 'include' directive - file(%s) open fail]", ssi_inc_file);
       }
-      if(flag == 0) fprintf(fpout, "%c", *tmp);
+      else printf("[qSedStr: an error occurred while processing 'include' directive - ending tag not found]");
+      continue;
     }
+
+    /* Pattern Matching */
+    for(i = flag = 0; i < argc && flag == 0; i++) {
+      switch(mode[i]) {
+        case 's': {
+          if(!strncmp(tmp, name[i], strlen(name[i]))) {
+            fprintf(fpout, "%s", value[i]);
+            tmp += strlen(name[i]) - 1;
+            flag = 1;
+          }
+          break;
+        }
+        default : {
+          qError("qSedStr(): Unknown mode '%c'.", mode[i]);
+          break;
+        }
+      }
+      if(flag == 1) break;  /* No more comparison is necessary. */
+    }
+    if(flag == 0) fprintf(fpout, "%c", *tmp);
   }
 
   /* Free */
@@ -912,11 +907,24 @@ int qSed(char *filename, FILE *fpout, char **arg) {
   if (name  != NULL) free(name);
   if (value != NULL) free(value);
 
-  fclose(fpin);
   return 1;
 }
 
+/**********************************************
+** Usage : int qSedFile(string pointer, fpout, arg) {
+** Return: Success 1, Fail open fail 0
+** Do    : Stream Editor.
+**********************************************/
+int qSedFile(char *filename, FILE *fpout, char **arg) {
+  char *sp;
+  int flag;
 
+  if((sp = qReadFile(filename, NULL)) == NULL) return 0;
+  flag = qSedStr(sp, fpout, arg);
+  free(sp);
+
+  return flag;
+}
 
 /**********************************************
 ** Usage : qURLencode(string to encode);
@@ -1646,8 +1654,8 @@ int qStr09AZaz(char *str){
 
 /**********************************************
 ** Usage : qStrBig(string);
-** Return: Pointer of converted string
-** Do    : Convert small char to big char
+** Return: Pointer of converted string.
+** Do    : Convert small character to big character.
 **********************************************/
 char *qStrBig(char *str) {
   char *tmp;
@@ -1659,11 +1667,11 @@ char *qStrBig(char *str) {
 }
 
 /**********************************************
-** Usage : qStrStr(string, token);
+** Usage : qStristr(string, token);
 ** Return: Pointer of token string located in original string, Fail NULL
-** Do    : Find token whih no case-censitive
+** Do    : Find token with no case-censitive
 **********************************************/
-char *qStrStr(char *orgstr, char *tokstr) {
+char *qStristr(char *orgstr, char *tokstr) {
   char *org, *tok, *retp;
 
   if(orgstr == NULL || tokstr == NULL) return 0;
@@ -1674,10 +1682,31 @@ char *qStrStr(char *orgstr, char *tokstr) {
   qStrBig(org), qStrBig(tok);
 
   retp = strstr(org, tok);
-
+  if(retp != NULL) retp = orgstr + (retp - org);
   free(org), free(tok);
 
   return retp;
+}
+
+/**********************************************
+** Usage : qStricmp(char *orgstr, char *tokstr);
+** Return: s1 < s2 less than 0, s1 = s2 0, s1 > s2 greater than 0
+** Do    : qDecoder implementation of stricmp() because
+           some systems do not support this function.
+**********************************************/
+int qStricmp(char *s1, char *s2) {
+  char *bs1, *bs2;
+  int result;
+
+  if(s1 == NULL || s2 == NULL) return 0;
+  if((bs1 = strdup(s1)) == NULL) return 0;
+  if((bs2 = strdup(s2)) == NULL) { free(bs1); return 0; }
+
+  qStrBig(bs1), qStrBig(bs2);
+  result = strcmp(bs1, bs2);
+  free(bs1), free(bs2);
+
+  return result;
 }
 
 /**********************************************

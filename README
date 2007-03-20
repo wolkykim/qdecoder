@@ -80,13 +80,13 @@ I-6. 저작권, 소유권
 II-1. 소프트웨어 정보 (Software Information)
 
   - 명    칭 : qDecoder
-  - 판 번 호 : 5.0.4
+  - 판 번 호 : 5.0.5
   - 종    류 : C/C++용 CGI Library
   - 사용환경 : All kind Unix (Solaris, HP/UX, FreeBSD, Linux, Etc.)
   - 제작회사 : (주)홍익인터넷 (Hongik Internet, Inc.)
   - 개 발 자 : Seung-young Kim(김승영) <nobreak@hongik.com>
   - 배 포 처 : ftp://ftp.hongik.com/pub/qDecoder/
-  - 배포일자 : 1999년 9월 9일
+  - 배포일자 : 1999년 9월 17일
 
 II-2. What's qDecoder?
 
@@ -109,6 +109,19 @@ II-2. What's qDecoder?
 +--------------------------------------------------------------------+
 | III. 버젼별 수정사항                                               |
 +--------------------------------------------------------------------+
+[Version 5.0.5]
+    * deleted functions
+    qStrStr()
+    - 대체함수 qStristr()
+    qSed()
+    - 대체함수 qSedFile()
+
+    * New functions
+    qStricmp()
+    - strcmp() 함수와 기능적으로 동일하나 대소문자를 구분하지 않는다.
+    qSedStr()
+    - 소스 입력을 스트링으로 한다.
+
 [Version 5.0.4]
     * deleted functions
     qFileCat()
@@ -678,12 +691,13 @@ IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
   can make your life more compatible.
   ---------------------
 
-  int    qSed(char *filename, FILE *fpout, char **arg);
+  int    qSedFile(char *filename, FILE *fpout, char **arg);
   기능 : 파일에서 지정된 기호를 정의된 문자열로 교체하여 출력하며,
          일부 SSI 문법을 지원한다. (본 함수은 Unix 시스템의 Sed와
          SSI 를 포괄적으로 지원하도록 확장될 예정이다.)
   복귀 : 성공시 1, 파일을 열 수 없을경우 0
-  사용 : qSed를 활용하면, 프로그램내에 HTML 코드를 전혀 포함하지 않고도
+  참고 : qSedStr()
+  사용 : qSedFile를 활용하면, 프로그램내에 HTML 코드를 전혀 포함하지 않고도
          CGI 프로그래밍을 할 수 있다. UI와 관련된 디버깅 시간을 대폭 줄일
          수 있고, 디자인과 개발의 분리작업이 가능하며, 패키지 제품의 경우
          사용자 측면에서 손쉽게 커스터 마이징이 가능할 수 있는등의 효용성을
@@ -714,7 +728,7 @@ IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
          앞의 streamedit.html.in 파일을 위의 인자 목록으로 다음과 같이
          수행하였을 경우의 출력을 보자.
 
-         ex) qSed("streamedit.html.in", stdout, arg);
+         ex) qSedFile("streamedit.html.in", stdout, arg);
 
          Hi "Seung-young Kim" <nobreak@hongik.com>.
          <p>You got a really cool hobby.
@@ -733,7 +747,7 @@ IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
          문자열 교체를 하지않고, SSI 기능만을 사용코자 할 경우엔 다음과 같이
          arg 인자로 NULL 값을 전달한다.
 
-         ex) qSed("streamedit.html.in", stdout, NULL);
+         ex) qSedFile("streamedit.html.in", stdout, NULL);
 
 IV-4. FILE 관련 함수군
 
@@ -880,8 +894,19 @@ IV-6. 문자열 관련 함수군
   기능 : 인자로 주어진 문자열을 모두 대문자로 변환한다.
   복귀 : 해당 문자열을 포인터
 
-  char   *qStrStr(char *orgstr, char *tokstr);
+  char   *qStristr(char *orgstr, char *tokstr);
   기능 : strstr() 함수와 같으나, 대소문자를 구분하지 않고 비교한다.
+  복귀 : strstr()과 같음
+
+  int    qStricmp(char *s1, char *s2);
+  기능 : strcmp() 함수와 같으나, 대소문자를 구분하지 않는다.
+  복귀 : strcmp()와 같음
+
+  int    qSedStr(char *srcstr, FILE *fpout, char **arg);
+  기능 : qSedFile()과 동일한 기능을 하나, 입력을 문자열로 받는다.
+  복귀 : qSedFile()과 동일
+  사용 : qSedStr("Hi my name is ${NAME}.", stdout, arg);
+  참고 : qSedFile()
 
 IV-7. 시간 관련 함수군
 

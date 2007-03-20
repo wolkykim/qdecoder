@@ -77,7 +77,8 @@ int       qAwkOpen(char *filename, char separator);
 int       qAwkNext(char array[][256]);
 void      qAwkClose(void);
 
-int       qSed(char *filename, FILE *fpout, char **arg);
+int       qSedStr(char *srcstr, FILE *fpout, char **arg);
+int       qSedFile(char *filename, FILE *fpout, char **arg);
 
 char      *qURLencode(char *str);
 void      qURLdecode(char *str);
@@ -112,10 +113,11 @@ int       qUpdateCounter(char *filename, int number);
 int       qCheckEmail(char *email);
 int       qCheckURL(char *url);
 char      *qRemoveSpace(char *str);
-int       qStr09AZaz(char *str);
 
+int       qStr09AZaz(char *str);
 char      *qStrBig(char *str);
-char      *qStrStr(char *orgstr, char *tokstr);
+char      *qStristr(char *orgstr, char *tokstr);
+int       qStricmp(char *s1, char *s2);
 
 char      *qitocomma(int value);
 

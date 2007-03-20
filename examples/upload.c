@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "qDecoder.h"
 
-void main(void) {
+int main(void) {
   FILE *fp;
   char *filedata, *filename;
   int filelength, i;
@@ -20,4 +20,5 @@ void main(void) {
 
   printf("<a href=\"%s\">%s</a> (%d bytes) saved.", filename, filename, filelength);
   qFree();
+  return 0;
 }
