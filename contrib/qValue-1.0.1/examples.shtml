@@ -1,11 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
 <html>
 <head>
-  <title>qFetch Examples</title>
+  <title>qValue Examples</title>
 </head>
 
 <body>
-<p><h1>qFetch Examples</h1>
+<p><h1>qValue Examples</h1>
 <a href="http://www.hongik.com"><img src="../../hongikinternet.gif" align="right" alt="Hongik Internet, Inc." border="0"></a>
 <i>
 Developed by <a href="http://www.hongik.com">Hongik Internet, Inc.</a>
@@ -14,18 +14,18 @@ Developed by <a href="http://www.hongik.com">Hongik Internet, Inc.</a>
 <p><a href="ftp://ftp.hongik.com/pub/qDecoder/"><img src="../../qDecoder.jpg" align="right" alt="qDecoder" border="0"></a>
 <blockquote>
 <b>Please modify this page before testing.</b>
-<br>Below SSI command should be corrected where the path qFetch located in the system.
+<br>Below SSI command should be corrected where the path qValue located in the system.
 <pre>
-    &lt;!--#exec cmd="<u>/ABSOLUTE_SYSTEM_PATH/</u>qFetch.cgi query"--&gt;
-ex) &lt;!--#exec cmd="<u>/home/hongik/cgi-bin/</u>qFetch.cgi query"--&gt;
+    &lt;!--#exec cmd="<u>/ABSOLUTE_SYSTEM_PATH/</u>qValue.cgi query"--&gt;
+ex) &lt;!--#exec cmd="<u>/home/hongik/cgi-bin/</u>qValue.cgi query"--&gt;
 </pre>
 </blockquote>
 </i>
 
 <hr>
-<b>Result A = "<!--#exec cmd="/ABSOLUTE_SYSTEM_PATH/qFetch.cgi A"-->"
-, B = "<!--#exec cmd="/ABSOLUTE_SYSTEM_PATH/qFetch.cgi B"-->"
-, C = "<!--#exec cmd="/ABSOLUTE_SYSTEM_PATH/qFetch.cgi C"-->"
+<b>Result A = "<!--#exec cmd="/ABSOLUTE_SYSTEM_PATH/qValue.cgi A"-->"
+, B = "<!--#exec cmd="/ABSOLUTE_SYSTEM_PATH/qValue.cgi B"-->"
+, C = "<!--#exec cmd="/ABSOLUTE_SYSTEM_PATH/qValue.cgi C"-->"
 </b>
 
 <form method="get" action="examples.shtml">

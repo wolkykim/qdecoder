@@ -1,5 +1,5 @@
 /*************************************************************
-** qFetch v1.0                                              **
+** qcValue v1.0                                             **
 **                                                          **
 ** Simple CGI utility for SSI technique on Apache web server**
 **                                                          **
@@ -7,7 +7,7 @@
 **           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
-**                        Last updated at Nov 26, 1999      **
+**                        Last updated at Dec 29, 1999      **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **
@@ -19,16 +19,22 @@
 #include <string.h>
 #include "qDecoder.h"
 
-int main(int argc, char *argv[]) {
-  char *data;
+int main(void) {
+  char *name;
+  char *value;
 
-  if(argc != 2) {
+  qDecoder();
+  qcDecoder();
+
+  qContentType("text/html");
+  if((name = qValue("name")) == NULL) {
     printf("Illegal usages");
     return 0;
   }
-  if((data = qValue(argv[1])) == NULL) data = "";
-  printf("%s", data);
+  if((value = qcValue(name)) == NULL) value = "";
+  printf("%s", value);
 
+  qcFree();
   qFree();
   return 0;
 }

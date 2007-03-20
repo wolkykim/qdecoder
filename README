@@ -14,12 +14,13 @@ C O N T E N T S
 4. 함수별 기능 설명
   1. CGI 관련 함수군
   2. COOKIE 관련 함수군
-  3. 형식화된 설정 파일및 문자열을 다루는 함수군
-  4. FILE 관련 함수군
-  5. 화면 출력 함수군
-  6. 문자열 관련 함수군
-  7. 시간 관련 함수군
-  8. 기타 함수군
+  3. 검색어 관련 함수군
+  4. 형식화된 설정 파일및 문자열을 다루는 함수군
+  5. FILE 관련 함수군
+  6. 화면 출력 함수군
+  7. 문자열 관련 함수군
+  8. 시간 관련 함수군
+  9. 기타 함수군
 5. 예제 (Examples)
 
 
@@ -80,13 +81,14 @@ I-6. 저작권, 소유권
 II-1. 소프트웨어 정보 (Software Information)
 
   - 명    칭 : qDecoder
-  - 판 번 호 : 5.0.6
+  - 판 번 호 : 5.0.7
   - 종    류 : C/C++용 CGI Library
   - 사용환경 : All kind Unix (Solaris, HP/UX, FreeBSD, Linux, Etc.)
   - 제작회사 : (주)홍익인터넷 (Hongik Internet, Inc.)
   - 개 발 자 : Seung-young Kim(김승영) <nobreak@hongik.com>
-  - 배 포 처 : ftp://ftp.hongik.com/pub/qDecoder/
-  - 배포일자 : 1999년 11월 26일
+  - 배 포 처 : http://www.hongik.com/products/qDecoder/
+               ftp://ftp.hongik.com/pub/qDecoder/
+  - 배포일자 : 2000년 1월 2일
 
 II-2. What's qDecoder?
 
@@ -109,6 +111,26 @@ II-2. What's qDecoder?
 +--------------------------------------------------------------------+
 | III. 버젼별 수정사항                                               |
 +--------------------------------------------------------------------+
+
+[Version 5.0.7]
+    * Deleted functions
+    qStrBig()
+    - 대체함수 qStrupr()
+
+    * New functions
+    qArgMake(), qArgPrint(), qArgMatch(), qArgEmprint(), qArgFree()
+    - 검색 쿼리를 분석하고 스트링내 쿼리 힛트수를 파악하며 매칭되는 부분을
+      볼드 처리하여 출력하여 주는 함수군
+    qValueDefault()
+    - qValue()와 같으나 해당 쿼리명이 없을 경우 기본 스트링값을 넘겨준다.
+    qValueNotEmpty();
+    - qValue()와 같으나 NULL이나, 공백문자열("")일 경우 오류 메시지를 출력해 준다.
+    qStrlwr()
+    - 인자로 주어진 문자열을 모두 소문자로 변환한다.
+    qStrincmp();
+    - strncmp()와 stricmp() 함수가 합쳐진 기능을 한다.
+      대소문자를 구분하지 않고 문자열의 처음 n 바이트를 비교한다.
+
 [Version 5.0.6]
     * Patched functions
     qitocomma()
@@ -122,8 +144,9 @@ II-2. What's qDecoder?
     qError(), qErrorContact()
     - qErrorContact()으로 설정된 메시지가 앞뒤에 [Administrator: ...]가
       삽입되던점 수정(삽입되지 않고, 원문이 그대로 출력되도록).
+
 [Version 5.0.5]
-    * deleted functions
+    * Deleted functions
     qStrStr()
     - 대체함수 qStristr()
     qSed()
@@ -181,7 +204,7 @@ II-2. What's qDecoder?
     - 파일에서 지정된 기호를 정의된 문자열로 교체하여 출력
 
 [Version 5.0]
-    * deleted functions
+    * Deleted functions
     qSendFile()
     - 대체함수 qFileCat()
 
@@ -476,6 +499,18 @@ IV-1. CGI 관련 함수군
          int test, i = 1;
          test = qValue("COUNT.%d", i);
 
+  char   *qValueDefault(char *defstr, char *format, ...);
+  기능 : 쿼리가 없을때 기본 인자를 설정하기 위해 사용하는 qValue()의 간략
+         함수로 다음 코드와 기능적으로 같다.
+         if((value = qValue("COUNTRY")) == NULL) value = "서울";
+  복귀 : qValue()와 같으나 NULL시 defstr의 포인터를 넘겨준다.
+  사용 : value = qValueDefault("서울", "COUNTRY");
+
+  char   *qValueNotEmpty(char *errmsg, char *format, ...);
+  기능 : 쿼리가 없거나 공백 문자열("")이 복귀될 시 qError()함수를 사용해
+         지정된 에러메시지를 출력한다.
+  사용 : value = qValueNotEmpty("지역명을 입력해 주세요", "COUNTRY");
+
   char   *qValueFirst(char *format, ...);
   기능 : 동일한 변수명을 갖는 인자들을 순차적으로 패치할 때 사용
   복귀 : 성공시 동일한 변수명을 갖는 인자들에 대한 첫번째 변수값 포인터를 복귀
@@ -523,8 +558,8 @@ IV-1. CGI 관련 함수군
   void   qCgienv(Cgienv *env);
   기능 : CGI의 환경변수와 시간을 구조체에 저장한다.
          구조체의 멤버구성은 qDecoder.h를 참조하기 바란다.
-  사용 : Cgienv *myenv;
-         qCgienv(myenv);
+  사용 : Cgienv myenv;
+         qCgienv(&myenv);
 
   char   *qGetEnv(char *envname, char *nullstr);
   기능 : getenv()함수와 동일하게 동작하나, NULL 대신 디폴드 스트링을 복귀한다.
@@ -577,7 +612,89 @@ IV-2. COOKIE 관련 함수군
   기능 : qcDecoder()에 의해 할당된 Memory를 해제한다.
   사용 : qcFree();
 
-IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
+
+IV-3. 검색어 관련 함수군
+
+  ## 검색어 관련 함수군은 질의 문자열을 스페이스와 큰따옴표(") 기준으로
+  나누어 리스트에 담아주며, 대상 문자열과의 매칭 테스트와 출력에 관련된
+  함수군을 제공한다.
+
+  ---- Example ----
+  Query Input: I am a "pretty girl"
+  -----------------
+        |  |
+        V  V
+  ---- qArgMake() ----
+  qlist[0] = I
+  qlist[1] = am
+  qlist[2] = a
+  qlist[3] = pretty girl
+  qlist[4] = NULL
+  Return: 4 (4 Tokens)
+  --------------------
+        |  |
+        V  V
+  ---- qArgPrint() ----
+  'I' (1 bytes)
+  'am' (2 bytes)
+  'a' (1 bytes)
+  'pretty girl' (11 bytes)
+  ---------------------
+        |  |
+        V  V
+  ---- qArgMatch() ----
+  Target String: Hi, I'm a pretty boy. Are you pretty girl?
+                  =  =   =             =       ===========
+                  0  0   2             2             3
+  Return: 3 (3 matches: qlist[0], qlist[2], qlist[3])
+  ---------------------
+        |  |
+        V  V
+  ---- qArgEmprint() ----
+  Target String..: Hi, I'm a pretty boy. Are you pretty girl?
+  Result.........: Hi, I'm a pretty boy. Are you pretty girl?
+                    =  =   =             =       ===========
+                    1  2   3             4             5
+  Return: 5 (5 matches)
+  -----------------------
+
+  int    qArgMake(char *str, char **qlist);
+  기능 : 쿼리를 토큰으로 분리한다. 구분자는 기본적으로 스페이스 문자 이며
+         쿼리의 앞뒤 공백과 토큰 사이의 중복된 스페이스는 무시된다.
+         쿼리내 큰따옴표(")로 둘러싸인 문자열은 그 자체를 하나의 토큰으로
+         취급한다.
+  복귀 : 구분된 토큰 수
+  사용 : char *query="I am a \"pretty girl\".", *qlist[MAX_TOKENS];
+         int queries;
+         queries = qArgMake(query, qlist);
+
+  void   qArgFree(char **qlist);
+  기능 : 메모리 할당된 qlist를 해제한다.
+  사용 : qArgFree(qlist);
+
+  void   qArgPrint(char **qlist);
+  기능 : 프로그램의 Debugging용으로 해석된 토큰을 모두 출력한다.
+  사용 : qArgPrint(qlist);
+
+  int    qArgMatch(char *str, char **qlist);
+  기능 : 대소문자를 구분하지 않고 토큰 매칭 테스트를 한다.
+  복귀 : 특정 문자열에서 발견되는 토큰의 개수를 복귀하며, 같은 토큰에
+         대해서는 중복되어 매칭되어도 1회로 계산한다. 중복 매칭을 포함하여
+         문자열내 총 매칭 카운트를 위해서는 qArgEmprint()의 복귀값을 참고하라.
+         이 값들은 qArgMake()에서 얻은 토큰의 총 개수로 백분율하여 검색 정확도를
+         계산하는데 쓰일 수 있다.
+  사용 : int matches;
+         matches = qArgMatch("Hi, I'm a pretty boy. Are you pretty girl?", qlist);
+
+  int    qArgEmprint(int mode, char *str, char **qlist);
+  기능 : 문자열에서 토큰과 매칭되는 부분을 볼드(bold)처리하여 출력한다. 대소문자를
+         구분하지 않는다.
+         mode값은 qPrintf()와 동일하며, 일반적인 목적엔 1이 주로 사용될 수 있겠다.
+  복귀 : 문자열에서 발견된 토큰의 개수를 복귀하며, qArgMatch()와는 다르게 중복 매칭을
+         포함하여 총 매칭 카운트를 복귀한다.
+  사용 : qArgEmprint(1, "Hi, I'm a pretty boy. Are you pretty girl?", qlist);
+
+IV-4. 형식화된 설정 파일및 문자열을 다루는 함수군
 
   ## 아래와 같은 형식의 화일을 읽어 Linked List에 저장한다.
   ---- test.conf ----
@@ -762,7 +879,7 @@ IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
 
          ex) qSedFile("streamedit.html.in", stdout, NULL);
 
-IV-4. FILE 관련 함수군
+IV-5. FILE 관련 함수군
 
   int    qCheckFile(char *filename);
   기능 : 화일의 존재여부를 파악한다.
@@ -816,11 +933,11 @@ IV-4. FILE 관련 함수군
   복귀 : 할당된 메모리 포인터, 파일 끝 NULL
   사용 : line = qfGetLine(fp);
 
-IV-5. 화면 출력 함수군
+IV-6. 화면 출력 함수군
 
   int    qPrintf(int mode, char *format, ...);
   기능 : printf()와 동일한 사용방법으로 HTML TAG의 적용 유뮤와 자동 Link를 행한다.
-         (Max string size = 1000byte)
+         (Max string size = 1024 byte)
          Mode 0 : printf()와 동일하다, HTML이 적용됨을 뜻한다.
          Mode 1 : HTML TAG 자체를 출력한다. Link되는 부분 없음.
          Mode 2 : Mode 1 + 자동으로 link 시킴.
@@ -858,14 +975,22 @@ IV-5. 화면 출력 함수군
          Mode 6 : "<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>"
 
   void   qPuts(int mode, char *buf);
-  기능 : 문자열을 HTML형식에 맞도록 출력한다. (qPrintf()와 기능 동일)
-  주의 : 인자로 전해준 문자열이 변형된다.
-         qPuts(mode, "문자열"); 이런식의 사용은 오류를 잃으킬수 있다.
-         이때에는 아래의 사용법처럼 인자를 복사한후 사용한다.
+  기능 : 포맷에 의한 인자 전달이 안된다는 점을 제외하면 qPrintf()와 동일하나
+         주어진 인자 buf 자체를 수정하기 때문에, 상수 문자열(ex: str = "문자열")이나
+         다시 사용되어야 하는 변수를 qPuts()로 출력하진 말아햐 한다. qPuts()가 존재하는
+         이유는 qPrintf()에서와 같은 인자 스트링의 길이 제한이 없으며 strdup() 함수가
+         사용되지 않기에 조금 더 빠르기 때문이다.
+  주의 : 인자로 전해준 문자열이 변형된다. 따라서 qPuts(mode, "문자열"); 이런식의
+         상수 문자열 사용은 오류를 잃으킨다. 이때에는 아래의 사용법처럼 인자를
+         복사한후 사용한다.
   사용 : char buf[100];
          strcpy(buf, "http://www.hongik.com mailto:nobreak@hongik.com");
          qPuts(2, buf);
 
+         char *buf;
+         buf = strdup("http://www.hongik.com mailto:nobreak@hongik.com");
+         qPuts(2, buf);
+         free(buf);
 
   void   qError(char *format, ...);
   기능 : 오류에대한 Message를 출력한다. printf() 함수와 사용법 동일.
@@ -886,7 +1011,7 @@ IV-5. 화면 출력 함수군
   사용 : qErrLog("로그파일명");        // log enable
          qErrLog(NULL);                // log disable (default)
 
-IV-6. 문자열 관련 함수군
+IV-7. 문자열 관련 함수군
 
   char   *qRemoveSpace(char *str);
   기능 : 문자열의 앞뒤 공백과 CR, LF를 제거한다.
@@ -903,17 +1028,25 @@ IV-6. 문자열 관련 함수군
   복귀 : 조건에 부합하면 1, 오류시 0
   사용 : if(qStr09AZaz("abc1234") == 1) printf("True");
 
-  char   *qStrBig(char *str);
+  char   *qStrupr(char *str);
   기능 : 인자로 주어진 문자열을 모두 대문자로 변환한다.
-  복귀 : 해당 문자열을 포인터
+  복귀 : 해당 문자열의 포인터
 
-  char   *qStristr(char *orgstr, char *tokstr);
+  char   *qStrlwr(char *str);
+  기능 : 인자로 주어진 문자열을 모두 소문자로 변환한다.
+  복귀 : 해당 문자열의 포인터
+
+  char   *qStristr(char *big, char *small);
   기능 : strstr() 함수와 같으나, 대소문자를 구분하지 않고 비교한다.
   복귀 : strstr()과 같음
 
   int    qStricmp(char *s1, char *s2);
   기능 : strcmp() 함수와 같으나, 대소문자를 구분하지 않는다.
   복귀 : strcmp()와 같음
+  
+  int    qStrincmp(char *s1, char *s2, size_t len);
+  기능 : 대소문자를 구분하지 않고 문자열의 처음 n 바이트를 비교한다.
+  복귀 : strncmp()와 같음
 
   int    qSedStr(char *srcstr, FILE *fpout, char **arg);
   기능 : qSedFile()과 동일한 기능을 하나, 입력을 문자열로 받는다.
@@ -921,7 +1054,7 @@ IV-6. 문자열 관련 함수군
   사용 : qSedStr("Hi my name is ${NAME}.", stdout, arg);
   참고 : qSedFile()
 
-IV-7. 시간 관련 함수군
+IV-8. 시간 관련 함수군
 
   struct tm *qGetTime(void);
   기능 : 시간을 구조체 tm에 저장한다.
@@ -938,7 +1071,7 @@ IV-7. 시간 관련 함수군
          qGetGMTime(gmt, plus_sec);
          printf("%s", gmt);         /* "Fri, 22-Aug-1997 15:11:30 GMT" */
 
-IV-8. 기타 함수군
+IV-9. 기타 함수군
 
   int    qCheckEmail(char *email){
   기능 : E-mail 주소의 오류를 판별한다.

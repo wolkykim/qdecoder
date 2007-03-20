@@ -1,5 +1,5 @@
 ##############################################################
-## Makefile for 'qDecoder Samples'                          ##
+## Makefile for 'qValue'                                    ##
 ##                                                          ##
 ##    Official distribution : ftp://ftp.hongik.com          ##
 ##        Technical contact : nobreak@hongik.com            ##
@@ -13,35 +13,24 @@
 CC      = gcc
 
 # Where are include files kept
-INCLUDE = -I../
+INCLUDE = -I./ -I../../
 
 # Options for release
 CFLAGS  = -Wall
 
 # qDecoder Library Path
-QLIB = ../libqDecoder.a
+QLIB = ../../libqDecoder.a
 
-## Main
-all:	fetch.cgi multivalue.cgi upload.cgi streamedit.cgi arglist.cgi
+## Make Library
+all:	qValue
 
-fetch.cgi: $(QLIB) fetch.o
-	$(CC) $(INCLUDE) $(CFLAGS) -o fetch.cgi fetch.o $(QLIB)
-
-multivalue.cgi:	$(QLIB) multivalue.o
-	$(CC) $(INCLUDE) $(CFLAGS) -o multivalue.cgi multivalue.o $(QLIB)
-
-upload.cgi: $(QLIB) upload.o
-	$(CC) $(INCLUDE) $(CFLAGS) -o upload.cgi upload.o $(QLIB)
-	chmod 6755 upload.cgi
-
-streamedit.cgi: $(QLIB) streamedit.o
-	$(CC) $(INCLUDE) $(CFLAGS) -o streamedit.cgi streamedit.o $(QLIB)
-
-arglist.cgi: $(QLIB) arglist.o
-	$(CC) $(INCLUDE) $(CFLAGS) -o arglist.cgi arglist.o $(QLIB)
+qValue: $(QLIB) qValue.o
+	$(CC) $(CFLAGS) $(INCLUDE) -o qValue.cgi qValue.o $(QLIB)
 
 $(QLIB):
-	(cd ../; make all)
+	(cd ../../; make all)
+
+reall: clean all
 
 ## Compile Module
 .c.o:
@@ -49,6 +38,5 @@ $(QLIB):
 
 ## Clear Module
 clean:
-	rm -f *.o *.cgi
+	rm -f *.o qValue.cgi
 
-reall: clean all

@@ -9,6 +9,7 @@
 <a href="http://www.hongik.com"><img src="../hongikinternet.gif" align="right" alt="Hongik Internet, Inc." border="0"></a>
 <i>
 Developed by <a href="http://www.hongik.com">Hongik Internet, Inc.</a>
+<br><a href="http://www.hongik.com/products/qDecoder/">http://www.hongik.com/products/qDecoder/</a>
 <br><a href="ftp://ftp.hongik.com/pub/qDecoder/">ftp://ftp.hongik.com/pub/qDecoder/</a>
 
 <p><blockquote>
@@ -36,7 +37,7 @@ Mailing-list archive can be founded at
 <hr>
 <h3>Example: <a href="fetch.c">fetch.c</a></h3>
 <form method="post" action="fetch.cgi">
-  Type anything: <input type="text" name="text" value="">
+  Type anything: <input type="text" name="query" value="">
   <input type="submit">
 </form>
 
@@ -69,5 +70,15 @@ Mailing-list archive can be founded at
   <br><input type="submit">
 </form>
 
+<!-- ex) arglist.cgi -->
+<hr>
+<h3>Example: <a href="arglist.c">arglist.c</a></h3>
+<form method="post" action="arglist.cgi">
+  String: <input type="text" name="string" value="Hi, I'm a pretty boy. Are you pretty girl?" size="50"><br>
+  Query:  <input type="text" name="query" value='I am a "pretty girl"'>
+  <input type="submit">
+</form>
+
+<p>--<br>End of examples.
 </body>
 </html>

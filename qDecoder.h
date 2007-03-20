@@ -47,6 +47,8 @@ extern "C" {
 int       qDecoder(void);
 char      *qValue(char *format, ...);
 int       qiValue(char *format, ...);
+char      *qValueDefault(char *defstr, char *format, ...);
+char      *qValueNotEmpty(char *errmsg, char *format, ...);
 char      *qValueFirst(char *format, ...);
 char      *qValueNext(void);
 void      qPrint(void);
@@ -79,6 +81,12 @@ void      qAwkClose(void);
 
 int       qSedStr(char *srcstr, FILE *fpout, char **arg);
 int       qSedFile(char *filename, FILE *fpout, char **arg);
+
+int       qArgMake(char *str, char **qlist);
+void      qArgFree(char **qlist);
+void      qArgPrint(char **qlist);
+int       qArgMatch(char *str, char **qlist);
+int       qArgEmprint(int mode, char *str, char **qlist);
 
 char      *qURLencode(char *str);
 void      qURLdecode(char *str);
@@ -115,10 +123,11 @@ int       qCheckURL(char *url);
 char      *qRemoveSpace(char *str);
 
 int       qStr09AZaz(char *str);
-char      *qStrBig(char *str);
-char      *qStristr(char *orgstr, char *tokstr);
+char      *qStrupr(char *str);
+char      *qStrlwr(char *str);
+char      *qStristr(char *big, char *small);
 int       qStricmp(char *s1, char *s2);
-
+int       qStrincmp(char *s1, char *s2, size_t len);
 char      *qitocomma(int value);
 
 #ifdef  __cplusplus

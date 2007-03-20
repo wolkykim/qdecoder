@@ -1,5 +1,5 @@
 ##############################################################
-## Makefile for 'qDecoder'                                  ##
+## Makefile for 'qcValue'                                   ##
 ##                                                          ##
 ##    Official distribution : ftp://ftp.hongik.com          ##
 ##        Technical contact : nobreak@hongik.com            ##
@@ -22,10 +22,10 @@ CFLAGS  = -Wall
 QLIB = ../../libqDecoder.a
 
 ## Make Library
-all:	qFetch
+all:	qcValue
 
-qFetch: $(QLIB) qFetch.o
-	$(CC) $(CFLAGS) $(INCLUDE) -o qFetch.cgi qFetch.o $(QLIB)
+qcValue: $(QLIB) qcValue.o
+	$(CC) $(CFLAGS) $(INCLUDE) -o qcValue.cgi qcValue.o $(QLIB)
 
 $(QLIB):
 	(cd ../../; make all)
@@ -38,5 +38,5 @@ reall: clean all
 
 ## Clear Module
 clean:
-	rm -f *.o qFetch.cgi
+	rm -f *.o qcValue.cgi
 

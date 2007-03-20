@@ -1,11 +1,11 @@
 /*************************************************************
-** qDecoder CGI Library v5.0.6                              **
+** qDecoder CGI Library v5.0.7                              **
 **                                                          **
 **  Official distribution site : ftp://ftp.hongik.com       **
 **           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
-**                        Last updated at Nov 26, 1999      **
+**                        Last updated at Jan 2, 2000       **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **
@@ -419,8 +419,56 @@ int qiValue(char *format, ...){
   if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qiValue(): Message is too long or invalid");
   va_end(arglist);
 
-  if(_first_entry == NULL)qDecoder();
+  if(_first_entry == NULL) qDecoder();
   return _EntryiValue(_first_entry, name);
+}
+
+/**********************************************
+** Usage : qValueDefault(Default String, Query Name);
+** Return: Success pointer of value string, Fail using default string.
+** Do    : If the query is not found, default string is used
+**         instead.
+**********************************************/
+char *qValueDefault(char *defstr, char *format, ...){
+  char name[1024];
+  int status;
+  va_list arglist;
+  char *value;
+
+  va_start(arglist, format);
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValueNotEmpty(): Message is too long or invalid");
+  va_end(arglist);
+
+  if(_first_entry == NULL) qDecoder();
+  if((value = _EntryValue(_first_entry, name)) == NULL) value = defstr;
+
+  return value;
+}
+
+/**********************************************
+** Usage : qValueNotEmpty(Error Message, Query Name);
+** Return: Success pointer of value string, Fail error message.
+** Do    : Find value string pointer which is not empty and NULL.
+**         When the query is not found or the value string is
+**         empty, error message will be shown using qError().
+**********************************************/
+char *qValueNotEmpty(char *errmsg, char *format, ...){
+  char name[1024];
+  int status;
+  va_list arglist;
+  char *value;
+
+  va_start(arglist, format);
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValueNotEmpty(): Message is too long or invalid");
+  va_end(arglist);
+
+  if(_first_entry == NULL) qDecoder();
+  if((value = _EntryValue(_first_entry, name)) == NULL) qError("%s", errmsg);
+  if(!strcmp(value, "")) qError("%s", errmsg);
+
+  return value;
 }
 
 /**********************************************
@@ -465,10 +513,10 @@ char *qValueNext(void) {
 
 /**********************************************
 ** Usage : qPrint(Pointer of the first Entry);
-** Do    : Print all parsed value & name for debugging
+** Do    : Print all parsed values & names for debugging
 **********************************************/
 void qPrint(void){
-  if(_first_entry == NULL)qDecoder();
+  if(_first_entry == NULL) qDecoder();
   _EntryPrint(_first_entry);
 }
 
@@ -685,7 +733,7 @@ char *qcValue(char *format, ...){
   if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qcValue(): Message is too long or invalid");
   va_end(arglist);
 
-  if(_cookie_first_entry == NULL)qcDecoder();
+  if(_cookie_first_entry == NULL) qcDecoder();
   return _EntryValue(_cookie_first_entry, name);
 }
 
@@ -809,7 +857,7 @@ void qAwkClose(void) {
 #define	SSI_INCLUDE_START	"<!--#include file=\""
 #define SSI_INCLUDE_END		"\"-->"
 /**********************************************
-** Usage : int qSedStr(string pointer, fpout, arg) {
+** Usage : qSedStr(string pointer, fpout, arg) {
 ** Return: Success 1, Fail 0
 ** Do    : Stream Editor.
 **********************************************/
@@ -911,7 +959,7 @@ int qSedStr(char *srcstr, FILE *fpout, char **arg) {
 }
 
 /**********************************************
-** Usage : int qSedFile(string pointer, fpout, arg) {
+** Usage : qSedFile(string pointer, fpout, arg) {
 ** Return: Success 1, Fail open fail 0
 ** Do    : Stream Editor.
 **********************************************/
@@ -924,6 +972,148 @@ int qSedFile(char *filename, FILE *fpout, char **arg) {
   free(sp);
 
   return flag;
+}
+
+/**********************************************
+** Usage : qArgMake(Query string, Token Array);
+** Return: number of parsed tokens
+** Do    : This function parses query string and stores
+**         each query into token array.
+** ex) char *query="I am a \"pretty girl\".", *qlist[MAX_TOKENS];
+**     int queries;
+**     queries = qArgMake(query, qlist);
+**********************************************/
+int qArgMake(char *str, char **qlist) {
+  char *query, *sp, *qp;
+  int argc;
+
+  query = sp = qRemoveSpace(strdup(str));
+
+  for(argc = 0; *sp != '\0';) {
+    switch(*sp) {
+      case ' ': { /* skip space */
+      	sp++;
+        break;
+      }
+      case '"': { /* Double quotation arounded string */
+      	qlist[argc] = qp = (char *)malloc(strlen(query) +  1);
+      	for(sp++; *sp != '\0'; sp++, qp++) {
+          if(*sp == '"') { sp++; break; }
+      	  *qp = *sp;
+      	}
+      	*qp = '\0';
+      	if(strlen(qlist[argc]) > 0) argc++;
+      	break;
+      }
+      default: {
+      	qlist[argc] = qp = (char *)malloc(strlen(query) +  1);
+      	for(; *sp != '\0'; sp++, qp++) {
+          if(*sp == ' ' || *sp == '"') break;
+      	  *qp = *sp;
+      	}
+      	*qp = '\0';
+      	argc++;
+      	break;
+      }
+    }
+  }
+  qlist[argc] = NULL;
+  free(query);
+  return argc;
+}
+
+/**********************************************
+** Usage : qArgFree(Pointer of Token Array);
+** Do    : Free malloced token array.
+**********************************************/
+void qArgFree(char **qlist) {
+  char **qp;
+  for(qp = qlist; *qp; qp++) free(*qp);
+  *qlist = NULL;
+}
+
+/**********************************************
+** Usage : qArgFree(Pointer of Token Array);
+** Do    : Print all parsed tokens for debugging.
+**********************************************/
+void qArgPrint(char **qlist) {
+  char **qp;
+
+  qContentType("text/html");
+
+  for(qp = qlist; *qp; qp++) {
+    printf("'%s' (%d bytes)<br>\n" , *qp, strlen(*qp));
+  }
+}
+
+/**********************************************
+** Usage : qArgMatch(Target string, Token Array);
+** Return: Number of token matched. (Do not allow duplicated token matches)
+**         This value is not equal to a value of qArgEmprint()
+**********************************************/
+int qArgMatch(char *str, char **qlist) {
+  char **qp;
+  int i;
+
+  /* To keep the value i over zero */
+  if(!*qlist) return 0;
+
+  for(qp = qlist, i = 0; *qp != NULL; qp++) if(qStristr(str, *qp)) i++;
+
+  return i;
+}
+
+/**********************************************
+** Usage : qArgEmprint(mode, Target string, Token Array);
+** Return: Number of matches (Allow duplicated token matches)
+**         This value is not equal to a value of qArgMatch().
+** Do    : Make matched token bold in target string.
+**********************************************/
+int qArgEmprint(int mode, char *str, char **qlist) {
+  char *sp, *freestr, *buf, *bp, *op;
+  int  i, j, flag, matches;
+
+  if(!*qlist) {
+    qPuts(mode, str);
+    return 0;
+  }
+
+  /* Set character pointer */
+  op = str;
+  sp = freestr = strdup(str);
+  qStrupr(sp);
+
+  if((bp = buf = (char *)malloc(strlen(str) + 1)) == NULL) qError("Memory allocation fail.");
+
+  for(matches = 0; *sp != '\0';) {
+    for(i = 0, flag = 0; qlist[i] != NULL; i++) {
+      if(!qStrincmp(sp, qlist[i], strlen(qlist[i]))) {
+        *bp = '\0'; /* Mark string end */
+        qPuts(mode, buf); /* flash buffer */
+        bp = buf; /* reset buffer pointer */
+      	printf("<b>");
+        for(j = 1; j <= strlen(qlist[i]); j++) {
+          printf("%c", *op++);
+          sp++;
+        }
+      	printf("</b>");
+      	flag = 1;
+      	matches++;
+      	break;
+      }
+    }
+    if(flag == 0) {
+      *bp++ = *op++;
+      sp++;
+    }
+  }
+  *bp = '\0'; /* Mark string end */
+  qPuts(mode, buf); /* Flash buffer */
+
+  free(buf);
+  free(freestr);
+
+  return matches;
 }
 
 /**********************************************
@@ -1005,7 +1195,7 @@ void qContentType(char *mimetype){
 **         Mode : see qPuts()
 **********************************************/
 int qPrintf(int mode, char *format, ...){
-  char buf[256];
+  char buf[1024];
   int  status;
   va_list arglist;
 
@@ -1652,37 +1842,50 @@ int qStr09AZaz(char *str){
 }
 
 /**********************************************
-** Usage : qStrBig(string);
+** Usage : qStrupr(string);
 ** Return: Pointer of converted string.
 ** Do    : Convert small character to big character.
 **********************************************/
-char *qStrBig(char *str) {
-  char *tmp;
+char *qStrupr(char *str) {
+  char *cp;
 
-  if(str == NULL) return NULL;
-  tmp = str;
-  for( ; *str; str++) if(*str >= 'a' && *str <= 'z') *str -= 32;
-  return tmp;
+  if(!str) return NULL;
+  for(cp = str; *cp; cp++) if(*cp >= 'a' && *cp <= 'z') *cp -= 32;
+  return str;
 }
 
 /**********************************************
-** Usage : qStristr(string, token);
+** Usage : qStrlwr(string);
+** Return: Pointer of converted string.
+** Do    : Convert big character to small character.
+**********************************************/
+char *qStrlwr(char *str) {
+  char *cp;
+
+  if(!str) return NULL;
+  for(cp = str; *cp; cp++) if(*cp >= 'A' && *cp <= 'Z') *cp += 32;
+  return str;
+}
+
+
+/**********************************************
+** Usage : qStristr(big, small);
 ** Return: Pointer of token string located in original string, Fail NULL
 ** Do    : Find token with no case-censitive
 **********************************************/
-char *qStristr(char *orgstr, char *tokstr) {
-  char *org, *tok, *retp;
+char *qStristr(char *big, char *small) {
+  char *bigp, *smallp, *retp;
 
-  if(orgstr == NULL || tokstr == NULL) return 0;
+  if(big == NULL || small == NULL) return 0;
 
-  if((org = strdup(orgstr)) == NULL) return 0;
-  if((tok = strdup(tokstr)) == NULL) { free(org); return 0; }
+  if((bigp = strdup(big)) == NULL) return 0;
+  if((smallp = strdup(small)) == NULL) { free(bigp); return 0; }
 
-  qStrBig(org), qStrBig(tok);
+  qStrupr(bigp), qStrupr(smallp);
 
-  retp = strstr(org, tok);
-  if(retp != NULL) retp = orgstr + (retp - org);
-  free(org), free(tok);
+  retp = strstr(bigp, smallp);
+  if(retp != NULL) retp = big + (retp - bigp);
+  free(bigp), free(smallp);
 
   return retp;
 }
@@ -1691,7 +1894,7 @@ char *qStristr(char *orgstr, char *tokstr) {
 ** Usage : qStricmp(char *orgstr, char *tokstr);
 ** Return: s1 < s2 less than 0, s1 = s2 0, s1 > s2 greater than 0
 ** Do    : qDecoder implementation of stricmp() because
-           some systems do not support this function.
+**         some systems do not support this function.
 **********************************************/
 int qStricmp(char *s1, char *s2) {
   char *bs1, *bs2;
@@ -1701,9 +1904,31 @@ int qStricmp(char *s1, char *s2) {
   if((bs1 = strdup(s1)) == NULL) return 0;
   if((bs2 = strdup(s2)) == NULL) { free(bs1); return 0; }
 
-  qStrBig(bs1), qStrBig(bs2);
+  qStrupr(bs1), qStrupr(bs2);
   result = strcmp(bs1, bs2);
   free(bs1), free(bs2);
+
+  return result;
+}
+
+/**********************************************
+** Usage : qStrnicmp(s1, s2, length);
+** Return: Same as strncmp().
+** Do    : Compare n-byte strings with no case-censitive.
+**********************************************/
+int qStrincmp(char *s1, char *s2, size_t len) {
+  char *s1p, *s2p;
+  int result;
+
+  if(s1 == NULL || s2 == NULL) return 0;
+
+  if((s1p = strdup(s1)) == NULL) return 0;
+  if((s2p = strdup(s2)) == NULL) { free(s1p); return 0; }
+
+  qStrupr(s1p), qStrupr(s2p);
+
+  result = strncmp(s1p, s2p, len);
+  free(s1p), free(s2p);
 
   return result;
 }

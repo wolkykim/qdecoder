@@ -1,28 +1,36 @@
 /*************************************************************
+** qValue v1.0.1                                            **
+**                                                          **
+** Simple CGI utility for SSI technique on Apache web server**
+**                                                          **
 **  Official distribution site : ftp://ftp.hongik.com       **
 **           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
 **                        Last updated at Dec 29, 1999      **
 **                                                          **
+**      Designed by Perfectionist for Perfectionist!!!      **
+**                                                          **
 **         Copyright (C) 1999 Hongik Internet, Inc.         **
 *************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "qDecoder.h"
 
-int main(void) {
-  char *list;
+int main(int argc, char *argv[]) {
+  char *value;
 
-  qContentType("text/html");
+  if(argc != 2) {
+    printf("Illegal usages");
+    return 0;
+  }
+
   qDecoder();
 
-  printf("You ordered ");
-  if((list = qValueFirst("checklist")) == NULL) qError("You should check it.");
-  for(; list; list = qValueNext()) {
-    printf("<b>%s</b> \n", list);
-  }
+  if((value = qValue(argv[1])) == NULL) value = "";
+  printf("%s", value);
 
   qFree();
   return 0;
