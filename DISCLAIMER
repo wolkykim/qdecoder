@@ -1,4 +1,3 @@
-/************************************************************************
 qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
 
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -33,36 +32,3 @@ Author:
   Seung-young Kim <nobreak@hongik.com>
   5th Fl., Daewoong Bldg., 689-4, Yoksam, Kangnam, Seoul, Korea 135-080
   Tel: +82-2-562-8988, Fax: +82-2-562-8987
-************************************************************************/
-
-#include "qDecoder.h"
-
-int main(void) {
-  char *string, *query;
-  char *qlist[256], **qp;
-  int queries, tmatches, matches;
-
-  qContentType("text/html");
-  qDecoder();
-
-  string = qValueNotEmpty("Type any string.", "string");
-  query = qValueNotEmpty("Type any query.", "query");
-
-  queries = qArgMake(query, qlist);
-  matches = qArgMatch(string, qlist);
-
-  printf("String: <b>%s</b><br>\n", string);
-  printf("Query Input: <b>%s</b><br>\n", query);
-
-  printf("<hr>\n");
-
-  printf("qArgMake(): <b>");
-  for(qp = qlist; *qp; qp++) qPrintf(1, "\"%s\" ", *qp);
-  printf("</b> (%d queries)<br>\n", queries);
-  printf("qArgEmprint(): "); tmatches = qArgEmprint(1, string, qlist); printf(" (%d query matched)<br>\n", tmatches);
-  printf("qArgMatch(): %d query matched<br>\n", matches);
-
-  qArgFree(qlist);
-  qFree();
-  return 0;
-}

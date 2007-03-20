@@ -1,1251 +1,1483 @@
-==================================================================
-
-                       qDecoder CGI Library
-
-                  Powered by Hongik Internet, Inc.
-
-==================================================================
-
-C O N T E N T S
-
-1. 라 이 센 스 (License Agreement)
-2. 소프트웨어 정보 (Software & Contact Information)
-3. 버젼별 수정사항
-4. 함수별 기능 설명
-  1. CGI 관련 함수군
-  2. COOKIE 관련 함수군
-  3. 검색어 관련 함수군
-  4. 형식화된 설정 파일및 문자열을 다루는 함수군
-  5. FILE 관련 함수군
-  6. 화면 출력 함수군
-  7. 문자열 관련 함수군
-  8. 시간 관련 함수군
-  9. 기타 함수군
-5. 예제 (Examples)
-
-
-+--------------------------------------------------------------------+
-| I. 라 이 센 스 (License Agreement)                                 |
-+--------------------------------------------------------------------+
-
-I-1. 총    칙
-
-(1) 본 계약서는 소프트웨어의 사용을 허락하는 것일 뿐, 소유권, 저작권을
-    이전하는 것은 아닙니다.
-
-I-2. 사용 허락
-
-사용자께서는
-(1) 소프트웨어를 네트워크나 인터넷에 접속하고 있는 서버(이하, '서버'
-    라고 함)의 저장 매체에 설치하여 사용하실수 있습니다.
-
-(2) 백업(backup)을 위해 소프트웨어와 파생된 자료를 복제해서 보관하실수
-    있습니다.
-
-(3) 배포당시의 원판이 수정되지 않았다면 소프트웨어 패키지를 반포할 수
-    있습니다. 단, 그 복제물의 소유권은 '(주)홍익인터넷'에게 있으며,
-    반포자는 써플라이어(배포자)가 되는것은 아닙니다.
-
-I-3. 서비스와 무보증
-
-'(주)홍익인터넷'은
-(1) 제품은 최적으로 판단되는 상태로 제공되는 것으로서, 그 사용과 성능에
-    관해서는, 일체 보증하지 않습니다. 단지, 지속적인 서비스와 신뢰적인
-    문제해결을 제공합니다.
-
-(2) 제품, 또는 도큐멘테이션(documentation)을 사용함으로써 얻어지는 성능,
-    결과에 대해서 보증할 수 없습니다. 단, 사용자로부터 결함(bug) 지적이
-    있을 경우, 개선하도록 노력합니다.
-
-(3) 제3자의 권리 침해, 상품성, 특정 목적의 적합성에 관하여 명시적, 암시적
-    보증은 하지 않습니다.
-
-I-4. 책임 제한
-
-'(주)홍익인터넷'은 소프트웨어로 인한 일실이익(逸失利益)을 포함한
-결과적, 우발적, 또는 특별한 손해에 대해서, 그것이 '(주)홍익인터넷'
-의 대리점이 이러한 손해가 발생할 가능성에 대해서 알고 있더라도, 책임을
-지지 않습니다.
-
-I-6. 저작권, 소유권
-
-본 소프트웨어는 '(주)홍익인터넷' 또는 서플라이어(supplier)가 소유하며,
-한국, 일본, 미국등의 저작권에 관한 법률, 국제법, 국제조약, 국제적인
-저작권 협정에 의해 보호를 받습니다.
-
-
-+--------------------------------------------------------------------+
-| II. 소프트웨어 정보 (SOFTWARE & CONTACT INFORMATION)               |
-+--------------------------------------------------------------------+
-
-II-1. 소프트웨어 정보 (Software Information)
-
-  - 명    칭 : qDecoder
-  - 판 번 호 : 5.0.8
-  - 종    류 : C/C++용 CGI Library
-  - 사용환경 : All kind Unix (Solaris, HP/UX, FreeBSD, Linux, Etc.)
-  - 제작회사 : (주)홍익인터넷 (Hongik Internet, Inc.)
-  - 개 발 자 : Seung-young Kim(김승영) <nobreak@hongik.com>
-  - 배 포 처 : http://www.hongik.com/products/qDecoder/
-               ftp://ftp.hongik.com/pub/qDecoder/
-  - 배포일자 : 2000년 3월 27일
-
-II-2. What's qDecoder?
-
-  qDecoder는 C/C++용 CGI 라이브러리로서, 개발자를 위한 솔루션 제품
-  입니다. Linked-list에 기반한 qDecoder의 Query Fetch 알고리즘은
-  GET/POST에 상관없이 심플한 라이브러리 인터페이스로 하위 레이어와의
-  투명성을 제공하기 때문에 웹기반 소프트웨어(CGI)가 더욱 직관적으로
-  설계되고 구현될 수 있도록 합니다. qDecoder는 Open source 모델에 따라
-  개발되며 공개 배포됩니다.
-
-  qDecoder is a CGI library for C/C++ language programming and a solution
-  product for developers. The Query Fetch algorithm of qDecoder which is
-  based on linked-list gives developers more simple library interface
-  without regard to a method of GET or POST. Also because it gives
-  transperance with a subordinate layer, web-based softwares - CGI - is
-  designed and embodied in reliability further. The source code for
-  qDecoder is freely available to everyone.
-
-
-+--------------------------------------------------------------------+
-| III. 버젼별 수정사항                                               |
-+--------------------------------------------------------------------+
-[Version 5.0.8]
-    * Patched functions
-    qSetCookie()
-    - 표준 규격에 맞도록 인자 순서 교정
-      qSetCookie(name, value, exp_days, path, domain, secure);
-    qURLdecode()
-    - 디코딩된 스트링 포인터를 리턴하도록 함수 프로토 타입를 void에서
-      char*로 수정
-    qDownload()
-    - 클라이언트에서 다운로딩시 전체 파일용량이 파악되도록 수정
-
-    * New functions
-    qDownloadMime()
-    - 클라이언트로 마임에 준하여 파일을 전송한다.
-    qFileSize()
-    - 파일의 용량을 byte 단위로 알려줌
-
-[Version 5.0.7]
-    * Deleted functions
-    qStrBig()
-    - 대체함수 qStrupr()
-
-    * New functions
-    qArgMake(), qArgPrint(), qArgMatch(), qArgEmprint(), qArgFree()
-    - 검색 쿼리를 분석하고 스트링내 쿼리 힛트수를 파악하며 매칭되는 부분을
-      볼드 처리하여 출력하여 주는 함수군
-    qValueDefault()
-    - qValue()와 같으나 해당 쿼리명이 없을 경우 기본 스트링값을 넘겨준다.
-    qValueNotEmpty();
-    - qValue()와 같으나 NULL이나, 공백문자열("")일 경우 오류 메시지를 출력해 준다.
-    qStrincmp(char *s1, char *s2, size_t len);
-    - strncmp()와 stricmp() 함수가 합쳐진 기능을 한다.
-      대소문자를 구분하지 않고 문자열의 처음 n 바이트를 비교한다.
-
-[Version 5.0.6]
-    * Patched functions
-    qitocomma()
-    - 음수의 출력이 '-,123,456'과 같이 나오던 문제 수정
-    qURLencode()
-    - 스페이스 ' '가 '+'가 아닌 '%20'으로 인코딩 되도록 수정
-    qUpdateCounter()
-    - '기존의값'을 복귀하던 문제를 '기존의값 + 업데이트' 수치로 수정
-    qDownload()
-    - 파일이 없을시 리턴값을 갖도록, 함수형을 void에서 int로 변경
-    qError(), qErrorContact()
-    - qErrorContact()으로 설정된 메시지가 앞뒤에 [Administrator: ...]가
-      삽입되던점 수정(삽입되지 않고, 원문이 그대로 출력되도록).
-
-[Version 5.0.5]
-    * Deleted functions
-    qStrStr()
-    - 대체함수 qStristr()
-    qSed()
-    - 대체함수 qSedFile()
-
-    * New functions
-    qStricmp()
-    - strcmp() 함수와 기능적으로 동일하나 대소문자를 구분하지 않는다.
-    qSedStr()
-    - 소스 입력을 스트링으로 한다.
-
-[Version 5.0.4]
-    * deleted functions
-    qFileCat()
-    - 대체함수 qCatFile()
-
-    * Patched functions
-    qUpdateCounter()
-    - 인터페이스 수정(업데이트 증/감 수치 지정이 가능하도록)
-    qDecoder()
-    - multipart/form-data 메소드에서도 환경변수 QUERY_STRING 으로 넘겨진 인자 처리
-
-    * New functions
-    qReadFile()
-    - 파일을 읽어 메모리에 저장한다.
-    qSaveStr()
-    - 스트링의 내용을 파일로 저장한다.
-
-[Version 5.0.3]
-    * Patched functions
-    qPrintf(), qPuts()
-    - 토큰에 '&' 다시 추가
-
-    * New functions
-    qfGetLine()
-    - 파일에서 길이 젝약없이 한 라인을 읽어, 할당된 메모리 포인터를 반환
-
-[Version 5.0.2]
-    * Patched functions
-    qSed()
-    - arg 인자로 NULL 포인터가 삽입될 수 있도록 수정.
-      arg의 첫번째 인자가 NULL일경우(변환을 하지 않고, SSI 기능만을 쓰고자
-      할때) Segmentation Fault 에러가 나던점 수정.
-    qPrintf(), qPuts()
-    - 토큰에서 '&' 문자 제거
-
-[Version 5.0.1]
-    * Patched functions
-    qValue(), qiValue(), qfValue(), qfiValue(), qsValue(), qsiValue(),
-    qcValue(), qciValue()
-    - 호환성의 문제로 vsnprintf() 함수 대신 vsprintf() 사용.
-
-    * New functions
-    qSed()
-    - 파일에서 지정된 기호를 정의된 문자열로 교체하여 출력
-
-[Version 5.0]
-    * Deleted functions
-    qSendFile()
-    - 대체함수 qFileCat()
-
-    * Patched functions
-    qValue(), qiValue(), qfValue(), qfiValue(), qsValue(), qsiValue(),
-    qcValue(), qciValue()
-    - 포맷에 의한 인자 전달이 가능하도록 패치
-    qPuts()
-    - Token list에서 & 제거.
-
-    * New functions
-    qValueFirst()
-    - 동일한 변수명으로 전달되는 인자중 첫번째 인자에 대한 변수값을 얻음
-    qValueNext()
-    - 다음번 변수값을 얻음
-    qRedirect()
-    - HTTP의 Location: 헤더를 사용한 페이지 점프 함수
-    qFileCat()
-    - 해당 파일을 모두 stdout 으로 출력
-
-[Version 4.3.1]
-    * Patched functions
-    Makefile의 install, deinstall 수정
-
-[Version 4.3]
-    * Patched functions
-    qDecoder()
-    - SSI로 넘겨지는 쿼리를 받을 수 있도록 패치
-
-    * New functions
-    int       qAwkOpen(char *filename, char separator);
-    int       qAwkNext(char array[][256]);
-    void      qAwkClose(void);
-
-    Entry     *qGetFirstEntry(void);
-    char      *qitocomma(int value);
-
-[Version 4.2]
-    * Patched functions
-    qDecoder()
-    - Macintosh IE 관련 패치
-    qGgienv()
-    - Apache 1.3 관련 패치
-    qGetGMTime
-    - 성능 향상
-
-    * New functions
-    char      *qCGIname(void);
-    void      qDownload(char *filename);
-    char      *qGetEnv(char *envname, char *nullstr);
-    char      *qStrBig(char *str);
-    char      *qStrStr(char *orgstr, char *tokstr);
-
-[Version 4.0.1]
-    * Patched functions
-    qfDecoder()
-    - 파일에서 한행의 길이제약을 없앰.
-    qDecoder()
-    - multipart/form-data형식 내부 알고리즘 수정.
-
-[Version 4.0]
-    * Patched functions
-    qDecoder()
-    - File Uploading 지원
-    qfDecoder()
-     행의 첫글자가 #일경우 주석으로 처리
-    qURLencode()
-    - '@', '.'을 인코딩 하지 않도록 수정
-    _decode_query() 함수 qURLdecode()로 함수명변경
-    qCheckEmail()
-    - ID중에 . 를 허용함.
-    qPrintf(), qPuts()
-    - mode 10 - 16 이 새로 지원됨.
-
-[Version 3.5]
-    * Patched functions
-    _get_query()
-    - 환경변수 미설정 확인추가
-    qCgienv()
-    - Netscape와 Explore에서 공통 사용되는 환경변수로 최적화
-    qSetCookie()
-    - expire 날짜 지정 char* 에서 int 타입으로 변경
-    qError()
-    - 로그 기능 추가
-    qURLencode()
-    - 숫자, 영문를 인코딩 하지 않도록 수정
-
-    * New functions
-    void      qErrLog(char *filename);
-
-[Version 3.4.2]
-    * Patched functions
-    qDecoder(), qfDecoder(), qcDecoder() :
-    - Linked List 알고리즘 수정
-    qPuts() :
-    - 몇몇 시스템에서 컴파일시 warning을 일으키던 문제 수정
-
-[Version 3.4.1]
-    * Patched functions
-    qPrintf(), qPuts() :
-    - 문자열 마지막에 출력되는 공백 제거
-
-[Version 3.4]
-    * Patched functions
-    qCheckEmail() : '-' , '_'가 포함된 Email도 가능토록 수정
-    qPrintf(), qPuts() :
-    - 문자열의 내용중 &lt , &gt를 '<' , '>'로 보여주는점 수정
-      (&amp;lt , &amp;gt로 출력함)
-    - 'mailto:guest@hongik.ac.kr' 같은 문자열만을 자동 링크하였으나,
-      'guest@hongik.ac.kr' 의 형태도 자동 링크 수행함
-
-    * New functions
-    void      qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure);
-    char      *qURLencode(char *str);
-    time_t    qGetGMTime(char *gmt, time_t plus_sec);
-
-[Version 3.3.1]
-    * Patched functions
-    qDecoder() : Query value내의 '&' 문자를 분리자로 인식하던점 수정
-
-[Version 3.3]
-     int       qcDecoder(void);
-    char      *qcValue(char *name);
-    void      qcPrint(void);
-    void      qcFree(void);
-
-[Version 3.2.2]
-    int       qUpdateCounter(char *filename);
-    void      qPuts(int mode, char *buf);
-    int       qCheckURL(char *url);
-
-[Version 3.2]
-    int       qReadCounter(char *filename);
-    int       qSaveCounter(char *filename, int number);
-    int       qStr09AZaz(char *str);
-
-[Version 3.1]
-    int       qPrintf(int mode, char *format, ...);
-    int       qCheckEmail(char *email);
-    void      qError(char *format, ...);
-
-[Version 3.0]
-    Entry     *qfDecoder(char *filename);
-    char      *qfValue(Entry *first, char *name);
-    void      qfPrint(Entry *first);
-    void      qError(char *format, ...);
-
-    char      *qRemoveSpace(char *str);
-
-[Version 2.2]
-    int       qDecoder(void);
-    char      *qValue(char *name);
-    void      qPrint(void);
-    void      qFree(void);
-
-    void      qContentType(char *mimetype);
-
-    void      qCgienv(Cgienv *env);
-    struct tm *qGetTime(void);
-
-    int       qCheckFile(char *filename);
-    int       qSendFile(char *filename);
-
-
-+--------------------------------------------------------------------+
-| IV. 함수별 기능 설명                                               |
-+--------------------------------------------------------------------+
-
-IV-1. CGI 관련 함수군
-
-  int    qDecoder(void);
-  기능 : 다음 형식의 인코딩된 Query String을 해석하여 Linked List에 저장.
-         - application/x-www-form-urlencoded (%xx로 인코딩되는 일반형)
-         - multipart/form-data               (File Uploading에 사용됨)
-
-         [ 예제 : application/x-www-form-urlencoded ]
-         웹상에서 직접 사용자로부터 입력을 받을경우 주로 사용한다.
-         다음과 같은 URL Encoding 형식의 일반적 [HTML] 문이 전달될경우
-         링크드 리스트에는 [결과]와 같이 저장되고, [C]와 같이 사용한다.
-
-         [HTML]
-         <form method="post" action="input.cgi">
-           사용자번호 <input type="text" name="userID"><br>
-           <input type="submit">
-         </form>
-
-         [결과]
-         name  = "userID"
-         value = "사용자가 입력한 문자열"
-
-         [C]
-         #include <stdio.h>
-         #include "qDecoder.h"
-         void main(void) {
-           char *id;
-           qContentType("text/html");
-           id = qValue("userID");
-           printf("%s", id);
-         }
-
-         [ 예제 : multipart/form-data ]
-         파일 업로딩 등을 원할때 주로 사용된다.
-         다음과 같은 형식의 [HTML] 문이 사용되고, 로컬PC에서 'a.gif'란
-         128byte 파일을 업로드 할경우, 내부적으로 [결과]와 같이 저장되며
-         [C]와 같이 사용할수 있다.
-
-         [HTML]
-         <form method="post" action="upload.cgi" enctype="multipart/form-data">
-           사용자번호 <input type="text" name="userID"><br>
-           업로드파일 <input type="file" name="binary"><br>
-           <input type="submit">
-         </form>
-
-         [결과]
-         name  = "userID"
-         value = "사용자가 입력한 문자열"
-
-         name  = "binary"
-         value = "a.gif의 2진 자료"
-         name  = "binary.length"
-         value = "128"
-         name  = "binary.filename"
-         value = "a.gif"
-
-         [C]
-         #include <stdio.h>
-         #include <stdlib.h>
-         #include "qDecoder.h"
-
-         void main(void) {
-           FILE *fp;
-           char *userID;
-           char *filedata, *filename;
-           int  filelength, i;
-
-           qContentType("text/plain");
-
-           userID = qValue("userID");
-
-           filedata   = qValue("binary");
-           filelength = qiValue("binary.length");
-           filename   = qValue("binary.filename");
-
-           fp = fopen(filename, "wb");
-           for(i = filelength; i > 0; i--) fprintf(fp, "%c", *(filedata++));
-           fclose(fp);
-
-           printf("%s : %s(%s bytes) saved.", userID, filename, filelength);
-         }
-
-         HTML상에서 type=text 일경우 사용은 동일하다.
-         type=file 일경우에는 '변수명.length'와 '변수명.name'의 변수가
-         자동으로 삽입된다.
-         '변수명.length'는 자료의 바이트수가 저장되며, '변수명.name'은
-         사용자가 전송한 파일명이 저장된다.
-         저장할 파일명을 별도로 받고싶을경우, 입력을 type=text 로 받아
-         처리하면 되지만, 본 라이브러리에서는 사용자가 로컬 PC에서
-         브라우징한 파일명 자체를 알려준다. 파일명은 \ 등의 기호가 제거
-         되어 들어간다.("C:\Data\a.gif"일경우 "a.gif"만이 저장된다)
-         복귀값의 카운터는 type=file 일경우 총 3개의 리스트가 생성되지만
-         이것은 1개의 자료에 대한 처리이므로 1개로 처리한다.
-         내부적으로 저장되는 리스트는 qPrint() 를 활용하여 확인할수 있다.
-
-  복귀 : 성공시 전달받은 인자의 갯수, 에러시 -1
-  사용 : int num;
-         num = qDecoder();
-
-  char   *qValue(char *format, ...);
-  기능 : Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌.
-         qDecoder()가 사전에 호출이 안되었으면, 자동으로 수행
-  복귀 : 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL
-  주의 : qValue()는 qDecoder()에 의해 생성된 쿼리 인덱스의 포인터만을 복귀
-         한다. 따라서 qValue로 전달받은 포인터를 free() 하여서는 안된다.
-         할당 메모리 해제는 qFree() 함수를 통해(일반적으로 프로그램 종료전)
-         수행하여야 한다.
-  사용 : char *test;
-         test = qValue("변수명");
-
-         char *test;
-         int i = 1;
-         test = qValue("COUNT.%d", i);
-
-  int    qiValue(char *format, ...);
-  기능 : Linked List에서 변수명에대한 값(숫자 문자열)을 찾아 정수로
-         변환후 넘겨줌. qDecoder()가 사전에 호출이 안되었으면,
-         자동으로 수행
-  복귀 : 성공시 변수값(숫자 문자열)에 대한 정수값.
-         변수명이 존재하지 않거나, 해당 값이 정수로 변환 불가능 하면 0
-  사용 : int test;
-         test = qiValue("변수명");
-
-         int test, i = 1;
-         test = qValue("COUNT.%d", i);
-
-  char   *qValueDefault(char *defstr, char *format, ...);
-  기능 : 쿼리가 없을때 기본 인자를 설정하기 위해 사용하는 qValue()의 간략
-         함수로 다음 코드와 기능적으로 같다.
-         if((value = qValue("COUNTRY")) == NULL) value = "서울";
-  복귀 : qValue()와 같으나 NULL시 defstr의 포인터를 넘겨준다.
-  사용 : value = qValueDefault("서울", "COUNTRY");
-
-  char   *qValueNotEmpty(char *errmsg, char *format, ...);
-  기능 : 쿼리가 없거나 공백 문자열("")이 복귀될 시 qError()함수를 사용해
-         지정된 에러메시지를 출력한다.
-  사용 : value = qValueNotEmpty("지역명을 입력해 주세요", "COUNTRY");
-
-  char   *qValueFirst(char *format, ...);
-  기능 : 동일한 변수명을 갖는 인자들을 순차적으로 패치할 때 사용
-  복귀 : 성공시 동일한 변수명을 갖는 인자들에 대한 첫번째 변수값 포인터를 복귀
-         변수명이 없을시시 NULL
-  사용 : qValueFirst("checklist");
-
-  char   *qValueNext(void);
-  기능 : qValueFirst()로 찾는 것을 계속한다.
-  복귀 : 성공시 변수값의 포인터, 더이상의 동일 변수명이 없을때 NULL
-  사용 : char *list;
-         for(list = qValueFirst("checklist"); list; list = qValueNext()) {
-           printf("checklist = %s<br>\n", list);
-         }
-
-  void   qPrint(void);
-  기능 : 프로그램의 Debugging용으로 전달된 인자를 모두 출력한다.
-  사용 : qPrint();
-
-  void   qFree(void);
-  기능 : qDecoder()에 의해 할당된 Memory를 해제한다.
-  사용 : qFree();
-
-  Entry  *qGetFirstEntry(void);
-  기능 : Linked List의 첫번째 Entry 포인터를 복귀한다.
-  사용 : Entry *first;
-         first = qGetFirstEntry();
-
-  char   *qURLencode(char *str);
-  기능 : 문자열을 URL Encoding규칙으로 변환한다.
-  복귀 : Encoding된 string pointer, 해제(free)는 사용자가 하여야 한다.
-  사용 : char *encstr;
-         encstr = qURLencode("안녕하세요?");
-
-  char   *qURLdecode(char *str);
-  기능 : %xx로 인코딩된 자료를 해독한다.
-  복귀 " str의 포인터
-  사용 : char *encstr;
-         qURLdecode(encstr);
-
-  void   qContentType(char *mimetype);
-  기능 : MimeType을 출력한다.
-         여러번 호출되어도 단 한번만 수행한다.
-  사용 : qContentType("text/html");
-         qContentType("image/gif");
-
-  void   qCgienv(Cgienv *env);
-  기능 : CGI의 환경변수와 시간을 구조체에 저장한다.
-         구조체의 멤버구성은 qDecoder.h를 참조하기 바란다.
-  사용 : Cgienv myenv;
-         qCgienv(&myenv);
-
-  char   *qGetEnv(char *envname, char *nullstr);
-  기능 : getenv()함수와 동일하게 동작하나, NULL 대신 디폴드 스트링을 복귀한다.
-  사용 : char *name;
-         name = qGetEnv("SCRIPT_NAME", "/cgi-bin/CrazyWWWBoard.cgi");
-         name = qGetEnv("SCRIPT_NAME", NULL);
-
-  char   *qCGIname(void);
-  기능 : 환경변수 SCRIPT_NAME에서 프로그램명만을 해석하여 복귀한다.
-  사용 : char *cginame;
-         cginame = qCGIname();
-
-IV-2. COOKIE 관련 함수군
-
-  void   qSetCookie(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
-  기능 : name=value에 해당하는 COOKIE를 설정함.
-  주의 : qContentType()이 호출되기 전에 사용하여야 한다.
-  사용 : char *name, *value;
-         name = "NAME", value = "Kim";
-         /* NAME=Kim 이란 정보를 30일간 클라이언트에 저장한다 */
-         qSetCookie(name, value, 30, NULL, NULL, NULL);
-
-  int    qcDecoder(void);
-  기능 : COOKIE를 해석하여 Linked List에 저장
-  복귀 : 성공시 전달받은 인자의 갯수, 에러시 -1
-  사용 : int num;
-         num = qcDecoder();
-
-  char   *qcValue(char *format, ...);
-  기능 : Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌
-         qcDecoder()가 사전에 호출이 안되었으면, 자동으로 수행
-  복귀 : 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL
-  사용 : char *test;
-         test = qcValue("변수명");
-
-  int    qciValue(char *format, ...);
-  기능 : Linked List에서 변수명에대한 값(숫자 문자열)을 찾아 정수로
-         변환후 넘겨줌. qcDecoder()가 사전에 호출이 안되었으면,
-         자동으로 수행
-  복귀 : 성공시 변수값(숫자 문자열)에 대한 정수값.
-         변수명이 존재하지 않거나, 해당 값이 정수로 변환 불가능 하면 0
-  사용 : int test;
-         test = qciValue("변수명");
-
-  void   qcPrint(void);
-  기능 : 프로그램의 Debugging용으로 COOKIE값을 모두 출력한다.
-  사용 : qcPrint();
-
-  void   qcFree(void);
-  기능 : qcDecoder()에 의해 할당된 Memory를 해제한다.
-  사용 : qcFree();
-
-
-IV-3. 검색어 관련 함수군
-
-  ## 검색어 관련 함수군은 질의 문자열을 스페이스와 큰따옴표(") 기준으로
-  나누어 리스트에 담아주며, 대상 문자열과의 매칭 테스트와 출력에 관련된
-  함수군을 제공한다.
-
-  ---- Example ----
-  Query Input: I am a "pretty girl"
-  -----------------
-        |  |
-        V  V
-  ---- qArgMake() ----
-  qlist[0] = I
-  qlist[1] = am
-  qlist[2] = a
-  qlist[3] = pretty girl
-  qlist[4] = NULL
-  Return: 4 (4 Tokens)
-  --------------------
-        |  |
-        V  V
-  ---- qArgPrint() ----
-  'I' (1 bytes)
-  'am' (2 bytes)
-  'a' (1 bytes)
-  'pretty girl' (11 bytes)
-  ---------------------
-        |  |
-        V  V
-  ---- qArgMatch() ----
-  Target String: Hi, I'm a pretty boy. Are you pretty girl?
-                  =  =   =             =       ===========
-                  0  0   2             2             3
-  Return: 3 (3 matches: qlist[0], qlist[2], qlist[3])
-  ---------------------
-        |  |
-        V  V
-  ---- qArgEmprint() ----
-  Target String..: Hi, I'm a pretty boy. Are you pretty girl?
-  Result.........: Hi, I'm a pretty boy. Are you pretty girl?
-                    =  =   =             =       ===========
-                    1  2   3             4             5
-  Return: 5 (5 matches)
-  -----------------------
-
-  int    qArgMake(char *str, char **qlist);
-  기능 : 쿼리를 토큰으로 분리한다. 구분자는 기본적으로 스페이스 문자 이며
-         쿼리의 앞뒤 공백과 토큰 사이의 중복된 스페이스는 무시된다.
-         쿼리내 큰따옴표(")로 둘러싸인 문자열은 그 자체를 하나의 토큰으로
-         취급한다.
-  복귀 : 구분된 토큰 수
-  사용 : char *query="I am a \"pretty girl\".", *qlist[MAX_TOKENS];
-         int queries;
-         queries = qArgMake(query, qlist);
-
-  void   qArgFree(char **qlist);
-  기능 : 메모리 할당된 qlist를 해제한다.
-  사용 : qArgFree(qlist);
-
-  void   qArgPrint(char **qlist);
-  기능 : 프로그램의 Debugging용으로 해석된 토큰을 모두 출력한다.
-  사용 : qArgPrint(qlist);
-
-  int    qArgMatch(char *str, char **qlist);
-  기능 : 대소문자를 구분하지 않고 토큰 매칭 테스트를 한다.
-  복귀 : 특정 문자열에서 발견되는 토큰의 개수를 복귀하며, 같은 토큰에
-         대해서는 중복되어 매칭되어도 1회로 계산한다. 중복 매칭을 포함하여
-         문자열내 총 매칭 카운트를 위해서는 qArgEmprint()의 복귀값을 참고하라.
-         이 값들은 qArgMake()에서 얻은 토큰의 총 개수로 백분율하여 검색 정확도를
-         계산하는데 쓰일 수 있다.
-  사용 : int matches;
-         matches = qArgMatch("Hi, I'm a pretty boy. Are you pretty girl?", qlist);
-
-  int    qArgEmprint(int mode, char *str, char **qlist);
-  기능 : 문자열에서 토큰과 매칭되는 부분을 볼드(bold)처리하여 출력한다. 대소문자를
-         구분하지 않는다.
-         mode값은 qPrintf()와 동일하며, 일반적인 목적엔 1이 주로 사용될 수 있겠다.
-  복귀 : 문자열에서 발견된 토큰의 개수를 복귀하며, qArgMatch()와는 다르게 중복 매칭을
-         포함하여 총 매칭 카운트를 복귀한다.
-  사용 : qArgEmprint(1, "Hi, I'm a pretty boy. Are you pretty girl?", qlist);
-
-IV-4. 형식화된 설정 파일및 문자열을 다루는 함수군
-
-  ## 아래와 같은 형식의 화일을 읽어 Linked List에 저장한다.
-  ---- test.conf ----
-  # this is comment.
-  name  = Kim
-  phone = 123-4567
-  addr  = 한국
-  -------------------
-
-  Entry  *qfDecoder(char *filename);
-  기능 : 화일을 읽어 Linked List에 저장한다. (화일의 행길이 제약없음)
-  복귀 : Linked List의 첫번째 레코드 포인터, 에러시 NULL
-  사용 : Entry *FirstRecord;
-         FirstRecord = qfDecoder("test.conf");
-
-  char   *qfValue(Entry *first, char *name);
-  기능 : 변수명의 변수값을 얻는다.
-  복귀 : 성공시 변수값의 포인터, 실패시 NULL
-  사용 : char *name;
-         name = qfValue(FirstRecord, "name");
-
-  int    qfiValue(char *format, ...);
-  기능 : 변수값을 정수로 변환후 넘겨준다.
-  복귀 : 설공시 변수값(숫자 문자열)에 대한 정수값.
-         변수명이 존재하지 않거나, 해당 값이 정수로 변환 불가능 하면 0
-  사용 : int counter;
-         counter = qfiValue(FirstRecord, "counter");
-
-  void   qfPrint(Entry *first);
-  기능 : 프로그램의 Debugging용으로 해석한 인자를 모두 출력한다.
-  사용 : qfPrint(FirstRecord);
-
-  void   qfFree(Entry *first);
-  기능 : 할당된 Memory를 반환한다.
-  사용 : qfFree(FirstRecord);
-
-  ## 아래와 같은 형식의 문자열을 읽어 Linked List에 저장한다.
-  ---- test.conf ----
-  # this is comment.
-  name  = Seung-young Kim
-  age   = 26
-  addr  = 한국
-  -------------------
-
-  Entry  *qsDecoder(char *str);
-  기능 : 문자열을 읽어 Linked List에 저장한다. (화일의 행길이 제약없음)
-  복귀 : Linked List의 첫번째 레코드 포인터, 에러시 NULL
-  사용 : Entry *FirstRecord;
-         char *str="name=Seung-young Kim\nage=26\naddr=한국";
-         FirstRecord = qsDecoder(str);
-
-  char   *qsValue(Entry *first, char *name);
-  기능 : 변수명의 변수값을 얻는다.
-  복귀 : 성공시 변수값의 포인터, 실패시 NULL
-  사용 : char *name;
-         name = qsValue(FirstRecord, "name");
-
-  int    qsiValue(char *format, ...);
-  기능 : 변수값을 정수로 변환후 넘겨준다.
-  복귀 : 설공시 변수값(숫자 문자열)에 대한 정수값.
-         변수명이 존재하지 않거나, 해당 값이 정수로 변환 불가능 하면 0
-  사용 : int age;
-         age = qsiValue(FirstRecord, "age");
-
-  void   qsPrint(Entry *first);
-  기능 : 프로그램의 Debugging용으로 해석한 인자를 모두 출력한다.
-  사용 : qsPrint(FirstRecord);
-
-  void   qsFree(Entry *first);
-  기능 : 할당된 Memory를 반환한다.
-  사용 : qsFree(FirstRecord);
-
-  ## 아래와 같은 형식의 카운터 화일을 다룬다.
-  ---- number.dat ----
-  74
-  --------------------
-
-  int    qReadCounter(char *filename);
-  기능 : 화일명의 카운터 화일을 읽는다.
-  복귀 : 성공시 카운터값, 에러시 0
-  사용 : int count;
-         count = qReadCounter("number.dat");
-
-  int    qSaveCounter(char *filename, int number);
-  기능 : 지정된 화일명에 카운터 값을 저장(갱신)한다.
-  복귀 : 성공시 1, 에러시 0
-  사용 : qSaveCounter("number.dat", 75);
-
-  int    qUpdateCounter(char *filename, int number){
-  기능 : 지정된 화일명의 카운터 값을 number만큼 증가시킨다.
-  복귀 : 성공시 기존 카운터값 + number, 에러시 0
-  사용 : int count;
-         count = qUpdateCounter("number.dat", -3);
-
-  ## UNIX 시스템의 AWK 명령과 흡사한 기능을 한다.
-  ---- ex) /etc/passwd ----
-  shpark:x:1008:1000:Sang-hyun Park:/home/shpark:/bin/csh
-  teamwork:x:1011:1000:Seung-young Kim:/home/teamwork:/bin/csh
-  kikuchi:x:1015:2000:KIKUCHI:/home/kikuchi:/bin/csh
-  ---------------------
-
-  int    qAwkOpen(char *filename, char separator);
-  기능 : 파일을 열고, 구분자를 설정한다.
-  복귀 : 성공시 1, 파일을 열 수 없을경우 0
-
-  int    qAwkNext(char array[][256]);
-  기능 : 한행을 읽어 들여, 인자로 주어진 배열에 저장한다.
-  복귀 : 성공시 필드 수, 파일의 끝 -1
-  사용 : char array[7][256];
-         qAwkOpen("/etc/passwd", ':');
-         qAwkNext(array)
-         printf("ID=%s, Name=%s", array[0], array[5]);
-         qAwkClose();
-  주의 : 행길이는 제한이 없으나, 각 필드는 256 바이트를 넘어선 안된다.
-
-  void   qAwkClose(void);
-  기능 : 파일을 닫는다.
-
-  ## UNIX 시스템의 SED 명령과 흡사한 기능을 한다.
-  ---- ex) streamedit.html.in ----
-  Hi "${NAME}" <${EMAIL}>.
-  <p>You got a really cool hobby.
-  <br>I'm sure that your hobby, ${HOBBY},
-  can make your life more compatible.
-  ---------------------
-
-  int    qSedFile(char *filename, FILE *fpout, char **arg);
-  기능 : 파일에서 지정된 기호를 정의된 문자열로 교체하여 출력하며,
-         일부 SSI 문법을 지원한다. (본 함수은 Unix 시스템의 Sed와
-         SSI 를 포괄적으로 지원하도록 확장될 예정이다.)
-  복귀 : 성공시 1, 파일을 열 수 없을경우 0
-  참고 : qSedStr()
-  사용 : qSedFile를 활용하면, 프로그램내에 HTML 코드를 전혀 포함하지 않고도
-         CGI 프로그래밍을 할 수 있다. UI와 관련된 디버깅 시간을 대폭 줄일
-         수 있고, 디자인과 개발의 분리작업이 가능하며, 패키지 제품의 경우
-         사용자 측면에서 손쉽게 커스터 마이징이 가능할 수 있는등의 효용성을
-         동반할 수 있다.
-
-         filename은 입력(대상)파일이고, fpout은 출력 스트림을 의미한다.
-         결과를 파일로 출력을 하고 자 할경우엔 파일을 "wt"로 열어,
-         해당 파일 포인터를 건네어 주면 되고, 화면 출력하고자 한다면,
-         그냥 stdout 을 지정하면 된다.
-
-         인자 목록은 다음과 같은 형식을 취한다.
-
-         "명령+구분자+지정문자열+구분자+교체문자열+구분자"
-
-         ex) char *arg[3 + 1] = { "s/${NAME}/Seung-young Kim/",
-                                  "s%${EMAIL}%nobreak@hongik.com%",
-                                  "s:${HOBBY}:Making love with Ji-su Hwang:",
-                                  NULL };
-
-         명령은 현재 's' 만이 지원되며, 이는 교체(replacement)를 의미한다.
-         구분자는 1바이트의 특정 문자열로 사용자가 임의 지정하면 된다.
-         보통 구분자로는 '/'나 '%'를 많이 사용하지만, 문자열내에 해당
-         캐릭터가 나올 경우엔 '#', 'A'등의 임의 문자열을 사용하기
-         바란다. 지정 문자열도 임의대로 지정이 가능하지만, 가시성과
-         원치않는 교체를 막기위해 특별한 이유가 없다면, ${STING}과 같이
-         쉘스크립트의 변수 명명법을 따르도록 하라.
-
-         앞의 streamedit.html.in 파일을 위의 인자 목록으로 다음과 같이
-         수행하였을 경우의 출력을 보자.
-
-         ex) qSedFile("streamedit.html.in", stdout, arg);
-
-         Hi "Seung-young Kim" <nobreak@hongik.com>.
-         <p>You got a really cool hobby.
-         <br>I'm sure that your hobby, Making love with Ji-su Hwang,
-         can make your life more compatible.
-
-         SSI 문법을 해석한다. (현재는 <!--#include file="FILEPATH"> 만이 지원됨)
-         문서내 다음과 같은 라인이 있을 경우, 해당 문서를 포함하여 출력되며,
-         포함되는 문서에 대해서도 교체및 SSI 기능은 그대로 유효하다. (Cascading)
-
-         <!--#include file="streamedit.html.in"-->
-
-         주의) include 되는 파일은 CGI가 실행되는 위치를 기준으로 상대경로 표기
-               하거나, 시스템 절대경로 표기한다.
-
-         문자열 교체를 하지않고, SSI 기능만을 사용코자 할 경우엔 다음과 같이
-         arg 인자로 NULL 값을 전달한다.
-
-         ex) qSedFile("streamedit.html.in", stdout, NULL);
-
-IV-5. FILE 관련 함수군
-
-  int    qCheckFile(char *filename);
-  기능 : 화일의 존재여부를 파악한다.
-  복귀 : 화일이 존재 하면 1, 화일이 없으면 0
-         Permission에 의해 접근 불가능한 화일도 화일이 없다고 판단한다.
-  사용 : if(qCheckFile("test.dat") == 0)qError("File not found");
-
-  int    qCatFile(char *filename);
-  기능 : 화일의 내용을 출력한다.
-  복귀 : 정상시 출력된 문자수, 에러시 -1
-  사용 : qContentType("image/gif");
-         qCatFile("mypic.gif");
-
-         qContentType("text/html");
-         qCatFile("myhtml.html");
-
-  char   *qReadFile(char *filename, int &size);
-  기능 : 파일을 읽어 메모리에 저장후 포인터 반환
-  복귀 : 정상시 스트링 포인터, 오류시 NULL
-  주의 : qReadFile은 실제 파일의 크기보다 1바이트 크게 메모리 할당
-         하여 스트링 종료문자 '\0'를 삽입한다. 이는 텍스트 파일을 읽어
-         다루기 편리하도록 함이다. spsize에는 파일에서 읽어들인 캐릭터
-         개수가 저장된다. 캐릭터 개수가 필요치 않다면 spsize 항목에
-         NULL 인자를 전달한다.
-  사용 : char *sp, *sp2;
-         int spsize;
-         sp  = qReadFile("filename", &spsize);
-         sp2 = qReadFile("filename2", NULL);
-         ...
-         free(sp), free(sp2);
-
-  int    qSaveStr(char *sp, int spsize, char *filename, char *mode, mode_t perm);
-  기능 : 스트링의 내용을 파일에 저장한다.
-  복귀 : 정상시 저장한 캐릭터 갯수(파일 크기), 오류시 -1, 퍼미션 조정 실패 -2
-  주의 : 퍼미션값은 기존 프로그램의 umask()에 의존선을 갖는다.
-         주어신 퍼미션 비트가 정확히 설정되도록 하려면, qSaveStr() 호출전
-         umaks(0)을 호출하여 퍼미션 마스크값을 0으로 설정해야 한다.
-         퍼미션 마스크가 umask(S_IWGRP | S_IWOTH)와 같이 설정된 상태에서는
-         perm 인자로 0666을 주어도 파일은 퍼미션 마스크와의 비트연산에 의해
-         0644로 생성될 것이다.
-         mode 인자는 fopen 시에 사용되는 mode 값과 같다. qSaveStr은 해당
-         mode로 파일을 오픈할 것이다.
-
-  사용 : char *sp = "To subscribe qDecoder mailing list\nSend mail to majordomo@hongik.com";
-         int len;
-         umask(0);
-         len = qSaveStr(sp, strlen(sp), "Howto-mailing.txt", "wt", 0644);
-
-  char   *qfGetLine(FILE *fp);
-  기능 : 화일에서 길이 제약없이 라인을 읽는다.
-  복귀 : 할당된 메모리 포인터, 파일 끝 NULL
-  사용 : line = qfGetLine(fp);
-
-IV-6. 화면 출력 함수군
-
-  int    qPrintf(int mode, char *format, ...);
-  기능 : printf()와 동일한 사용방법으로 HTML TAG의 적용 유뮤와 자동 Link를 행한다.
-         (Max string size = 1024 byte)
-         Mode 0 : printf()와 동일하다, HTML이 적용됨을 뜻한다.
-         Mode 1 : HTML TAG 자체를 출력한다. Link되는 부분 없음.
-         Mode 2 : Mode 1 + 자동으로 link 시킴.
-         Mode 3 : Mode 2 + link를 클릭했을시 전화면(target=_top) 출력한다.
-         Mode 4 : HTML TAG를 무시한다. 출력되지 않음.
-         Mode 5 : Mode 4 + 자동으로 Link 시킴.
-         Mode 6 : Mode 5 + link를 클릭했을시 전화면(target=_top) 출력한다.
-         Mode 10  :Mode 0 + Convert
-         Mode 11 : Print HTML TAG + Convert
-         Mode 12 : Mode 11 + Auto Link
-         Mode 13 : Mode 12 + Auto Link to _top frame
-         Mode 14 : Waste HTML TAG + Convert
-         Mode 15 : Mode 14 + Auto Link
-         Mode 16 : Mode 15 + Auto Link to _top frame
-
-         Convert : " "   -> " "
-                   "  "  -> " &nbsp;"
-                   "   " -> " &nbsp;&nbsp;"
-                   "\r"  -> 무시
-                   "\n"  -> "<br>\n"
-
-         10 이상의 Mode 값은 <pre> 태그를 사용하지 않고, 연속된 공백을
-         화면에 보여줄수 있다. 또한, 화면폭의 변화에 따라 자동으로 줄바꿈이
-         된다.
-
-  복귀 : 성공시 출력한 bytes 갯수, 에러시 EOF
-  사용 : qPrintf(4, "%s", buf);
-  예제 : qPrintf(i, "%s\n", "<font><b>\"http://www.hongik.com\"</b></font>");
-         Mode 0 : <font><b>"http://www.hongik.com"</b></font>
-         Mode 1 : &ltfont&gt&ltb&gt"http://www.hongik.com"&lt/b&gt&lt/font&gt
-         Mode 2 : &ltfont&gt&ltb&gt"<a href="http://www.hongik.com" target="">http://www.hongik.com</a>"&lt/b&gt&lt/font&gt
-         Mode 3 : &ltfont&gt&ltb&gt"<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>"&lt/b&gt&lt/font&gt
-         Mode 4 : "http://www.hongik.com"
-         Mode 5 : "<a href="http://www.hongik.com" target="">http://www.hongik.com</a>"
-         Mode 6 : "<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>"
-
-  void   qPuts(int mode, char *buf);
-  기능 : 포맷에 의한 인자 전달이 안된다는 점을 제외하면 qPrintf()와 동일하나
-         주어진 인자 buf 자체를 수정하기 때문에, 상수 문자열(ex: str = "문자열")이나
-         다시 사용되어야 하는 변수를 qPuts()로 출력하진 말아햐 한다. qPuts()가 존재하는
-         이유는 qPrintf()에서와 같은 인자 스트링의 길이 제한이 없으며 strdup() 함수가
-         사용되지 않기에 조금 더 빠르기 때문이다.
-  주의 : 인자로 전해준 문자열이 변형된다. 따라서 qPuts(mode, "문자열"); 이런식의
-         상수 문자열 사용은 오류를 잃으킨다. 이때에는 아래의 사용법처럼 인자를
-         복사한후 사용한다.
-  사용 : char buf[100];
-         strcpy(buf, "http://www.hongik.com mailto:nobreak@hongik.com");
-         qPuts(2, buf);
-
-         char *buf;
-         buf = strdup("http://www.hongik.com mailto:nobreak@hongik.com");
-         qPuts(2, buf);
-         free(buf);
-
-  void   qError(char *format, ...);
-  기능 : 오류에대한 Message를 출력한다. printf() 함수와 사용법 동일.
-         오류 메시지 하단의 개발자 접속 링크는 qDecoder.h의 CONTACT_INFO를
-         수정하여 변경할수 있다.
-         qErrLog()함수로 로그파일이 정의된경우 오류메시지가 파일시스템에 남는다.
-         (Max string size = 1000byte)
-  사용 : qError("오류메시지");
-         qError("%s에 오류", buf);
-
-  void   qErrLog(char *filename);
-  기능 : qError() 함수를 부를때 전달되는 오류 메시지들을 별도의 로그파일로
-         기록하도록 한다.
-         로그를 기록할때, 본파일을 직접 호출하는것이 아니라,
-         qErrLog("logs/error.log") 와같이 프로그램 초기에 호출하면 그 후
-         qError()가 호출될때마다, 'logs/error.log' 파일에 로그가 자동 기록
-         된다.
-  사용 : qErrLog("로그파일명");        // log enable
-         qErrLog(NULL);                // log disable (default)
-
-IV-7. 문자열 관련 함수군
-
-  char   *qRemoveSpace(char *str);
-  기능 : 문자열의 앞뒤 공백과 CR, LF를 제거한다.
-  복귀 : 성공시 문자열의 포인터, 실패시 NULL
-  주의 : qRemoveSpace("문자열"); 이런식의 사용은 오류를 잃으킬수 있다.
-         이때에는 아래의 사용법처럼 인자를 복사한후 사용한다.
-  사용 : char teststr[100];
-         strcpy(teststr, " Hello, world    \r\n");
-         qRemoveSpace(teststr);
-         // 삭제후 teststr에는 "Hello, world"가 들어간다.
-
-  int    qStr09AZaz(char *str);
-  기능 : 문자열이 '0' - '9', 'A' - 'Z', 'a' - 'z'로 이루어졌는지 판별한다.
-  복귀 : 조건에 부합하면 1, 오류시 0
-  사용 : if(qStr09AZaz("abc1234") == 1) printf("True");
-
-  char   *qStrupr(char *str);
-  기능 : 인자로 주어진 문자열을 모두 대문자로 변환한다.
-  복귀 : 해당 문자열을 포인터
-
-  char   *qStristr(char *big, char *small);
-  기능 : strstr() 함수와 같으나, 대소문자를 구분하지 않고 비교한다.
-  복귀 : strstr()과 같음
-
-  int    qStricmp(char *s1, char *s2);
-  기능 : strcmp() 함수와 같으나, 대소문자를 구분하지 않는다.
-  복귀 : strcmp()와 같음
-
-  int    qSedStr(char *srcstr, FILE *fpout, char **arg);
-  기능 : qSedFile()과 동일한 기능을 하나, 입력을 문자열로 받는다.
-  복귀 : qSedFile()과 동일
-  사용 : qSedStr("Hi my name is ${NAME}.", stdout, arg);
-  참고 : qSedFile()
-
-IV-8. 시간 관련 함수군
-
-  struct tm *qGetTime(void);
-  기능 : 시간을 구조체 tm에 저장한다.
-  복귀 : 구조체 tm의 포인터
-  사용 : struct tm *mytime;
-         mytime = qGetTime();
-
-  time_t qGetGMTime(char *gmt, time_t plus_sec);
-  기능 : '현재시간+plus_sec'을 Cookie에서 사용하는 GMT 문자열 시간으로 변환한다.
-  복귀 : 1970/1/1(00:00:00)부터 현제까지의 초 + plus_sec
-  사용 : time_t plus_sec;
-         char gmt[0xff];
-         plus_sec = (time_t)300; /* 5분 */
-         qGetGMTime(gmt, plus_sec);
-         printf("%s", gmt);         /* "Fri, 22-Aug-1997 15:11:30 GMT" */
-
-IV-9. 기타 함수군
-
-  int    qCheckEmail(char *email){
-  기능 : E-mail 주소의 오류를 판별한다.
-  복귀 : 오류가 없으면 1, 문제가 발생하면 0
-  사용 : qCheckEmail("nobreak@hongik.com");
-
-  int    qCheckURL(char *url);
-  기능 : URL 주소의 오류를 판별한다.
-  복귀 : 오류가 없으면 1, 문제가 발생하면 0
-  사용 : qCheckURL("http://www.hongik.com");
-
-  int    qDownload(char *filename);
-  기능 : 클라이언트로 파일을 전송하는데, 파일의 종류에 상관없이
-         브라우저에 다운로딩 상자가 나타나도록 한다.
-  복귀 : 성공 1, 파일 없음 0
-  사용 : qDownload("/home/nobreak/myprg.exe");
-
-  int    qDownloadMime(char *filename, char *mime);
-  기능 : 클라이언트로 마임에 준하여 파일을 전송한다.
-  복귀 : 성공 1, 파일 없음 0
-  사용 : qDownload("/home/nobreak/myprg.gif", "image/gif");
-  기타 : 본 함수는 해당 파일을 웹상에 직접 링크하였을 때와 동일한 결과를
-         갖지만, 사용자 인증이 되어야만 다운로드 할 수 있도록 전처리를 하거나,
-         웹상에 공개될 수 없는 파일을 특정 프로그램을 통해서만 다운받을 수
-         있게 하는데 유용하다. mime이 'application/octet-stream'일 경우에는
-         qDownload()와 동일하다.
-  주의 : 본 함수는 스트림이 종료될때 까지 프로세스가 실행되게 되므로, 웹상에도
-         링크가 걸릴 수 있는 파일인데 다운로딩 카운트등을 위한 전처리로 사용할
-         경우라면 qRedirect()를 활용하는 것이 좋다.
-
-  long   qFileSize(char *filename);
-  기능 : 파일의 용량을 byte 단위로 돌려줌
-  복귀 : 성공 파일의 용량, 파일 없음 -1
-  사용 : long size;
-         size = qFileSize("/home/nobreak/sample.pdf");
-
-  void   qRedirect(char *url);
-  기능 : HTTP의 Location: 헤더를 사용해 특정 페이지로 점프한다.
-  주의 : qRedirect는 HTTP 헤더를 사용하므로 qConteneType() 등을
-         이전에 사용하여서는 안되고, 해당 프로세스에서 스트림
-         아웃하는 유일한 명령이여야 한다.
-  사용 : qRedirect("http://www.hongik.com/");
-
-  char   *qitocomma(int value);
-  기능 : 숫자를 콤마 문자열로 변환한다.
-  사용 : printf("Price = %s", qitocomma(1234567));
-         Price = 1,234,567
-
-
-+--------------------------------------------------------------------+
-| V. 예제 (Examples)                                                 |
-+--------------------------------------------------------------------+
-
-V-1. 전달된 인자를 모두 출력하는 CGI
-
-    #include "qDecoder.h"
-
-    void main(void){
-      qPrint();
-    }
-
-    위의 소스를 test.c로 저장한후 다음과 같이 Compile하자.
-    (같은 디렉토리에 qDecoder.c와 qDecoder.h가 존재해야함)
-
-    gcc -o test.cgi test.c qDecoder.c
-
-    Browser상에서 다음과 같이 실행하여 결과를 확인한다.
-
-    URL -> http://서버URL/test.cgi가있는디렉토리/test.cgi?a=b&c=de
-
-    출력결과는 다음과 같다.
-
-    'a' = 'b'
-    'c' = 'de'
-
-V-2. 원하는 인자('a')를 선택하여 화면 출력
-
-    #include "stdio.h"
-    #include "qDecoder.h"
-
-     void main(void){
-       char *value;
-
-       qContentType("text/html");
-
-       value = qValue("a");
-       printf("test a = %s", value);
+qDecoder On-line Reference
+
+   * 컴파일과 설치 및 사용
+        o 패키지 구하기
+        o 압축 풀기
+        o 컴파일
+        o 설치
+        o 테스트
+        o NT에서의 운용
+
+   * 화면 출력 함수군
+        o qContentType()
+        o qPrintf()
+        o qPuts()
+        o qError()
+        o qErrorLog()
+        o qErrorContact()
+        o qRedirect()
+
+   * 쿼리 관련 함수군
+        o qDecoder()
+        o qValue()
+        o qiValue()
+        o qValueDefault()
+        o qValueNotEmpty()
+        o qValueFirst()
+        o qValueNext()
+        o qGetFirstEntry()
+        o qPrint()
+        o qFree()
+
+   * 쿠키(cookie) 관련 함수군
+        o qSetCookie()
+        o qcDecoder()
+        o qcValue()
+        o qciValue()
+        o qcPrint()
+        o qcFree()
+
+   * 문자열 관련 함수군
+        o qURLencode()
+        o qURLdecode()
+        o qRemoveSpace()
+        o qStr09AZaz()
+        o qStrupr()
+        o qStristr()
+        o qStricmp()
+        o qitocomma()
+
+   * 검색어 관련 함수군
+        o qArgMake()
+        o qArgMatch()
+        o qArgEmprint()
+        o qArgPrint()
+        o qArgFree()
+
+   * 파일 관련 함수군
+        o qCheckFile()
+        o qCatFile()
+        o qReadFile()
+        o qSaveStr()
+        o qfGetLine()
+        o qFileSize()
+
+   * 형식화된 설정 파일을 다루는 함수군
+        o qfDecoder()
+        o qfValue()
+        o qfiValue()
+        o qfPrint()
+        o qfFree()
+        o qsDecoder()
+        o qsValue()
+        o qsiValue()
+        o qsPrint()
+        o qsFree()
+        o qReadCounter()
+        o qSaveCounter()
+        o qUpdateCounter()
+        o qAwkOpen()
+        o qAwkNext()
+        o qAwkClose()
+        o qSedFile()
+        o qSedStr()
+
+   * 시간 관련 함수군
+        o qGetTime()
+        o qGetGMTime()
+
+   * 형식 검사 함수군
+        o qCheckEmail()
+        o qCheckURL()
+
+   * 기타 함수군
+        o qGetEnv()
+        o qCGIenv()
+        o qCGIname()
+        o qDownload()
+        o qDownloadMime()
+
+  ------------------------------------------------------------------------
+
+컴파일과 설치 및 사용
+
+패키지 구하기
+
+qDecoder의 최신버젼은 http://www.qDecoder.org나
+ftp://ftp.qDecoder.org/pub/qDecoder/에서 구할 수 있다.
+
+압축 풀기
+
+qDecoder는 기본적으로 유닉스상에서 tar로 묶여져 compress로 압축해 제공된다.
+압축을 풀기 위해서는 다음과 같은 절차를 따른다.
+
+     $ uncompress qDecoder-VERSION.tar.Z
+     $ tar xvf qDecoder-VERSION.tar
+
+qDecoder-VERSION 에 해당하는 디렉토리가 생성되며 다음과 유사한 형태로
+패키지가 풀려진다.
+
+     $ cd qDecoder-VERSION
+     $ ls -asCF
+     total 148
+       1 ./                    3 Makefile              1 examples/
+       1 ../                  43 README               64 qDecoder.c
+       1 CONTACT              59 README.pdf            6 qDecoder.h
+      26 COPYING               1 VERSION               2 qDecoder.jpg
+       2 DISCLAIMER            1 contrib/              1 rfc/
+
+     CONTACT - 사이트 및 연락처 정보
+     COPYING - 저작권 관련 문서
+     DISCLAIMER - 저작권 관련 서명서
+     README - 사용법 문서
+     README.pdf - 출력용 PDF 포맷 README 파일
+     VERSION - 버젼 번호가 담긴 파일
+     Makefile - 컴파일에 사용되는 Makefile
+     qDecoder.c - 메인 소스
+     qDecoder.h - 헤더 파일
+     qDecoder.jpg - 로고 그림
+     contrib/... - 배포되는 관련 프로그램들
+     examples/... - 예제 소스 모음
+     rfc/... - RFC 관련 문서 모음
+
+컴파일
+
+다음과 같이 make 명령을 통해 컴파일 한다. Makefile은 기본적으로 컴파일러가
+GCC를 사용하도록 설정되어 있다. 따라서 컴파일러가 선의 CC나 기타 컴파일러를
+사용할 경우 Makefile을 적절히 수정하여 사용하기 바란다.
+
+     $ cd qDecoder-VERSION
+     $ make
+     gcc -I./ -Wall -c -o qDecoder.o qDecoder.c
+     ar -q libqDecoder.a qDecoder.o
+     ranlib libqDecoder.a
+     ld -G -o libqDecoder.so qDecoder.o
+     chmod 644 libqDecoder.so
+
+솔라리스의 경우 ``make''가 기본 PATH에 설정되어 있지 않은 경우가 종종
+있는데 이때에는 풀 경로 ``/usr/ccs/bin/make''를 입력하기 바란다.
+
+컴파일에 의해 생성된 라이브러리와 오브젝트를 지우고 초기 배포판 생태를
+유지하고자 한다면 ``make clean''을 입력하기 바란다.
+
+설치
+
+``make install''은 필요로 하는 파일 3개(qDecoder.h, libqDecoder.a,
+libqDecoder.so)를 시스템 디렉토리 /usr/local/include, /usr/local/lib 에
+설치하여 준다. 시스템 디렉토리에 설치하는 작업은 슈퍼유저 권한이 필요한데
+권한을 얻기 힘들거나 다른 위치에 설치하고자 한다면 Makefile의 LIBDIR과
+HEADERDIR을 적절히 수정해야 한다.
+
+     $ make install
+     ar -q libqDecoder.a qDecoder.o
+     ranlib libqDecoder.a
+     ld -G -o libqDecoder.so qDecoder.o
+     chmod 644 libqDecoder.so
+     cp qDecoder.h /usr/local/include/qDecoder.h
+     chmod 0444 /usr/local/include/qDecoder.h
+     cp libqDecoder.a /usr/local/lib/libqDecoder.a
+     chmod 0444 /usr/local/lib/libqDecoder.a
+     cp libqDecoder.so /usr/local/lib/libqDecoder.so
+     chmod 0444 /usr/local/lib/libqDecoder.so
+
+``make deinstall''을 통해 설치된 qDecoder를 제거할 수 있다.
+
+테스트
+
+준비된 examples 디렉토리에서 ``make''를 입력 후, 브라우저로 해당 디렉토리의
+examples.html을 열어 테스트 한다. 해당 디렉토리의 소스코드와 Makefile 을
+참고하여 여러분의 프로그램에 qDecoder를 어떻게 적용해야 하는지 살펴보기
+바란다.
+
+     $ cd examples/
+     $ make
+     (cd ../; make all)
+     ar -q libqDecoder.a qDecoder.o
+     ranlib libqDecoder.a
+     ld -G -o libqDecoder.so qDecoder.o
+     chmod 644 libqDecoder.so
+     gcc -I../ -Wall -c -o fetch.o fetch.c
+     gcc -I../ -Wall -o fetch.cgi fetch.o ../libqDecoder.a
+     gcc -I../ -Wall -c -o multivalue.o multivalue.c
+     gcc -I../ -Wall -o multivalue.cgi multivalue.o ../libqDecoder.a
+     gcc -I../ -Wall -c -o upload.o upload.c
+     gcc -I../ -Wall -o upload.cgi upload.o ../libqDecoder.a
+     chmod 6755 upload.cgi
+     gcc -I../ -Wall -c -o streamedit.o streamedit.c
+     gcc -I../ -Wall -o streamedit.cgi streamedit.o ../libqDecoder.a
+     gcc -I../ -Wall -c -o arglist.o arglist.c
+     gcc -I../ -Wall -o arglist.cgi arglist.o ../libqDecoder.a
+
+정적 라이브러리 libqDecoder.a 대신 공유 라이브러리 ``libqDecoder.so''를
+링크하면 프로그램이 더욱 컴팩트해지고 효율적으로 동작한다.
+examples/Makefile에서 ``QLIB = ../libqDecoder.a''를 ``QLIB =
+../libqDecoder.so''로 수정한후 ``make clean all''명령을 통해 재 컴파일 해
+보자.
+
+     $ ls -al *.cgi (정적 라이브러리 libqDecoder.a 링크시)
+     -rwxr-xr-x  1 qdecoder  power  30986 May  8 23:12 arglist.cgi
+     -rwxr-xr-x  1 qdecoder  power  30500 May  8 23:12 fetch.cgi
+     -rwxr-xr-x  1 qdecoder  power  30573 May  8 23:12 multivalue.cgi
+     -rwxr-xr-x  1 qdecoder  power  30725 May  8 23:12 streamedit.cgi
+     -rwsr-sr-x  1 qdecoder  power  30809 May  8 23:12 upload.cgi
+
+     $ ls -al *.cgi (공유 라이브러리 libqDecoder.so 링크시)
+     -rwxr-xr-x  1 qdecoder  power  4597 May  8 23:11 arglist.cgi
+     -rwxr-xr-x  1 qdecoder  power  3675 May  8 23:11 fetch.cgi
+     -rwxr-xr-x  1 qdecoder  power  3927 May  8 23:11 multivalue.cgi
+     -rwxr-xr-x  1 qdecoder  power  4051 May  8 23:11 streamedit.cgi
+     -rwsr-sr-x  1 qdecoder  power  4380 May  8 23:11 upload.cgi
+
+NT에서의 운용
+
+qDecoder는 편의상 유닉스 패키징 도구를 사용해 제공되고 대부분의 예제가
+유닉스 환경 기준하에 작성되어 있지만, NT도 환경에서도 적용 개발이 가능하다.
+다음에 Visual C++ 환경에서의 qDecoder 적용 순서를 살펴보자. 여기서는 Visual
+C++ 만을 예로 들지만, 다른 Windows용 컴파일러 환경에도 무리없이 적용
+가능하다.
+
+  1. WinZip과 같은 압축 해제 프로그램을 통해 패키지를 특정 디렉토리에 풀어
+     놓는다.
+  2. Project 생성시 ``Win32 Console Application''을 선택한다.
+  3. ``FileView'' 탬에서 ``Header Files'' 가지에 ``Add Files to Folder''
+     명령으로 qDecoder.h 를 포함한다.
+  4. ``Source Files' 가지에도 qDecoder.c 파일을 같은 방법으로 추가한다.
+  5. 소스의 examples 디렉토리에서 가장 간단한 fetch.c(다른 소스도
+     상관없다)를 선택해 ``Source Files'' 가지에 추가한다.
+  6. 빌드후 실행시켜 본다.
+  7. IIS등의 웹서버에 연결후 다음과 같이 수행 해 보고 잘 동작함을 확인한다.
+
+     http://localhost/...PATH.../fetch.exe?query=OK
+  8. fetch.c 를 원하는 형태로 수정한다.
+
+예제가 모두 C로 구현되어 있으나, OOP 프로그램을 원한다면 CPP로 이름
+변경하여 사용하면 된다. 다만 qDecoder는 프리 프로세스시 C plus plus
+환경으로 프로토 타입이 전이되도록 처리되어 있으니, qDecoder.c는 이름 변경할
+필요 없이 그냥 사용해도 좋다.
+  ------------------------------------------------------------------------
+
+화면 출력 함수군
+
+qContentType()
+
+Syntax: void qContentType(char *mimetype);
+Function: MimeType을 출력한다.
+Return:
+Note: 여러번 호출되어도 단 한번만 수행된다.
+Example:
+
+     qContentType("text/html");  // HTML 출력시
+     qContentType("image/gif");  // GIF 이미지 출력시
+
+  ------------------------------------------------------------------------
+
+qPrintf()
+
+Syntax: int qPrintf(int mode, char *format, ...);
+Function: printf()와 동일한 사용방법으로 HTML TAG의 적용 유뮤와 자동 Link를
+행한다.
+Return: 성공시 출력한 bytes 갯수, 에러시 EOF
+Note: 조합된 스트링의 최대 크기가 10K(1024 * 10 - 1)을 넘으면 안된다.
+Example:
+
+     Mode 0 : printf()와 동일하다, HTML이 적용됨을 뜻한다.
+     Mode 1 : HTML TAG 자체를 출력한다. Link되는 부분 없음.
+     Mode 2 : Mode 1 + 자동으로 link 시킴.
+     Mode 3 : Mode 2 + link를 클릭했을시 전화면(target=_top) 출력한다.
+     Mode 4 : HTML TAG를 무시한다. 출력되지 않음.
+     Mode 5 : Mode 4 + 자동으로 Link 시킴.
+     Mode 6 : Mode 5 + link를 클릭했을시 전화면(target=_top) 출력한다.
+     Mode 10  :Mode 0 + Convert
+     Mode 11 : Print HTML TAG + Convert
+     Mode 12 : Mode 11 + Auto Link
+     Mode 13 : Mode 12 + Auto Link to _top frame
+     Mode 14 : Waste HTML TAG + Convert
+     Mode 15 : Mode 14 + Auto Link
+     Mode 16 : Mode 15 + Auto Link to _top frame
+
+     Convert : " "   -> " "
+               "  "  -> " &nbsp;"
+               "   " -> " &nbsp;&nbsp;"
+               "\r"  -> 무시
+               "\n"  -> "<br>\n"
+
+     10 이상의 Mode 값은 <pre> 태그를 사용치 않고서도, 연속된 공백을 화면에 보여주고자 할 때
+     사용하면 효과적이다. 또한 이 경우엔 화면폭의 변화에 따라 자동으로 줄바꿈이 수행된다.
+
+     qPrintf(i, "Mode %d: <font>\"http://www.hongik.com\"</font>\n", i);
+
+     Mode 0: <font>"http://www.hongik.com"</font>
+     Mode 1: &lt;font&gt;&quot;http://www.hongik.com&quot;&lt;/font&gt;
+     Mode 2: &lt;font&gt;&quot;<a href="http://www.hongik.com" target="">http://www.hongik.com</a>&quot;&lt;/font&gt;
+     Mode 3: &lt;font&gt;&quot;<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>&quot;&lt;/font&gt;
+     Mode 4: &quot;http://www.hongik.com&quot;
+     Mode 5: &quot;<a href="http://www.hongik.com" target="">http://www.hongik.com</a>&quot;
+     Mode 6: &quot;<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>&quot;
+     Mode 10: <font>"http://www.hongik.com"</font><br>
+     Mode 11: &lt;font&gt;&quot;http://www.hongik.com&quot;&lt;/font&gt;<br>
+     Mode 12: &lt;font&gt;&quot;<a href="http://www.hongik.com" target="">http://www.hongik.com</a>&quot;&lt;/font&gt;<br>
+     Mode 13: &lt;font&gt;&quot;<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>&quot;&lt;/font&gt;<br>
+     Mode 14: &quot;http://www.hongik.com&quot;<br>
+     Mode 15: &quot;<a href="http://www.hongik.com" target="">http://www.hongik.com</a>&quot;<br>
+     Mode 16: &quot;<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>&quot;<br>
+
+     qPrintf(i, "Mode %d: ' ', '  ', '   ', '    '\n", i);
+
+     Mode 0: ' ', '  ', '   ', '    '
+     Mode 1: ' ', '  ', '   ', '    '
+     Mode 2: ' ', '  ', '   ', '    '
+     Mode 3: ' ', '  ', '   ', '    '
+     Mode 4: ' ', '  ', '   ', '    '
+     Mode 5: ' ', '  ', '   ', '    '
+     Mode 6: ' ', '  ', '   ', '    '
+     Mode 10: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+     Mode 11: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+     Mode 12: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+     Mode 13: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+     Mode 14: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+     Mode 15: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+     Mode 16: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+
+  ------------------------------------------------------------------------
+
+qPuts()
+
+Syntax: void qPuts(int mode, char *buf);
+Function: 포맷에 의한 인자 전달이 안된다는 점을 제외하면 qPrintf()와
+동일하나 주어진 인자 buf 자체를 수정하기 때문에, 상수 문자열(ex: str =
+"문자열")이나 다시 사용되어야 하는 변수를 qPuts()로 출력하진 말아햐 한다.
+qPuts()가 존재하는 이유는 qPrintf()에서와 같은 인자 스트링의 길이 제한이
+없으며 strdup() 함수가 사용되지 않기에 조금 더 빠르기 때문이다.
+Note: 인자로 전해준 문자열이 변형된다. 따라서 qPuts(mode, "문자열");
+이런식의 상수 문자열 사용은 오류를 잃으킨다. 이때에는 아래의 사용법처럼
+인자를 복사한후 사용한다.
+Example:
+
+     char buf[100];
+     strcpy(buf, "http://www.hongik.com mailto:nobreak@hongik.com");
+     qPuts(2, buf);
+
+     char *buf;
+     buf = strdup("http://www.hongik.com mailto:nobreak@hongik.com");
+     qPuts(2, buf);
+     free(buf);
+
+  ------------------------------------------------------------------------
+
+qError()
+
+Syntax: void qError(char *format, ...);
+Function: 오류에대한 Message를 출력한다. printf() 함수와 사용법 동일.
+Note: 조합된 오류 메시지의 최대 크기는 1024-1 byte를 넘지 않아야 한다.
+Example:
+
+     qError("오류메시지");
+     qError("%s에 오류", buf);
+
+  ------------------------------------------------------------------------
+
+qErrorLog()
+
+Syntax: void qErrorLog(char *filename);
+Function: qError() 함수를 부를때 전달되는 오류 메시지들이 기록되는
+로그파일을 설정한다.
+Note: 로그를 기록할때 본파일을 직접 호출하는것이 아니라,
+qErrorLog("logs/error.log") 와같이 프로그램 초기에 호출하면 그 후
+qError()가 호출될때마다, 'logs/error.log' 파일에 로그가 자동 기록 된다.
+Example:
+
+     qErrorLog("로그파일명");        // enable log
+     qErrorLog(NULL);                // disable log (default)
+
+  ------------------------------------------------------------------------
+
+qErrorContact()
+
+Syntax: void qErrorContact(char *msg);
+Function: 오류 메시지의 꼬리말로 qError() 호출시 항상 붙어 출력된다.
+일반적으로 제작처등의 고정 정보를 제공하기 위해 사용한다.
+Return:
+Note:
+Example:
+
+     qErrorContact("- Author");
+     qErrorContact(NULL);            // disable (default)
+
+  ------------------------------------------------------------------------
+
+qRedirect()
+
+Syntax: void qRedirect(char *url);
+Function: HTTP의 Location: 헤더를 사용해 특정 페이지로 점프한다.
+Note: qRedirect는 HTTP 헤더를 사용하므로 qConteneType() 등을 이전에
+사용하여서는 안되고, 해당 프로세스에서 스트림 아웃하는 유일한 명령이어야
+한다.
+Example:
+
+     qRedirect("http://www.hongik.com/");
+
+  ------------------------------------------------------------------------
+
+쿼리 관련 함수군
+
+qDecoder()
+
+Syntax: int qDecoder(void);
+Function: 인코딩된 Query String을 해석하여 Linked List에 저장
+Return: 성공시 전달받은 인자의 갯수, 에러시 -1
+Example:
+
+          int num;
+          num = qDecoder();
+
+     다음 형식의 인코딩된 쿼리를 지원한다.
+
+        * application/x-www-form-urlencoded (%xx로 인코딩되는 일반형)
+        * multipart/form-data (File Uploading에 사용됨)
+
+     Example 1: application/x-www-form-urlencoded
+     웹상에서 직접 사용자로부터 입력을 받을경우 주로 사용한다. 다음과
+     같은 URL Encoding 형식의 일반적 [HTML] 문이 전달될경우 링크드
+     리스트에는 [결과]와 같이 저장되고, [C]와 같이 사용한다.
+
+          [HTML]
+          <form method="post" action="input.cgi">
+            사용자번호 <input type="text" name="userID"><br>
+            <input type="submit">
+          </form>
+
+          [결과]
+          name  = "userID"
+          value = "사용자가 입력한 문자열"
+
+          [C]
+          #include <stdio.h>
+          #include "qDecoder.h"
+          void main(void) {
+            char *id;
+            qContentType("text/html");
+            id = qValue("userID");
+            printf("%s", id);
+          }
+
+     Example 2: multipart/form-data
+
+     파일 업로딩 등을 원할때 주로 사용된다. 다음과 같은 형식의 [HTML]
+     문이 사용되고, 로컬PC에서 'a.gif'란 128byte 파일을 업로드 할경우,
+     내부적으로 [결과]와 같이 저장되며 [C]와 같이 사용할수 있다.
+
+          [HTML]
+          <form method="post" action="upload.cgi" enctype="multipart/form-data">
+            사용자번호 <input type="text" name="userID"><br>
+            업로드파일 <input type="file" name="binary"><br>
+            <input type="submit">
+          </form>
+
+          [결과]
+          name  = "userID"
+          value = "사용자가 입력한 문자열"
+
+          name  = "binary"
+          value = "a.gif의 2진 자료"
+          name  = "binary.length"
+          value = "128"
+          name  = "binary.filename"
+          value = "a.gif"
+
+          [C]
+          #include <stdio.h>
+          #include <stdlib.h>
+          #include "qDecoder.h"
+
+          void main(void) {
+            FILE *fp;
+            char *userID;
+            char *filedata, *filename;
+            int  filelength, i;
+
+            qContentType("text/plain");
+
+            userID = qValue("userID");
+
+            filedata   = qValue("binary");
+            filelength = qiValue("binary.length");
+            filename   = qValue("binary.filename");
+
+            fp = fopen(filename, "wb");
+            for(i = filelength; i > 0; i--) fprintf(fp, "%c", *(filedata++));
+            fclose(fp);
+
+            printf("%s : %s(%s bytes) saved.", userID, filename, filelength);
+          }
+
+     HTML상에서 type=text 일경우 사용은 동일하다. type=file 일경우에는
+     '변수명.length'와 '변수명.name'의 변수가 자동으로 삽입된다.
+     '변수명.length'는 자료의 바이트수가 저장되며, '변수명.name'은
+     사용자가 전송한 파일명이 저장된다. 저장할 파일명을 별도로
+     받고싶을경우, 입력을 type=text 로 받아 처리하면 되지만, 본
+     라이브러리에서는 사용자가 로컬 PC에서 브라우징한 파일명 자체를
+     알려준다. 파일명은 \ 등의 기호가 제거 되어 들어간다.
+     ("C:\Data\a.gif"일경우 "a.gif"만이 저장된다) 복귀값의 카운터는
+     type=file 일경우 총 3개의 리스트가 생성되지만 이것은 1개의 자료에
+     대한 처리이므로 1개로 처리한다. 내부적으로 저장되는 리스트는
+     qPrint() 를 활용하여 확인할수 있다.
+
+  ------------------------------------------------------------------------
+
+qValue()
+
+Syntax: char *qValue(char *format, ...);
+Function: Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌.
+qDecoder()가 사전에 호출되지 않았다면 내부적으로 qDecoder 호출.
+Return: 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL
+Note: qValue()는 qDecoder()에 의해 생성된 쿼리 인덱스의 포인터만을
+복귀한다. 따라서 qValue로 전달받은 포인터를 free() 하여서는 안된다. 할당
+메모리 해제는 qFree() 함수를 통해(일반적으로 프로그램 종료전) 수행하여야
+한다.
+Example:
+
+     char *test;
+     test = qValue("변수명");
+
+     char *test;
+     int i = 1;
+     test = qValue("COUNT.%d", i);
+
+  ------------------------------------------------------------------------
+
+qiValue()
+
+Syntax: int qiValue(char *format, ...);
+Function: qValue()와 같으나, 값(숫자 문자열)을 정수로 변환하여 복귀함.
+Return: 성공시 변수값(숫자 문자열)에 대한 정수값. 변수명이 존재하지 않거나
+변환 불가능시 0
+Example:
+
+     int test;
+     test = qiValue("변수명");
+
+     int test, i = 1;
+     test = qValue("COUNT.%d", i);
+
+  ------------------------------------------------------------------------
+
+qValueDefault()
+
+Syntax: char *qValueDefault(char *defstr, char *format, ...);
+Function: 쿼리가 없을때 기본 인자를 설정하기 위해 사용하는 qValue()의 간략
+함수이다.
+Return: qValue()와 같으나 NULL시 defstr의 포인터를 복귀.
+Example:
+
+     value = qValueDefault("서울", "COUNTRY");
+
+  ------------------------------------------------------------------------
+
+qValueNotEmpty()
+
+Syntax: char *qValueNotEmpty(char *errmsg, char *format, ...);
+Function: 쿼리가 없거나 공백 문자열("")이 복귀될 시 qError()함수를 사용해
+지정된 에러메시지를 출력한다.
+Return: NULL에 대한 오류처리가 내장된 것을 제외하곤 qValue()와 같다.
+Example:
+
+     value = qValueNotEmpty("지역명을 입력해 주세요", "COUNTRY");
+
+  ------------------------------------------------------------------------
+
+qValueFirst()
+
+Syntax: char *qValueFirst(char *format, ...);
+Function: 동일한 변수명을 갖는 인자들을 순차적으로 패치할 때 사용.
+Return: 성공시 동일한 변수명을 갖는 인자들에 대한 첫번째 변수값 포인터를
+복귀 변수명이 없을시시 NULL.
+Example:
+
+     qValueFirst("checklist");
+
+  ------------------------------------------------------------------------
+
+qValueNext()
+
+Syntax: char *qValueNext(void);
+Function: qValueFirst()로 찾는 것을 계속한다.
+Return: 성공시 변수값의 포인터, 더이상의 동일 변수명이 없을때 NULL.
+Example:
+
+     char *list;
+     for(list = qValueFirst("checklist"); list; list = qValueNext()) {
+       printf("checklist = %s<br>\n", list);
      }
 
-    예제 1과 같이 Compile 한후 같은 방법으로 실행한다.
+  ------------------------------------------------------------------------
 
-    출력결과는 다음과 같다.
+qGetFirstEntry()
 
-    test a = b
+Syntax: Q_Entry *qGetFirstEntry(void);
+Function: Linked List의 첫번째 Q_Entry 포인터를 복귀한다. qDecoder()에 의해
+사용되는 Linked List를 직접 조작하고자 할때 루트 포인터를 얻기위해
+사용한다.
+Example:
 
-V-3. 정확한 함수 호출 절차
+     Q_Entry *first;
+     first = qGetFirstEntry();
 
-    #include "qDecoder.h"
+  ------------------------------------------------------------------------
 
-    void main(void){
-      qDecoder();
-      qContentType("text/html");
+qPrint()
 
-      사용자 Code
+Syntax: void qPrint(void);
+Function: 프로그램의 디버깅용으로 전달된 인자를 모두 출력한다.
+Example:
 
-      qFree();
-    }
+     qPrint();
 
-    qDecoder(), qFree()는 생략가능하다.
+  ------------------------------------------------------------------------
 
+qFree()
 
-V-4. Compile
+Syntax: void qFree(void);
+Function: qDecoder()에 의해 할당된 Memory를 해제한다.
+Example:
 
-  GCC 사용자
-    gcc -o 실행화일명 작성한소스.c qDecoder.c
-    ex) gcc -o test.cgi main.c qDecoder.c
-    ex) gcc -o test.cgi main.c sub.c qDecoder.c
+     qFree();
 
-  CC 사용자
-    cc -o 실행화일명 작성한소스.c qDecoder.c
-    ex) cc -o test.cgi main.c qDecoder.c
+  ------------------------------------------------------------------------
 
-  Library 제작 사용
-    qDecoder 디렉토리에서 make를 실행한다.
-    $ cd qDecoder
-    $ make
-    gcc -I. -Wall -c -o qDecoder.o qDecoder.c
-    ar -q libqDecoder.a qDecoder.o
-    ranlib libqDecoder.a
+쿠키(cookie) 관련 함수군
 
-    $ gcc -o test.cgi main.c libqDecoder.a
+qSetCookie()
 
-  라이브러리 설치
-    $ cd qDecoder
-    $ make install
-    $ gcc -o test.cgi main.c -lqDecoder
+Syntax: void qSetCookie(char *name, char *value, int exp_days, char *path,
+char *domain, char *secure);
+Function: name=value 에 해당하는 쿠키를 설정함.
+Note: qContentType()이 호출되기 전에 사용하여야 한다.
+Example:
 
-  라이브러리 제거
-    $ make deinstall
+     char *name = "NAME", *value = "Kim";
 
-V-5. Example Makefile
+     // NAME=Kim 이란 정보를 현재 도메인과 현재 디렉토리에 30일간 적용한다.
+     qSetCookie(name, value, 30, NULL, NULL, NULL);
 
-## Define
-CC      = gcc -Wall        # For GNU C Compiler(gcc)
-#CC      = cc               # For the other C Compiler
+     // NAME=Kim 이란 정보를 "ANYTHING.qdecoder.org"의 "/" 디렉토리에 대해
+     // 브라우저가 종료될 때 까지 적용한다.
+     qSetCookie(name, value, 0, "/", ".qdecoder.org", NULL);
 
-OBJ  = $(OBJ1) $(OBJ2)
-OBJ1 = qDecoder.o
-OBJ2 = YourMain.o YourSub.o
+  ------------------------------------------------------------------------
 
-PRG_NAME = test.cgi
+qcDecoder()
 
-## Main
-all:	$(PRG_NAME)
+Syntax: int qcDecoder(void);
+Function: 쿠키를 해석하여 Linked List에 저장
+Return: 성공시 전달받은 인자의 갯수, 에러시 -1
+Note:
+Example:
 
-## Link Module
-$(PRG_NAME): $(OBJ)
-	$(CC) -o $(PRG_NAME) $(OBJ)
+     int num;
+     num = qcDecoder();
 
-## Compile Module
-.c.o:
-	$(CC) -c -o $@ $<
+  ------------------------------------------------------------------------
 
-## Clear Module
-clean:
-	rm -f $(OBJ) $(PRG_NAME)
+qcValue()
 
-+-----------------------------------------------------+
-+------------------ E     N     D --------------------+
-+-----------------------------------------------------+
+Syntax: char *qcValue(char *format, ...);
+Function: Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌.
+Return: 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL.
+Note: qcDecoder()가 사전에 호출이 안되었으면, 자동 수행.
+Example:
+
+     char *value;
+     value = qcValue("변수명");
+
+  ------------------------------------------------------------------------
+
+qciValue()
+
+Syntax: int qciValue(char *format, ...);
+Function: Linked List에서 변수명에대한 값(숫자 문자열)을 찾아 정수로 변환후
+넘겨줌.
+Return: 성공시 변수값(숫자 문자열)에 대한 정수값. 변수명이 존재하지 않거나
+변환 불가능시 0.
+Note: qcDecoder()가 사전에 호출이 안되었으면 자동 수행
+Example:
+
+     int value;
+     value = qciValue("변수명");
+
+  ------------------------------------------------------------------------
+
+qcPrint()
+
+Syntax: void qcPrint(void);
+Function: 프로그램의 디버깅용으로 쿠키값을 모두 출력한다.
+Example:
+
+     qcPrint();
+
+  ------------------------------------------------------------------------
+
+qcFree()
+
+Syntax: void qcFree(void);
+Function: qcDecoder()에 의해 할당된 Memory를 해제한다.
+Example:
+
+     qcFree();
+
+  ------------------------------------------------------------------------
+
+문자열 관련 함수군
+
+qURLencode()
+
+Syntax: char *qURLencode(char *str);
+Function: 문자열을 URL Encoding 한다.
+Return: URL Encoding된 문자열이 메모리 할당되어 복귀된다. 해제(free)는
+사용자가 하여야 한다.
+Example:
+
+     char *encstr;
+     encstr = qURLencode("안녕하세요?");
+
+  ------------------------------------------------------------------------
+
+qURLdecode()
+
+Syntax: char *qURLdecode(char *str);
+Function: %xx로 URL Encoding된 문자열을 해독한다.
+Return: 문자열 포인터
+Note: 해독된 문자열은 메모리 할당되지 않고 str 자체에 덮어 쓰여진다.
+Example:
+
+     char *encstr;
+     qURLdecode(encstr);
+
+  ------------------------------------------------------------------------
+
+qRemoveSpace()
+
+Syntax: char *qRemoveSpace(char *str);
+Function: 문자열의 앞뒤 공백과 CR, LF를 제거한다.
+Return: 성공시 문자열의 포인터, 실패시 NULL.
+Note: qRemoveSpace("문자열"); 이런식의 사용은 오류를 잃으킬수 있다.
+이때에는 아래의 사용법처럼 인자를 복사한후 사용한다.
+Example:
+
+     char teststr[100];
+     strcpy(teststr, "  Hello, world    \r\n  ");
+     qRemoveSpace(teststr); // 삭제후 teststr에는 "Hello, world"가 들어간다.
+
+  ------------------------------------------------------------------------
+
+qStr09AZaz()
+
+Syntax: int qStr09AZaz(char *str);
+Function: 문자열이 '0' - '9', 'A' - 'Z', 'a' - 'z'로 이루어졌는지 판별한다.
+
+Return: 조건에 부합하면 1, 오류시 0
+Note:
+Example:
+
+     if(qStr09AZaz("abc1234") == 1) printf("True");
+
+  ------------------------------------------------------------------------
+
+qStrupr()
+
+Syntax: char *qStrupr(char *str);
+Function: 인자로 주어진 문자열을 모두 대문자로 변환한다.
+Return: 해당 문자열의 포인터
+  ------------------------------------------------------------------------
+
+qStristr()
+
+Syntax: char *qStristr(char *big, char *small);
+Function: strstr() 함수와 같으나, 대소문자를 구분하지 않고 비교한다.
+Return: strstr()과 같음
+  ------------------------------------------------------------------------
+
+qStricmp()
+
+Syntax: int qStricmp(char *s1, char *s2);
+Function: strcmp() 함수와 같으나, 대소문자를 구분하지 않는다.
+Return: strcmp()와 같음
+  ------------------------------------------------------------------------
+
+qitocomma()
+
+Syntax: char *qitocomma(int value);
+Function: 숫자를 콤마 문자열로 변환한다.
+Return: 문자로 변환된 스트링 포인터.
+Note: 복귀 스트링은 함수 내부에 static 선언되어 있기때문에, qitocomma()가
+수행될 때 마다 그 값이 바뀐다.
+Example:
+
+     printf("Price = %s", qitocomma(1234567));
+     Price = 1,234,567
+
+  ------------------------------------------------------------------------
+
+검색어 관련 함수군
+
+qArgMake()
+
+검색어 관련 함수군은 질의 문자열을 스페이스와 큰따옴표(") 기준으로 나누어
+리스트에 담아주며, 대상 문자열과의 매칭 테스트와 출력에 관련된 함수군을
+제공한다.
+
+     ---- Example ----
+     Query Input: I am a "pretty girl"
+     -----------------
+           |  |
+           V  V
+     ---- qArgMake() ----
+     qlist[0] = I
+     qlist[1] = am
+     qlist[2] = a
+     qlist[3] = pretty girl
+     qlist[4] = NULL
+     Return: 4 (4 Tokens)
+     --------------------
+           |  |
+           V  V
+     ---- qArgPrint() ----
+     'I' (1 bytes)
+     'am' (2 bytes)
+     'a' (1 bytes)
+     'pretty girl' (11 bytes)
+     ---------------------
+           |  |
+           V  V
+     ---- qArgMatch() ----
+     Target String: Hi, I'm a pretty boy. Are you pretty girl?
+                     =  =   =             =       ===========
+                     0  0   2             2             3
+     Return: 3 (3 matches: qlist[0], qlist[2], qlist[3])
+     ---------------------
+           |  |
+           V  V
+     ---- qArgEmprint() ----
+     Target String..: Hi, I'm a pretty boy. Are you pretty girl?
+     Result.........: Hi, I'm a pretty boy. Are you pretty girl?
+                       =  =   =             =       ===========
+                       1  2   3             4             5
+     Return: 5 (5 matches)
+     -----------------------
+
+Syntax: int qArgMake(char *str, char **qlist);
+Function: 쿼리를 토큰으로 분리한다. 구분자는 기본적으로 스페이스 문자 이며
+쿼리의 앞뒤 공백과 토큰 사이의 중복된 스페이스는 무시된다.
+Return: 구분된 토큰 수
+Note: 쿼리내 큰따옴표(")로 둘러싸인 문자열은 그 자체를 하나의 토큰으로
+취급한다.
+Example:
+
+     char *query="I am a \"pretty girl\".", *qlist[MAX_TOKENS];
+     int queries;
+     queries = qArgMake(query, qlist);
+
+  ------------------------------------------------------------------------
+
+qArgMatch()
+
+Syntax: int qArgMatch(char *str, char **qlist);
+Function: 대소문자를 구분하지 않고 토큰 매칭 테스트를 한다.
+Return: 특정 문자열에서 발견되는 토큰의 개수를 복귀하며, 같은 토큰에
+대해서는 중복되어 매칭되어도 1회로 계산한다. 중복 매칭을 포함하여 문자열내
+총 매칭 카운트를 위해서는 qArgEmprint()의 복귀값을 참고하라. 이 값들은
+qArgMake()에서 얻은 토큰의 총 개수로 백분율하여 검색 정확도를 계산하는데
+쓰일 수 있다.
+Example:
+
+     int matches;
+     matches = qArgMatch("Hi, I'm a pretty boy. Are you pretty girl?", qlist);
+
+  ------------------------------------------------------------------------
+
+qArgEmprint()
+
+Syntax: int qArgEmprint(int mode, char *str, char **qlist);
+Function: 문자열에서 토큰과 매칭되는 부분을 볼드(bold)처리하여 출력한다.
+대소문자를 구분하지 않는다.
+Return: 문자열에서 발견된 토큰의 개수를 복귀하며, qArgMatch()와는 다르게
+중복 매칭을 포함하여 총 매칭 카운트를 복귀한다.
+Note: mode값은 qPrintf()와 동일하며, 일반적인 목적엔 1이 주로 사용될 수
+있겠다.
+Example:
+
+     qArgEmprint(1, "Hi, I'm a pretty boy. Are you pretty girl?", qlist);
+
+  ------------------------------------------------------------------------
+
+qArgPrint()
+
+Syntax: void qArgPrint(char **qlist);
+Function: 프로그램의 디버깅용으로 해석된 토큰을 모두 출력한다.
+Example:
+
+     qArgPrint(qlist);
+
+  ------------------------------------------------------------------------
+
+qArgFree()
+
+Syntax: void qArgFree(char **qlist);
+Function: 메모리 할당된 qlist를 해제한다.
+Example:
+
+     qArgFree(qlist);
+
+  ------------------------------------------------------------------------
+
+파일 관련 함수군
+
+qCheckFile()
+
+Syntax: int qCheckFile(char *filename);
+Function: 화일의 존재여부를 파악한다.
+Return: 화일이 존재 하면 1, 화일이 없으면 0.
+Note: Permission에 의해 접근 불가능한 화일도 화일이 없다고 판단한다.
+Example:
+
+     if(qCheckFile("test.dat") == 0) qError("File not found");
+
+  ------------------------------------------------------------------------
+
+qCatFile()
+
+Syntax: int qCatFile(char *filename);
+Function: 화일의 내용을 출력한다.
+Return: 정상시 출력된 문자수, 에러시 -1
+Note:
+Example:
+
+     qContentType("image/gif");
+     qCatFile("mypic.gif");
+
+     qContentType("text/html");
+     qCatFile("myhtml.html");
+
+  ------------------------------------------------------------------------
+
+qReadFile()
+
+Syntax: char *qReadFile(char *filename, int &size);
+Function: 파일을 읽어 메모리에 저장후 포인터 반환
+Return: 정상시 스트링 포인터, 오류시 NULL.
+Note: qReadFile은 실제 파일의 크기보다 1바이트 크게 메모리 할당 하여 스트링
+종료문자 '\0'를 삽입한다. 이는 텍스트 파일을 읽어 다루기 편리하도록 함이다.
+spsize에는 파일에서 읽어들인 캐릭터 개수가 저장된다. 캐릭터 개수가 필요치
+않다면 spsize 항목에 NULL 인자를 전달한다.
+Example:
+
+     char *sp, *sp2;
+     int spsize;
+     sp  = qReadFile("filename", &spsize);
+     sp2 = qReadFile("filename2", NULL);
+     ...
+     free(sp), free(sp2);
+
+  ------------------------------------------------------------------------
+
+qSaveStr()
+
+Syntax: int qSaveStr(char *sp, int spsize, char *filename, char *mode);
+Function: 스트링의 내용을 파일에 저장한다.
+Return: 정상시 저장한 캐릭터 갯수(파일 크기), 오류시 -1, 퍼미션 조정 실패
+-2
+Note: mode 인자는 fopen 시에 사용되는 mode 값과 같다. qSaveStr은 해당
+mode로 파일을 오픈할 것이다. 파일 퍼미션은 호출전의 umask() 설정값에
+의존선을 갖는다.
+Example:
+
+     char *sp = "To subscribe qDecoder mailing list\nSend mail to majordomo@hongik.com";
+     int len;
+     umask(0);
+     len = qSaveStr(sp, strlen(sp), "Howto-mailing.txt", "wt", 0644);
+
+  ------------------------------------------------------------------------
+
+qfGetLine()
+
+Syntax: char *qfGetLine(FILE *fp);
+Function: 화일에서 길이 제약없이 라인을 읽는다.
+Return: 할당된 메모리 포인터, 파일 끝 NULL.
+Note: 복귀된 스트링 포인터의 메모리 해제는 사용자가 하여야 한다.
+Example:
+
+     line = qfGetLine(fp);
+
+  ------------------------------------------------------------------------
+
+qFileSize()
+
+Syntax: long qFileSize(char *filename);
+Function: 파일의 용량을 byte 단위로 돌려줌
+Return: 성공 파일의 용량, 파일 없음 -1
+Note:
+Example:
+
+     long size;
+     size = qFileSize("/home/nobreak/sample.pdf");
+
+  ------------------------------------------------------------------------
+
+형식화된 설정 파일을 다루는 함수군
+
+qfDecoder()
+
+     ## 아래와 같은 형식의 화일을 읽어 Linked List에 저장한다.
+     ---- test.conf ----
+     # this is comment.
+     name  = Kim
+     phone = 123-4567
+     addr  = 한국
+     -------------------
+
+Syntax: Q_Entry *qfDecoder(char *filename);
+Function: 화일을 읽어 Linked List에 저장한다. (화일의 행길이 제약없음)
+Return: Linked List의 첫번째 레코드 포인터, 에러시 NULL.
+Note: 샵(#)으로 시작되는 행은 주석으로 처리해 해석하지 않는다.
+Example:
+
+     Q_Entry *firstRecord;
+     firstRecord = qfDecoder("test.conf");
+
+  ------------------------------------------------------------------------
+
+qfValue()
+
+Syntax: char *qfValue(Q_Entry *first, char *name);
+Function: 변수명의 변수값을 얻는다.
+Return: 성공시 변수값의 포인터, 실패시 NULL.
+Example:
+
+     char *value;
+     value = qfValue(FirstRecord, "name");
+
+  ------------------------------------------------------------------------
+
+qfiValue()
+
+Syntax: int qfiValue(char *format, ...);
+Function: 변수값을 정수로 변환후 넘겨준다.
+Return: 설공시 변수값(숫자 문자열)에 대한 정수값. 변수명이 존재하지 않거나,
+해당 값이 정수로 변환 불가능 하면 0
+Example:
+
+     int counter;
+     counter = qfiValue(FirstRecord, "counter");
+
+  ------------------------------------------------------------------------
+
+qfPrint()
+
+Syntax: void qfPrint(Q_Entry *first);
+Function: 프로그램의 디버깅용으로 해석한 인자를 모두 출력한다.
+Example:
+
+     qfPrint(FirstRecord);
+
+  ------------------------------------------------------------------------
+
+qfFree()
+
+Syntax: void qfFree(Q_Entry *first);
+Function: 할당된 Memory를 반환한다.
+Example:
+
+     qfFree(FirstRecord);
+
+다음과 같은 형식의 문자열을 읽어 Linked List에 저장한다.
+
+     ---- test.conf ----
+     # this is comment.
+     name  = Seung-young Kim
+     age   = 26
+     addr  = 한국
+     -------------------
+
+  ------------------------------------------------------------------------
+
+qsDecoder()
+
+Syntax: Q_Entry *qsDecoder(char *str);
+Function: 문자열을 읽어 Linked List에 저장한다. (화일의 행길이 제약없음)
+Return: Linked List의 첫번째 레코드 포인터, 에러시 NULL.
+Note:
+Example:
+
+     Q_Entry *FirstRecord;
+     char *str="name=Seung-young Kim\nage=26\naddr=한국";
+     FirstRecord = qsDecoder(str);
+
+  ------------------------------------------------------------------------
+
+qsValue()
+
+Syntax: char *qsValue(Q_Entry *first, char *name);
+Function: 변수명의 변수값을 얻는다.
+Return: 성공시 변수값의 포인터, 실패시 NULL.
+Note:
+Example:
+
+     char *name;
+     name = qsValue(FirstRecord, "name");
+
+  ------------------------------------------------------------------------
+
+qsiValue()
+
+Syntax: int qsiValue(char *format, ...);
+Function: 변수값을 정수로 변환후 넘겨준다.
+Return: 설공시 변수값(숫자 문자열)에 대한 정수값. 변수명이 존재하지 않거나,
+해당 값이 정수로 변환 불가능 하면 0.
+Note:
+Example:
+
+     int age;
+     age = qsiValue(FirstRecord, "age");
+
+  ------------------------------------------------------------------------
+
+qsPrint()
+
+Syntax: void qsPrint(Q_Entry *first);
+Function: 프로그램의 디버깅용으로 해석한 인자를 모두 출력한다.
+Example:
+
+     qsPrint(FirstRecord);
+
+  ------------------------------------------------------------------------
+
+qsFree()
+
+Syntax: void qsFree(Q_Entry *first);
+Function: 할당된 Memory를 반환한다.
+Return:
+Note:
+Example:
+
+     qsFree(FirstRecord);
+
+  ------------------------------------------------------------------------
+
+qReadCounter()
+
+다음과 같은 형식의 카운터 화일을 다룬다.
+
+     ---- number.dat ----
+     74
+     --------------------
+
+Syntax: int qReadCounter(char *filename);
+Function: 화일명의 카운터 화일을 읽는다.
+Return: 성공시 카운터값, 에러시 0
+Example:
+
+     int count;
+     count = qReadCounter("number.dat");
+
+  ------------------------------------------------------------------------
+
+qSaveCounter()
+
+Syntax: int qSaveCounter(char *filename, int number);
+Function: 지정된 화일명에 카운터 값을 저장(갱신)한다.
+Return: 성공시 1, 에러시 0
+Example:
+
+     qSaveCounter("number.dat", 75);
+
+  ------------------------------------------------------------------------
+
+qUpdateCounter()
+
+Syntax: int qUpdateCounter(char *filename, int number);
+Function: 지정된 화일명의 카운터 값을 number만큼 증가시킨다.
+Return: 성공시 기존 카운터값 + number, 에러시 0
+Example:
+
+     int count;
+     count = qUpdateCounter("number.dat", -3);
+
+  ------------------------------------------------------------------------
+
+qAwkOpen()
+
+     ## UNIX 시스템의 AWK 명령과 흡사한 기능을 한다.
+     ---- ex) /etc/passwd ----
+     shpark:x:1008:1000:Sang-hyun Park:/home/shpark:/bin/csh
+     teamwork:x:1011:1000:Seung-young Kim:/home/teamwork:/bin/csh
+     kikuchi:x:1015:2000:KIKUCHI:/home/kikuchi:/bin/csh
+     ---------------------
+
+Syntax: int qAwkOpen(char *filename, char separator);
+Function: 파일을 열고, 구분자를 설정한다.
+Return: 성공시 1, 파일을 열 수 없을경우 0
+  ------------------------------------------------------------------------
+
+qAwkNext()
+
+Syntax: int qAwkNext(char array[][256]);
+Function: 한행을 읽어 들여, 인자로 주어진 배열에 저장한다.
+Return: 성공시 필드 수, 파일의 끝 -1
+Note: 행길이는 제한이 없으나, 각 필드는 256 바이트를 넘어선 안된다.
+Example:
+
+     char array[7][256];
+     qAwkOpen("/etc/passwd", ':');
+     for( ; qAwkNext(array) > 0; ) printf("ID=%s, Name=%s", array[0], array[5]);
+     qAwkClose();
+
+  ------------------------------------------------------------------------
+
+qAwkClose()
+
+Syntax: void qAwkClose(void);
+Function: 오픈된 파일을 닫는다.
+  ------------------------------------------------------------------------
+
+qSedFile()
+
+     ## UNIX 시스템의 SED 명령과 흡사한 기능을 한다.
+     ---- ex) streamedit.html.in ----
+     Hi "${NAME}" <${EMAIL}>.
+     <p>You got a really cool hobby.
+     <br>I'm sure that your hobby, ${HOBBY},
+     can make your life more compatible.
+     ---------------------
+
+Syntax: int qSedFile(char *filename, FILE *fpout, char **arg);
+Function: 파일에서 지정된 기호를 정의된 문자열로 교체하여 출력하며, 일부
+SSI 문법을 지원한다.
+Return: 성공시 1, 파일을 열 수 없을경우 0
+Note: 본 함수은 Unix 시스템의 Sed와 SSI 를 포괄적으로 지원하도록 확장될
+예정이다.
+Example:
+
+     qSedFile를 활용하면, 프로그램내에 HTML 코드를 전혀 포함하지 않고도
+     CGI 프로그래밍을 할 수 있다. UI와 관련된 디버깅 시간을 대폭 줄일
+     수 있고, 디자인과 개발의 분리작업이 가능하며, 패키지 제품의 경우
+     사용자 측면에서 손쉽게 커스터 마이징이 가능할 수 있는등의 효용성을
+     동반할 수 있다.
+
+     filename은 입력(대상)파일이고, fpout은 출력 스트림을 의미한다.
+     결과를 파일로 출력을 하고 자 할경우엔 파일을 "wt"로 열어,
+     해당 파일 포인터를 건네어 주면 되고, 화면 출력하고자 한다면,
+     그냥 stdout 을 지정하면 된다.
+
+     인자 목록은 다음과 같은 형식을 취한다.
+
+     "명령+구분자+지정문자열+구분자+교체문자열+구분자"
+
+     ex) char *arg[3 + 1] = { "s/${NAME}/Seung-young Kim/",
+                              "s%${EMAIL}%nobreak@hongik.com%",
+                              "s:${HOBBY}:Playing with Ji-su Hwang:",
+                              NULL };
+
+     명령은 현재 's' 만이 지원되며, 이는 교체(replacement)를 의미한다.
+     구분자는 1바이트의 특정 문자열로 사용자가 임의 지정하면 된다.
+     보통 구분자로는 '/'나 '%'를 많이 사용하지만, 문자열내에 해당
+     캐릭터가 나올 경우엔 '#', 'A'등의 임의 문자열을 사용하기
+     바란다. 지정 문자열도 임의대로 지정이 가능하지만, 가시성과
+     원치않는 교체를 막기위해 특별한 이유가 없다면, ${STING}과 같이
+     쉘스크립트의 변수 명명법을 따르도록 하라.
+
+     앞의 streamedit.html.in 파일을 위의 인자 목록으로 다음과 같이
+     수행하였을 경우의 출력을 보자.
+
+     ex) qSedFile("streamedit.html.in", stdout, arg);
+
+     Hi "Seung-young Kim" <nobreak@hongik.com>.
+     <p>You got a really cool hobby.
+     <br>I'm sure that your hobby, Playing with Ji-su Hwang,
+     can make your life more compatible.
+
+     SSI 문법을 해석한다. (현재는 <!--#include file="FILEPATH"--> 만이 지원됨)
+     문서내 다음과 같은 라인이 있을 경우, 해당 문서를 포함하여 출력되며,
+     포함되는 문서에 대해서도 교체및 SSI 기능은 그대로 유효하다. (Cascading)
+
+     <!--#include file="streamedit.html.in"-->
+
+     주의) include 되는 파일은 CGI가 실행되는 위치를 기준으로 상대경로 표기
+           하거나, 시스템 절대경로 표기한다.
+
+     문자열 교체를 하지않고, SSI 기능만을 사용코자 할 경우엔 다음과 같이
+     arg 인자로 NULL 값을 전달한다.
+
+     ex) qSedFile("streamedit.html.in", stdout, NULL);
+
+  ------------------------------------------------------------------------
+
+qSedStr()
+
+Syntax: int qSedStr(char *srcstr, FILE *fpout, char **arg);
+Function: qSedFile()과 동일한 기능을 하나, 입력을 문자열로 받는다.
+Return: qSedFile()과 동일
+Example:
+
+     qSedStr("Hi my name is ${NAME}.", stdout, arg);
+
+  ------------------------------------------------------------------------
+
+시간 관련 함수군
+
+qGetTime()
+
+Syntax: struct tm *qGetTime(void);
+Function: 시간을 구조체 tm에 저장한다.
+Return: 구조체 tm의 포인터
+Note:
+Example:
+
+     struct tm *mytime;
+     mytime = qGetTime();
+
+  ------------------------------------------------------------------------
+
+qGetGMTime()
+
+Syntax: time_t qGetGMTime(char *gmt, time_t plus_sec);
+Function: '현재시간+plus_sec'을 쿠키에서 사용하는 GMT 문자열 시간으로
+변환한다.
+Return: 1970/1/1(00:00:00)부터 현제까지의 초 + plus_sec
+Note:
+Example:
+
+     time_t plus_sec;
+     char gmt[0xff];
+     plus_sec = (time_t)300; /* 5분 */
+     qGetGMTime(gmt, plus_sec);
+     printf("%s", gmt); // "Fri, 22-Aug-1997 15:11:30 GMT"
+
+  ------------------------------------------------------------------------
+
+형식 검사 함수군
+
+qCheckEmail()
+
+Syntax: int qCheckEmail(char *email);
+Function: E-mail 주소의 오류를 판별한다.
+Return: 오류가 없으면 1, 문제가 발생하면 0.
+Note:
+Example:
+
+     qCheckEmail("nobreak@hongik.com");
+
+  ------------------------------------------------------------------------
+
+qCheckURL()
+
+Syntax: int qCheckURL(char *url);
+Function: URL 주소의 오류를 판별한다.
+Return: 오류가 없으면 1, 규칙에 준하지 않으면 0
+Example:
+
+     qCheckURL("http://www.hongik.com");
+
+  ------------------------------------------------------------------------
+
+기타 함수군
+
+qGetEnv()
+
+Syntax: char *qGetEnv(char *envname, char *nullstr);
+Function: getenv()함수와 동일하게 동작하나, NULL 대신 디폴드 스트링을
+복귀한다.
+Example:
+
+     char *name;
+     name = qGetEnv("SCRIPT_NAME", "/cgi-bin/CrazyWWWBoard.cgi");
+     name = qGetEnv("SCRIPT_NAME", NULL);
+
+  ------------------------------------------------------------------------
+
+qCGIenv()
+
+Syntax: void qCGIenv(Q_CGIenv *env);
+Function: CGI의 환경변수와 시간을 구조체에 저장한다.
+Example:
+
+     Q_CGIenv myenv;
+     qCGIenv(&myenv);
+
+     typedef struct Q_CGIenv Q_CGIenv;
+     struct Q_CGIenv{
+       char *auth_type;
+       char *content_length;
+       char *content_type;
+       char *document_root;
+       char *gateway_interface;
+       char *http_accept;
+       char *http_accept_encoding;
+       char *http_accept_language;
+       char *http_connection;
+       char *http_cookie;
+       char *http_host;
+       char *http_referer;
+       char *http_user_agent;
+       char *query_string;
+       char *remote_addr;
+       char *remote_host;
+       char *remote_port;
+       char *remote_user;
+       char *request_method;
+       char *request_uri;
+       char *script_filename;
+       char *script_name;
+       char *server_admin;
+       char *server_name;
+       char *server_port;
+       char *server_protocol;
+       char *server_software;
+       char *server_signature;
+       char *unique_id;
+
+       /* Miscellaneous Informations Supported by qDecoder */
+       int  year, mon, day, hour, min, sec;
+     };
+
+  ------------------------------------------------------------------------
+
+qCGIname()
+
+Syntax: char *qCGIname(void);
+Function: 환경변수 SCRIPT_NAME에서 프로그램명만을 해석하여 복귀한다.
+Return:
+Note:
+Example:
+
+     char *cginame;
+     cginame = qCGIname();
+
+  ------------------------------------------------------------------------
+
+qDownload()
+
+Syntax: int qDownload(char *filename);
+Function: 클라이언트로 파일을 전송하는데, 파일의 종류에 상관없이 브라우저에
+다운로딩 상자가 나타나도록 한다.
+Return: 성공 전송한 바이트수, 파일 없음 -1
+Note: 본 함수는 편의를 위한 qDownloadMime()의 껍대기 함수이다.
+Example:
+
+     qDownload("/home/nobreak/myprg.exe");
+
+  ------------------------------------------------------------------------
+
+qDownloadMime()
+
+Syntax: int qDownloadMime(char *filename, char *mime);
+Function: 클라이언트로 마임에 준하여 파일을 전송한다.
+Return: 성공 전송한 바이트수, 파일 없음 -1
+Note: 본 함수는 해당 파일을 웹상에 직접 링크하였을 때와 동일한 결과를
+갖지만, 사용자 인증이 되어야만 다운로드 할 수 있도록 전처리를 하거나,
+웹상에 공개될 수 없는 파일을 특정 프로그램을 통해서만 다운받을 수 있게
+하는데 유용하다. mime이 'application/octet-stream'일 경우에는 qDownload()와
+동일하다. 또한 스트림이 종료될때 까지 프로세스가 실행되게 되므로, 웹상에도
+링크가 걸릴 수 있는 파일인데 다운로딩 카운트등을 위한 전처리로 사용할
+경우라면 qRedirect()를 활용하는 것이 좋다.
+Example:
+
+     qDownload("/home/nobreak/myprg.gif", "image/gif");

@@ -1,35 +1,39 @@
-/*************************************************************
-** qDecoder CGI Library v5.0.8                              **
-**                                                          **
-**  Official distribution site : ftp://ftp.hongik.com       **
-**           Technical contact : nobreak@hongik.com         **
-**                                                          **
-**                        Developed by 'Seung-young Kim'    **
-**                        Last updated at Mar 27, 2000      **
-**                                                          **
-**      Designed by Perfectionist for Perfectionist!!!      **
-**                                                          **
-**         Copyright (C) 1999 Hongik Internet, Inc.         **
-**         Copyright (C) 1998 Nobreak Technologies, Inc.    **
-**         Copyright (C) 1996,1997 Seung-young Kim          **
-**                                                          **
-** qDecoder is a CGI library for C/C++ language programming **
-** and a solution product for developers. The Query Fetch   **
-** algorithm of qDecoder which is based on linked-list gives**
-** developers more simple library interface without regard  **
-** to a method of GET or POST.                              **
-** Also because it gives transperance with a subordinate    **
-** layer, web-based softwares - CGI - is designed and       **
-** embodied in reliability further. The source code for     **
-** qDecoder is freely available to everyone.                **
-*************************************************************/
+/************************************************************************
+qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <sys/stat.h>
+Copyright (C) 1999,2000 Hongik Internet, Inc.
+Copyright (C) 1998 Nobreak Technologies, Inc.
+Copyright (C) 1996,1997 Seung-young Kim.
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+Copyright Disclaimer:
+  Hongik Internet, Inc., hereby disclaims all copyright interest.
+  President, Christopher Roh, 6 April 2000
+
+  Nobreak Technologies, Inc., hereby disclaims all copyright interest.
+  President, Yoon Cho, 6 April 2000
+
+  Seung-young Kim, hereby disclaims all copyright interest.
+  Author, Seung-young Kim, 6 April 2000
+
+Author:
+  Seung-young Kim <nobreak@hongik.com>
+  5th Fl., Daewoong Bldg., 689-4, Yoksam, Kangnam, Seoul, Korea 135-080
+  Tel: +82-2-562-8988, Fax: +82-2-562-8987
+************************************************************************/
 
 #include "qDecoder.h"
 
@@ -46,17 +50,17 @@ char _x2c(char hex_up, char hex_low);
 char *_makeword(char *str, char stop);
 char *_strtok2(char *str, char *token, char *retstop);
 
-char *_EntryValue(Entry *first, char *name);
-int  _EntryiValue(Entry *first, char *name);
-void _EntryPrint(Entry *first);
-void _EntryFree(Entry *first);
+char *_EntryValue(Q_Entry *first, char *name);
+int  _EntryiValue(Q_Entry *first, char *name);
+void _EntryPrint(Q_Entry *first);
+void _EntryFree(Q_Entry *first);
 
 /**********************************************
 ** Static Values Definition used only internal
 **********************************************/
 
-static Entry *_first_entry = NULL;
-static Entry *_cookie_first_entry = NULL;
+static Q_Entry *_first_entry = NULL;
+static Q_Entry *_cookie_first_entry = NULL;
 
 static char  *_error_contact_info = NULL;
 static char  *_error_log_filename = NULL;
@@ -64,7 +68,7 @@ static char  *_error_log_filename = NULL;
 static FILE  *_awkfp = NULL;
 static char  _awksep = ' ';
 
-static Entry *_multi_last_entry = NULL;
+static Q_Entry *_multi_last_entry = NULL;
 static char  _multi_last_key[1024];
 
 /**********************************************
@@ -106,7 +110,7 @@ int qDecoder(void){
 
 /* For decode application/s-www-form-urlencoded, used by qDecoder() */
 int _parse_urlencoded(void){
-  Entry *entries, *back;
+  Q_Entry *entries, *back;
   char *query;
   int  amount;
   int  loop;
@@ -119,7 +123,7 @@ int _parse_urlencoded(void){
     else break;
     for(; query && *query; amount++){
       back = entries;
-      entries = (Entry *)malloc(sizeof(Entry));
+      entries = (Q_Entry *)malloc(sizeof(Q_Entry));
       if(back != NULL) back->next = entries;
       if(_first_entry == NULL) _first_entry = entries;
 
@@ -159,7 +163,7 @@ char *_get_query(char *method){
   if(!strcmp(method, "POST")){
     if(getenv("REQUEST_METHOD") == NULL) return NULL;
     if(strcmp("POST", getenv("REQUEST_METHOD")))return NULL;
-    if(getenv("CONTENT_LENGTH") == NULL) qError("_get_query() : Your browser sent a non-HTTP compliant message.");
+    if(getenv("CONTENT_LENGTH") == NULL) qError("_get_query(): Your browser sent a non-HTTP compliant message.");
 
     cl = atoi(getenv("CONTENT_LENGTH"));
     query = (char *)malloc(sizeof(char) * (cl + 1));
@@ -172,21 +176,25 @@ char *_get_query(char *method){
 
 /* For decode multipart/form-data, used by qDecoder() */
 int _parse_multipart_data(void) {
-  Entry *entries, *back;
+  Q_Entry *entries, *back;
   char *query;
   int  amount;
 
   char *name = NULL, *value = NULL, *filename = NULL;
   int  valuelen;
 
-  char boundary[256],     boundaryEOF[256];
+  char boundary[256], boundaryEOF[256];
   char rnboundaryrn[256], rnboundaryEOF[256];
-  int  boundarylen,        boundaryEOFlen;
+  int  boundarylen, boundaryEOFlen, maxboundarylen;
 
   char buf[1024];
   int  c, c_count;
 
   int  finish;
+
+#ifdef _WIN32
+  setmode(fileno(stdin), _O_BINARY);
+#endif
 
   entries = back = NULL;
 
@@ -194,7 +202,7 @@ int _parse_multipart_data(void) {
   query = _get_query("GET");
   for(amount = 0; query && *query; amount++){
     back = entries;
-    entries = (Entry *)malloc(sizeof(Entry));
+    entries = (Q_Entry *)malloc(sizeof(Q_Entry));
     if(back != NULL) back->next = entries;
     if(_first_entry == NULL) _first_entry = entries;
 
@@ -208,6 +216,14 @@ int _parse_multipart_data(void) {
   if(query)free(query);
 
   /* For parse multipart/form-data method */
+
+  /* Force to check the boundary string length to defense overflow attack */
+  maxboundarylen =  strlen("--");
+  maxboundarylen += strlen(strstr(getenv("CONTENT_TYPE"), "boundary=") + strlen("boundary="));
+  maxboundarylen += strlen("--");
+  maxboundarylen += strlen("\r\n");
+  if(maxboundarylen >= sizeof(boundary)) qError("_parse_multipart_data(): The boundary string is too long. Stopping process.");
+
   /* find boundary string */
   sprintf(boundary,    "--%s", strstr(getenv("CONTENT_TYPE"), "boundary=") + strlen("boundary="));
   /* This is not necessary but, I can not trust MS Explore */
@@ -221,8 +237,8 @@ int _parse_multipart_data(void) {
   boundarylen    = strlen(boundary);
   boundaryEOFlen = strlen(boundaryEOF);
 
-  /* If you want to observe the string from stdin, enable this section */
-  /* This section is made for debugging                                */
+  /* If you want to observe the string from stdin, enable this section. */
+  /* This section is made for debugging.                                */
   if(0) {
     int i, j;
     qContentType("text/html");
@@ -241,12 +257,12 @@ int _parse_multipart_data(void) {
   }
 
   /* check boundary */
-  if(_fgetstring(buf, sizeof(buf), stdin) == NULL) qError("_parse_multipart_data() : Your browser sent a non-HTTP compliant message.");
+  if(_fgetstring(buf, sizeof(buf), stdin) == NULL) qError("_parse_multipart_data(): Your browser sent a non-HTTP compliant message.");
 
   /* for explore 4.0 of NT, it sent \r\n before starting, fucking Micro$oft */
   if(!strcmp(buf, "\r\n")) _fgetstring(buf, sizeof(buf), stdin);
 
-  if(strncmp(buf, boundary, boundarylen) != 0) qError("_parse_multipart_data() : String format invalid.");
+  if(strncmp(buf, boundary, boundarylen) != 0) qError("_parse_multipart_data(): String format invalid.");
 
   for(finish = 0; finish != 1; amount++){
     /* get name field */
@@ -287,7 +303,7 @@ int _parse_multipart_data(void) {
     for(valuelen = (1024 * 16), c_count = 0; (c = fgetc(stdin)) != EOF; ) {
       if(c_count == 0) {
         value = (char *)malloc(sizeof(char) * valuelen);
-        if(value == NULL) qError("_parse_multipart_data() : Memory allocation fail.");
+        if(value == NULL) qError("_parse_multipart_data(): Memory allocation fail.");
       }
       else if(c_count == valuelen - 1) {
         char *valuetmp;
@@ -297,7 +313,7 @@ int _parse_multipart_data(void) {
 
         /* Here, we do not use realloc(). Because sometimes it is unstable. */
         valuetmp = (char *)malloc(sizeof(char) * valuelen);
-        if(valuetmp == NULL) qError("_parse_multipart_data() : Memory allocation fail.");
+        if(valuetmp == NULL) qError("_parse_multipart_data(): Memory allocation fail.");
         for(i = 0; i < c_count; i++) valuetmp[i] = value[i];
         free(value);
         value = valuetmp;
@@ -345,12 +361,12 @@ int _parse_multipart_data(void) {
       }
     }
 
-    if(c == EOF) qError("_parse_multipart_data() : Internal bug at '%s'.", name);
+    if(c == EOF) qError("_parse_multipart_data(): Internal bug at '%s'.", name);
 
     /* store in linked list */
     /* store data */
     back = entries;
-    entries = (Entry *)malloc(sizeof(Entry));
+    entries = (Q_Entry *)malloc(sizeof(Q_Entry));
     if(back != NULL) back->next = entries;
     if(_first_entry == NULL) _first_entry = entries;
 
@@ -361,7 +377,7 @@ int _parse_multipart_data(void) {
     if(strcmp(filename, "") != 0) {
       /* store data length, 'NAME.length'*/
       back = entries;
-      entries = (Entry *)malloc(sizeof(Entry));
+      entries = (Q_Entry *)malloc(sizeof(Q_Entry));
       back->next = entries;
 
       entries->name  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".length") + 1));
@@ -371,7 +387,7 @@ int _parse_multipart_data(void) {
 
       /* store transfer filename, 'NAME.filename'*/
       back = entries;
-      entries = (Entry *)malloc(sizeof(Entry));
+      entries = (Q_Entry *)malloc(sizeof(Q_Entry));
       back->next = entries;
 
       entries->name  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".filename") + 1));
@@ -497,7 +513,7 @@ char *qValueFirst(char *format, ...){
 ** Do    : Find next value string pointer
 **********************************************/
 char *qValueNext(void) {
-  Entry *entries;
+  Q_Entry *entries;
 
   for(entries = _multi_last_entry; entries; entries = entries->next){
     if(!strcmp(_multi_last_key, entries->name)) {
@@ -532,7 +548,7 @@ void qFree(void){
 ** Usage : qGetFirstEntry();
 ** Do    : Return _first_entry;
 **********************************************/
-Entry *qGetFirstEntry(void){
+Q_Entry *qGetFirstEntry(void){
   if(_first_entry == NULL)qDecoder();
   return _first_entry;
 }
@@ -543,9 +559,9 @@ Entry *qGetFirstEntry(void){
 ** Do    : Save file into linked list
            # is used for comments
 **********************************************/
-Entry *qfDecoder(char *filename){
+Q_Entry *qfDecoder(char *filename){
   FILE  *fp;
-  Entry *first, *entries, *back;
+  Q_Entry *first, *entries, *back;
   char  *buf;
 
   fp = fopen(filename, "rt");
@@ -558,7 +574,7 @@ Entry *qfDecoder(char *filename){
     if((buf[0] == '#') || (buf[0] == '\0')) continue;
 
     back = entries;
-    entries = (Entry *)malloc(sizeof(Entry));
+    entries = (Q_Entry *)malloc(sizeof(Q_Entry));
     if(back != NULL) back->next = entries;
     if(first == NULL) first = entries;
 
@@ -576,7 +592,7 @@ Entry *qfDecoder(char *filename){
   return first;
 }
 
-char *qfValue(Entry *first, char *format, ...){
+char *qfValue(Q_Entry *first, char *format, ...){
   char name[1024];
   int status;
   va_list arglist;
@@ -589,7 +605,7 @@ char *qfValue(Entry *first, char *format, ...){
   return _EntryValue(first, name);
 }
 
-int qfiValue(Entry *first, char *format, ...){
+int qfiValue(Q_Entry *first, char *format, ...){
   char name[1024];
   int status;
   va_list arglist;
@@ -602,11 +618,11 @@ int qfiValue(Entry *first, char *format, ...){
   return _EntryiValue(first, name);
 }
 
-void qfPrint(Entry *first){
+void qfPrint(Q_Entry *first){
   _EntryPrint(first);
 }
 
-void qfFree(Entry *first){
+void qfFree(Q_Entry *first){
   _EntryFree(first);
 }
 
@@ -616,8 +632,8 @@ void qfFree(Entry *first){
 ** Do    : Save string into linked list
            # is used for comments
 **********************************************/
-Entry *qsDecoder(char *str){
-  Entry *first, *entries, *back;
+Q_Entry *qsDecoder(char *str){
+  Q_Entry *first, *entries, *back;
   char  *org, *buf, *offset;
   int  eos;
 
@@ -636,7 +652,7 @@ Entry *qsDecoder(char *str){
     if((buf[0] == '#') || (buf[0] == '\0')) continue;
 
     back = entries;
-    entries = (Entry *)malloc(sizeof(Entry));
+    entries = (Q_Entry *)malloc(sizeof(Q_Entry));
     if(back != NULL) back->next = entries;
     if(first == NULL) first = entries;
 
@@ -653,7 +669,7 @@ Entry *qsDecoder(char *str){
   return first;
 }
 
-char *qsValue(Entry *first, char *format, ...){
+char *qsValue(Q_Entry *first, char *format, ...){
   char name[1024];
   int status;
   va_list arglist;
@@ -666,7 +682,7 @@ char *qsValue(Entry *first, char *format, ...){
   return _EntryValue(first, name);
 }
 
-int qsiValue(Entry *first, char *format, ...){
+int qsiValue(Q_Entry *first, char *format, ...){
   char name[1024];
   int status;
   va_list arglist;
@@ -679,11 +695,11 @@ int qsiValue(Entry *first, char *format, ...){
   return _EntryiValue(first, name);
 }
 
-void qsPrint(Entry *first){
+void qsPrint(Q_Entry *first){
   _EntryPrint(first);
 }
 
-void qsFree(Entry *first){
+void qsFree(Q_Entry *first){
   _EntryFree(first);
 }
 
@@ -693,7 +709,7 @@ void qsFree(Entry *first){
 ** Do    : Decode COOKIES & Save it in linked list
 **********************************************/
 int qcDecoder(void){
-  Entry *entries, *back;
+  Q_Entry *entries, *back;
   char *query;
   int  amount;
 
@@ -706,7 +722,7 @@ int qcDecoder(void){
 
   for(amount = 0; *query; amount++){
     back = entries;
-    entries = (Entry *)malloc(sizeof(Entry));
+    entries = (Q_Entry *)malloc(sizeof(Q_Entry));
     if(back != NULL) back->next = entries;
     if(_cookie_first_entry == NULL) _cookie_first_entry = entries;
 
@@ -1094,7 +1110,7 @@ int qArgEmprint(int mode, char *str, char **qlist) {
         qPuts(mode, buf); /* flash buffer */
         bp = buf; /* reset buffer pointer */
       	printf("<b>");
-        for(j = 1; j <= strlen(qlist[i]); j++) {
+        for(j = 1; j <= (int)strlen(qlist[i]); j++) {
           printf("%c", *op++);
           sp++;
         }
@@ -1199,7 +1215,7 @@ void qContentType(char *mimetype){
 **         Mode : see qPuts()
 **********************************************/
 int qPrintf(int mode, char *format, ...){
-  char buf[1024];
+  char buf[1024*10];
   int  status;
   va_list arglist;
 
@@ -1292,7 +1308,7 @@ void qPuts(int mode, char *buf){
       case 15 : {printhtml = 0, autolink = 1, target = "";     convert = 1; break;}
       case 16 : {printhtml = 0, autolink = 1, target = "_top"; convert = 1; break;}
 
-      default: {qError("_autolink() : Invalid Mode (%d)", mode); break;}
+      default: {qError("_autolink(): Invalid Mode (%d).", mode); break;}
     }
 
     token = " `(){}[]<>&\"',\r\n";
@@ -1447,35 +1463,43 @@ void qErrorContact(char *msg) {
 
 
 /**********************************************
-** Usage : qCgienv(Pointer of Cgienv);
+** Usage : qCGIenv(Pointer of Cgienv);
 ** Do    : Get environment of CGI
 **********************************************/
-void qCgienv(Cgienv *env){
+void qCGIenv(Q_CGIenv *env){
   struct tm *envtime;
 
   envtime = qGetTime();
 
-  env->auth_type         = qGetEnv("AUTH_TYPE", NULL);
-  env->content_length    = qGetEnv("CONTENT_LENGTH", NULL);
-  env->content_type      = qGetEnv("CONTENT_TYPE", NULL);
-  env->document_root     = qGetEnv("DOCUMENT_ROOT", NULL);
-  env->gateway_interface = qGetEnv("GATEWAY_INTERFACE", NULL);
-  env->http_accept       = qGetEnv("HTTP_ACCEPT", NULL);
-  env->http_cookie       = qGetEnv("HTTP_COOKIE", NULL);
-  env->http_user_agent   = qGetEnv("HTTP_USER_AGENT", NULL);
-  env->query_string      = qGetEnv("QUERY_STRING", NULL);
-  env->remote_addr       = qGetEnv("REMOTE_ADDR", NULL);
-  env->remote_host       = qGetEnv("REMOTE_HOST", env->remote_addr);
-  env->remote_user       = qGetEnv("REMOTE_USER", NULL);
-  env->remote_port       = qGetEnv("REMOTE_PORT", NULL);
-  env->request_method    = qGetEnv("REQUEST_METHOD", NULL);
-  env->script_name       = qGetEnv("SCRIPT_NAME", NULL);
-  env->script_filename   = qGetEnv("SCRIPT_FILENAME", NULL);
-  env->server_name       = qGetEnv("SERVER_NAME", NULL);
-  env->server_protocol   = qGetEnv("SERVER_PROTOCOL", NULL);
-  env->server_port       = qGetEnv("SERVER_PORT", NULL);
-  env->server_software   = qGetEnv("SERVER_SOFTWARE", NULL);
-  env->server_admin      = qGetEnv("SERVER_ADMIN", NULL);
+  env->auth_type		= qGetEnv("AUTH_TYPE",	NULL);
+  env->content_length		= qGetEnv("CONTENT_LENGTH", NULL);
+  env->content_type		= qGetEnv("CONTENT_TYPE", NULL);
+  env->document_root		= qGetEnv("DOCUMENT_ROOT", NULL);
+  env->gateway_interface	= qGetEnv("GATEWAY_INTERFACE",	NULL);
+  env->http_accept		= qGetEnv("HTTP_ACCEPT", NULL);
+  env->http_accept_encoding	= qGetEnv("HTTP_ACCEPT_ENCODING", NULL);
+  env->http_accept_language	= qGetEnv("HTTP_ACCEPT_LANGUAGE", NULL);
+  env->http_connection		= qGetEnv("HTTP_CONNECTION", NULL);
+  env->http_cookie		= qGetEnv("HTTP_COOKIE", NULL);
+  env->http_host		= qGetEnv("HTTP_HOST",	NULL);
+  env->http_referer		= qGetEnv("HTTP_REFERER", NULL);
+  env->http_user_agent		= qGetEnv("HTTP_USER_AGENT", NULL);
+  env->query_string		= qGetEnv("QUERY_STRING", NULL);
+  env->remote_addr		= qGetEnv("REMOTE_ADDR", NULL);
+  env->remote_host		= qGetEnv("REMOTE_HOST", env->remote_addr);
+  env->remote_port		= qGetEnv("REMOTE_PORT", NULL);
+  env->remote_user		= qGetEnv("REMOTE_USER", NULL);
+  env->request_method		= qGetEnv("REQUEST_METHOD", NULL);
+  env->request_uri		= qGetEnv("REQUEST_URI", NULL);
+  env->script_filename		= qGetEnv("SCRIPT_FILENAME", NULL);
+  env->script_name		= qGetEnv("SCRIPT_NAME", NULL);
+  env->server_admin		= qGetEnv("SERVER_ADMIN", NULL);
+  env->server_name		= qGetEnv("SERVER_NAME", NULL);
+  env->server_port		= qGetEnv("SERVER_PORT", NULL);
+  env->server_protocol		= qGetEnv("SERVER_PROTOCOL", NULL);
+  env->server_signature		= qGetEnv("SERVER_SIGNATURE", NULL);
+  env->server_software		= qGetEnv("SERVER_SOFTWARE", NULL);
+  env->unique_id		= qGetEnv("UNIQUE_ID",	NULL);
 
   /* qDecoder Supported Extended Informations */
   env->year = envtime->tm_year;
@@ -1594,6 +1618,7 @@ int qCatFile(char *filename) {
 ** Do    : Read file to malloced memory.
 **********************************************/
 char *qReadFile(char *filename, int *size) {
+#ifdef __unix
   FILE *fp;
   struct stat fstat;
   char *sp, *tmp;
@@ -1611,21 +1636,23 @@ char *qReadFile(char *filename, int *size) {
   fclose(fp);
   if(size != NULL) *size = i;
   return sp;
+#else
+  qError("qReadFile(): Sorry. Currently this function is not supported on the Win32 platform.");
+  return NULL;
+#endif
 }
 
 /**********************************************
-** Usage : qSaveStr(string pointer, string size, filename, mode, permission)
+** Usage : qSaveStr(string pointer, string size, filename, mode)
 ** Return: Success number bytes stored, File open fail -1,
-           Can not adjust permission -2
 ** Do    : Store string to file.
 **********************************************/
-int qSaveStr(char *sp, int spsize, char *filename, char *mode, mode_t perm) {
+int qSaveStr(char *sp, int spsize, char *filename, char *mode) {
   FILE *fp;
   int i;
   if((fp = fopen(filename, mode)) == NULL) return -1;
   for(i = 0; i < spsize; i++) fputc(*sp++, fp);
   fclose(fp);
-  if(chmod(filename, perm) != 0) return -2;
 
   return i;
 }
@@ -1645,7 +1672,7 @@ char *qfGetLine(FILE *fp) {
   for(memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
     if(c_count == 0) {
       string = (char *)malloc(sizeof(char) * memsize);
-      if(string == NULL) qError("qfGetLine() : Memory allocation fail.");
+      if(string == NULL) qError("qfGetLine(): Memory allocation fail.");
     }
     else if(c_count == memsize - 1) {
       char *stringtmp;
@@ -1655,7 +1682,7 @@ char *qfGetLine(FILE *fp) {
 
       /* Here, we do not use realloc(). Because sometimes it is unstable. */
       stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
-      if(stringtmp == NULL) qError("qfGetLine() : Memory allocation fail.");
+      if(stringtmp == NULL) qError("qfGetLine(): Memory allocation fail.");
       for(i = 0; i < c_count; i++) stringtmp[i] = string[i];
       free(string);
       string = stringtmp;
@@ -1684,15 +1711,16 @@ int qDownload(char *filename) {
 ** Usage : qDownloadMime(filename, mime);
 ** Do    : Pump file to stdout, should not call qContentType().
 **         if mime is 'application/octet-stream', forcing download.
-** Return: Success 1, File not found 0
+** Return: Success number of bytes sent, File not found -1
 **********************************************/
 int qDownloadMime(char *filename, char *mime) {
   char *file, *c, *disposition;
+  int sent;
 
   if(mime == NULL) mime = "application/octet-stream";
 
   if(filename == NULL) qError("qDownload(): Null pointer can not be used.");
-  if(qCheckFile(filename) == 0) return 0;
+  if(qCheckFile(filename) == 0) return -1;
 
   file = strdup(filename);
 
@@ -1712,8 +1740,8 @@ int qDownloadMime(char *filename, char *mime) {
   printf("\n");
   free(file);
 
-  qCatFile(filename);
-  return 1;
+  sent = qCatFile(filename);
+  return sent;
 }
 
 /**********************************************
@@ -1721,11 +1749,16 @@ int qDownloadMime(char *filename, char *mime) {
 ** Return: Size of file in byte, File not found -1
 **********************************************/
 long qFileSize(char *filename) {
+#ifdef __unix
   struct stat finfo;
 
   if (lstat(filename, &finfo) < 0) return -1;
 
   return finfo.st_size;
+#else
+  qError("qFileSize(): Sorry. Currently this function is not supported on the Win32 platform.");
+  return -1;
+#endif
 }
 
 /**********************************************
@@ -2087,13 +2120,13 @@ char *_fgetstring(char *buf, int maxlen, FILE *fp) {
 **********************************************/
 
 /**********************************************
-** Usage : _EntryValue(Pointer of the first Entry, Name);
+** Usage : _EntryValue(Pointer of the first entry, Name);
 ** Return: Success pointer of value string, Fail NULL
 ** Do    : Find value string pointer
 **         It find value in linked list
 **********************************************/
-char *_EntryValue(Entry *first, char *name){
-  Entry *entries;
+char *_EntryValue(Q_Entry *first, char *name){
+  Q_Entry *entries;
 
   for(entries = first; entries; entries = entries->next){
     if(!strcmp(name, entries->name))return (entries->value);
@@ -2102,11 +2135,11 @@ char *_EntryValue(Entry *first, char *name){
 }
 
 /**********************************************
-** Usage : _EntryiValue(Pointer of the first Entry, Name);
+** Usage : _EntryiValue(Pointer of the first entry, Name);
 ** Return: Success integer of value string, Fail 0
 ** Do    : Find value string pointer and convert to integer
 **********************************************/
-int _EntryiValue(Entry *first, char *name){
+int _EntryiValue(Q_Entry *first, char *name){
   char *str;
 
   str = _EntryValue(first, name);
@@ -2115,11 +2148,11 @@ int _EntryiValue(Entry *first, char *name){
 }
 
 /**********************************************
-** Usage : _EntryPrint(Pointer of the first Entry);
+** Usage : _EntryPrint(Pointer of the first entry);
 ** Do    : Print all parsed value & name for debugging
 **********************************************/
-void _EntryPrint(Entry *first){
-  Entry *entries;
+void _EntryPrint(Q_Entry *first){
+  Q_Entry *entries;
 
   qContentType("text/html");
 
@@ -2129,11 +2162,11 @@ void _EntryPrint(Entry *first){
 }
 
 /**********************************************
-** Usage : _EntryFree(Pointer of the first Entry);
+** Usage : _EntryFree(Pointer of the first entry);
 ** Do    : Make free of linked list memory
 **********************************************/
-void _EntryFree(Entry *first){
-  Entry *entries;
+void _EntryFree(Q_Entry *first){
+  Q_Entry *entries;
 
   for(; first; first = entries){
     entries = first->next; /* copy next to tmp */
