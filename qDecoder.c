@@ -1,5 +1,5 @@
 /***********************************************
-** [Query String Decoder Version 3.4.1]
+** [Query String Decoder Version 3.4.2]
 **
 ** Last Modified : 1997/09/01
 **
@@ -63,21 +63,24 @@ static Entry *_cookie_first_entry = NULL;
 **         It doesn't care Method
 **********************************************/
 int qDecoder(void){
-  Entry *entries;
+  Entry *entries, *back;
   char *query;
   int  amount;
 
   if(_first_entry != NULL) return -1;
 
-  entries = (Entry *)malloc(sizeof(Entry));
-  _first_entry = entries -> next = entries;
+  entries = back = NULL;
 
   query = _get_query("GET");
   for(amount = 0; query && *query; amount++){
-    entries = entries->next;
+    back = entries;
+    entries = (Entry *)malloc(sizeof(Entry));
+    if(back != NULL) back->next = entries;
+    if(_first_entry == NULL) _first_entry = entries;
+
     entries->value = _makeword(query, '&');
     entries->name  = _makeword(entries->value, '=');
-    entries->next = (Entry *)malloc(sizeof(Entry));
+    entries->next  = NULL;
     _decode_query(entries->name);
     _decode_query(entries->value);
   }
@@ -85,22 +88,20 @@ int qDecoder(void){
 
   query = _get_query("POST");
   for(; query && *query; amount++){
-    entries = entries->next;
+    back = entries;
+    entries = (Entry *)malloc(sizeof(Entry));
+    if(back != NULL) back->next = entries;
+    if(_first_entry == NULL) _first_entry = entries;
+
     entries->value = _makeword(query, '&');
     entries->name  = _makeword(entries->value, '=');
-    entries->next = (Entry *)malloc(sizeof(Entry));
+    entries->next  = NULL;
+
     _decode_query(entries->name);
     _decode_query(entries->value);
   }
   if(query)free(query);
-  if(entries->next == _first_entry){
-    free(entries);
-    _first_entry = NULL;
-  }
-  else{
-    free(entries->next);
-    entries->next = NULL;
-  }
+
   return amount;
 }
 
@@ -162,7 +163,6 @@ void qFree(void){
   _first_entry = NULL;
 }
 
-
 /**********************************************
 ** Usage : qfDecoder(filename);
 ** Return: Success pointer of the first entry, Fail NULL
@@ -170,32 +170,27 @@ void qFree(void){
 **********************************************/
 Entry *qfDecoder(char *filename){
   FILE  *fp;
-  Entry *first, *entries;
+  Entry *first, *entries, *back;
   char  buf[1000 + 1];
 
   fp = fopen(filename, "rt");
   if(fp == NULL) return NULL;    
 
-  entries = (Entry *)malloc(sizeof(Entry));
-  first = entries -> next = entries;
+  first = entries = back = NULL;
 
-  while(fgets(buf, 1000 + 1, fp)){
-    entries = entries->next;
+  while(fgets(buf, sizeof(buf), fp)){
+    back = entries;
+    entries = (Entry *)malloc(sizeof(Entry));
+    if(back != NULL) back->next = entries;
+    if(first == NULL) first = entries;
+
     entries->value = (char *)malloc(sizeof(char) * (strlen(buf) + 1));
     strcpy(entries->value, buf);
     entries->name  = _makeword(entries->value, '=');
-    entries->next = (Entry *)malloc(sizeof(Entry));
+    entries->next  = NULL;
 
     qRemoveSpace(entries->name);
     qRemoveSpace(entries->value);
-  }
-  if(entries->next == first){
-    free(entries);
-    first = NULL;
-  }
-  else{
-    free(entries->next);
-    entries->next = NULL;
   }
 
   fclose(fp);
@@ -253,7 +248,7 @@ void qfFree(Entry *first){
 ** Do    : Decode COOKIES & Save it in linked list
 **********************************************/
 int qcDecoder(void){
-  Entry *entries;
+  Entry *entries, *back;
   char *query;
   int  amount;
 
@@ -263,28 +258,24 @@ int qcDecoder(void){
   query = (char *)malloc(sizeof(char) * (strlen(getenv("HTTP_COOKIE")) + 1));
   strcpy(query, getenv("HTTP_COOKIE"));
 
-  entries = (Entry *)malloc(sizeof(Entry));
-  _cookie_first_entry = entries -> next = entries;
+  entries = back = NULL;
 
   for(amount = 0; *query; amount++){
-    entries = entries->next;
+    back = entries;
+    entries = (Entry *)malloc(sizeof(Entry));
+    if(back != NULL) back->next = entries;
+    if(_cookie_first_entry == NULL) _cookie_first_entry = entries;
+
     entries->value = _makeword(query, ';');
     entries->name  = _makeword(entries->value, '=');
-    entries->next = (Entry *)malloc(sizeof(Entry));
+    entries->next  = NULL;
+
     _decode_query(entries->name);
     _decode_query(entries->value);
     qRemoveSpace(entries->name);
   }
   free(query);
 
-  if(entries->next == _cookie_first_entry){
-    free(entries);
-    _cookie_first_entry = NULL;
-  }
-  else{
-    free(entries->next);
-    entries->next = NULL;
-  }
   return amount;
 }
 
@@ -472,6 +463,11 @@ void qPuts(int mode, char *buf){
   else {
     char *ptr, retstop, *target, *token;
     int printhtml, autolink, linkflag, ignoreflag;
+
+    /* set defaults */
+    printhtml = 1;
+    autolink  = 1;
+    target    = "_top";
 
     switch(mode){
       case 1 : {printhtml = 1, autolink = 0, target = ""; break;}

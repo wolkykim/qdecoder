@@ -7,7 +7,7 @@
 ** Programmed by 'Seung-young, Kim'                **
 **                                                 **
 ** Email : nobreak@shinan.hongik.ac.kr             **
-** Home  : http://shinan.hongik.ac.kr/~nobreak     **
+** Home  : http://cgi.hongik.ac.kr                 **
 **                                                 **
 ** Hongik University Shinan Campus                 **
 **                                                 **
@@ -35,6 +35,12 @@
              프로그래밍의 가독성과 효율을 극대화 한다.
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
+  [Version 3.4.2]
+    ** Patch functions
+    qDecoder(), qfDecoder(), qcDecoder() :
+    - Linked List 알고리즘 수정
+    ** qPuts() :
+    - 몇몇 시스템에서 warning을 일으키던 문제 수정 
 
   [Version 3.4.1]
     ** Patch functions
