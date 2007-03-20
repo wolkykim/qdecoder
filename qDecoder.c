@@ -1,11 +1,11 @@
 /*************************************************************
-** qDecoder CGI Library v5.0.1                              **
+** qDecoder CGI Library v5.0.2                              **
 **                                                          **
 **  Official distribution site : ftp://ftp.hongik.com       **
 **           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
-**                        Last updated at August 14, 1999   **
+**                        Last updated at August 18, 1999   **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **
@@ -810,12 +810,19 @@ int qSed(char *filename, FILE *fpout, char **arg) {
   if((fpin = fopen(filename, "rt")) == NULL) return 0;
 
   /* Arguments count */
-  for(argc = 0; arg[argc] != NULL; argc++);
+  if(arg == NULL) argc = 0;
+  else for(argc = 0; arg[argc] != NULL; argc++);
 
   /* Memory allocation */
-  mode  = (char *)malloc(sizeof(char) * argc);
-  name  = (char **)malloc(sizeof(char *) * argc);
-  value = (char **)malloc(sizeof(char *) * argc);
+  if(argc == 0) {
+    mode = NULL;
+    name = value = NULL;
+  }
+  else {
+    mode  = (char *)malloc(sizeof(char) * argc);
+    name  = (char **)malloc(sizeof(char *) * argc);
+    value = (char **)malloc(sizeof(char *) * argc);
+  }
 
   /* Make arguments comparision list */
   for(i = 0; i < argc; i++) {
@@ -842,7 +849,7 @@ int qSed(char *filename, FILE *fpout, char **arg) {
   /* Parsing */
   while((str = _fgetline(fpin)) != NULL) {
     for(tmp = str; *tmp != '\0'; tmp++) {
-      /* SSI invacation */
+      /* SSI invocation */
       if(!strncmp(tmp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
         char ssi_inc_file[1024], *endp;
         if((endp = strstr(tmp, SSI_INCLUDE_END)) != NULL) {
@@ -858,7 +865,7 @@ int qSed(char *filename, FILE *fpout, char **arg) {
         continue;
       }
 
-      /* Fatten Matching */
+      /* Pattern Matching */
       for(i = flag = 0; i < argc && flag == 0; i++) {
         switch(mode[i]) {
           case 's': {
@@ -885,9 +892,9 @@ int qSed(char *filename, FILE *fpout, char **arg) {
     free(name[i]);
     free(value[i]);
   }
-  free(mode);
-  free(name);
-  free(value);
+  if (mode  != NULL) free(mode);
+  if (name  != NULL) free(name);
+  if (value != NULL) free(value);
 
   fclose(fpin);
   return 1;
