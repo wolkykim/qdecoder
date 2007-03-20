@@ -60,7 +60,7 @@ clean:
 	done
 	${RM} -f config.cache config.log config.status
 
-reset:	clean
+distclean: clean
 	@for DIR in ${DIRS} .; do \
 		echo "===> Removing $${DIR}/Makefile"; \
 		(cd $${DIR}; rm -f Makefile); \

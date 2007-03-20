@@ -106,19 +106,20 @@ char      *qValue(char *format, ...);
 int       qiValue(char *format, ...);
 char      *qValueDefault(char *defstr, char *format, ...);
 char      *qValueNotEmpty(char *errmsg, char *format, ...);
+char      *qValueReplace(char *mode, char *name, char *tokstr, char *word);
 char      *qValueFirst(char *format, ...);
 char      *qValueNext(void);
 void      qPrint(void);
 void      qFree(void);
-Q_Entry     *qGetFirstEntry(void);
+Q_Entry   *qGetFirstEntry(void);
 
-Q_Entry     *qfDecoder(char *filename);
+Q_Entry   *qfDecoder(char *filename);
 char      *qfValue(Q_Entry *first, char *format, ...);
 int       qfiValue(Q_Entry *first, char *format, ...);
 void      qfPrint(Q_Entry *first);
 void      qfFree(Q_Entry *first);
 
-Q_Entry     *qsDecoder(char *str);
+Q_Entry   *qsDecoder(char *str);
 char      *qsValue(Q_Entry *first, char *format, ...);
 int       qsiValue(Q_Entry *first, char *format, ...);
 void      qsPrint(Q_Entry *first);
@@ -134,7 +135,7 @@ void      qSetCookie(char *name, char *value, int exp_days, char *path, char *do
 
 int       qAwkOpen(char *filename, char separator);
 int       qAwkNext(char array[][256]);
-void      qAwkClose(void);
+int       qAwkClose(void);
 
 int       qSedStr(char *srcstr, FILE *fpout, char **arg);
 int       qSedFile(char *filename, FILE *fpout, char **arg);
@@ -154,6 +155,8 @@ void      qPuts(int mode, char *buf);
 void      qError(char *format, ...);
 void      qErrorLog(char *filename);
 void      qErrorContact(char *msg);
+
+void      qReset(void);
 
 void      qCGIenv(Q_CGIenv *env);
 char      *qGetEnv(char *envname, char *nullstr);
@@ -179,6 +182,7 @@ int       qUpdateCounter(char *filename, int number);
 
 int       qCheckEmail(char *email);
 int       qCheckURL(char *url);
+
 char      *qRemoveSpace(char *str);
 
 int       qStr09AZaz(char *str);
@@ -188,6 +192,7 @@ char      *qStristr(char *big, char *small);
 int       qStricmp(char *s1, char *s2);
 int       qStrincmp(char *s1, char *s2, size_t len);
 char      *qitocomma(int value);
+char      *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
 
 #ifdef __cplusplus
 }

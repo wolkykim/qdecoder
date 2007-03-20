@@ -24,6 +24,7 @@ qDecoder On-line Reference
         o qiValue()
         o qValueDefault()
         o qValueNotEmpty()
+        o qValueReplace()
         o qValueFirst()
         o qValueNext()
         o qGetFirstEntry()
@@ -47,6 +48,7 @@ qDecoder On-line Reference
         o qStristr()
         o qStricmp()
         o qitocomma()
+        o qStrReplace()
 
    * 검색어 관련 함수군
         o qArgMake()
@@ -97,6 +99,7 @@ qDecoder On-line Reference
         o qCGIname()
         o qDownload()
         o qDownloadMime()
+        o qReset()
 
   ------------------------------------------------------------------------
 
@@ -208,7 +211,8 @@ configure후 make를 통하는데, configure는 해당 시스템의 컴파일러 환경과
 노트) 컴파일에 의해 생성된 라이브러리와 오브젝트를 지우고 초기 배포판
 생태를 유지하고자 한다면 ``make clean''을 입력하기 바란다. 이때 ``make
 clean''은 편의상 configure에 의해 생성된 Makefile은 제거하지 않는데, 초기
-배포판과 완전 동일한 환경을 만들고자 한다면 ``make reset''을 사용하면 된다.
+배포판과 완전 동일한 환경을 만들고자 한다면 ``make distclean''을 사용하면
+된다.
 
 설치
 
@@ -511,7 +515,7 @@ Example:
 qDecoder()
 
 Syntax: int qDecoder(void);
-Function: 인코딩된 Query String을 해석하여 Linked List에 저장
+Function: 인코딩된 Query String을 해석하여 linked-list에 저장
 Return: 성공시 전달받은 인자의 갯수, 에러시 -1
 Example:
 
@@ -615,7 +619,7 @@ Example:
 qValue()
 
 Syntax: char *qValue(char *format, ...);
-Function: Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌.
+Function: Linked-list에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌.
 qDecoder()가 사전에 호출되지 않았다면 내부적으로 qDecoder 호출.
 Return: 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL
 Note: qValue()는 qDecoder()에 의해 생성된 쿼리 인덱스의 포인터만을
@@ -665,11 +669,90 @@ qValueNotEmpty()
 
 Syntax: char *qValueNotEmpty(char *errmsg, char *format, ...);
 Function: 쿼리가 없거나 공백 문자열("")이 복귀될 시 qError()함수를 사용해
-지정된 에러메시지를 출력한다.
+지정된 에러메세지를 출력한다.
 Return: NULL에 대한 오류처리가 내장된 것을 제외하곤 qValue()와 같다.
 Example:
 
      value = qValueNotEmpty("지역명을 입력해 주세요", "COUNTRY");
+
+  ------------------------------------------------------------------------
+
+qValueReplace()
+
+Syntax: char *qValueReplace(char *mode, char *name, char *tokstr, char
+*word);
+Function: Linked-list 문자열에 대한 문자열 및 토큰 치환을 한다.
+Return: 치환된 문자열 포인터.
+Example:
+
+     qValueReplace()는 기본적으로 qStrReplace()의 Wrapping 함수이다.
+     차이점은 소스 문자열을 쿼리 값(name에 대한 linked-list의
+     value)으로 한다는 점이며, 그 변환이 linked-list 자체에 직접적으로
+     가해질 수도 있음에 있다.
+
+     따라서 qValueReplace()의 인자 사용법은 qStrReplace()와 기본적으로
+     동일하다.
+
+     'name' 인자는 소스 문자열로 사용할 linked-list의 쿼리명이며 해당
+     value을 치환시 사용할 소스 문자열로 한다.
+
+     'mode' 인자는 "sr"와 같이 두개의 분리된 문자로 구성된 문자열이다.
+
+     첫번째 문자는 치환방법을 정의하며 't'나 's'가 위치할 수 있다.
+     't'는 [t]oken을 의미하며 tokstr 문자열의 각 문자를 토큰으로 소스
+     문자열 (주어진 name에 대한 linked-list의 value 문자열)을
+     비교하여, 매칭이 되는 문자를 word 문자열로 치환한다. 's'는
+     [s]tring을 의미하여 tokstr 스트링 자체를 하나의 토큰으로 하여
+     소스 스트링내에 나타나는 tokstr 매칭 문자열을 word 문자열로
+     치환한다.
+
+     두번째 문자는 치환된 문자열에 대한 기록 형태를 나타내며 'n'과
+     'r'이 사용될 수 있다. 'n'은 [n]ew를 나타내며 치환된 결과 문자열을
+     새로운 메모리 공간에 저장하여 해당 포인터를 리턴하게 한다. 따라서
+     소스 스트링 linked-list 자체는 원상태가 유지되고 해당 메모리는
+     사용자 측면에서 free() 되어야 한다. 'r'은 [r]eplace를 의미하며
+     치환 결과를 linked-list 자체에 덮어 씀을 의미한다. 이것은
+     내부적으로 메모리 재할당을 통해 이루어 진다.
+
+     결과적으로 'mode' 인자는 다음과 같이 4개의 조합 가능한 경우를
+     갖는다.
+
+            Mode "tn" : [t]oken 치환 & 새로운 공간에 결과를 담아 복귀
+            Mode "tr" : [t]oken 치환 & linked-list 자체를 수정
+            Mode "sn" : [s]tring 치환 & 새로운 공간에 결과를 담아 복귀
+            Mode "sr" : [s]tring 치환 & linked-list 자체를 수정
+
+          Example)
+            char *retstr, *mode;
+            mode = qValue("mode");
+            qContentType("text/plain");
+
+            printf("before %s : srcstr = %s\n", mode, qValue("srcstr"));
+            retstr = qValueReplace(mode, "srcstr", "hello", "[?]");
+            printf("after  %s : srcstr = %s\n", mode, qValue("srcstr"));
+            printf("            retstr = %s\n\n", retstr);
+            if(mode[1] == 'n') free(retstr);
+            return 0;
+
+          Result 'tn')
+            before tn : srcstr = hello world
+            after  tn : srcstr = hello world
+                        retstr = [?][?][?][?][?] w[?]r[?]d
+
+          Result 'tr')
+            before tr : srcstr = hello world
+            after  tr : srcstr = [?][?][?][?][?] w[?]r[?]d
+                        retstr = [?][?][?][?][?] w[?]r[?]d
+
+          Result 'sn')
+            before sn : srcstr = hello world
+            after  sn : srcstr = hello world
+                        retstr = [?] world
+
+          Result 'sr')
+            before sr : srcstr = hello world
+            after  sr : srcstr = [?] world
+                        retstr = [?] world
 
   ------------------------------------------------------------------------
 
@@ -702,8 +785,8 @@ Example:
 qGetFirstEntry()
 
 Syntax: Q_Entry *qGetFirstEntry(void);
-Function: Linked List의 첫번째 Q_Entry 포인터를 복귀한다. qDecoder()에 의해
-사용되는 Linked List를 직접 조작하고자 할때 루트 포인터를 얻기위해
+Function: Linked-list의 첫번째 Q_Entry 포인터를 복귀한다. qDecoder()에 의해
+사용되는 linked-list를 직접 조작하고자 할때 루트 포인터를 얻기위해
 사용한다.
 Example:
 
@@ -756,7 +839,7 @@ Example:
 qcDecoder()
 
 Syntax: int qcDecoder(void);
-Function: 쿠키를 해석하여 Linked List에 저장
+Function: 쿠키를 해석하여 linked-list에 저장
 Return: 성공시 전달받은 인자의 갯수, 에러시 -1
 Note:
 Example:
@@ -769,7 +852,7 @@ Example:
 qcValue()
 
 Syntax: char *qcValue(char *format, ...);
-Function: Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌.
+Function: Linked-list에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌.
 Return: 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL.
 Note: qcDecoder()가 사전에 호출이 안되었으면, 자동 수행.
 Example:
@@ -782,7 +865,7 @@ Example:
 qciValue()
 
 Syntax: int qciValue(char *format, ...);
-Function: Linked List에서 변수명에대한 값(숫자 문자열)을 찾아 정수로 변환후
+Function: Linked-list에서 변수명에대한 값(숫자 문자열)을 찾아 정수로 변환후
 넘겨줌.
 Return: 성공시 변수값(숫자 문자열)에 대한 정수값. 변수명이 존재하지 않거나
 변환 불가능시 0.
@@ -863,7 +946,6 @@ Syntax: int qStr09AZaz(char *str);
 Function: 문자열이 '0' - '9', 'A' - 'Z', 'a' - 'z'로 이루어졌는지 판별한다.
 
 Return: 조건에 부합하면 1, 오류시 0
-Note:
 Example:
 
      if(qStr09AZaz("abc1234") == 1) printf("True");
@@ -875,6 +957,12 @@ qStrupr()
 Syntax: char *qStrupr(char *str);
 Function: 인자로 주어진 문자열을 모두 대문자로 변환한다.
 Return: 해당 문자열의 포인터
+Example:
+
+     char *str;
+     str = strdup("Hello World");
+     qStrupr(str);
+
   ------------------------------------------------------------------------
 
 qStristr()
@@ -882,6 +970,10 @@ qStristr()
 Syntax: char *qStristr(char *big, char *small);
 Function: strstr() 함수와 같으나, 대소문자를 구분하지 않고 비교한다.
 Return: strstr()과 같음
+Example:
+
+     printf("%s", qStristr("Hello World", "WORLD"));
+
   ------------------------------------------------------------------------
 
 qStricmp()
@@ -889,6 +981,11 @@ qStricmp()
 Syntax: int qStricmp(char *s1, char *s2);
 Function: strcmp() 함수와 같으나, 대소문자를 구분하지 않는다.
 Return: strcmp()와 같음
+Example:
+
+     if(!qStricmp("Hello", "HELLO")) printf("Equal");
+     else printf("Differ");
+
   ------------------------------------------------------------------------
 
 qitocomma()
@@ -896,12 +993,94 @@ qitocomma()
 Syntax: char *qitocomma(int value);
 Function: 숫자를 콤마 문자열로 변환한다.
 Return: 문자로 변환된 스트링 포인터.
-Note: 복귀 스트링은 함수 내부에 static 선언되어 있기때문에, qitocomma()가
-수행될 때 마다 그 값이 바뀐다.
+Note: 복귀 스트링 포인터는 사용자가 매번 free()하는 번거로움을 없애기 위해
+메모리를 할당하여 반환치 않고 함수 내부에 static 선언되어 있다. 따라서
+qitocomma()는 매번 동일한 스트링 포인터를 반환하게 되며 함수가 수행될 때
+마다 이전 값이 지워짐에 유의하여야 한다.
 Example:
 
-     printf("Price = %s", qitocomma(1234567));
-     Price = 1,234,567
+     1) (O) 바른 사용 예, 단일 인자 사용시
+        printf("Price = %s", qitocomma(1234567));
+        Price = 1,234,567
+
+     2) (O) 바른 사용 예, 복수 인자 사용시
+        char a[14+1], b[14+1];
+        strcpy(a, qitocomma(1234));
+        strcpy(b, qitocomma(5678));
+        printf("Price = %s + %s\n", a, b);
+        Price = 1,234 + 5,678
+
+     3) (X) 잘못된 사용예
+        printf("%s %s\n", qitocomma(1234), qitocomma(5678));
+        Price = 1,234 + 1,234
+
+  ------------------------------------------------------------------------
+
+qStrReplace()
+
+Syntax: char *qStrReplace(char *mode, char *srcstr, char *tokstr, char
+*word);
+Function: 문자열에 대한 문자열 및 토큰 치환을 한다.
+Return: 치환된 스트링 포인터.
+Example:
+
+     'mode' 인자는 "sr"와 같이 두개의 분리된 문자로 구성된 문자열이다.
+
+     첫번째 문자는 치환방법을 정의하며 't'나 's'가 위치할 수 있다.
+     't'는 [t]oken을 의미하며 tokstr 문자열의 각 문자를 토큰으로 소스
+     문자열 srcstr을 비교하여, 매칭이 되는 문자를 word 문자열로
+     치환한다. 's'는 [s]tring을 의미하여 tokstr 스트링 자체를 하나의
+     토큰으로 하여 소스 스트링내에 나타나는 tokstr 매칭 문자열을 word
+     문자열로 치환한다.
+
+     두번째 문자는 치환된 문자열에 대한 기록 형태를 나타내며 'n'과
+     'r'이 사용될 수 있다. 'n'은 [n]ew를 나타내며 치환된 결과 문자열을
+     새로운 메모리 공간에 저장하여 해당 포인터를 리턴하게 한다. 따라서
+     소스 스트링 자체는 원상태가 유지되고 해당 메모리는 사용자
+     측면에서 free() 되어야 한다. 'r'은 [r]eplace를 의미하며 치환
+     결과를 srcstr에 덮어 씀을 의미한다. 이때 srcstr이 충분히
+     여유있다고 가정하므로(편리성의 이유로 메모리 재할당을 하지 않음)
+     [r]eplace 모드를 사용하고자 할 때에는 이 점에 유의하여야 한다.
+
+     결과적으로 'mode' 인자는 다음과 같이 4개의 조합 가능한 경우를
+     갖는다.
+
+            Mode "tn" : [t]oken 치환 & 새로운 공간에 결과를 담아 복귀
+            Mode "tr" : [t]oken 치환 & linked-list 자체를 수정
+            Mode "sn" : [s]tring 치환 & 새로운 공간에 결과를 담아 복귀
+            Mode "sr" : [s]tring 치환 & linked-list 자체를 수정
+
+          Example)
+            int  i;
+            char srcstr[256], *retstr;
+            char mode[4][2+1] = {"tn", "tr", "sn", "sr"};
+
+            for(i = 0; i < 4; i++) {
+              strcpy(srcstr, "Welcome to the qDecoder project.");
+              printf("before %s : srcstr = %s\n", mode[i], srcstr);
+
+              retstr = qStrReplace(mode[i], srcstr, "the", "_");
+              printf("after  %s : srcstr = %s\n", mode[i], srcstr);
+              printf("            retstr = %s\n\n", retstr);
+              if(mode[i][1] == 'n') free(retstr);
+            }
+
+          Result)
+            before tn : srcstr = Welcome to the qDecoder project.
+            after  tn : srcstr = Welcome to the qDecoder project.
+                        retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+
+            before tr : srcstr = Welcome to the qDecoder project.
+            after  tr : srcstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+                        retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+
+            before sn : srcstr = Welcome to the qDecoder project.
+            after  sn : srcstr = Welcome to the qDecoder project.
+                        retstr = Welcome to _ qDecoder project.
+
+            before sr : srcstr = Welcome to the qDecoder project.
+            after  sr : srcstr = Welcome to _ qDecoder project.
+                        retstr = Welcome to _ qDecoder project.
 
   ------------------------------------------------------------------------
 
@@ -1102,7 +1281,6 @@ qFileSize()
 Syntax: long qFileSize(char *filename);
 Function: 파일의 용량을 byte 단위로 돌려줌
 Return: 성공 파일의 용량, 파일 없음 -1
-Note:
 Example:
 
      long size;
@@ -1114,7 +1292,7 @@ Example:
 
 qfDecoder()
 
-     ## 아래와 같은 형식의 화일을 읽어 Linked List에 저장한다.
+     ## 아래와 같은 형식의 화일을 읽어 linked-list에 저장한다.
      ---- test.conf ----
      # this is comment.
      name  = Kim
@@ -1123,8 +1301,8 @@ qfDecoder()
      -------------------
 
 Syntax: Q_Entry *qfDecoder(char *filename);
-Function: 화일을 읽어 Linked List에 저장한다. (화일의 행길이 제약없음)
-Return: Linked List의 첫번째 레코드 포인터, 에러시 NULL.
+Function: 화일을 읽어 linked-list에 저장한다. (화일의 행길이 제약없음)
+Return: Linked-list의 첫번째 레코드 포인터, 에러시 NULL.
 Note: 샵(#)으로 시작되는 행은 주석으로 처리해 해석하지 않는다.
 Example:
 
@@ -1176,7 +1354,7 @@ Example:
 
      qfFree(FirstRecord);
 
-다음과 같은 형식의 문자열을 읽어 Linked List에 저장한다.
+다음과 같은 형식의 문자열을 읽어 linked-list에 저장한다.
 
      ---- test.conf ----
      # this is comment.
@@ -1190,8 +1368,8 @@ Example:
 qsDecoder()
 
 Syntax: Q_Entry *qsDecoder(char *str);
-Function: 문자열을 읽어 Linked List에 저장한다. (화일의 행길이 제약없음)
-Return: Linked List의 첫번째 레코드 포인터, 에러시 NULL.
+Function: 문자열을 읽어 linked-list에 저장한다. (화일의 행길이 제약없음)
+Return: Linked-list의 첫번째 레코드 포인터, 에러시 NULL.
 Note:
 Example:
 
@@ -1303,6 +1481,10 @@ qAwkOpen()
 Syntax: int qAwkOpen(char *filename, char separator);
 Function: 파일을 열고, 구분자를 설정한다.
 Return: 성공시 1, 파일을 열 수 없을경우 0
+Example:
+
+     qAwkOpen("/etc/passwd", ':');
+
   ------------------------------------------------------------------------
 
 qAwkNext()
@@ -1322,8 +1504,13 @@ Example:
 
 qAwkClose()
 
-Syntax: void qAwkClose(void);
+Syntax: int qAwkClose(void);
+Return: 성공시 1, 열려있는 파일이 없을때 0.
 Function: 오픈된 파일을 닫는다.
+Example:
+
+     qAwkClose();
+
   ------------------------------------------------------------------------
 
 qSedFile()
@@ -1344,57 +1531,58 @@ Note: 본 함수은 Unix 시스템의 Sed와 SSI 를 포괄적으로 지원하도록 확장될
 예정이다.
 Example:
 
-     qSedFile를 활용하면, 프로그램내에 HTML 코드를 전혀 포함하지 않고도
-     CGI 프로그래밍을 할 수 있다. UI와 관련된 디버깅 시간을 대폭 줄일
-     수 있고, 디자인과 개발의 분리작업이 가능하며, 패키지 제품의 경우
-     사용자 측면에서 손쉽게 커스터 마이징이 가능할 수 있는등의 효용성을
-     동반할 수 있다.
+     qSedFile를 활용하면, 프로그램내에 HTML 코드를 전혀 포함하지
+     않고도 CGI 프로그래밍을 할 수 있다. UI와 관련된 디버깅 시간을
+     대폭 줄일 수 있고, 디자인과 개발의 분리작업이 가능하며, 패키지
+     제품의 경우 사용자 측면에서 손쉽게 커스터 마이징이 가능할 수
+     있는등의 효용성을 동반할 수 있다.
 
      filename은 입력(대상)파일이고, fpout은 출력 스트림을 의미한다.
-     결과를 파일로 출력을 하고 자 할경우엔 파일을 "wt"로 열어,
-     해당 파일 포인터를 건네어 주면 되고, 화면 출력하고자 한다면,
-     그냥 stdout 을 지정하면 된다.
+     결과를 파일로 출력을 하고 자 할경우엔 파일을 "wt"로 열어, 해당
+     파일 포인터를 건네어 주면 되고, 화면 출력하고자 한다면, 그냥
+     stdout 을 지정하면 된다.
 
      인자 목록은 다음과 같은 형식을 취한다.
 
      "명령+구분자+지정문자열+구분자+교체문자열+구분자"
 
-     ex) char *arg[3 + 1] = { "s/${NAME}/Seung-young Kim/",
-                              "s%${EMAIL}%nobreak@hongik.com%",
-                              "s:${HOBBY}:Playing with Ji-su Hwang:",
-                              NULL };
+          ex) char *arg[3 + 1] = { "s/${NAME}/Seung-young Kim/",
+                                   "s%${EMAIL}%nobreak@hongik.com%",
+                                   "s:${HOBBY}:Playing with Ji-su Hwang:",
+                                   NULL };
 
      명령은 현재 's' 만이 지원되며, 이는 교체(replacement)를 의미한다.
      구분자는 1바이트의 특정 문자열로 사용자가 임의 지정하면 된다.
      보통 구분자로는 '/'나 '%'를 많이 사용하지만, 문자열내에 해당
-     캐릭터가 나올 경우엔 '#', 'A'등의 임의 문자열을 사용하기
-     바란다. 지정 문자열도 임의대로 지정이 가능하지만, 가시성과
-     원치않는 교체를 막기위해 특별한 이유가 없다면, ${STING}과 같이
+     캐릭터가 나올 경우엔 '#', 'A'등의 임의 문자열을 사용하기 바란다.
+     지정 문자열도 임의대로 지정이 가능하지만, 가시성과 원치않는
+     교체를 막기위해 특별한 이유가 없다면, ${STING}과 같이
      쉘스크립트의 변수 명명법을 따르도록 하라.
 
      앞의 streamedit.html.in 파일을 위의 인자 목록으로 다음과 같이
      수행하였을 경우의 출력을 보자.
 
-     ex) qSedFile("streamedit.html.in", stdout, arg);
+          ex) qSedFile("streamedit.html.in", stdout, arg);
 
-     Hi "Seung-young Kim" <nobreak@hongik.com>.
-     <p>You got a really cool hobby.
-     <br>I'm sure that your hobby, Playing with Ji-su Hwang,
-     can make your life more compatible.
+          Hi "Seung-young Kim" <nobreak@hongik.com>.
+          <p>You got a really cool hobby.
+          <br>I'm sure that your hobby, Playing with Ji-su Hwang,
+          can make your life more compatible.
 
-     SSI 문법을 해석한다. (현재는 <!--#include file="FILEPATH"--> 만이 지원됨)
-     문서내 다음과 같은 라인이 있을 경우, 해당 문서를 포함하여 출력되며,
-     포함되는 문서에 대해서도 교체및 SSI 기능은 그대로 유효하다. (Cascading)
+     SSI 문법을 해석한다. (현재는 <!--#include file="FILEPATH"--> 만이
+     지원됨) 문서내 다음과 같은 라인이 있을 경우, 해당 문서를 포함하여
+     출력되며, 포함되는 문서에 대해서도 교체및 SSI 기능은 그대로
+     유효하다. (Cascading)
 
-     <!--#include file="streamedit.html.in"-->
+          <!--#include file="streamedit.html.in"-->
 
-     주의) include 되는 파일은 CGI가 실행되는 위치를 기준으로 상대경로 표기
-           하거나, 시스템 절대경로 표기한다.
+     주의) include 되는 파일은 CGI가 실행되는 위치를 기준으로 상대경로
+     표기 하거나, 시스템 절대경로 표기한다.
 
-     문자열 교체를 하지않고, SSI 기능만을 사용코자 할 경우엔 다음과 같이
-     arg 인자로 NULL 값을 전달한다.
+     문자열 교체를 하지않고, SSI 기능만을 사용코자 할 경우엔 다음과
+     같이 arg 인자로 NULL 값을 전달한다.
 
-     ex) qSedFile("streamedit.html.in", stdout, NULL);
+          ex) qSedFile("streamedit.html.in", stdout, NULL);
 
   ------------------------------------------------------------------------
 
@@ -1569,3 +1757,17 @@ Note: 본 함수는 해당 파일을 웹상에 직접 링크하였을 때와 동일한 결과를
 Example:
 
      qDownload("/home/nobreak/myprg.gif", "image/gif");
+
+  ------------------------------------------------------------------------
+
+qReset()
+
+Syntax: void qReset(void);
+Function: qDecoder를 초기화 한다.
+Note: Daemon 형태의 반복적 프로그램을 작성하거나 qDecoder를 새롭게 초기화
+하고자 할 때 본 함수가 사용될 수 있다. qReset()은 linked-list를 포함하여
+자체적으로 할당한 메모리를 모두 반환하고 내부 정적 변수들을 초기 상태로
+환원시키는 작업을 한다.
+Example:
+
+     qReset();

@@ -59,6 +59,7 @@ static void _EntryFree(Q_Entry *first);
 ** Static Values Definition used only internal
 **********************************************/
 
+static int _content_type_flag = 0;
 static Q_Entry *_first_entry = NULL;
 static Q_Entry *_cookie_first_entry = NULL;
 
@@ -77,11 +78,11 @@ static char _multi_last_key[1024];
 
 /**********************************************
 ** Usage : qDecoder();
-** Return: Success number of values, Fail -1
-** Do    : Decode Query & Save it in linked list
-**         It doesn't care Method
+** Return: Success number of values, Fail -1.
+** Do    : Decode Query & Save it in linked list.
+**         It doesn't care Method.
 **********************************************/
-int qDecoder(void){
+int qDecoder(void) {
   int  amount = -1;
   char *content_type;
 
@@ -108,8 +109,8 @@ int qDecoder(void){
   return amount;
 }
 
-/* For decode application/s-www-form-urlencoded, used by qDecoder() */
-static int _parse_urlencoded(void){
+/* For decode application/x-www-form-urlencoded, used by qDecoder() */
+static int _parse_urlencoded(void) {
   Q_Entry *entries, *back;
   char *query;
   int  amount;
@@ -118,10 +119,10 @@ static int _parse_urlencoded(void){
   entries = back = NULL;
 
   for(amount = 0, loop = 1; loop <= 2; loop++) {
-    if (loop == 1 ) query = _get_query("GET");
+    if(loop == 1 ) query = _get_query("GET");
     else if(loop == 2 ) query = _get_query("POST");
     else break;
-    for(; query && *query; amount++){
+    for(; query && *query; amount++) {
       back = entries;
       entries = (Q_Entry *)malloc(sizeof(Q_Entry));
       if(back != NULL) back->next = entries;
@@ -141,11 +142,11 @@ static int _parse_urlencoded(void){
 }
 
 /* For fetch query used by _parse_urlencoded() */
-static char *_get_query(char *method){
+static char *_get_query(char *method) {
   char *query;
   int cl, i;
 
-  if(!strcmp(method, "GET")){
+  if(!strcmp(method, "GET")) {
     if(getenv("QUERY_STRING") == NULL) return NULL;
     query = strdup(getenv("QUERY_STRING"));
     /* SSI query handling */
@@ -160,7 +161,7 @@ static char *_get_query(char *method){
 
     return query;
   }
-  if(!strcmp(method, "POST")){
+  if(!strcmp(method, "POST")) {
     if(getenv("REQUEST_METHOD") == NULL) return NULL;
     if(strcmp("POST", getenv("REQUEST_METHOD")))return NULL;
     if(getenv("CONTENT_LENGTH") == NULL) qError("_get_query(): Your browser sent a non-HTTP compliant message.");
@@ -200,7 +201,7 @@ static int _parse_multipart_data(void) {
 
   /* For parse GET method */
   query = _get_query("GET");
-  for(amount = 0; query && *query; amount++){
+  for(amount = 0; query && *query; amount++) {
     back = entries;
     entries = (Q_Entry *)malloc(sizeof(Q_Entry));
     if(back != NULL) back->next = entries;
@@ -264,7 +265,7 @@ static int _parse_multipart_data(void) {
 
   if(strncmp(buf, boundary, boundarylen) != 0) qError("_parse_multipart_data(): String format invalid.");
 
-  for(finish = 0; finish != 1; amount++){
+  for(finish = 0; finish != 1; amount++) {
     /* get name field */
     _fgetstring(buf, sizeof(buf), stdin);
     name = (char *)malloc(sizeof(char) * (strlen(buf) - strlen("Content-Disposition: form-data; name=\"") + 1));
@@ -296,7 +297,7 @@ static int _parse_multipart_data(void) {
     /* skip header */
     for(;;) {
       _fgetstring(buf, sizeof(buf), stdin);
-      if (!strcmp(buf, "\r\n")) break;
+      if(!strcmp(buf, "\r\n")) break;
     }
 
     /* get value field */
@@ -401,12 +402,12 @@ static int _parse_multipart_data(void) {
 }
 
 /**********************************************
-** Usage : qValue(Query Name);
-** Return: Success pointer of value string, Fail NULL
-** Do    : Find value string pointer
-**         It find value in linked list
+** Usage : qValue(query name);
+** Return: Success pointer of value string, Fail NULL.
+** Do    : Find value string pointer.
+**         It find value in linked list.
 **********************************************/
-char *qValue(char *format, ...){
+char *qValue(char *format, ...) {
   char name[1024];
   int status;
   va_list arglist;
@@ -421,11 +422,11 @@ char *qValue(char *format, ...){
 }
 
 /**********************************************
-** Usage : qiValue(Query Name);
-** Return: Success integer of value string, Fail 0
-** Do    : Find value string pointer and convert to integer
+** Usage : qiValue(query name);
+** Return: Success integer of value string, Fail 0.
+** Do    : Find value string pointer and convert to integer.
 **********************************************/
-int qiValue(char *format, ...){
+int qiValue(char *format, ...) {
   char name[1024];
   int status;
   va_list arglist;
@@ -440,12 +441,11 @@ int qiValue(char *format, ...){
 }
 
 /**********************************************
-** Usage : qValueDefault(Default String, Query Name);
+** Usage : qValueDefault(default string, query name);
 ** Return: Success pointer of value string, Fail using default string.
-** Do    : If the query is not found, default string is used
-**         instead.
+** Do    : If the query is not found, default string is used instead.
 **********************************************/
-char *qValueDefault(char *defstr, char *format, ...){
+char *qValueDefault(char *defstr, char *format, ...) {
   char name[1024];
   int status;
   va_list arglist;
@@ -453,7 +453,7 @@ char *qValueDefault(char *defstr, char *format, ...){
 
   va_start(arglist, format);
   status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValueNotEmpty(): Message is too long or invalid");
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValueDefault(): Message is too long or invalid");
   va_end(arglist);
 
   if(_first_entry == NULL) qDecoder();
@@ -463,13 +463,13 @@ char *qValueDefault(char *defstr, char *format, ...){
 }
 
 /**********************************************
-** Usage : qValueNotEmpty(Error Message, Query Name);
+** Usage : qValueNotEmpty(error message, query name);
 ** Return: Success pointer of value string, Fail error message.
 ** Do    : Find value string pointer which is not empty and NULL.
 **         When the query is not found or the value string is
 **         empty, error message will be shown using qError().
 **********************************************/
-char *qValueNotEmpty(char *errmsg, char *format, ...){
+char *qValueNotEmpty(char *errmsg, char *format, ...) {
   char name[1024];
   int status;
   va_list arglist;
@@ -488,11 +488,56 @@ char *qValueNotEmpty(char *errmsg, char *format, ...){
 }
 
 /**********************************************
-** Usage : qValueFirst(Query Name);
-** Return: Success pointer of first value string, Fail NULL
-** Do    : Find first value string pointer
+** Usage : qValueReplace(mode, query name, token string, word);
+** Return: String pointer which is new or replaced.
+** Do    : Replace string or tokens as word from linked list
+**         with given mode.
+**
+** Refer the description of qStrReplace() for more detail.
 **********************************************/
-char *qValueFirst(char *format, ...){
+char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
+  Q_Entry *entries;
+  char *retstr, *repstr, method, memuse, newmode[2+1];
+
+  if(_first_entry == NULL) qDecoder();
+
+  if(strlen(mode) != 2) qError("qValueReplace(): Unknown mode \"%s\".", mode);
+  method = mode[0], memuse = mode[1];
+  newmode[0] = method, newmode[1] = 'n', newmode[2] = '\0';
+
+  if(method != 't' && method != 's') qError("qValueReplace(): Unknown mode \"%s\".", mode);
+  if(memuse == 'n') { /* new */
+    if((repstr = _EntryValue(_first_entry, name)) != NULL) {
+      retstr = qStrReplace(newmode, repstr, tokstr, word);
+    }
+    else retstr = NULL;
+  }
+  else if(memuse == 'r') { /* replace */
+    /* To support multiful queries, it searches whole list and convert all of
+       matched ones due to the possibility of duplicated query name.
+       So when you need to do this replacement for duplicated query name,
+       you can call this once before qValueFirst(). */
+    for(retstr = NULL, entries = _first_entry; entries; entries = entries->next) {
+      if(!strcmp(name, entries->name)) {
+    	repstr = qStrReplace(newmode, entries->value, tokstr, word);
+        free(entries->value);
+    	entries->value = repstr;
+    	if(retstr == NULL) retstr = repstr; /* To catch first matched one */
+      }
+    }
+  }
+  else qError("qValueReplace(): Unknown mode \"%s\".", mode);
+
+  /* Return the value of first matched one */
+  return retstr;
+}
+
+/**********************************************
+** Usage : qValueFirst(query name);
+** Return: Success pointer of first value string, Fail NULL.
+** Do    : Find first value string pointer.
+**********************************************/
+char *qValueFirst(char *format, ...) {
   int status;
   va_list arglist;
 
@@ -509,13 +554,13 @@ char *qValueFirst(char *format, ...){
 
 /**********************************************
 ** Usage : qValueNext();
-** Return: Success pointer of next value string, Fail NULL
-** Do    : Find next value string pointer
+** Return: Success pointer of next value string, Fail NULL.
+** Do    : Find next value string pointer.
 **********************************************/
 char *qValueNext(void) {
   Q_Entry *entries;
 
-  for(entries = _multi_last_entry; entries; entries = entries->next){
+  for(entries = _multi_last_entry; entries; entries = entries->next) {
     if(!strcmp(_multi_last_key, entries->name)) {
       _multi_last_entry = entries->next;
       return (entries->value);
@@ -528,38 +573,39 @@ char *qValueNext(void) {
 }
 
 /**********************************************
-** Usage : qPrint(Pointer of the first Entry);
-** Do    : Print all parsed values & names for debugging
+** Usage : qPrint(pointer of the first Entry);
+** Do    : Print all parsed values & names for debugging.
 **********************************************/
-void qPrint(void){
+void qPrint(void) {
   if(_first_entry == NULL) qDecoder();
   _EntryPrint(_first_entry);
 }
 
 /**********************************************
-** Usage : qFree(Pointer of the first Entry);
-** Do    : Make free of linked list memory
+** Usage : qFree(pointer of the first Entry);
+** Do    : Make free of linked list memory.
 **********************************************/
-void qFree(void){
+void qFree(void) {
  _EntryFree(_first_entry);
+ _first_entry = NULL;
 }
 
 /**********************************************
 ** Usage : qGetFirstEntry();
-** Do    : Return _first_entry;
+** Do    : Return _first_entry.
 **********************************************/
-Q_Entry *qGetFirstEntry(void){
+Q_Entry *qGetFirstEntry(void) {
   if(_first_entry == NULL)qDecoder();
   return _first_entry;
 }
 
 /**********************************************
 ** Usage : qfDecoder(filename);
-** Return: Success pointer of the first entry, Fail NULL
-** Do    : Save file into linked list
-           # is used for comments
+** Return: Success pointer of the first entry, Fail NULL.
+** Do    : Save file into linked list.
+           # is used for comments.
 **********************************************/
-Q_Entry *qfDecoder(char *filename){
+Q_Entry *qfDecoder(char *filename) {
   FILE  *fp;
   Q_Entry *first, *entries, *back;
   char  *buf;
@@ -569,7 +615,7 @@ Q_Entry *qfDecoder(char *filename){
 
   first = entries = back = NULL;
 
-  while((buf = qfGetLine(fp)) != NULL){
+  while((buf = qfGetLine(fp)) != NULL) {
     qRemoveSpace(buf);
     if((buf[0] == '#') || (buf[0] == '\0')) continue;
 
@@ -592,7 +638,7 @@ Q_Entry *qfDecoder(char *filename){
   return first;
 }
 
-char *qfValue(Q_Entry *first, char *format, ...){
+char *qfValue(Q_Entry *first, char *format, ...) {
   char name[1024];
   int status;
   va_list arglist;
@@ -605,7 +651,7 @@ char *qfValue(Q_Entry *first, char *format, ...){
   return _EntryValue(first, name);
 }
 
-int qfiValue(Q_Entry *first, char *format, ...){
+int qfiValue(Q_Entry *first, char *format, ...) {
   char name[1024];
   int status;
   va_list arglist;
@@ -618,21 +664,21 @@ int qfiValue(Q_Entry *first, char *format, ...){
   return _EntryiValue(first, name);
 }
 
-void qfPrint(Q_Entry *first){
+void qfPrint(Q_Entry *first) {
   _EntryPrint(first);
 }
 
-void qfFree(Q_Entry *first){
+void qfFree(Q_Entry *first) {
   _EntryFree(first);
 }
 
 /**********************************************
 ** Usage : qsDecoder(string);
-** Return: Success pointer of the first entry, Fail NULL
-** Do    : Save string into linked list
-           # is used for comments
+** Return: Success pointer of the first entry, Fail NULL.
+** Do    : Save string into linked list.
+           # is used for comments.
 **********************************************/
-Q_Entry *qsDecoder(char *str){
+Q_Entry *qsDecoder(char *str) {
   Q_Entry *first, *entries, *back;
   char  *org, *buf, *offset;
   int  eos;
@@ -669,7 +715,7 @@ Q_Entry *qsDecoder(char *str){
   return first;
 }
 
-char *qsValue(Q_Entry *first, char *format, ...){
+char *qsValue(Q_Entry *first, char *format, ...) {
   char name[1024];
   int status;
   va_list arglist;
@@ -682,7 +728,7 @@ char *qsValue(Q_Entry *first, char *format, ...){
   return _EntryValue(first, name);
 }
 
-int qsiValue(Q_Entry *first, char *format, ...){
+int qsiValue(Q_Entry *first, char *format, ...) {
   char name[1024];
   int status;
   va_list arglist;
@@ -695,20 +741,20 @@ int qsiValue(Q_Entry *first, char *format, ...){
   return _EntryiValue(first, name);
 }
 
-void qsPrint(Q_Entry *first){
+void qsPrint(Q_Entry *first) {
   _EntryPrint(first);
 }
 
-void qsFree(Q_Entry *first){
+void qsFree(Q_Entry *first) {
   _EntryFree(first);
 }
 
 /**********************************************
 ** Usage : qcDecoder();
-** Return: Success number of values, Fail -1
-** Do    : Decode COOKIES & Save it in linked list
+** Return: Success number of values, Fail -1.
+** Do    : Decode COOKIES & Save it in linked list.
 **********************************************/
-int qcDecoder(void){
+int qcDecoder(void) {
   Q_Entry *entries, *back;
   char *query;
   int  amount;
@@ -720,7 +766,7 @@ int qcDecoder(void){
 
   entries = back = NULL;
 
-  for(amount = 0; *query; amount++){
+  for(amount = 0; *query; amount++) {
     back = entries;
     entries = (Q_Entry *)malloc(sizeof(Q_Entry));
     if(back != NULL) back->next = entries;
@@ -739,7 +785,7 @@ int qcDecoder(void){
   return amount;
 }
 
-char *qcValue(char *format, ...){
+char *qcValue(char *format, ...) {
   char name[1024];
   int status;
   va_list arglist;
@@ -753,7 +799,7 @@ char *qcValue(char *format, ...){
   return _EntryValue(_cookie_first_entry, name);
 }
 
-int qciValue(char *format, ...){
+int qciValue(char *format, ...) {
   char name[1024];
   int status;
   va_list arglist;
@@ -767,26 +813,27 @@ int qciValue(char *format, ...){
   return _EntryiValue(_cookie_first_entry, name);
 }
 
-void qcPrint(void){
+void qcPrint(void) {
   if(_cookie_first_entry == NULL)qcDecoder();
   _EntryPrint(_cookie_first_entry);
 }
 
-void qcFree(void){
+void qcFree(void) {
  _EntryFree(_cookie_first_entry);
+ _cookie_first_entry = NULL;
 }
 
 /**********************************************
 ** Usage : qSetCookie();
-** Do    : Set Cookie
+** Do    : Set cookie.
 **
-** The 'exp_days' is number of days which expire the cookie
-** The current time + exp_days will be set
-** This is must called before qContentType();
+** The 'exp_days' is number of days which expire the cookie.
+** The current time + exp_days will be set.
+** This function should be called before qContentType().
 **
 ** ex) qSetCookie("NAME", "Kim", 30, NULL, NULL, NULL);
 **********************************************/
-void qSetCookie(char *name, char *value, int exp_days, char *path, char *domain, char *secure){
+void qSetCookie(char *name, char *value, int exp_days, char *path, char *domain, char *secure) {
   char *Name, *Value;
   char cookie[(4 * 1024) + 256];
 
@@ -825,12 +872,13 @@ void qSetCookie(char *name, char *value, int exp_days, char *path, char *domain,
 
 /**********************************************
 ** Usage : qAwkOpen(filename, field-separator);
-** Return: Success 1, Fail 0
+** Return: Success 1, Fail 0.
 ** Do    : Open file to scan pattern. (similar to unix command awk)
+**
 ** ex) qAwkOpen("source.dat", ':');
 **********************************************/
 int qAwkOpen(char *filename, char separator) {
-  if (_awkfp != NULL) qError("qAwkOpen(): There is already opened handle.");
+  if(_awkfp != NULL) qError("qAwkOpen(): There is already opened handle.");
   if((_awkfp = fopen(filename, "rt")) == NULL) return 0;
   _awksep = separator;
   return 1;
@@ -838,8 +886,9 @@ int qAwkOpen(char *filename, char separator) {
 
 /**********************************************
 ** Usage : qAwkNext(array);
-** Return: Success number of field, End of file -1
-** Do    : Scan one line (Unlimited line length)
+** Return: Success number of field, End of file -1.
+** Do    : Scan one line. (Unlimited line length)
+**
 ** ex) char array[10][256];
 **     qAwkNext(array);
 **********************************************/
@@ -848,7 +897,7 @@ int qAwkNext(char array[][256]) {
   char *bp1, *bp2;
   int i, exitflag;
 
-  if (_awkfp == NULL) qError("qAwkNext(): There is no opened handle.");
+  if(_awkfp == NULL) qError("qAwkNext(): There is no opened handle.");
   if((buf = qRemoveSpace(qfGetLine(_awkfp))) == NULL) return -1;
 
   for(i = exitflag = 0, bp1 = bp2 = buf; exitflag == 0; i++) {
@@ -864,19 +913,23 @@ int qAwkNext(char array[][256]) {
 
 /**********************************************
 ** Usage : qAwkClose();
+** Return: Success 1, Fail 0.
 ** Do    : Close file.
 **********************************************/
-void qAwkClose(void) {
-  if (_awkfp == NULL) qError("qAwkClose(): There is no opened handle.");
+int qAwkClose(void) {
+  if(_awkfp == NULL) return 0;
   fclose(_awkfp);
   _awkfp = NULL;
+  _awksep = ' ';
+
+  return 1;
 }
 
 #define	SSI_INCLUDE_START	"<!--#include file=\""
 #define SSI_INCLUDE_END		"\"-->"
 /**********************************************
 ** Usage : qSedStr(string pointer, fpout, arg) {
-** Return: Success 1, Fail 0
+** Return: Success 1, Fail 0.
 ** Do    : Stream Editor.
 **********************************************/
 int qSedStr(char *srcstr, FILE *fpout, char **arg) {
@@ -909,7 +962,7 @@ int qSedStr(char *srcstr, FILE *fpout, char **arg) {
     /* name */
     name[i] = (char *)malloc(strlen(arg[i]) + 1);
     for(j = 2, k = 0; arg[i][j] != sep; j++, k++) {
-      if (arg[i][j] == '\0') qError("qSedStr(): Premature end of argument '%s'.", arg[i]);
+      if(arg[i][j] == '\0') qError("qSedStr(): Premature end of argument '%s'.", arg[i]);
       name[i][k] = arg[i][j];
     }
     name[i][k] = '\0';
@@ -917,7 +970,7 @@ int qSedStr(char *srcstr, FILE *fpout, char **arg) {
     /* value */
     value[i] = (char *)malloc(strlen(arg[i]) + 1);
     for(j++, k = 0; arg[i][j] != sep; j++, k++) {
-      if (arg[i][j] == '\0') qError("qSedStr(): Premature end of argument '%s'.", arg[i]);
+      if(arg[i][j] == '\0') qError("qSedStr(): Premature end of argument '%s'.", arg[i]);
       value[i][k] = arg[i][j];
     }
     value[i][k] = '\0';
@@ -969,16 +1022,16 @@ int qSedStr(char *srcstr, FILE *fpout, char **arg) {
     free(name[i]);
     free(value[i]);
   }
-  if (mode  != NULL) free(mode);
-  if (name  != NULL) free(name);
-  if (value != NULL) free(value);
+  if(mode  != NULL) free(mode);
+  if(name  != NULL) free(name);
+  if(value != NULL) free(value);
 
   return 1;
 }
 
 /**********************************************
-** Usage : qSedFile(filename, fpout, arg) {
-** Return: Success 1, Fail open fail 0
+** Usage : qSedFile(filename, fpout, arg);
+** Return: Success 1, Fail open fail 0.
 ** Do    : Stream Editor.
 **********************************************/
 int qSedFile(char *filename, FILE *fpout, char **arg) {
@@ -993,10 +1046,11 @@ int qSedFile(char *filename, FILE *fpout, char **arg) {
 }
 
 /**********************************************
-** Usage : qArgMake(Query string, Token Array);
-** Return: number of parsed tokens
+** Usage : qArgMake(query string, token array);
+** Return: Number of parsed tokens.
 ** Do    : This function parses query string and stores
 **         each query into token array.
+**
 ** ex) char *query="I am a \"pretty girl\".", *qlist[MAX_TOKENS];
 **     int queries;
 **     queries = qArgMake(query, qlist);
@@ -1041,7 +1095,7 @@ int qArgMake(char *str, char **qlist) {
 }
 
 /**********************************************
-** Usage : qArgFree(Pointer of Token Array);
+** Usage : qArgFree(pointer of token array);
 ** Do    : Free malloced token array.
 **********************************************/
 void qArgFree(char **qlist) {
@@ -1051,7 +1105,7 @@ void qArgFree(char **qlist) {
 }
 
 /**********************************************
-** Usage : qArgFree(Pointer of Token Array);
+** Usage : qArgPrint(pointer of token array);
 ** Do    : Print all parsed tokens for debugging.
 **********************************************/
 void qArgPrint(char **qlist) {
@@ -1065,7 +1119,7 @@ void qArgPrint(char **qlist) {
 }
 
 /**********************************************
-** Usage : qArgMatch(Target string, Token Array);
+** Usage : qArgMatch(target string, token array);
 ** Return: Number of token matched. (Do not allow duplicated token matches)
 **         This value is not equal to a value of qArgEmprint()
 **********************************************/
@@ -1082,8 +1136,8 @@ int qArgMatch(char *str, char **qlist) {
 }
 
 /**********************************************
-** Usage : qArgEmprint(mode, Target string, Token Array);
-** Return: Number of matches (Allow duplicated token matches)
+** Usage : qArgEmprint(mode, target string, token array);
+** Return: Number of matches. (Allow duplicated token matches)
 **         This value is not equal to a value of qArgMatch().
 ** Do    : Make matched token bold in target string.
 **********************************************/
@@ -1137,21 +1191,21 @@ int qArgEmprint(int mode, char *str, char **qlist) {
 /**********************************************
 ** Usage : qURLencode(string to encode);
 ** Return: Pointer of encoded str which is memory allocated.
-** Do    : Encode string
+** Do    : Encode string.
 **********************************************/
-char *qURLencode(char *str){
+char *qURLencode(char *str) {
   char *encstr, buf[2+1];
   int i, j;
   unsigned char c;
   if(str == NULL) return NULL;
   if((encstr = (char *)malloc((strlen(str) * 3) + 1)) == NULL) return NULL;
 
-  for(i = j = 0; str[i]; i++){
+  for(i = j = 0; str[i]; i++) {
     c = (unsigned char)str[i];
-         if ((c >= '0') && (c <= '9')) encstr[j++] = c;
-    else if ((c >= 'A') && (c <= 'Z')) encstr[j++] = c;
-    else if ((c >= 'a') && (c <= 'z')) encstr[j++] = c;
-    else if ((c == '@') || (c == '.') || (c == '/') || (c == '_') || (c == '-')) encstr[j++] = c;
+         if((c >= '0') && (c <= '9')) encstr[j++] = c;
+    else if((c >= 'A') && (c <= 'Z')) encstr[j++] = c;
+    else if((c >= 'a') && (c <= 'z')) encstr[j++] = c;
+    else if((c == '@') || (c == '.') || (c == '/') || (c == '_') || (c == '-')) encstr[j++] = c;
     else {
       sprintf(buf, "%02x", c);
       encstr[j++] = '%';
@@ -1165,16 +1219,16 @@ char *qURLencode(char *str){
 }
 
 /**********************************************
-** Usage : qURLdecode(Query Pointer);
-** Return: Pointer of Query string
-** Do    : Decode query string
+** Usage : qURLdecode(query pointer);
+** Return: Pointer of query string.
+** Do    : Decode query string.
 **********************************************/
-char *qURLdecode(char *str){
+char *qURLdecode(char *str) {
   int i, j;
 
   if(!str) return NULL;
-  for(i = j = 0; str[j]; i++, j++){
-    switch(str[j]){
+  for(i = j = 0; str[j]; i++, j++) {
+    switch(str[j]) {
       case '+':{
         str[i] = ' ';
         break;
@@ -1196,25 +1250,23 @@ char *qURLdecode(char *str){
 }
 
 /**********************************************
-** Usage : qContentType(Mime Type);
-** Do    : Print Content Type Once
+** Usage : qContentType(mime type);
+** Do    : Print content type once.
 **********************************************/
-void qContentType(char *mimetype){
-  static int flag = 0;
-
-  if(flag)return;
+void qContentType(char *mimetype) {
+  if(_content_type_flag) return;
 
   printf("Content-Type: %s%c%c", mimetype, 10, 10);
-  flag = 1;
+  _content_type_flag = 1;
 }
 
 /**********************************************
-** Usage : qPrintf(Mode, Format, Arg);
-** Return: Sucess number of output bytes, Fail EOF
-** Do    : Print message like printf
+** Usage : qPrintf(mode, format, arg);
+** Return: Sucess number of output bytes, Fail EOF.
+** Do    : Print message like printf.
 **         Mode : see qPuts()
 **********************************************/
-int qPrintf(int mode, char *format, ...){
+int qPrintf(int mode, char *format, ...) {
   char buf[1024*10];
   int  status;
   va_list arglist;
@@ -1229,8 +1281,8 @@ int qPrintf(int mode, char *format, ...){
 }
 
 /**********************************************
-** Usage : qPuts(Mode, String pointer);
-** Do    : print HTML link as multi mode
+** Usage : qPuts(mode, string pointer);
+** Do    : print HTML link as multi mode.
 **         Mode 0  : Same as printf()
 **         Mode 1  : Print HTML TAG
 **         Mode 2  : Mode 1 + Auto Link
@@ -1254,9 +1306,9 @@ int qPrintf(int mode, char *format, ...){
 **                   "\r\n" -> "<br>\n"
 **
 ** You can use 1x mode, to wrap long lines with no <pre> tag.
-** Note) It modify argument string...
+** Note) It modify argument string.
 **********************************************/
-void qPuts(int mode, char *buf){
+void qPuts(int mode, char *buf) {
 
   if(buf == NULL) return;
 
@@ -1294,7 +1346,7 @@ void qPuts(int mode, char *buf){
     target    = "_top";
     convert   = 0;
 
-    switch(mode){
+    switch(mode) {
       case 1  : {printhtml = 1, autolink = 0, target = "";     convert = 0; break;}
       case 2  : {printhtml = 1, autolink = 1, target = "";     convert = 0; break;}
       case 3  : {printhtml = 1, autolink = 1, target = "_top"; convert = 0; break;}
@@ -1315,11 +1367,10 @@ void qPuts(int mode, char *buf){
     lastretstop = '0'; /* any character except space */
     ptr = _strtok2(buf, token, &retstop);
 
-    for(linkflag = ignoreflag = 0; ptr != NULL;){
-
+    for(linkflag = ignoreflag = 0; ptr != NULL;) {
       /* auto link */
       if(ignoreflag == 0) {
-        if(autolink == 1){
+        if(autolink == 1) {
           if(!strncmp(ptr, "http://",        7)) linkflag = 1;
           else if(!strncmp(ptr, "ftp://",    6)) linkflag = 1;
           else if(!strncmp(ptr, "telnet://", 9)) linkflag = 1;
@@ -1334,7 +1385,7 @@ void qPuts(int mode, char *buf){
       }
 
       /* print */
-      if(printhtml == 1){
+      if(printhtml == 1) {
         if     (retstop == '<')  printf("&lt;");
         else if(retstop == '>')  printf("&gt;");
         else if(retstop == '\"') printf("&quot;");
@@ -1374,10 +1425,10 @@ void qPuts(int mode, char *buf){
 }
 
 /**********************************************
-** Usage : qError(Format, Arg);
-** Do    : Print error message
+** Usage : qError(format, arg);
+** Do    : Print error message.
 **********************************************/
-void qError(char *format, ...){
+void qError(char *format, ...) {
   char buf[1024];
   int status;
   int logstatus;
@@ -1386,7 +1437,7 @@ void qError(char *format, ...){
   va_start(arglist, format);
 
   status = vsprintf(buf, format, arglist);
-  if(strlen(buf) + 1 > sizeof(buf) || status == EOF){
+  if(strlen(buf) + 1 > sizeof(buf) || status == EOF) {
     printf("qError(): Message is too long or invalid");
     exit(1);
   }
@@ -1446,27 +1497,45 @@ void qError(char *format, ...){
 }
 
 /**********************************************
-** Usage : qErrorLog(logFilename);
-** Do    : Turn Error log on
+** Usage : qErrorLog(log filename);
+** Do    : Turn Error log on.
 **********************************************/
 void qErrorLog(char *filename) {
   _error_log_filename = filename;
 }
 
 /**********************************************
-** Usage : qErrorContact(logFilename);
-** Do    : Error contact information
+** Usage : qErrorContact(message);
+** Do    : Error contact information.
 **********************************************/
 void qErrorContact(char *msg) {
   _error_contact_info = msg;
 }
 
+/**********************************************
+** Usage : qReset();
+** Do    : Reset all static flags and de-allocate
+**         all reserved memories.
+**********************************************/
+
+void qReset(void) {
+  qFree();
+  qcFree();
+  qErrorLog(NULL);
+  qErrorContact(NULL);
+  qAwkClose();
+
+  /* Reset static variables */
+  _content_type_flag = 0;
+  _multi_last_entry = NULL;
+  strcpy(_multi_last_key, "");
+}
 
 /**********************************************
-** Usage : qCGIenv(Pointer of Cgienv);
-** Do    : Get environment of CGI
+** Usage : qCGIenv(pointer of Cgienv);
+** Do    : Get environment of CGI.
 **********************************************/
-void qCGIenv(Q_CGIenv *env){
+void qCGIenv(Q_CGIenv *env) {
   struct tm *envtime;
 
   envtime = qGetTime();
@@ -1511,10 +1580,10 @@ void qCGIenv(Q_CGIenv *env){
 }
 
 /**********************************************
-** Usage : qGetEnv(Environment string name, Fail return string pointer);
+** Usage : qGetEnv(environment string name, fail return string pointer);
 ** Return: Environment string or 'nullstr'.
 ** Do    : Get environment string.
-**         When 'getenv' does not find 'envname', it will return 'nullstr.
+**         When it does not find 'envname', it will return 'nullstr'.
 **********************************************/
 char *qGetEnv(char *envname, char *nullstr) {
   char *envstr;
@@ -1545,11 +1614,11 @@ char *qCGIname(void) {
 }
 
 /**********************************************
-** Usage : qGetTime(void);
-** Return: Pointer of struct tm
-** Do    : Get Time
+** Usage : qGetTime();
+** Return: Pointer of struct tm.
+** Do    : Get time.
 **********************************************/
-struct tm *qGetTime(void){
+struct tm *qGetTime(void) {
   time_t nowtime;
   static struct tm *nowlocaltime;
 
@@ -1563,10 +1632,9 @@ struct tm *qGetTime(void){
 
 /**********************************************
 ** Usage : qGetGMTime(gmt, plus_sec);
-** Do    : Make string of GMT Time for Cookie
-** Return: Amount second from 1970/00/00 00:00:00
-**
-** plus_sec will be added to current time;
+** Do    : Make string of GMT Time for Cookie.
+** Return: Amount second from 1970/00/00 00:00:00.
+** Note   : plus_sec will be added to current time.
 **********************************************/
 time_t qGetGMTime(char *gmt, time_t plus_sec) {
   time_t nowtime;
@@ -1582,11 +1650,11 @@ time_t qGetGMTime(char *gmt, time_t plus_sec) {
 }
 
 /**********************************************
-** Usage : qCheckFile(Filename);
-** Return: If file exist, return 1. Or return 0;
-** Do    : Check filethat file is existGet environment of CGI
+** Usage : qCheckFile(filename);
+** Return: If file exist, return 1. Or return 0.
+** Do    : Check filethat file is existGet environment of CGI.
 **********************************************/
-int qCheckFile(char *filename){
+int qCheckFile(char *filename) {
   FILE *fp;
   fp = fopen(filename, "rb");
   if(fp == NULL) return 0;
@@ -1596,7 +1664,7 @@ int qCheckFile(char *filename){
 
 /**********************************************
 ** Usage : qCatFile(filename);
-** Return: Success number of characters, Fail -1
+** Return: Success number of characters, Fail -1.
 ** Do    : Stream out file.
 **********************************************/
 int qCatFile(char *filename) {
@@ -1614,7 +1682,7 @@ int qCatFile(char *filename) {
 
 /**********************************************
 ** Usage : qReadFile(filename, string pointer);
-** Return: Success stream pointer, Fail NULL
+** Return: Success stream pointer, Fail NULL.
 ** Do    : Read file to malloced memory.
 **********************************************/
 char *qReadFile(char *filename, int *size) {
@@ -1625,7 +1693,7 @@ char *qReadFile(char *filename, int *size) {
   int c, i;
 
   if(size != NULL) *size = 0;
-  if (lstat(filename, &fstat) < 0) return NULL;
+  if(lstat(filename, &fstat) < 0) return NULL;
   if((fp = fopen(filename, "rb")) == NULL) return NULL;
 
   sp = (char *)malloc(fstat.st_size + 1);
@@ -1644,7 +1712,7 @@ char *qReadFile(char *filename, int *size) {
 
 /**********************************************
 ** Usage : qSaveStr(string pointer, string size, filename, mode)
-** Return: Success number bytes stored, File open fail -1,
+** Return: Success number bytes stored, File open fail -1.
 ** Do    : Store string to file.
 **********************************************/
 int qSaveStr(char *sp, int spsize, char *filename, char *mode) {
@@ -1658,8 +1726,8 @@ int qSaveStr(char *sp, int spsize, char *filename, char *mode) {
 }
 
 /*********************************************
-** Usage : qfGetLine(fp);
-** Return: Success string pointer, End of file NULL
+** Usage : qfGetLine(file pointer);
+** Return: Success string pointer, End of file NULL.
 ** Do    : Read one line from file pointer and alocate
 **         memory to save string. And there is no limit
 **         about length.
@@ -1701,7 +1769,7 @@ char *qfGetLine(FILE *fp) {
 /**********************************************
 ** Usage : qDownload(filename);
 ** Do    : Pump file to stdout, do not call qContentType().
-** Return: Success 1, File not found 0
+** Return: Success 1, File not found 0.
 **********************************************/
 int qDownload(char *filename) {
   return qDownloadMime(filename, "application/octet-stream");
@@ -1711,7 +1779,7 @@ int qDownload(char *filename) {
 ** Usage : qDownloadMime(filename, mime);
 ** Do    : Pump file to stdout, should not call qContentType().
 **         if mime is 'application/octet-stream', forcing download.
-** Return: Success number of bytes sent, File not found -1
+** Return: Success number of bytes sent, File not found -1.
 **********************************************/
 int qDownloadMime(char *filename, char *mime) {
   char *file, *c, *disposition;
@@ -1746,13 +1814,13 @@ int qDownloadMime(char *filename, char *mime) {
 
 /**********************************************
 ** Usage : qFileSize(filename);
-** Return: Size of file in byte, File not found -1
+** Return: Size of file in byte, File not found -1.
 **********************************************/
 long qFileSize(char *filename) {
 #ifdef __unix
   struct stat finfo;
 
-  if (lstat(filename, &finfo) < 0) return -1;
+  if(lstat(filename, &finfo) < 0) return -1;
 
   return finfo.st_size;
 #else
@@ -1771,10 +1839,10 @@ void qRedirect(char *url) {
 
 /**********************************************
 ** Usage : qReadCounter(filename);
-** Return: Success counter value, Fail 0
-** Do    : Read counter value
+** Return: Success counter value, Fail 0.
+** Do    : Read counter value.
 **********************************************/
-int qReadCounter(char *filename){
+int qReadCounter(char *filename) {
   FILE *fp;
   int  counter;
 
@@ -1786,10 +1854,10 @@ int qReadCounter(char *filename){
 
 /**********************************************
 ** Usage : qSaveCounter(filename, number);
-** Return: Success 1, Fail 0
-** Do    : Save counter value
+** Return: Success 1, Fail 0.
+** Do    : Save counter value.
 **********************************************/
-int qSaveCounter(char *filename, int number){
+int qSaveCounter(char *filename, int number) {
   FILE *fp;
 
   if((fp = fopen(filename, "wt")) == NULL) return 0;
@@ -1800,10 +1868,10 @@ int qSaveCounter(char *filename, int number){
 
 /**********************************************
 ** Usage : qUpdateCount(filename, number);
-** Return: Success current value + number, Fail 0
-** Do    : Update counter value
+** Return: Success current value + number, Fail 0.
+** Do    : Update counter value.
 **********************************************/
-int qUpdateCounter(char *filename, int number){
+int qUpdateCounter(char *filename, int number) {
   FILE *fp;
   int counter = 0;
 
@@ -1820,16 +1888,16 @@ int qUpdateCounter(char *filename, int number){
 
 
 /**********************************************
-** Usage : qCheckEmail(E-mail Address);
-** Return: If it is valid return 1. Or return 0;
-** Do    : Check E-mail address
+** Usage : qCheckEmail(email address);
+** Return: If it is valid return 1. Or return 0.
+** Do    : Check E-mail address.
 **********************************************/
-int qCheckEmail(char *email){
+int qCheckEmail(char *email) {
   int i, alpa, dot, gol;
 
   if(email == NULL) return 0;
 
-  for(i = alpa = dot = gol = 0; email[i] != '\0'; i++){
+  for(i = alpa = dot = gol = 0; email[i] != '\0'; i++) {
     switch(email[i]) {
       case '@' : {
         if(alpa == 0) return 0;
@@ -1861,10 +1929,10 @@ int qCheckEmail(char *email){
 
 /**********************************************
 ** Usage : qCheckURL(internet address);
-** Return: If it is valid return 1. Or return 0;
-** Do    : Check URL
+** Return: If it is valid return 1. Or return 0.
+** Do    : Check valid URL.
 **********************************************/
-int qCheckURL(char *url){
+int qCheckURL(char *url) {
   if(!strncmp(url, "http://", 7)) return 1;
   else if(!strncmp(url, "ftp://", 6)) return 1;
   else if(!strncmp(url, "telnet://", 9)) return 1;
@@ -1874,12 +1942,11 @@ int qCheckURL(char *url){
 }
 
 /**********************************************
-** Usage : qRemoveSpace(Source string);
-** Return: Pointer of str
-** Do    : Remove Space before string & after string
-**         Remove CR, LF
+** Usage : qRemoveSpace(string);
+** Return: Pointer of string.
+** Do    : Remove space(including CR, LF) from head & tail.
 **********************************************/
-char *qRemoveSpace(char *str){
+char *qRemoveSpace(char *str) {
   int i, j;
 
   if(!str)return NULL;
@@ -1894,11 +1961,11 @@ char *qRemoveSpace(char *str){
 
 /**********************************************
 ** Usage : qStr09AZaz(string);
-** Return: Valid 1, Invalid 0
-** Do    : Check characters of string is in 0-9, A-Z, a-z
+** Return: Valid 1, Invalid 0.
+** Do    : Check characters of string is in 0-9, A-Z, a-z.
 **********************************************/
-int qStr09AZaz(char *str){
-  for(; *str; str++){
+int qStr09AZaz(char *str) {
+  for(; *str; str++) {
     if((*str >= '0') && (*str <= '9')) continue;
     else if((*str >= 'A') && (*str <= 'Z')) continue;
     else if((*str >= 'a') && (*str <= 'z')) continue;
@@ -1936,8 +2003,8 @@ char *qStrlwr(char *str) {
 
 /**********************************************
 ** Usage : qStristr(big, small);
-** Return: Pointer of token string located in original string, Fail NULL
-** Do    : Find token with no case-censitive
+** Return: Pointer of token string located in original string, Fail NULL.
+** Do    : Find token with no case-censitive.
 **********************************************/
 char *qStristr(char *big, char *small) {
   char *bigp, *smallp, *retp;
@@ -1958,7 +2025,7 @@ char *qStristr(char *big, char *small) {
 
 /**********************************************
 ** Usage : qStricmp(char *orgstr, char *tokstr);
-** Return: s1 < s2 less than 0, s1 = s2 0, s1 > s2 greater than 0
+** Return: s1 < s2 less than 0, s1 = s2 0, s1 > s2 greater than 0.
 ** Do    : qDecoder implementation of stricmp() because
 **         some systems do not support this function.
 **********************************************/
@@ -2001,10 +2068,11 @@ int qStrincmp(char *s1, char *s2, size_t len) {
 
 /**********************************************
 ** Usage : qitocomma(value);
-** Return: String pointer
-** Do    : Convert integer to comma string
-**         printf("Output: %s", qitocomma(1234567));
-**         Output: -1,234,567,000
+** Return: String pointer.
+** Do    : Convert integer to comma string.
+**
+** ex) printf("Output: %s", qitocomma(1234567));
+**     Output: -1,234,567,000
 **********************************************/
 char *qitocomma(int value) {
   static char str[14+1];
@@ -2012,7 +2080,7 @@ char *qitocomma(int value) {
 
   if(value < 0) *strp++ = '-';
   sprintf(buf, "%d", abs(value));
-  for (bufp = buf; *bufp != '\0'; strp++, bufp++) {
+  for(bufp = buf; *bufp != '\0'; strp++, bufp++) {
     *strp = *bufp;
     if((strlen(bufp)) % 3 == 1 && *(bufp + 1) != '\0') *(++strp) = ',';
   }
@@ -2022,18 +2090,142 @@ char *qitocomma(int value) {
 }
 
 /**********************************************
+** Usage : qStrReplace(mode, source string, token string to replace, word);
+** Return: String pointer which is new or replaced.
+** Do    : Replace string or tokens as word from source string
+**         with given mode.
+**
+** The mode argument has two separated character. First character
+** is used to decide replacing method and can be 't' or 's'.
+** The character 't' and 's' stand on [t]oken and [s]tring.
+**
+** When 't' is given each character of the token string(third argument)
+** will be compared with source string individually. If matched one
+** is found. the character will be replaced with given work.
+**
+** If 's' is given instead of 't'. Token string will be analyzed
+** only one chunk word. So the replacement will be occured when
+** the case of whole word matched.
+**
+** Second character is used to decide returning memory type and
+** can be 'n' or 'r' which are stand on [n]ew and [r]eplace.
+**
+** When 'n' is given the result will be placed into new array so
+** you should free the return string after using. Instead of this,
+** you can also use 'r' character to modify source string directly.
+** In this case, given source string should have enough space. Be
+** sure that untouchable value can not be used for source string.
+**
+** So there are four associatable modes such like below.
+**
+** Mode "tn" : [t]oken replacing & putting the result into [n]ew array.
+** Mode "tr" : [t]oken replacing & [r]eplace source string directly.
+** Mode "sn" : [s]tring replacing & putting the result into [n]ew array.
+** Mode "sr" : [s]tring replacing & [r]eplace source string directly.
+**
+** ex) int  i;
+**     char srcstr[256], *retstr;
+**     char mode[4][2+1] = {"tn", "tr", "sn", "sr"};
+**
+**     for(i = 0; i < 4; i++) {
+**       strcpy(srcstr, "Welcome to the qDecoder project.");
+**       printf("before %s : srcstr = %s\n", mode[i], srcstr);
+**
+**       retstr = qStrReplace(mode[i], srcstr, "the", "_");
+**       printf("after  %s : srcstr = %s\n", mode[i], srcstr);
+**       printf("            retstr = %s\n\n", retstr);
+**       if(mode[i][1] == 'n') free(retstr);
+**     }
+**     --[Result]--
+**     before tn : srcstr = Welcome to the qDecoder project.
+**     after  tn : srcstr = Welcome to the qDecoder project.
+**                 retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+**
+**     before tr : srcstr = Welcome to the qDecoder project.
+**     after  tr : srcstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+**                 retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+**
+**     before sn : srcstr = Welcome to the qDecoder project.
+**     after  sn : srcstr = Welcome to the qDecoder project.
+**                 retstr = Welcome to _ qDecoder project.
+**
+**     before sr : srcstr = Welcome to the qDecoder project.
+**     after  sr : srcstr = Welcome to _ qDecoder project.
+**                 retstr = Welcome to _ qDecoder project.
+**********************************************/
+char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
+  char method, memuse;
+  int maxstrlen, tokstrlen;
+  char *newstr, *newp, *srcp, *tokenp, *retp;
+
+  if(strlen(mode) != 2) qError("qStrReplace(): Unknown mode \"%s\".", mode);
+  method = mode[0], memuse = mode[1];
+
+  /* Put replaced string into malloced 'newstr' */
+  if(method == 't') { /* Token replace */
+    maxstrlen = strlen(srcstr) * strlen(word);
+    newstr = (char *)malloc(maxstrlen + 1);
+
+    for(srcp = srcstr, newp = newstr; *srcp; srcp++) {
+      for(tokenp = tokstr; *tokenp; tokenp++) {
+        if(*srcp == *tokenp) {
+          char *wordp;
+          for(wordp = word; *wordp; wordp++) *newp++ = *wordp;
+          break;
+        }
+      }
+      if(!*tokenp) *newp++ = *srcp;
+    }
+    *newp = '\0';
+  }
+  else if(method == 's') { /* String replace */
+    if(strlen(word) > strlen(tokstr))
+      maxstrlen
+      = ((strlen(srcstr) / strlen(tokstr)) * strlen(word))
+      + (strlen(srcstr)
+      % strlen(tokstr));
+    else maxstrlen = strlen(srcstr);
+    newstr = (char *)malloc(maxstrlen + 1);
+    tokstrlen = strlen(tokstr);
+
+    for(srcp = srcstr, newp = newstr; *srcp; srcp++) {
+      if(!strncmp(srcp, tokstr, tokstrlen)) {
+        char *wordp;
+        for(wordp = word; *wordp; wordp++) *newp++ = *wordp;
+      	  srcp += tokstrlen - 1;
+      }
+      else *newp++ = *srcp;
+    }
+    *newp = '\0';
+  }
+  else qError("qStrReplace(): Unknown mode \"%s\".", mode);
+
+  /* Decide whether newing the memory or replacing into exist one */
+  if(memuse == 'n') retp = newstr;
+  else if(memuse == 'r') {
+    strcpy(srcstr, newstr);
+    free(newstr);
+    retp = srcstr;
+  }
+  else qError("qReplaceToken(): Unknown mode \"%s\".", mode);
+
+  return retp;
+}
+
+
+/**********************************************
 ***********************************************
-** You don't need to use below functions
-** It is used by qDecoder();
+** You don't need to use below functions.
+** It is just used by qDecoder().
 ***********************************************
 **********************************************/
 
 /**********************************************
-** Usage : _x2c(HEX Up character, HEX Low character);
-** Return: Hex value which is changed
-** Do    : Change two hex character to one hex value
+** Usage : _x2c(HEX up character, HEX low character);
+** Return: Hex value which is changed.
+** Do    : Change two hex character to one hex value.
 **********************************************/
-static char _x2c(char hex_up, char hex_low){
+static char _x2c(char hex_up, char hex_low) {
   char digit;
 
   digit = 16 * (hex_up >= 'A' ? ((hex_up & 0xdf) - 'A') + 10 : (hex_up - '0'));
@@ -2044,12 +2236,12 @@ static char _x2c(char hex_up, char hex_low){
 
 
 /**********************************************
-** Usage : _makeword(Source string, Stop character);
-** Return: Pointer of Parsed string
-** Do    : It copy source string before stop character
-**         The pointer of source string direct after stop character
+** Usage : _makeword(source string, stop character);
+** Return: Pointer of Parsed string.
+** Do    : It copy source string before stop character.
+**         The pointer of source string direct after stop character.
 **********************************************/
-static char *_makeword(char *str, char stop){
+static char *_makeword(char *str, char stop) {
   char *word;
   int  len, i;
 
@@ -2067,20 +2259,20 @@ static char *_makeword(char *str, char stop){
 }
 
 /*********************************************
-** Usage : _strtok2(String, TokenStopString, ReturnStopCharacter);
-** Do    : Find token string (usage like strtok())
-** Return: Pointer of token & character of stop
+** Usage : _strtok2(string, token stop string, teturn stop character);
+** Do    : Find token string. (usage like strtok())
+** Return: Pointer of token & character of stop.
 **********************************************/
-static char *_strtok2(char *str, char *token, char *retstop){
+static char *_strtok2(char *str, char *token, char *retstop) {
   static char *tokensp, *tokenep;
   int i, j;
 
   if(str != NULL) tokensp = tokenep = str;
   else tokensp = tokenep;
 
-  for(i = strlen(token);*tokenep;tokenep++){
-    for(j = 0; j < i; j++){
-      if(*tokenep == token[j]){
+  for(i = strlen(token);*tokenep;tokenep++) {
+    for(j = 0; j < i; j++) {
+      if(*tokenep == token[j]) {
         *retstop = token[j];
         *tokenep = '\0';
         tokenep++;
@@ -2120,26 +2312,26 @@ static char *_fgetstring(char *buf, int maxlen, FILE *fp) {
 **********************************************/
 
 /**********************************************
-** Usage : _EntryValue(Pointer of the first entry, Name);
-** Return: Success pointer of value string, Fail NULL
-** Do    : Find value string pointer
-**         It find value in linked list
+** Usage : _EntryValue(pointer of the first entry, name);
+** Return: Success pointer of value string, Fail NULL.
+** Do    : Find value string pointer.
+**         It find value in linked list.
 **********************************************/
-static char *_EntryValue(Q_Entry *first, char *name){
+static char *_EntryValue(Q_Entry *first, char *name) {
   Q_Entry *entries;
 
-  for(entries = first; entries; entries = entries->next){
+  for(entries = first; entries; entries = entries->next) {
     if(!strcmp(name, entries->name))return (entries->value);
   }
   return NULL;
 }
 
 /**********************************************
-** Usage : _EntryiValue(Pointer of the first entry, Name);
-** Return: Success integer of value string, Fail 0
-** Do    : Find value string pointer and convert to integer
+** Usage : _EntryiValue(pointer of the first entry, name);
+** Return: Success integer of value string, Fail 0.
+** Do    : Find value string pointer and convert to integer.
 **********************************************/
-static int _EntryiValue(Q_Entry *first, char *name){
+static int _EntryiValue(Q_Entry *first, char *name) {
   char *str;
 
   str = _EntryValue(first, name);
@@ -2148,27 +2340,27 @@ static int _EntryiValue(Q_Entry *first, char *name){
 }
 
 /**********************************************
-** Usage : _EntryPrint(Pointer of the first entry);
-** Do    : Print all parsed value & name for debugging
+** Usage : _EntryPrint(pointer of the first entry);
+** Do    : Print all parsed value & name for debugging.
 **********************************************/
-static void _EntryPrint(Q_Entry *first){
+static void _EntryPrint(Q_Entry *first) {
   Q_Entry *entries;
 
   qContentType("text/html");
 
-  for(entries = first; entries; entries = entries->next){
+  for(entries = first; entries; entries = entries->next) {
     printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
   }
 }
 
 /**********************************************
-** Usage : _EntryFree(Pointer of the first entry);
-** Do    : Make free of linked list memory
+** Usage : _EntryFree(pointer of the first entry);
+** Do    : Make free of linked list memory.
 **********************************************/
-static void _EntryFree(Q_Entry *first){
+static void _EntryFree(Q_Entry *first) {
   Q_Entry *entries;
 
-  for(; first; first = entries){
+  for(; first; first = entries) {
     entries = first->next; /* copy next to tmp */
     free(first->name);
     free(first->value);

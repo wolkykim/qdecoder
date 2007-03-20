@@ -3,6 +3,14 @@ qDecoder Changes
 ``FIX'', ``ADD'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``Added'', ``Replaced'' and ``Removed''.
 
+   * Release 6.0.3
+        o ADD) qValueReplace() - 쿼리 스트링의 특정 문자열이나 토큰을
+          주어진 문자열로 치환
+        o ADD) qStrReplace() - 스트링의 특정 문자열이나 토큰을 주어진
+          문자열로 치환
+        o ADD) qReset() - qDecoder 초기화(메모리 해제및 내부 변수 초기화)
+        o FIX) qAwkClose() - 복귀 값(성공,실패)을 갖도록 수정.
+
    * Release 6.0.2
         o ADD) Microsoft Visual C++용 정적 라이브러리 생성 프로젝트 파일
           추가
