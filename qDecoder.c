@@ -1,5 +1,5 @@
 /***********************************************
-** [Query String Decoder Version 2.2]
+** [Query String Decoder Version 3.0]
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
@@ -23,9 +23,6 @@
 **   // It's not necessary but for the perfectionist.
 **   qFree();
 ** }
-**
-** Just use four functions
-** qDecoder(), qPrint(), qValue(), qFree();
 **
 ** If you use qPrint() or qValue(),
 ** qDecoder() is automatically called once..
@@ -99,22 +96,6 @@ int qDecoder(void){
 }
 
 /**********************************************
-** Usage : qFree();
-** Do    : Make free of linked list memory
-**********************************************/
-void qFree(void){
-  Entry *next;
-
-  for(; _first_entry; _first_entry = next){
-	next = _first_entry->next;
-	free(_first_entry->name);
-	free(_first_entry->value);
-	free(_first_entry);
-  }
-}
-
-
-/**********************************************
 ** Usage : qValue(Name);
 ** Return: Pointer of value string
 ** Do    : Get value string pointer
@@ -132,19 +113,6 @@ char *qValue(char *name){
 }
 
 /**********************************************
-** Usage : qContentType(Mime Type);
-** Do    : Print Content Type Once
-**********************************************/
-void qContentType(char *mimetype){
-  static flag = 0;  
-  
-  if(flag)return;
-
-  printf("Content-type: %s%c%c", mimetype, 10, 10);
-  flag = 1;
-}
-
-/**********************************************
 ** Usage : qPrint();
 ** Do    : Print all parsed value & name for debugging
 **********************************************/
@@ -159,6 +127,145 @@ void qPrint(void){
 	printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
   }
 }
+
+/**********************************************
+** Usage : qFree();
+** Do    : Make free of linked list memory
+**********************************************/
+void qFree(void){
+  Entry *next;
+
+  for(; _first_entry; _first_entry = next){
+	next = _first_entry->next;
+	free(_first_entry->name);
+	free(_first_entry->value);
+	free(_first_entry);
+  }
+  _first_entry = NULL;
+}
+
+
+/**********************************************
+** Usage : qfDecoder(filename);
+** Return: Pointer of the first entry
+** Do    : Save file into linked list
+**********************************************/
+Entry *qfDecoder(char *filename){
+  FILE  *fp;
+  Entry *first, *entries;
+  int   amount;
+  char  buf[1000];
+
+  fp = fopen(filename, "rt");
+  if(fp == NULL) return NULL;    
+
+  entries = (Entry *)malloc(sizeof(Entry));
+  first = entries -> next = entries;
+
+  while(fgets(buf, 1000, fp)){
+	entries = entries->next;
+	entries->value = (char *)malloc(sizeof(char) * (strlen(buf) + 1));
+        strcpy(entries->value, buf);
+	entries->name  = _makeword(entries->value, '=');
+	entries->next = (Entry *)malloc(sizeof(Entry));
+
+        qRemoveSpace(entries->name);
+        qRemoveSpace(entries->value);
+  }
+  if(entries->next == first){
+	free(entries);
+	first = NULL;
+  }
+  else{
+	free(entries->next);
+	entries->next = NULL;
+  }
+
+  fclose(fp);
+
+  return first;
+}
+
+/**********************************************
+** Usage : qfValue(Pointer of the first Entry, Name);
+** Return: Pointer of value string
+** Do    : Get value string pointer
+**         It find value in linked list
+**********************************************/
+char *qfValue(Entry *first, char *name){
+  Entry *entries;
+
+  for(entries = first; entries; entries = entries->next){
+	if(!strcmp(name, entries->name))return (entries->value);
+  }
+  return NULL;
+}
+
+/**********************************************
+** Usage : qfPrint(Pointer of the first Entry);
+** Do    : Print all parsed value & name for debugging
+**********************************************/
+void qfPrint(Entry *first){
+  Entry *entries;
+
+  qContentType("text/html");
+
+  for(entries = first; entries; entries = entries->next){
+	printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
+  }
+}
+
+/**********************************************
+** Usage : qfFree(Pointer of the first Entry);
+** Do    : Make free of linked list memory
+**********************************************/
+void qfFree(Entry *first){
+  Entry *next;
+
+  for(; first; first = next){
+	next = first->next;
+	free(first->name);
+	free(first->value);
+	free(first);
+  }
+  first = NULL;
+}
+
+
+/**********************************************
+** Usage : qContentType(Mime Type);
+** Do    : Print Content Type Once
+**********************************************/
+void qContentType(char *mimetype){
+  static flag = 0;  
+  
+  if(flag)return;
+
+  printf("Content-type: %s%c%c", mimetype, 10, 10);
+  flag = 1;
+}
+
+/**********************************************
+** Usage : qError(String);
+** Do    : Print error message
+**********************************************/
+void qError(char *str){
+  qContentType("text/html");
+
+  printf("<font color=red size=6><B>Error !!!</B></font>\n");
+  printf("<br><br>\n");
+  printf("<font size=3>\n");
+  printf("<i>%s</i>\n", str);
+  printf("</font>\n");
+  printf("<br><br>\n");
+  printf("<center><font size=2>\n");
+  printf("Made in Korea by 'Kim Seung-young', [Hongik Shinan Network Security]<br>\n");
+  printf("홍익대학교 신안캠퍼스 전자전산공학과 94학번 김승영<br>\n");
+  printf("<br><a href=\"javascript:history.back()\">BACK</a>");
+  printf("</font></center>");
+  exit(1);
+}
+
 
 /**********************************************
 ** Usage : qCgienv(Pointer of Cgienv);
@@ -211,6 +318,7 @@ struct tm *qGetTime(void){
   return nowlocaltime;
 }
 
+
 /**********************************************
 ** Usage : qCheckFile(Filename);
 ** Return: If file exist, return 1. Or return 0;
@@ -241,25 +349,27 @@ int qSendFile(char *filename){
 }
 
 /**********************************************
-** Usage : qError(String);
-** Do    : Print error message
+** Usage : qRemoveSpace(Source string);
+** Do    : Remove Space before string & after string
+           Remove CR, LF
 **********************************************/
-void qError(char *str){
-  qContentType("text/html");
+void qRemoveSpace(char *str){
+  int i, j;
+  
+  if(!str)return;
 
-  printf("<font color=red size=6><B>Error !!!</B></font>\n");
-  printf("<br><br>\n");
-  printf("<font size=3>\n");
-  printf("<i>%s</i>\n", str);
-  printf("</font>\n");
-  printf("<br><br>\n");
-  printf("<center><font size=2>\n");
-  printf("Made in Korea by 'Kim Seung-young', [Hongik Shinan Network Security]<br>\n");
-  printf("홍익대학교 신안캠퍼스 전자전산공학과 94학번 김승영<br>\n");
-  printf("<br><a href=\"javascript:history.back()\">BACK</a>");
-  printf("</font></center>");
-  exit(1);
+  for(i = 0; str[i] != '\0'; i++){
+    if(str[i] == '\r' || str[i] == '\n') str[i] = '\0';
+  }
+
+  for(j = 0; str[j] == ' '; j++);
+  for(i = 0; str[j] != '\0'; i++, j++) str[i] = str[j];
+  str[i] = '\0';
+
+  for(i--; (i >= 0) && (str[i] == ' '); i--);
+  str[i+1] = '\0';
 }
+
 
 /**********************************************
 ***********************************************
@@ -279,11 +389,13 @@ char *_get_query(char *method){
   int cl, i;
 
   if(!strcmp(method, "GET")){
+        if(getenv("QUERY_STRING") == NULL) return NULL;
 	query = (char *)malloc(sizeof(char) * (strlen(getenv("QUERY_STRING")) + 1));
 	strcpy(query, getenv("QUERY_STRING"));
 	return query;
   }
   if(!strcmp(method, "POST")){
+        if(getenv("REQUEST_METHOD") == NULL) return NULL;
 	if(strcmp("POST", getenv("REQUEST_METHOD")))return NULL;
 	cl = atoi(getenv("CONTENT_LENGTH"));
 	query = (char *)malloc(sizeof(char) * (cl + 1));
@@ -303,8 +415,8 @@ void _decode_query(char *str){
   int i, j;
 
   if(!str)return;
-    for(i = j = 0; str[j]; i++, j++){
-	switch(str[j]){
+  for(i = j = 0; str[j]; i++, j++){
+    switch(str[j]){
 	  case '+':{
 		str[i] = ' ';
 		break;
@@ -318,7 +430,7 @@ void _decode_query(char *str){
 		str[i] = str[j];
 		break;
 	  }
-	}
+    }
   }
   str[i]='\0';
 }
@@ -342,7 +454,7 @@ char _x2c(char hex_up, char hex_low){
 ** Usage : _makeword(Source string, Stop character);
 ** Return: Pointer of Parsed string
 ** Do    : It copy source string before stop character
-		   The pointer of source string direct after stop character
+           The pointer of source string direct after stop character
 **********************************************/
 char *_makeword(char *str, char stop){
   char *word;

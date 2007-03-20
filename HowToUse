@@ -1,0 +1,254 @@
+*****************************************************
+** [Query String Decoder 'qDecoder' Version 3.0]   **
+**                                                 **
+**  Source  Code Name : qDecoder.c                 **
+**  Include Code Name : qDecoder.h                 **
+**                                                 **
+** Programmed by 'Kim Seung-young'                 **
+**                                                 **
+** Email : nobreak@shinan.hongik.ac.kr             **
+** Home  : http://shinan.hongik.ac.kr/~nobreak     **
+**                                                 **
+** Hongik University Shinan Campus                 **
+**                                                 **
+** Designed by Perfectionist for Perfectionist!!!  **
+*****************************************************
+
+** Index
+  0. 서론
+  1. 각 Version별 지원 함수
+  2. 각 function 기능 설명
+  3. 예제
+  4. Compile
+
+0. 서론
+
+  명    칭 : qDecoder
+  개 발 자 : 김 승 영
+  소    속 : 홍익대학교 신안 캠퍼스
+  사용환경 : Unix
+  Language : C Language
+  목    적 : CGI 구현을 보다 편리하고 빠르게
+  특    징 : 사용자는 인자의 갯수를 미리 파악할 필요가 없으며
+             GET, POST 방식을 구분할 필요가 없다.
+
+1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
+
+  [Version 3.0]
+
+    Entry     *qfDecoder(char *filename);
+    char      *qfValue(Entry *first, char *name);
+    void      qfPrint(Entry *first);
+    void      qfFree(Entry *first);
+
+    void      qRemoveSpace(char *str);
+
+  [Version 2.2]
+    int       qDecoder(void);
+    char      *qValue(char *name);
+    void      qPrint(void);
+    void      qFree(void);
+
+    void      qContentType(char *mimetype);
+    void      qError(char *str);
+
+    void      qCgienv(Cgienv *env);
+    struct tm *qGetTime(void);
+
+    int       qCheckFile(char *filename);
+    int       qSendFile(char *filename);
+
+2. 각 Function 기능 설명
+
+  ****************************************
+  ** CGI 관련 함수군
+  ****************************************
+
+  int       qDecoder(void);
+  기능 : 전달된 Query String을 해석하여 Linked List에 저장
+  복귀 : 전달받은 인자의 갯수
+  사용 :
+    int num;
+    num = qDecoder();
+  
+  char      *qValue(char *name);
+  기능 : Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌
+         qDecoder()이 사전에 호출이 안되었으면, 자동으로 수행
+  복귀 : 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL
+  사용 :
+    char *test;
+    test = qValue("변수명");
+
+  void      qPrint(void);
+  기능 : 프로그램의 Debugging용으로 전달된 인자를 모두 출력한다.
+  사용 : qPrint();
+
+  void      qFree(void);
+  기능 : qDecoder()에 의해 할당된 Memory를 해제한다.
+  사용 : qFree();
+
+  void      qContentType(char *mimetype);
+  기능 : MimeType을 출력한다.
+         여러번 호출되어도 단 한번만 수행한다.
+  사용 : qContentType("text/html");
+         qContentType("image/gif");
+
+  void      qCgienv(Cgienv *env);
+  기능 : CGI의 환경변수와 시간을 구조체에 저장한다.
+         구조체의 멤버구성은 qDecoder.h를 참조하기 바란다.
+  사용 :
+    Cgienv *myenv;
+    qCgienv(myenv);
+
+  ****************************************
+  ** 형식화된 Configuration FILE을 다루는 함수군  
+  ****************************************
+
+  아래와 같은 형식의 화일을 읽어 Linked List에 저장한다.
+  ---- test.conf ----
+  name  = Kim
+  phone = 123-4567
+  addr  = 한국
+  -------------------
+
+  Entry     *qfDecoder(char *filename);
+  기능 : 화일을 읽어 Linked List에 저장한다.
+  복귀 : Linked List의 첫번째 레코드 포인터
+  사용 :
+    Entry *FirstRecord;
+    FirstRecord = qfDecoder("test.conf");
+
+  char      *qfValue(Entry *first, char *name);
+  기능 : 변수명의 변수값을 얻는다.
+  복귀 : 변수값의 포인터
+  사용 :
+    char *name;
+    name = qfValue(FirstRecord, "name");
+
+  void      qfPrint(Entry *first);
+  기능 : 프로그램의 Debugging용으로 해석한 인자를 모두 출력한다.
+  사용 : qfPrint(FirstRecord);
+
+  void      qfFree(Entry *first);
+  기능 : 할당된 Memory를 반환한다.
+  사용 : qfFree(FirstRecord);
+
+  ****************************************
+  ** FILE 관련 함수군
+  ****************************************
+
+  int       qCheckFile(char *filename);
+  기능 : 화일의 존재여부를 파악한다.
+  복귀 : 화일이 존재 하면 1, 화일이 없으면 0
+         Permission에 의해 접근 불가능한 화일도 화일이 없다고 판단한다.
+  사용 : if(qCheckFile("test.dat") == 0)qError("File not found");
+
+  int       qSendFile(char *filename);
+  기능 : 화일의 내용을 출력한다.
+  복귀 : 정상 출력 1, 에러시 0
+  사용 :
+    qContentType("image/gif");
+    qSendFile("mypic.gif");
+
+    qContentType("text/html");
+    qSendFile("myhtml.html");
+
+  ****************************************
+  ** 기타 함수군
+  ****************************************
+  void      qRemoveSpace(char *str);
+  기능 : 문자열의 앞뒤 공백을 제거한다.
+         또한 문자열의 CR, LF를 제거한다.
+  사용 :
+    char *teststr;
+    teststr = " Hello, world    \r\n";
+    qRemoveSpace(teststr);
+    // 삭제후 teststr에는 "Hello, world"가 들어간다.
+
+  struct tm *qGetTime(void);
+  기능 : 시간을 구조체 tm에 저장한다.
+  복귀 : 구조체 tm의 포인터
+  사용 :
+    struct tm *mytime;
+    mytime = qGetTime();
+
+  void      qError(char *str);
+  기능 : 오류에대한 Message를 출력한다.
+         qDecoder.c를 수정하여 출력 형태를 고칠수 있다.
+  사용 : qError("오류메시지");
+
+3. 예제
+
+    --------- Ex 1 ----------
+    전달된 인자를 모두 출력하는 CGI
+
+    #include "qDecoder.h"
+
+    void main(void){
+      qPrint();
+    }
+
+    위의 소스를 test.c로 저장한후 다음과 같이 Compile하자.
+    (같은 디렉토리에 qDecoder.c와 qDecoder.h가 존재해야함)
+
+    gcc -o test.cgi test.c qDecoder.c
+    
+    Browser상에서 다음과 같이 실행하여 결과를 확인한다.
+
+    URL -> http://서버URL/test.cgi가있는디렉토리/test.cgi?a=b&c=de
+
+    출력결과는 다음과 같다.
+
+    'a' = 'b'
+    'c' = 'de'  
+
+    --------- Ex 2 ----------
+    원하는 인자('a')를 선택하여 화면 출력
+
+    #include "stdio.h"
+    #include "qDecoder.h"
+
+     void main(void){
+       char *value;
+
+       qContentType("text/html");
+
+       value = qValue("a");
+       printf("test a = %s", value);
+     }
+   
+    예제 1과 같이 Compile 한후 같은 방법으로 실행한다.
+
+    출력결과는 다음과 같다.
+
+    test a = b
+
+    --------- Ex 3 ----------
+    정확한 함수 호출 절차
+
+    #include "qDecoder.h"
+
+    void main(void){
+      qDecoder();
+      qContentType("text/html");
+
+      사용자 Code
+
+      qFree();
+    }
+
+    qDecoder(), qFree()는 생략가능하다.
+   
+
+4. Compile
+
+  GCC 사용자
+    gcc -o 실행화일명 작성한소스.c qDecoder.c
+    ex) gcc -o test.cgi main.c qDecoder.c
+    ex) gcc -o test.cgi main.c sub.c qDecoder.c
+
+  CC 사용자
+    cc -o 실행화일명 작성한소스.c qDecoder.c
+    ex) cc -o test.cgi main.c qDecoder.c
+
+--- END ---

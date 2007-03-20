@@ -29,12 +29,21 @@ struct Cgienv{
 };
 
 int       qDecoder(void);
-void      qFree(void);
 char      *qValue(char *name);
 void      qPrint(void);
+void      qFree(void);
+
+Entry     *qfDecoder(char *filename);
+char      *qfValue(Entry *first, char *name);
+void      qfPrint(Entry *first);
+void      qfFree(Entry *first);
+
 void      qContentType(char *mimetype);
-void      qCgienv(Cgienv *env);
-int       qCheckFile(char *filename);
-struct tm *qGetTime(void);
-int       qSendFile(char *filename);
 void      qError(char *str);
+
+void      qCgienv(Cgienv *env);
+struct tm *qGetTime(void);
+
+int       qCheckFile(char *filename);
+int       qSendFile(char *filename);
+void      qRemoveSpace(char *str);
