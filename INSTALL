@@ -1,0 +1,287 @@
+qDecoder Installation Guide
+
+   * Getting qDecoder Package
+   * Unpacking qDecoder Package
+   * Compile
+   * Install
+   * Deinstall
+   * Test
+   * Running under Microsoft Visual C++
+
+Step 1. Getting qDecoder Package
+
+qDecoder의 최신버젼은 http://www.qDecoder.org나
+ftp://ftp.qDecoder.org/pub/qDecoder/에서 구할 수 있다.
+
+Step 2. Unpacking qDecoder Package
+
+qDecoder는 기본적으로 유닉스상에서 tar로 묶여져 compress로 압축해 제공된다.
+압축을 풀기 위해서는 다음과 같은 절차를 따른다.
+
+     $ uncompress qDecoder-VERSION.tar.Z
+     $ tar xvf qDecoder-VERSION.tar
+
+GNU Tar가 설치된 시스템에서는 다음과 같이 한번에 압축을 해제할 수도 있다.
+
+     $ tar xvfZ qDecoder-VERSION.tar.Z
+
+qDecoder-VERSION 에 해당하는 디렉토리가 생성되며 다음과 유사한 형태로
+패키지가 풀려진다.
+
+     $ cd qDecoder-VERSION
+     $ ls -asCF
+       1 ./                    3 Makefile.in           6 install-sh*
+       1 ../                   7 README                2 qDecoder.jpg
+       1 AUTHORS              48 REFERENCE             1 rfc/
+       9 CHANGES              55 configure*            1 src/
+      26 COPYING               3 configure.in          1 win32/
+       2 DISCLAIMER            1 contrib/
+      12 INSTALL               1 examples/
+
+     AUTHORS    - 제작자 명단
+     CHANGES    - 버젼별 수정 내역
+     COPYING    - 저작권 관련 문서
+     DISCLAIMER - 저작권 관련 서명서
+     INSTALL    - 설치 안내서
+     README     - 일반 안내서
+     REFERENCE  - 함수 사용 설명서
+     qDecoder.jpg - 로고 그림
+
+     Makefile.in --+
+     configure     +
+     configure.in  +--> Autoconf 관련 파일들
+     install-sh  --+
+
+     contrib/... - 배포되는 관련 프로그램들이 위치하는 디렉토리
+     examples/... - 예제 소스 모음
+     rfc/... - RFC 관련 문서 모음
+     src/... - qDecoder 메인 소스
+     win32/... - Microsoft Visual C++용 정적 라이브러리 생성 프로젝트 파일
+
+Step 3. Compile
+
+qDecoder는 대부분의 GNU 소프트웨어와 Free/Open Source 소프트웨어들이
+채택하는 Autoconf를 적용(6.0.1 이상)하여 다양한 이기종간에 컴파일이 더욱
+자유롭도록 하였다. 컴파일 방법은 일반적인 오픈소스의 그것과 같이
+configure후 make를 통하는데, configure는 해당 시스템의 컴파일러 환경과
+필요한 함수, 명령들이 사용가능한지 점검해 그 시스템에서 가장 효율적으로
+컴파일 될 수 있도록 Makefile을 구성하는 역활을 한다.
+
+     $ cd qDecoder-VERSION
+
+     $ ./configure
+     creating cache ./config.cache
+     checking for gcc... gcc
+     checking whether the C compiler (gcc  ) works... yes
+     checking whether the C compiler (gcc  ) is a cross-compiler... no
+     ...(생략)...
+     creating Makefile
+     creating src/Makefile
+     creating examples/Makefile
+     creating contrib/qValue-1.0.1/Makefile
+     creating contrib/qcValue-1.0/Makefile
+
+     $ ls -asCF (Makefile이 생성되었음을 알 수 있다)
+       1 ./                    3 Makefile.in           1 contrib/
+       1 ../                   7 README                1 examples/
+       1 AUTHORS              48 REFERENCE             6 install-sh*
+       9 CHANGES               2 config.cache          2 qDecoder.jpg
+      26 COPYING               2 config.log            1 rfc/
+       2 DISCLAIMER            6 config.status*        1 src/
+      12 INSTALL              55 configure*            1 win32/
+       3 Makefile              3 configure.in
+
+     $ make
+     ===> src
+     gcc -g -O2 -DSTDC_HEADERS=1 -DHAVE_CTYPE_H=1 -DHAVE_TIME_H=1 -DHAVE_SYS_STAT_H=1
+      -DHAVE_SYS_TYPES_H=1 -DHAVE_STRFTIME=1 -DHAVE_VPRINTF=1 -DHAVE_STRDUP=1 -DHAVE_
+     STRSTR=1 -I. -c -o qDecoder.o qDecoder.c
+     ...(생략)...
+     /bin/rm -f libqDecoder.so
+     ln -s libqDecoder.so.1 libqDecoder.so
+     <=== src
+     ===> examples
+     gcc -g -O2 -DSTDC_HEADERS=1 -DHAVE_CTYPE_H=1 -DHAVE_TIME_H=1 -DHAVE_SYS_STAT_H=1
+      -DHAVE_SYS_TYPES_H=1 -DHAVE_STRFTIME=1 -DHAVE_VPRINTF=1 -DHAVE_STRDUP=1 -DHAVE_
+     STRSTR=1 -I. -I../src -c -o fetch.o fetch.c
+     ...(생략)...
+     gcc -g -O2 -DSTDC_HEADERS=1 -DHAVE_CTYPE_H=1 -DHAVE_TIME_H=1 -DHAVE_SYS_STAT_H=1
+      -DHAVE_SYS_TYPES_H=1 -DHAVE_STRFTIME=1 -DHAVE_VPRINTF=1 -DHAVE_STRDUP=1 -DHAVE_
+     STRSTR=1 -I. -I../src -o arglist.cgi arglist.o ../src/libqDecoder.a
+     <=== examples
+     ...(생략)...
+
+NOTE) 솔라리스의 경우 ``make''가 기본 PATH에 설정되어 있지 않은 경우가 종종
+있는데 이때에는 make가 위치하는 `/usr/ccs/bin/''디렉토리를 PATH에 추가한 후
+시도하자.
+
+NOTE) 컴파일에 의해 생성된 라이브러리와 오브젝트를 지우고 초기 배포판
+생태를 유지하고자 한다면 ``make clean''을 입력하기 바란다. 이때 ``make
+clean''은 편의상 configure에 의해 생성된 Makefile은 제거하지 않는데, 초기
+배포판과 완전 동일한 환경을 만들고자 한다면 ``make distclean''을 사용하면
+된다.
+
+NOTE) 시스템에 컴파일러가 없거나 몇몇 문제로 인해 이 과정을 진행하지 못하는
+사용자를 위해 ftp://ftp.qDecoder.org/pub/qDecoder/precompiled/에 미리
+컴파일된 패키지를 기종별로 제공하고 있다.
+
+Step 4. Install
+
+라이브러리를 설치하기 위해서는 ``make install'' 명령을 사용한다. ``make
+install''은 시스템에 라이브러리를 설치하여 주며, 헤더와 라이브러리의 설치
+위치는 configure시 --prefix, --libdir, --includedir 옵션에 의해 조정된다.
+설치되는 위치와 옵션과의 관계는 다음과 같으며, 아무 인자없이 configure를
+수행하였을 경우엔 /usr/local/lib, /usr/local/include 로 설치위치가
+설정된다.
+
+     ${prefix}          ===> /usr/local        (기본값)
+     ${libdir}          ===> ${prefix}/lib     (기본값)
+     ${includedir}      ===> ${prefix}/include (기본값)
+
+     libqDecoder.a      ===> ${libdir}/libqDecoder.a
+     libqDecoder.so.[n] ===> ${libdir}/libqDecoder.so.[n]
+     libqDecoder.so     ===> ${libdir}/libqDecoder.so
+     qDecoder.h         ===> ${includedir}/include/qDecoder.h
+
+     ex) $ ./configure --prefix=/usr
+     ex) $ ./configure --libdir=/home/nobreak/mylib --includedir=/home/nobreak/myinclude
+
+NOTE) libqDecoder.so는 실제 공유라이브러리 libqDecoder.so.[n]를 가르키는
+심볼릭 링크이다. 여기서 n은 1부터 증가하는 정수로 하위 호환성이 결여될
+경우에 증가한다. 예로 6.0.1 버젼의 경우 libqDecoder.so.1 인데 qDecoder의
+자체 버젼이 7.0, 8.0으로 증가한다 해도 하위 호환성이 유지된다면,
+공유라이브러리는 여전히 libqDecoder.so.1 로 생성될 것이다.
+
+     $ cd qDecoder-VERSION
+
+     $ make install
+     ln -s libqDecoder.so.1 libqDecoder.so
+     /usr/bin/install -c -m 444 qDecoder.h /usr/local/include/qDecoder.h
+     /usr/bin/install -c -m 444 libqDecoder.a /usr/local/lib/libqDecoder.a
+     /usr/bin/install -c -m 444 libqDecoder.so.1 /usr/local/lib/libqDecoder.so.1
+     /bin/rm -f /usr/local/lib/libqDecoder.so
+     ln -s /usr/local/lib/libqDecoder.so.1 /usr/local/lib/libqDecoder.so
+
+NOTE) 시스템 영역에 설치하기 위해서는 root 권한이 필요하다.
+
+Step 5. Deinstall
+
+설치된 qDecoder는 ``make deinstall''을 통해 깨끗하게 제거된다.
+
+     $ make deinstall
+     /bin/rm -f /usr/local/include/qDecoder.h
+     /bin/rm -f /usr/local/lib/libqDecoder.a
+     /bin/rm -f /usr/local/lib/libqDecoder.so.1
+     /bin/rm -f /usr/local/lib/libqDecoder.so
+
+Step 6. Test
+
+examples 디렉토리엔 미리 제작된 예제 소스들이 들어 있다, 소스들은 패키지
+컴파일시 자동으로 컴파일이 되기 때문에 해당 디렉토리의 examples.html을
+브라우저로 연후 바로 테스트를 할 수 있다. 소스코드와 Makefile 을 살펴보며
+여러분의 프로그램에 어떻게 qDecoder를 적용해야 하는지 살펴보기 바란다.
+
+예제는 정적 라이브러리(libqDecoder.a)로 링크되었는데, 공유
+라이브러리(libqDecoder.so)를 링크하면 프로그램이 더욱 컴팩트해지고
+효율적으로 동작한다. examples/Makefile 의 ``QLIB = ../src/libqDecoder.a''를
+``QLIB = ../src/libqDecoder.so''로 수정한후 examples 디렉토리에서 ``make
+clean all''명령을 통해 재 컴파일 해보자. (Makefile의 수정없이 examples
+디렉토리에서 다음과 같이 하여도 동일한 결과를 얻을 수 있다. ``make clean
+all QLIB=../src/libqDecoder.so'')
+
+     $ make clean all QLIB=../src/libqDecoder.a (정적 라이브러리 링크시)
+     $ ls -al *.cgi
+     -rwxr-xr-x  1 root  power  61876   6  2 22:32 arglist.cgi
+     -rwxr-xr-x  1 root  power  61210   6  2 22:32 fetch.cgi
+     -rwxr-xr-x  1 root  power  61331   6  2 22:32 multivalue.cgi
+     -rwxr-xr-x  1 root  power  61551   6  2 22:32 streamedit.cgi
+     -rwsr-sr-x  1 root  power  61639   6  2 22:32 upload.cgi
+
+     $ make clean all QLIB=../src/libqDecoder.so (공유 라이브러리 링크시)
+     $ ls -al *.cgi
+     -rwxr-xr-x  1 root  power  12682   6  2 22:33 arglist.cgi
+     -rwxr-xr-x  1 root  power  11560   6  2 22:33 fetch.cgi
+     -rwxr-xr-x  1 root  power  11852   6  2 22:33 multivalue.cgi
+     -rwxr-xr-x  1 root  power  12052   6  2 22:33 streamedit.cgi
+     -rwsr-sr-x  1 root  power  12393   6  2 22:33 upload.cgi
+
+Step 7. Running under Microsoft Visual C++
+
+qDecoder는 편의상 유닉스 패키징 도구를 사용해 제공되고 대부분의 예제가
+유닉스 환경 기준하에 작성되어 있지만, NT도 환경에서도 사용 가능하도록
+개발된다. 패키지(6.0.2) 부터는 편리를 위해 대부분의 Windows 개발자가
+사용하는 Microsoft Visual C++ 환경에서 정적 라이브러리를 바로 생성할 수
+있도록 미리 설정된 프로젝트 파일을 포함하여 제공한다. 다른 컴파일러
+환경에서도 비슷한 맥락으로 사용이 가능 할 것이다.
+
+  1. Getting qDecoder Package: Getting qDecoder Package를 참고한다.
+
+  2. Unpacking qDecoder Package: 압축 해제 프로그램(예: WinZip)을 통해
+     패키지를 특정 디렉토리에 풀어 놓는다.
+
+  3. Compile:
+       1. ``File -> Open Workspace'' 메뉴를 통해 win32/qDecoder.dsw 를
+          연다.
+       2. ``Build -> Build qDecoder.lib'' 메뉴를 통해 라이브러리 생성한다.
+
+               ------Configuration: qDecoder - Win32 Release------
+               Compiling...
+               qArg.c
+               qAwk.c
+               qcDecoder.c
+               qCounter.c
+               qDecoder.c
+               qDownload.c
+               qEncode.c
+               qEnv.c
+               qError.c
+               qfDecoder.c
+               qFile.c
+               qHeader.c
+               qInternalCommon.c
+               qInternalEntry.c
+               qMisc.c
+               qsDecoder.c
+               qSed.c
+               qString.c
+               qTime.c
+               qValid.c
+               Creating library...
+
+               qDecoder.lib - 0 error(s), 0 warning(s)
+
+          NOTE) 컴파일된 Win32용 라이브러리 파일이 이미 패키지의
+          win32/Release/qDecoder.lib 로 존재하므로 본 과정을 생략하고 해당
+          라이브러리 파일을 사용하여도 된다. 또한
+          ftp://ftp.qDecoder.org/pub/qDecoder/precompiled/Win32/에서도 미리
+          컴파일된 패키지를 구할 수 있을 것이다.
+
+  4. Install: src/qDecoder.h 헤더 파일과 생성된
+     win32/Release/qDecoder.lib를 특정한 디렉토리 혹은 Visual C++의 기본
+     헤더, 라이브러리 디렉토리에 각각 복사한다. (기본 디렉토리에 복사해
+     두면 헤더와 라이브러리 사용시 별도의 경로를 지정할 필요가 없다)
+     예) C:\Program Files\Microsoft Visual Studio\VC98\Lib\qDecoder.lib
+     예) C:\Program Files\Microsoft Visual Studio\VC98\Include\qDecoder.h
+
+  5. Usages:
+       1. 소스 파일에 #include <qDecoder.h> 혹은 #include
+          "...PATH...\qDecoder.h"를 삽입한다.
+       2. ''Project -> Setting -> Link -> Object/library modules'에
+          qDecoder.lib를 추가한다. (기본 라이브러리 디렉토리에 설치되지
+          않은 경우엔 경로 명시)
+
+  6. Test:
+       1. ``File -> New -> Win32 Console Application'' 생성
+       2. ``FileView -> Source Files -> Add Files to Folder''를 통해
+          examples/fetch.c 삽입
+       3. ``Project -> Setting -> Link -> Object/library modules''에
+          qDecoder.lib 추가
+       4. ``Build -> Build PRJ_NAME.exe'' 컴파일 및 실행파일 생성
+       5. 로컬 웹서버(IIS)의 CGI 실행 가능 디렉토리에 PRJ_NAME.exe를 복사후
+          브라우저를 통해 동작 확인.
+          http://localhost/...PATH.../PRJ_NAME.exe?query=OK
+          [Pic: Win32 Test Step 1] [Pic: Win32 Test Step 2]
+
+          [Pic: Win32 Test Step 3] [Pic: Win32 Test Step 4]
+
+          [Pic: Win32 Test Step 5]

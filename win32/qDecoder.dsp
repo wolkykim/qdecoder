@@ -43,7 +43,7 @@ RSC=rc.exe
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
 # ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
 # ADD BASE RSC /l 0x412 /d "NDEBUG"
-# ADD RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x412 /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -63,10 +63,10 @@ LIB32=link.exe -lib
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
+# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ  /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ  /c
 # ADD BASE RSC /l 0x412 /d "_DEBUG"
-# ADD RSC /l 0x409 /d "_DEBUG"
+# ADD RSC /l 0x412 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -85,7 +85,83 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=..\src\qArg.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qAwk.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qcDecoder.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qCounter.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\qDecoder.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qDownload.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qEncode.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qEnv.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qError.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qfDecoder.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qFile.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qHeader.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qInternalCommon.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qInternalEntry.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qMisc.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qsDecoder.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qSed.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qString.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qTime.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qValid.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -94,6 +170,10 @@ SOURCE=..\src\qDecoder.c
 # Begin Source File
 
 SOURCE=..\src\qDecoder.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\qInternal.h
 # End Source File
 # End Group
 # End Target

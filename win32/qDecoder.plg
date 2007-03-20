@@ -1,0 +1,89 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: qDecoder - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSP18D.tmp" with contents
+[
+/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /Fp"Release/qDecoder.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"K:\qDecoder-6.0.4\src\qArg.c"
+"K:\qDecoder-6.0.4\src\qAwk.c"
+"K:\qDecoder-6.0.4\src\qcDecoder.c"
+"K:\qDecoder-6.0.4\src\qCounter.c"
+"K:\qDecoder-6.0.4\src\qDecoder.c"
+"K:\qDecoder-6.0.4\src\qDownload.c"
+"K:\qDecoder-6.0.4\src\qEncode.c"
+"K:\qDecoder-6.0.4\src\qEnv.c"
+"K:\qDecoder-6.0.4\src\qError.c"
+"K:\qDecoder-6.0.4\src\qfDecoder.c"
+"K:\qDecoder-6.0.4\src\qFile.c"
+"K:\qDecoder-6.0.4\src\qHeader.c"
+"K:\qDecoder-6.0.4\src\qInternalCommon.c"
+"K:\qDecoder-6.0.4\src\qInternalEntry.c"
+"K:\qDecoder-6.0.4\src\qMisc.c"
+"K:\qDecoder-6.0.4\src\qsDecoder.c"
+"K:\qDecoder-6.0.4\src\qSed.c"
+"K:\qDecoder-6.0.4\src\qString.c"
+"K:\qDecoder-6.0.4\src\qTime.c"
+"K:\qDecoder-6.0.4\src\qValid.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSP18D.tmp" 
+Creating temporary file "C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSP18E.tmp" with contents
+[
+/nologo /out:"Release\qDecoder.lib" 
+".\Release\qArg.obj"
+".\Release\qAwk.obj"
+".\Release\qcDecoder.obj"
+".\Release\qCounter.obj"
+".\Release\qDecoder.obj"
+".\Release\qDownload.obj"
+".\Release\qEncode.obj"
+".\Release\qEnv.obj"
+".\Release\qError.obj"
+".\Release\qfDecoder.obj"
+".\Release\qFile.obj"
+".\Release\qHeader.obj"
+".\Release\qInternalCommon.obj"
+".\Release\qInternalEntry.obj"
+".\Release\qMisc.obj"
+".\Release\qsDecoder.obj"
+".\Release\qSed.obj"
+".\Release\qString.obj"
+".\Release\qTime.obj"
+".\Release\qValid.obj"
+]
+Creating command line "link.exe -lib @C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSP18E.tmp"
+<h3>Output Window</h3>
+Compiling...
+qArg.c
+qAwk.c
+qcDecoder.c
+qCounter.c
+qDecoder.c
+qDownload.c
+qEncode.c
+qEnv.c
+qError.c
+qfDecoder.c
+qFile.c
+qHeader.c
+qInternalCommon.c
+qInternalEntry.c
+qMisc.c
+qsDecoder.c
+qSed.c
+qString.c
+qTime.c
+qValid.c
+Creating library...
+
+
+
+<h3>Results</h3>
+qDecoder.lib - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

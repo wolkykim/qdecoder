@@ -1,6 +1,7 @@
 /************************************************************************
 qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
 
+Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
 Copyright (C) 1998 Nobreak Technologies, Inc.
 Copyright (C) 1996,1997 Seung-young Kim.
@@ -31,8 +32,9 @@ Copyright Disclaimer:
 
 Author:
   Seung-young Kim <nobreak@hongik.com>
-  5th Fl., Daewoong Bldg., 689-4, Yoksam, Kangnam, Seoul, Korea 135-080
-  Tel: +82-2-562-8988, Fax: +82-2-562-8987
+  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
+  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
+  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"

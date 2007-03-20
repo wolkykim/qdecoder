@@ -3,13 +3,25 @@ qDecoder Changes
 ``FIX'', ``ADD'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``Added'', ``Replaced'' and ``Removed''.
 
+   * Release 6.0.4
+        o ADD) qAddCookie() - 쿠키값을 쿠키 링크드 리스트에 강제 추가
+        o ADD) qResetContentFlag() - ContentType()을 강제적으로 중복 출력할
+          수 있도록 초기화
+        o FIX) qURLencode() - "@./-?&=#\:_" 가 인코딩 되지 않도록 조정
+        o FIX) qPrintf(), qPuts() - 자동링크 기능에서 '&'이후의 문자열이
+          링크되지 않도록 토큰 캐릭터를 " `(){}[]<>\"',\r\n"로 수정
+        o FIX) qSetCookie(), qGetGMTime() - qGetGMTime()이 Solaris 기종에서
+          시간은 GMT로 정상 출력되나 Time Zone이 GMT가 아닌 KST와 같은
+          Local Time Zone으로 표시되어 쿠키 설정에 문제가 발생하던점 수정
+        o FIX) qReadFile(), qFileSize() - Win32 지원
+
    * Release 6.0.3
         o ADD) qValueReplace() - 쿼리 스트링의 특정 문자열이나 토큰을
           주어진 문자열로 치환
         o ADD) qStrReplace() - 스트링의 특정 문자열이나 토큰을 주어진
           문자열로 치환
         o ADD) qReset() - qDecoder 초기화(메모리 해제및 내부 변수 초기화)
-        o FIX) qAwkClose() - 복귀 값(성공,실패)을 갖도록 수정.
+        o FIX) qAwkClose() - 복귀 값(성공,실패)을 갖도록 수정
 
    * Release 6.0.2
         o ADD) Microsoft Visual C++용 정적 라이브러리 생성 프로젝트 파일

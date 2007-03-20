@@ -1,5 +1,6 @@
 dnl qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
 dnl
+dnl Copyright (C) 2001 The qDecoder Project.
 dnl Copyright (C) 1999,2000 Hongik Internet, Inc.
 dnl Copyright (C) 1998 Nobreak Technologies, Inc.
 dnl Copyright (C) 1996,1997 Seung-young Kim.
@@ -30,8 +31,9 @@ dnl   Author, Seung-young Kim, 6 April 2000
 dnl
 dnl Author:
 dnl   Seung-young Kim <nobreak@hongik.com>
-dnl   5th Fl., Daewoong Bldg., 689-4, Yoksam, Kangnam, Seoul, Korea 135-080
-dnl   Tel: +82-2-562-8988, Fax: +82-2-562-8987
+dnl   Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
+dnl   51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
+dnl   Tel: +82-2-753-2553, Fax: +82-2-753-1302
 
 dnl Process this file with autoconf to produce a configure script.
 
