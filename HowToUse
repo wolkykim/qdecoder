@@ -1,18 +1,16 @@
-*****************************************************
-** [Query String Decoder 'qDecoder']               **
-**                                                 **
-**  Source  Code Name : qDecoder.c                 **
-**  Include Code Name : qDecoder.h                 **
-**                                                 **
-** Programmed by 'Seung-young, Kim'                **
-**                                                 **
-** Email : nobreak@shinan.hongik.ac.kr             **
-** Home  : http://cgi.hongik.ac.kr                 **
-**                                                 **
-** Hongik University Shinan Campus                 **
-**                                                 **
-** Designed by Perfectionist for Perfectionist!!!  **
-*****************************************************
+************************************************************
+** [Query String Decoder 'qDecoder']                      **
+**                                                        **
+**  Source  Code Name : qDecoder.c                        **
+**  Include Code Name : qDecoder.h                        **
+**                                                        **
+**  Official distribution site : http://www.cgiserver.net **
+**           Technical contact : nobreak@cgiserver.net    **
+**                                                        **
+**                       Programmed by 'Seung-young, Kim' **
+**                                                        **
+**    Designed by Perfectionist for Perfectionist!!!      **
+************************************************************
 
 ** Index
   0. 서론
@@ -26,15 +24,25 @@
 
   명    칭 : qDecoder
   개 발 자 : 김 승 영 (nobreak@shinan.hongik.ac.kr)
-  소    속 : 홍익대학교 신안 캠퍼스
+  소    속 : Nobreak Technologies
   사용환경 : Unix
   Language : C Language
   배포장소 : http://cgi.hongik.ac.kr
-  목    적 : CGI 구현을 보다 빠르고 편리하게
-  특    징 : CGI 구현에 공통되는 부분들을 모듈화하여 제공함으로써,
-             프로그래밍의 가독성과 효율을 극대화 한다.
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
+  [Version 4.0]
+    ** Patch functions
+    qDecoder()
+    - File Uploading 지원
+    qfDecoder()
+     행의 첫글자가 #일경우 주석으로 처리
+    qURLencode()
+    - '@', '.'을 인코딩 하지 않도록 수정
+    _decode_query() 함수 qURLdecode()로 함수명변경
+    qCheckEmail()
+    - ID중에 . 를 허용함.
+    qPrintf(), qPuts()
+    - mode 10 - 16 이 새로 지원됨.
 
   [Version 3.5]
     ** Patch functions
@@ -132,7 +140,100 @@
   ****************************************
 
   int    qDecoder(void);
-  기능 : 전달된 Query String을 해석하여 Linked List에 저장
+  기능 : 다음 형식의 인코딩된 Query String을 해석하여 Linked List에 저장.
+         - application/x-www-form-urlencoded (%xx로 인코딩되는 일반형)
+         - multipart/form-data               (File Uploading에 사용됨)
+
+         [ 예제 : application/x-www-form-urlencoded ]
+         웹상에서 직접 사용자로부터 입력을 받을경우 주로 사용한다.
+         다음과 같은 URL Encoding 형식의 일반적 [HTML] 문이 전달될경우
+         링크드 리스트에는 [결과]와 같이 저장되고, [C]와 같이 사용한다.
+
+         [HTML] 
+         <form method="post" action="input.cgi">
+           사용자번호 <input type="text" name="userID"><br>
+           <input type="submit">
+         </form>
+
+         [결과]
+         name  = "userID"
+         value = "사용자가 입력한 문자열"
+
+         [C]
+         #include <stdio.h>
+         #include "qDecoder.h"
+         void main(void) {
+           char *id;
+           qContentType("text/html");
+           id = qValue("userID");
+           printf("%s", id);
+         }
+
+         [ 예제 : multipart/form-data ]
+         파일 업로딩 등을 원할때 주로 사용된다.
+         다음과 같은 형식의 [HTML] 문이 사용되고, 로컬PC에서 'a.gif'란
+         128byte 파일을 업로드 할경우, 내부적으로 [결과]와 같이 저장되며
+         [C]와 같이 사용할수 있다.
+
+         [HTML]
+         <form method="post" action="upload.cgi" enctype='multipart/form-data'>
+           사용자번호 <input type="text" name="userID"><br>
+           업로드파일 <input type="file" name="binary>"<br>
+           <input type="submit">
+         </form>
+
+         [결과]
+         name  = "userID"
+         value = "사용자가 입력한 문자열"
+
+         name  = "binary"
+         value = "a.gif의 2진 자료"
+         name  = "binary.length"
+         value = "128"
+         name  = "binary.filename"
+         value = "a.gif"
+
+         [C]
+         #include <stdio.h>
+         #include <stdlib.h>
+         #include "qDecoder.h"
+
+         void main(void) {
+           FILE *fp;
+           char *userID;
+           char *filedata, *filelen, *filename;
+           int  i, len;
+
+           qContentType("text/plain");
+
+           userID = qValue("userID");
+
+           filedata = qValue("binary");
+           filelen  = qValue("binary.length");     
+           filename = qValue("binary.filename");
+
+           len = atoi(filelen);
+
+           fp = fopen(filename, "wb");
+           for(i = 0; i < len; i++) fprintf(fp, "%c", filedata[i]);
+           fclose(fp);
+
+           printf("%s : %s(%sbytes) saved.", userID, filename, filelen);
+         }
+
+         HTML상에서 type=text 일경우 사용은 동일하다.
+         type=file 일경우에는 '변수명.length'와 '변수명.name'의 변수가
+         자동으로 삽입된다.
+         '변수명.length'는 자료의 바이트수가 저장되며, '변수명.name'은
+         사용자가 전송한 파일명이 저장된다.
+         저장할 파일명을 별도로 받고싶을경우, 입력을 type=text 로 받아
+         처리하면 되지만, 본 라이브러리에서는 사용자가 로컬 PC에서 
+         브라우징한 파일명 자체를 알려준다. 파일명은 \ 등의 기호가 제거
+         되어 들어간다.("C:\Data\a.gif"일경우 "a.gif"만이 저장된다)
+         복귀값의 카운터는 type=file 일경우 총 3개의 리스트가 생성되지만
+         이것은 1개의 자료에 대한 처리이므로 1개로 처리한다.
+         내부적으로 저장되는 리스트는 qPrint() 를 활용하여 확인할수 있다.
+
   복귀 : 성공시 전달받은 인자의 갯수, 에러시 -1
   사용 : int num;
          num = qDecoder();
@@ -157,6 +258,14 @@
   복귀 : Encoding된 string pointer, 해제(free)는 사용자가 하여야 한다.
   사용 : char *encstr;
          encstr = qURLencode("안녕하세요?");
+
+  void   qURLdecode(char *str);
+  기능 : %xx로 인코딩된 자료를 해독한다.
+  사용 : char *encstr;
+         qURLdecode(encstr);
+
+  * 사용 예제 1,(qDecoder(), qValue())
+  - 
 
   void   qContentType(char *mimetype);
   기능 : MimeType을 출력한다.
@@ -209,6 +318,7 @@
 
   ## 아래와 같은 형식의 화일을 읽어 Linked List에 저장한다.
   ---- test.conf ----
+  # this is comment.
   name  = Kim
   phone = 123-4567
   addr  = 한국
@@ -289,6 +399,24 @@
          Mode 4 : HTML TAG를 무시한다. 출력되지 않음.
          Mode 5 : Mode 4 + 자동으로 Link 시킴.
          Mode 6 : Mode 5 + link를 클릭했을시 전화면(target=_top) 출력한다.         
+         Mode 10  :Mode 0 + Convert
+         Mode 11 : Print HTML TAG + Convert
+         Mode 12 : Mode 11 + Auto Link
+         Mode 13 : Mode 12 + Auto Link to _top frame
+         Mode 14 : Waste HTML TAG + Convert
+         Mode 15 : Mode 14 + Auto Link
+         Mode 16 : Mode 15 + Auto Link to _top frame
+
+         Convert : " "   -> " "
+                   "  "  -> " &nbsp;"
+                   "   " -> " &nbsp;&nbsp;"
+                   "\r"  -> 무시
+                   "\n"  -> "<br>\n"
+
+         10 이상의 Mode 값은 <pre> 태그를 사용하지 않고, 연속된 공백을
+         화면에 보여줄수 있다. 또한, 화면폭의 변화에 따라 자동으로 줄바꿈이
+         된다.
+
   복귀 : 성공시 출력한 bytes 갯수, 에러시 EOF
   사용 : qPrintf(4, "%s", buf);
   예제 : qPrintf(i, "%s\n", "<font><b>\"http://shinan.hongik.ac.kr\"</b></font>");

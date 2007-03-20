@@ -57,11 +57,14 @@ void      qcFree(void);
 void      qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure);
 
 char      *qURLencode(char *str);
+void      qURLdecode(char *str);
 void      qContentType(char *mimetype);
 int       qPrintf(int mode, char *format, ...);
 void      qPuts(int mode, char *buf);
+
 void      qError(char *format, ...);
-void      qErrLog(char *filename);
+void      qErrorLog(char *filename);
+void      qErrorContact(char *msg);
 
 void      qCgienv(Cgienv *env);
 
@@ -79,7 +82,5 @@ int       qCheckEmail(char *email);
 int       qCheckURL(char *url);
 char      *qRemoveSpace(char *str);
 int       qStr09AZaz(char *str);
-
-#define   CONTACT_INFO	"Made in Korea by '<a href='mailto:nobreak@shinan.hongik.ac.kr'>Seung-young, Kim</a>'"
 
 #endif

@@ -2,9 +2,9 @@
 ##
 ## qDecoder Makefile
 ##
-## Designed by Seung-young, Kim
+## Designed by 'Seung-young, Kim'
 ##
-## [Hongik Shinan Network Security]
+## (c) Nobreak Technologies
 ##
 ########################################
 
@@ -27,6 +27,7 @@ OBJ2 =
 all: $(OBJ)
 	$(AR) q $(LIBNAME) $(OBJ)
 	$(RANLIB) $(LIBNAME)
+reall: clean all
 
 ## Compile Module
 %.o:	%.c

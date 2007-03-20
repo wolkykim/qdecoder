@@ -1,7 +1,7 @@
 /***********************************************
-** [Query String Decoder Version 3.5]
+** [Query String Decoder Version 4.0]
 **
-** Last Modified : 1997/10/22
+** Last Modified : 1997/10/27
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
@@ -40,14 +40,19 @@
 
 #include "qDecoder.h"
 
+
 /**********************************************
 ** Internal Functions Definition
 **********************************************/
+int  _parse_urlencoded(void);
 char *_get_query(char *method);
-void _decode_query(char *str);
+int  _parse_multipart_data(void);
+char *_fgetstring(char *buf, int maxlen, FILE *fp);
+
 char _x2c(char hex_up, char hex_low);
 char *_makeword(char *str, char stop);
 char *_strtok2(char *str, char *token, char *retstop);
+
 
 /**********************************************
 ** Static Values Definition used only internal
@@ -56,7 +61,8 @@ char *_strtok2(char *str, char *token, char *retstop);
 static Entry *_first_entry = NULL;
 static Entry *_cookie_first_entry = NULL;
 
-static char *_error_log_file = NULL;
+static char  *_error_contact_info = NULL;
+static char  *_error_log_filename = NULL;
 
 /**********************************************
 ** Usage : qDecoder();
@@ -65,11 +71,37 @@ static char *_error_log_file = NULL;
 **         It doesn't care Method
 **********************************************/
 int qDecoder(void){
+  int  amount;
+  char *content_type;
+
+  if(_first_entry != NULL) return -1;
+
+  content_type = "";
+  content_type = getenv("CONTENT_TYPE");
+
+  if(content_type == NULL) {
+    amount = _parse_urlencoded();
+  }
+  /* for application/x-www-form-urlencoded */
+  else if(!strcmp (content_type, "application/x-www-form-urlencoded")) {
+    amount = _parse_urlencoded();
+  }
+  /* for multipart/form-data */
+  else if(!strncmp(content_type, "multipart/form-data", strlen("multipart/form-data"))) {
+    amount = _parse_multipart_data();
+  }
+  else {
+    qError("qDecoder() : This encoding type is not supported.");
+  }
+
+  return amount;
+}
+
+/* For decode application/s-www-form-urlencoded, used by qDecoder() */
+int _parse_urlencoded(void){
   Entry *entries, *back;
   char *query;
   int  amount;
-
-  if(_first_entry != NULL) return -1;
 
   entries = back = NULL;
 
@@ -83,8 +115,8 @@ int qDecoder(void){
     entries->value = _makeword(query, '&');
     entries->name  = _makeword(entries->value, '=');
     entries->next  = NULL;
-    _decode_query(entries->name);
-    _decode_query(entries->value);
+    qURLdecode(entries->name);
+    qURLdecode(entries->value);
   }
   if(query)free(query);
 
@@ -99,10 +131,212 @@ int qDecoder(void){
     entries->name  = _makeword(entries->value, '=');
     entries->next  = NULL;
 
-    _decode_query(entries->name);
-    _decode_query(entries->value);
+    qURLdecode(entries->name);
+    qURLdecode(entries->value);
   }
   if(query)free(query);
+
+  return amount;
+}
+
+/* For fetch query used by _parse_urlencoded() */
+char *_get_query(char *method){
+  char *query;
+  int cl, i;
+
+  if(!strcmp(method, "GET")){
+    if(getenv("QUERY_STRING") == NULL) return NULL;
+    query = (char *)malloc(sizeof(char) * (strlen(getenv("QUERY_STRING")) + 1));
+    strcpy(query, getenv("QUERY_STRING"));
+    return query;
+  }
+  if(!strcmp(method, "POST")){
+    if(getenv("REQUEST_METHOD") == NULL) return NULL;
+    if(strcmp("POST", getenv("REQUEST_METHOD")))return NULL;
+    if(getenv("CONTENT_LENGTH") == NULL) qError("_get_query() : Your browser sent a non-HTTP compliant message.");
+
+    cl = atoi(getenv("CONTENT_LENGTH"));
+    query = (char *)malloc(sizeof(char) * (cl + 1));
+    for(i = 0; i < cl; i++)query[i] = fgetc(stdin);
+    query[i] = '\0';
+    return query;
+  }
+  return NULL;
+}
+
+/* For decode multipart/form-data, used by qDecoder() */
+int _parse_multipart_data(void) {
+  Entry *entries, *back;
+  int  amount;
+
+  char *name, *value, *filename;
+  int  valuelen;
+
+  char boundary[0xff],     boundaryEOF[0xff];
+  char rnboundaryrn[0xff], rnboundaryEOF[0xff];
+  int  boundarylen,        boundaryEOFlen;
+
+  char buf[1000];
+  int  c, c_count;
+
+  int  finish;
+
+  entries = back = NULL;
+
+  /* find boundary string */
+  sprintf(boundary,    "--%s", strstr(getenv("CONTENT_TYPE"), "boundary=") + strlen("boundary="));
+  /* This is not necessary but, I can not trust MS Explore */
+  qRemoveSpace(boundary);
+
+  sprintf(boundaryEOF, "%s--", boundary);
+
+  sprintf(rnboundaryrn, "\r\n%s\r\n", boundary);
+  sprintf(rnboundaryEOF, "\r\n%s", boundaryEOF);
+
+  boundarylen    = strlen(boundary);
+  boundaryEOFlen = strlen(boundaryEOF);
+
+
+  /* If you want to observe the string from stdin, enable this section */
+  /* This section is made for debugging                                */
+  if(0) {
+    int i, j;
+    qContentType("text/html");
+
+    printf("Content Length = %s<br>\n", getenv("CONTENT_LENGTH"));
+    printf("Boundary len %d : %s<br>\n", strlen(boundary), boundary);
+    for(i=0; boundary[i] !='\0'; i++) printf("%02X ",boundary[i]);
+    printf("<p>\n");
+
+    for(j = 1; _fgetstring(buf, 1000, stdin) != NULL; j++) {
+      printf("Line %d, len %d : %s<br>\n", j, strlen(buf), buf);
+      for(i=0; buf[i] !='\0'; i++) printf("%02X ",buf[i]);
+      printf("<p>\n");
+    }
+    exit(0);
+  }
+
+  /* check boundary */
+  if(_fgetstring(buf, 1000, stdin) == NULL) qError("_parse_multipart_data() : Your browser sent a non-HTTP compliant message.");
+
+  /* for explore 4.0 of NT, it sent \r\n before starting, fucking Micro$oft */
+  if(!strcmp(buf, "\r\n")) _fgetstring(buf, 1000, stdin);
+
+  if(strncmp(buf, boundary, boundarylen) != 0) qError("_parse_multipart_data() : String format invalid.");
+
+  for(amount = 0, finish = 0; finish != 1; amount++){
+    /* get name field */
+    _fgetstring(buf, 1000, stdin);
+    name = (char *)malloc(sizeof(char) * (strlen(buf) - strlen("Content-Disposition: form-data; name=\"") + 1));
+    strcpy(name, buf + strlen("Content-Disposition: form-data; name=\""));
+    for(c_count = 0; (name[c_count] != '\"') && (name[c_count] != '\0'); c_count++);
+    name[c_count] = '\0';
+
+    /* get filename field */
+    if(strstr(buf, "; filename=\"") != NULL) {
+      int erase;
+      filename = (char *)malloc(sizeof(char) * (strlen(buf) - strlen("Content-Disposition: form-data; name=\"") + 1));
+      strcpy(filename, strstr(buf, "; filename=\"") + strlen("; filename=\""));
+      for(c_count = 0; (filename[c_count] != '\"') && (filename[c_count] != '\0'); c_count++);
+      filename[c_count] = '\0';
+      /* erase '\' */
+      for(erase = 0, c_count = strlen(filename) - 1; c_count >= 0; c_count--) {
+        if(erase == 1) filename[c_count]= ' ';
+        else {
+          if(filename[c_count] == '\\') {
+            erase = 1;
+            filename[c_count] = ' ';
+          }
+        }
+      }
+      qRemoveSpace(filename);
+    }
+    else filename = "";
+
+    /* skip header */
+    for(;;) {
+      _fgetstring(buf, 1000, stdin);
+      if (!strcmp(buf, "\r\n")) break;
+    }
+
+    /* get value field */
+    for(valuelen = 10000, c_count = 0; (c = fgetc(stdin)) != EOF; ) {
+      if(c_count == 0) {
+        value = (char *)malloc(sizeof(char) * (valuelen + 1));
+        if(value == NULL) qError("_parse_multipart_data() : Memory allocation fail.");
+      }
+      else if(c_count == valuelen) {
+        char *valuetmp;
+        int  i;
+
+        valuelen *= 2;
+
+        /* Here, we do not use realloc(). Because sometimes it is unstable. */
+        valuetmp = (char *)malloc(sizeof(char) * (valuelen + 1));
+        if(valuetmp == NULL) qError("_parse_multipart_data() : Memory allocation fail.");
+        for(i = 0; i < c_count; i++) valuetmp[i] = value[i];
+        free(value);
+        value = valuetmp;
+      }
+      value[c_count++] = (char)c;
+
+      /* check end */
+      if((c == '\n') || (c == '-')) {
+        value[c_count] = '\0';
+
+        if((c_count - (2 + boundarylen + 2)) >= 0) {
+          if(!strcmp(value + (c_count - (2 + boundarylen + 2)), rnboundaryrn)) {
+            value[c_count - (2 + boundarylen + 2)] = '\0';
+            valuelen = c_count - (2 + boundarylen + 2);
+            break;
+          }
+        }
+        if((c_count - (2 + boundaryEOFlen)) >= 0) {
+          if(!strcmp(value + (c_count - (2 + boundaryEOFlen)), rnboundaryEOF)) {
+            value[c_count - (2 + boundaryEOFlen)] = '\0';
+            valuelen = c_count - (2 + boundaryEOFlen);
+            finish = 1;
+            break;
+          }
+        }
+      }
+    }
+
+    if(c == EOF) qError("_parse_multipart_data() : Internal bug.");
+
+    /* store in linked list */
+    /* store data */
+    back = entries;
+    entries = (Entry *)malloc(sizeof(Entry));
+    if(back != NULL) back->next = entries;
+    if(_first_entry == NULL) _first_entry = entries;
+
+    entries->name  = name;
+    entries->value = value;
+    entries->next  = NULL;
+
+    if(strcmp(filename, "") != 0) {
+      /* store data length, 'NAME.length'*/
+      back = entries;
+      entries = (Entry *)malloc(sizeof(Entry));
+      back->next = entries;
+
+      entries->name  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".length") + 1));
+      entries->value = (char *)malloc(sizeof(char) * 20 + 1);
+      sprintf(entries->name,  "%s.length", name);
+      sprintf(entries->value, "%d", valuelen);
+
+      /* store transfer filename, 'NAME.filename'*/
+      back = entries;
+      entries = (Entry *)malloc(sizeof(Entry));
+      back->next = entries;
+
+      entries->name  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".filename") + 1));
+      entries->value = filename;
+      sprintf(entries->name,  "%s.filename", name);
+      entries->next  = NULL;
+    }
+  }
 
   return amount;
 }
@@ -169,6 +403,7 @@ void qFree(void){
 ** Usage : qfDecoder(filename);
 ** Return: Success pointer of the first entry, Fail NULL
 ** Do    : Save file into linked list
+           # is used for comments
 **********************************************/
 Entry *qfDecoder(char *filename){
   FILE  *fp;
@@ -180,7 +415,10 @@ Entry *qfDecoder(char *filename){
 
   first = entries = back = NULL;
 
-  while(fgets(buf, sizeof(buf), fp)){
+  while(fgets(buf, sizeof(buf), fp) != NULL){
+    qRemoveSpace(buf);
+    if((buf[0] == '#') || (buf[0] == '\0')) continue;
+
     back = entries;
     entries = (Entry *)malloc(sizeof(Entry));
     if(back != NULL) back->next = entries;
@@ -272,8 +510,8 @@ int qcDecoder(void){
     entries->name  = _makeword(entries->value, '=');
     entries->next  = NULL;
 
-    _decode_query(entries->name);
-    _decode_query(entries->value);
+    qURLdecode(entries->name);
+    qURLdecode(entries->value);
     qRemoveSpace(entries->name);
   }
   free(query);
@@ -393,6 +631,7 @@ char *qURLencode(char *str){
     else if ((c >= '0') && (c <= '9')) encstr[j++] = c;
     else if ((c >= 'A') && (c <= 'Z')) encstr[j++] = c;
     else if ((c >= 'a') && (c <= 'z')) encstr[j++] = c;
+    else if ((c == '@') || (c == '.')) encstr[j++] = c;
     else {
       sprintf(buf, "%02x", c);
       encstr[j++] = '%';
@@ -403,6 +642,35 @@ char *qURLencode(char *str){
   encstr[j] = '\0';
 
   return encstr;
+}
+
+/**********************************************
+** Usage : qURLdecode(Query Pointer);
+** Return: Pointer of Query string
+** Do    : Decode query string
+**********************************************/
+void qURLdecode(char *str){
+  int i, j;
+
+  if(!str)return;
+  for(i = j = 0; str[j]; i++, j++){
+    switch(str[j]){
+      case '+':{
+        str[i] = ' ';
+        break;
+      }
+      case '%':{
+        str[i] = _x2c(str[j + 1], str[j + 2]);
+        j += 2;
+        break;
+      }
+      default:{
+        str[i] = str[j];
+        break;
+      }
+    }
+  }
+  str[i]='\0';
 }
 
 /**********************************************
@@ -422,13 +690,7 @@ void qContentType(char *mimetype){
 ** Usage : qPrintf(Mode, Format, Arg);
 ** Return: Sucess number of output bytes, Fail EOF
 ** Do    : Print message like printf
-**         Mode 0 : Same as printf(), it means Accept HTML
-**         Mode 1 : Print HTML TAG
-**         Mode 2 : Mode 1 + Auto Link
-**         Mode 3 : Mode 2 + _top frame link
-**         Mode 4 : Waste HTML TAG
-**         Mode 5 : Mode 4 + Auto Link
-**         Mode 6 : Mode 5 + _top frame link
+**         Mode : see qPuts()
 **********************************************/
 int qPrintf(int mode, char *format, ...){
   char buf[1000+1];
@@ -438,7 +700,7 @@ int qPrintf(int mode, char *format, ...){
   va_start(arglist, format);
   status = vsprintf(buf, format, arglist);
   if(status == EOF) return status;
-  if(strlen(buf) > 1000)qError("qprintf : Message is too long");
+  if(strlen(buf) > 1000)qError("qprintf() : Message is too long");
 
   qPuts(mode, buf);
 
@@ -448,46 +710,92 @@ int qPrintf(int mode, char *format, ...){
 /**********************************************
 ** Usage : qPuts(Mode, String pointer);
 ** Do    : print HTML link as multi mode
-**         Mode 0 : Same as printf()
-**         Mode 1 : Print HTML TAG
-**         Mode 2 : Mode 1 + Auto Link
-**         Mode 3 : Mode 2 + Auto Link to _top frame
-**         Mode 4 : Waste HTML TAG
-**         Mode 5 : Mode 4 + Auto Link
-**         Mode 6 : Mode 5 + Auto Link to _top frame
+**         Mode 0  : Same as printf()
+**         Mode 1  : Print HTML TAG
+**         Mode 2  : Mode 1 + Auto Link
+**         Mode 3  : Mode 2 + Auto Link to _top frame
+**         Mode 4  : Waste HTML TAG
+**         Mode 5  : Mode 4 + Auto Link
+**         Mode 6  : Mode 5 + Auto Link to _top frame
+**
+**         Mode 10  :Mode 0 + Convert
+**         Mode 11 : Print HTML TAG + Convert
+**         Mode 12 : Mode 11 + Auto Link
+**         Mode 13 : Mode 12 + Auto Link to _top frame
+**         Mode 14 : Waste HTML TAG + Convert
+**         Mode 15 : Mode 14 + Auto Link
+**         Mode 16 : Mode 15 + Auto Link to _top frame
+**
+**         Convert : " "   -> " "
+**                   "  "  -> " &nbsp;"
+**                   "   " -> " &nbsp;&nbsp;"
+**                   "\n"   -> "<br>\n"
+**                   "\r\n" -> "<br>\n"
+**
+** You can use 1x mode, to wrap long lines with no <pre> tag.
 ** Note) It modify argument string...
 **********************************************/
 void qPuts(int mode, char *buf){
 
   if(mode == 0) printf("%s", buf);
+  else if(mode == 10) {
+    int i;
+    for(i = 0; buf[i] != '\0'; i++) {
+      switch(buf[i]) {
+        case ' '  : {
+          if((i > 0) && (buf[i - 1] == ' ')) printf("&nbsp;");
+          else printf(" ");
+          break;
+        }
+        case '\r' : {
+          break;
+        }
+        case '\n' : {
+          printf("<br>\n");
+          break;
+        }
+        default   : {
+          printf("%c", buf[i]);
+          break;
+        }
+      }
+    }
+  }
   else {
-    char *ptr, retstop, *target, *token;
-    int printhtml, autolink, linkflag, ignoreflag;
+    char *ptr, retstop, lastretstop, *target, *token;
+    int printhtml, autolink, convert, linkflag, ignoreflag;
 
-    printhtml = autolink = 0;
-    target="";
-    /* set defaults */
+    /* set defaults, mode 2*/
     printhtml = 1;
     autolink  = 1;
     target    = "_top";
+    convert   = 0;
 
     switch(mode){
-      case 1 : {printhtml = 1, autolink = 0, target = ""; break;}
-      case 2 : {printhtml = 1, autolink = 1, target = ""; break;}
-      case 3 : {printhtml = 1, autolink = 1, target = "_top"; break;}
-      case 4 : {printhtml = 0, autolink = 0, target = ""; break;}
-      case 5 : {printhtml = 0, autolink = 1, target = ""; break;}
-      case 6 : {printhtml = 0, autolink = 1, target = "_top"; break;}
+      case 1  : {printhtml = 1, autolink = 0, target = "";     convert = 0; break;}
+      case 2  : {printhtml = 1, autolink = 1, target = "";     convert = 0; break;}
+      case 3  : {printhtml = 1, autolink = 1, target = "_top"; convert = 0; break;}
+      case 4  : {printhtml = 0, autolink = 0, target = "";     convert = 0; break;}
+      case 5  : {printhtml = 0, autolink = 1, target = "";     convert = 0; break;}
+      case 6  : {printhtml = 0, autolink = 1, target = "_top"; convert = 0; break;}
+      case 11 : {printhtml = 1, autolink = 0, target = "";     convert = 1; break;}
+      case 12 : {printhtml = 1, autolink = 1, target = "";     convert = 1; break;}
+      case 13 : {printhtml = 1, autolink = 1, target = "_top"; convert = 1; break;}
+      case 14 : {printhtml = 0, autolink = 0, target = "";     convert = 1; break;}
+      case 15 : {printhtml = 0, autolink = 1, target = "";     convert = 1; break;}
+      case 16 : {printhtml = 0, autolink = 1, target = "_top"; convert = 1; break;}
+
       default: {qError("_autolink() : Invalid Mode (%d)", mode); break;}
     }
 
-    /* &를 삽입함은 자동링크에서 & 캐릭터 전까지만 링크가 됨을 뜻하나
-      &lt;와 같은 문자를 < 가아닌 &lt;로 찍기위해 필요하다 */
     token = " `(){}[]<>&\"',\r\n";
 
+    lastretstop = '0'; /* any character except space */
     ptr = _strtok2(buf, token, &retstop);
+
     for(linkflag = ignoreflag = 0; ptr != NULL;){
 
+      /* auto link */
       if(ignoreflag == 0) {
         if(autolink == 1){
           if(!strncmp(ptr, "http://",        7)) linkflag = 1;
@@ -503,19 +811,41 @@ void qPuts(int mode, char *buf){
         else printf("%s", ptr);
       }
 
+      /* print */
       if(printhtml == 1){
         if     (retstop == '<')  printf("&lt;");
         else if(retstop == '>')  printf("&gt;");
-        else if(retstop == '\"') printf("&quot;");  /* " */
+        else if(retstop == '\"') printf("&quot;");
         else if(retstop == '&')  printf("&amp;");
+
+        else if(retstop == ' '  && convert == 1) {
+          if(lastretstop == ' ' && strlen(ptr) == 0) printf("&nbsp;");
+          else printf(" ");
+        }
+        else if(retstop == '\r' && convert == 1); /* skip when convert == 1 */
+        else if(retstop == '\n' && convert == 1) printf("<br>\n");
+
         else if(retstop != '\0') printf("%c", retstop);
       }
       else {
         if     (retstop == '<') ignoreflag = 1;
         else if(retstop == '>') ignoreflag = 0;
-        else if(ignoreflag == 0 && retstop !='\0') printf("%c", retstop);
+
+        else if(retstop == '\"' && ignoreflag == 0) printf("&quot;");
+        else if(retstop == '&'  && ignoreflag == 0) printf("&amp;");
+
+        else if(retstop == ' '  && ignoreflag == 0 && convert == 1) {
+          if(lastretstop == ' ' && strlen(ptr) == 0) printf("&nbsp;");
+          else printf(" ");
+        }
+        else if(retstop == '\r' && ignoreflag == 0 && convert == 1); /* skip when convert == 1 */
+        else if(retstop == '\n' && ignoreflag == 0 && convert == 1) printf("<br>\n");
+
+        else if(retstop != '\0' && ignoreflag == 0) printf("%c", retstop);
+
       }
 
+      lastretstop = retstop;
       ptr = _strtok2(NULL, token, &retstop);
     }
   }
@@ -542,10 +872,10 @@ void qError(char *format, ...){
   }
 
   logstatus = 0;
-  if(_error_log_file != NULL) {
+  if(_error_log_filename != NULL) {
     FILE *fp;
 
-    if((fp = fopen(_error_log_file, "at")) == NULL) logstatus = -1;
+    if((fp = fopen(_error_log_filename, "at")) == NULL) logstatus = -1;
     else {
       char *http_user_agent, *remote_host;
       struct tm *time;
@@ -555,7 +885,9 @@ void qError(char *format, ...){
       if((http_user_agent = getenv("HTTP_USER_AGENT")) == NULL) http_user_agent = "null";
       if((remote_host     = getenv("REMOTE_HOST"))     == NULL) remote_host     = "null";
 
-      fprintf(fp, "%04d/%02d/%02d(%02d:%02d) : '%s' from %s(%s)\n", time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min, buf, remote_host, http_user_agent);
+      fprintf(fp, "%04d/%02d/%02d(%02d:%02d) : '%s' from %s(%s)\n",
+              time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min,
+              buf, remote_host, http_user_agent);
 
       fclose(fp);
       logstatus = 1;
@@ -566,8 +898,19 @@ void qError(char *format, ...){
   printf("<body bgcolor=white>\n\n");
   printf("  <font color=red size=6><B>Error !!!</B></font><br><br>\n\n");
   printf("  <font size=3><b><i>%s</i></b></font><br><br>\n\n", buf);
+  if(!strcmp(buf, "_get_query() : Your browser sent a non-HTTP compliant message.")) {
+    printf("    <font size=3 color=red><b><i>\n");
+    printf("    There is a little PROBLEM in your COOKIE information of 'Netscape' browser.<br>\n");
+    printf("    You can fix that problem by following below procedure.<p>\n");
+    printf("    <font size=2 color=darkred>\n");
+    printf("    1. COMPLETELY turn your 'Netscape' browser OFF.<br>\n");
+    printf("    2. DELETE 'cookies.txt' file in your 'Netscape' directory.<br>\n");
+    printf("    3. Turn it ON & TRY AGAIN.<br>\n");
+    printf("    </font>\n");
+    printf("    </i></b></font><br>\n\n");
+  }
   printf("  <center><font size=2>\n");
-  printf("    %s<p>\n", CONTACT_INFO);
+  if(_error_contact_info != NULL) printf("    %s<p>\n", _error_contact_info);
   printf("    <a href='javascript:history.back()'>BACK</a><p>\n");
   if(logstatus == -1) printf("    Error logging failed.\n");
   printf("  </font></center>\n\n");
@@ -578,12 +921,21 @@ void qError(char *format, ...){
 }
 
 /**********************************************
-** Usage : qErrLog(logFilename);
+** Usage : qErrorLog(logFilename);
 ** Do    : Turn Error log on
 **********************************************/
-void qErrLog(char *filename) {
-  _error_log_file = filename;
+void qErrorLog(char *filename) {
+  _error_log_filename = filename;
 }
+
+/**********************************************
+** Usage : qErrorContact(logFilename);
+** Do    : Error contact information
+**********************************************/
+void qErrorContact(char *msg) {
+  _error_contact_info = msg;
+}
+
 
 /**********************************************
 ** Usage : qCgienv(Pointer of Cgienv);
@@ -752,26 +1104,26 @@ int qUpdateCounter(char *filename){
 ** Do    : Check E-mail address
 **********************************************/
 int qCheckEmail(char *email){
-  int i, dotcount;
+  int i, alpa, dot, gol;
 
   if(email == NULL) return 0;
 
-  if(strlen(email) > 60) return 0;
-
-  for(i = dotcount = 0; email[i] != '\0'; i++){
+  for(i = alpa = dot = gol = 0; email[i] != '\0'; i++){
     switch(email[i]) {
       case '@' : {
-        dotcount++;
-        if(dotcount != 1 || i == 0) return 0;
+        if(alpa == 0) return 0;
+        if(gol > 0)   return 0;
+        gol++;
         break;
       }
       case '.' : {
-        dotcount++;
-        if(dotcount < 2 || dotcount > 5) return 0;
-        if(email[i - 1] == '@' || email[i-1] == '.') return 0;
+        if((i > 0)   && (email[i - 1] == '@')) return 0;
+        if((gol > 0) && (email[i - 1] == '.')) return 0;
+        dot++;
         break;
       }
       default  : {
+        alpa++;
              if((email[i] >= '0') && (email[i] <= '9')) break;
         else if((email[i] >= 'A') && (email[i] <= 'Z')) break;
         else if((email[i] >= 'a') && (email[i] <= 'z')) break;
@@ -781,7 +1133,8 @@ int qCheckEmail(char *email){
     }
   }
 
-  if(dotcount < 2 || dotcount > 5) return 0;
+  if((alpa <= 3) || (gol == 0) || (dot == 0))return 0;
+
   return 1;
 }
 
@@ -835,69 +1188,10 @@ int qStr09AZaz(char *str){
 
 /**********************************************
 ***********************************************
-** You need not use below functions
+** You don't need to use below functions
 ** It is used by qDecoder();
 ***********************************************
 **********************************************/
-
-/**********************************************
-** Usage : _get_query("GET");
-**         _get_query("POST");
-** Return: Pointer of Query string
-** Do    : Return query string which is copied
-**********************************************/
-char *_get_query(char *method){
-  char *query;
-  int cl, i;
-
-  if(!strcmp(method, "GET")){
-    if(getenv("QUERY_STRING") == NULL) return NULL;
-    query = (char *)malloc(sizeof(char) * (strlen(getenv("QUERY_STRING")) + 1));
-    strcpy(query, getenv("QUERY_STRING"));
-    return query;
-  }
-  if(!strcmp(method, "POST")){
-    if(getenv("REQUEST_METHOD") == NULL) return NULL;
-    if(strcmp("POST", getenv("REQUEST_METHOD")))return NULL;
-    if(getenv("CONTENT_LENGTH") == NULL) qError("Your browser sent a non-HTTP compliant message.");
-
-    cl = atoi(getenv("CONTENT_LENGTH"));
-    query = (char *)malloc(sizeof(char) * (cl + 1));
-    for(i = 0; i < cl; i++)query[i] = fgetc(stdin);
-    query[i] = '\0';
-    return query;
-  }
-  return NULL;
-}
-
-/**********************************************
-** Usage : _decode_query(Query Pointer);
-** Return: Pointer of Query string
-** Do    : Decode query string
-**********************************************/
-void _decode_query(char *str){
-  int i, j;
-
-  if(!str)return;
-  for(i = j = 0; str[j]; i++, j++){
-    switch(str[j]){
-      case '+':{
-        str[i] = ' ';
-        break;
-      }
-      case '%':{
-        str[i] = _x2c(str[j + 1], str[j + 2]);
-        j += 2;
-        break;
-      }
-      default:{
-        str[i] = str[j];
-        break;
-      }
-    }
-  }
-  str[i]='\0';
-}
 
 /**********************************************
 ** Usage : _x2c(HEX Up character, HEX Low character);
@@ -963,4 +1257,25 @@ char *_strtok2(char *str, char *token, char *retstop){
   *retstop = '\0';
   if(tokensp != tokenep) return tokensp;
   return NULL;
+}
+
+/*********************************************
+** Usage : This function is perfectly same as fgets();
+**********************************************/
+char *_fgetstring(char *buf, int maxlen, FILE *fp) {
+  int i, c;
+
+  for(i = 0; i < (maxlen - 1); i++) {
+    c = fgetc(fp);
+    if(c == EOF) break;
+    buf[i] = (char)c;
+    if(c == '\n') {
+      i++;
+      break;
+    }
+  }
+  if(i == 0) return NULL;
+
+  buf[i] = '\0';
+  return buf;
 }
