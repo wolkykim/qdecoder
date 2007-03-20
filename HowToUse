@@ -35,6 +35,23 @@
              프로그래밍의 가독성과 효율을 극대화 한다.
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
+
+  [Version 3.5]
+    ** Patch functions
+    _get_query()
+    - 환경변수 미설정 확인추가
+    qCgienv()
+    - Netscape와 Explore에서 공통 사용되는 환경변수로 최적화
+    qSetCookie()
+    - expire 날짜 지정 char* 에서 int 타입으로 변경
+    qError()
+    - 로그 기능 추가
+    qURLencode()
+    - 숫자, 영문를 인코딩 하지 않도록 수정
+
+    ** New functions
+    void      qErrLog(char *filename);
+
   [Version 3.4.2]
     ** Patch functions
     qDecoder(), qfDecoder(), qcDecoder() :
@@ -66,7 +83,7 @@
     qDecoder() : Query value내의 '&' 문자를 분리자로 인식하던점 수정
 
   [Version 3.3]
-    int       qcDecoder(void);
+     int       qcDecoder(void);
     char      *qcValue(char *name);
     void      qcPrint(void);
     void      qcFree(void);
@@ -157,13 +174,13 @@
   ** COOKIE 관련 함수군
   ****************************************
 
-  void   qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure);
+  void   qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure);
   기능 : name=value에 해당하는 COOKIE를 설정함.
   주의 : qContentType()이 호출되기 전에 사용하여야 한다.
   사용 : char *name, *value;
          name = "NAME", value = "Kim";
          /* NAME=Kim 이란 정보를 30일간 클라이언트에 저장한다 */
-         qSetCookie(name, value, '30', NULL, NULL, NULL);
+         qSetCookie(name, value, 30, NULL, NULL, NULL);
 
   int    qcDecoder(void);
   기능 : COOKIE를 해석하여 Linked List에 저장
@@ -216,7 +233,6 @@
   void   qfFree(Entry *first);
   기능 : 할당된 Memory를 반환한다.
   사용 : qfFree(FirstRecord);
-
 
   ## 아래와 같은 형식의 카운터 화일을 다룬다.
   ---- number.dat ----
@@ -296,11 +312,22 @@
 
   void   qError(char *format, ...);
   기능 : 오류에대한 Message를 출력한다. printf() 함수와 사용법 동일.
-         qDecoder.c를 수정하여 출력 형태를 고칠수 있다.
+         오류 메시지 하단의 개발자 접속 링크는 qDecoder.h의 CONTACT_INFO를
+         수정하여 변경할수 있다.
+         qErrLog()함수로 로그파일이 정의된경우 오류메시지가 파일시스템에 남는다.
          (Max string size = 1000byte)
   사용 : qError("오류메시지");
          qError("%s에 오류", buf);
 
+  void   qErrLog(char *filename);
+  기능 : qError() 함수를 부를때 전달되는 오류 메시지들을 별도의 로그파일로
+         기록하도록 한다.
+         로그를 기록할때, 본파일을 직접 호출하는것이 아니라, 
+         qErrLog("logs/error.log") 와같이 프로그램 초기에 호출하면 그 후
+         qError()가 호출될때마다, 'logs/error.log' 파일에 로그가 자동 기록
+         된다.
+  사용 : qErrLog("로그파일명");        // log enable
+         qErrLog(NULL);                // log disable (default)
 
   ****************************************
   ** 기타 함수군
@@ -419,6 +446,15 @@
     cc -o 실행화일명 작성한소스.c qDecoder.c
     ex) cc -o test.cgi main.c qDecoder.c
 
+  Library 제작 사용
+    qDecoder 디렉토리에서 make를 실행한다.
+    - cd qDecoder
+    - make
+    qDecoder.a가 생성된다.
+
+    ex) gcc -o test.cgi main.c qDecoder.a
+
+
 5. Example Makefile
 
 ---- Cut Here ----
@@ -428,7 +464,7 @@ CC      = gcc -Wall        # For GNU C Compiler(gcc)
 
 OBJ  = $(OBJ1) $(OBJ2)
 OBJ1 = qDecoder.o
-OBJ2 =
+OBJ2 = YourMain.o YourSub.o
 
 PRG_NAME = test.cgi
 
@@ -448,3 +484,4 @@ clean:  rm -f $(OBJ) $(PRG_NAME)
 ---- Cut Here ----
 
 --- END ---
+

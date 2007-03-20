@@ -1,7 +1,7 @@
 /***********************************************
-** [Query String Decoder Version 3.4.2]
+** [Query String Decoder Version 3.5]
 **
-** Last Modified : 1997/09/01
+** Last Modified : 1997/10/22
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
@@ -55,6 +55,8 @@ char *_strtok2(char *str, char *token, char *retstop);
 
 static Entry *_first_entry = NULL;
 static Entry *_cookie_first_entry = NULL;
+
+static char *_error_log_file = NULL;
 
 /**********************************************
 ** Usage : qDecoder();
@@ -336,9 +338,9 @@ void qcFree(void){
 ** The current time + exp_days will be set
 ** This is must called before qContentType();
 **
-** ex) qSetCookie("NAME", "Kim", "30", NULL, NULL, NULL);
+** ex) qSetCookie("NAME", "Kim", 30, NULL, NULL, NULL);
 **********************************************/
-void qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure){
+void qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure){
   char *Name, *Value;
   char cookie[(4 * 1024) + (0xFF) + 1];
 
@@ -347,10 +349,10 @@ void qSetCookie(char *name, char *value, char *exp_days, char *domain, char *pat
   sprintf(cookie, "%s=%s", Name, Value);
   free(Name), free(Value);
 
-  if(exp_days != NULL) {
+  if(exp_days != 0) {
     time_t plus_sec;
     char gmt[0xff];
-    plus_sec = (time_t)(atoi(exp_days) * 24 * 60 * 60);
+    plus_sec = (time_t)(exp_days * 24 * 60 * 60);
     qGetGMTTime(gmt, plus_sec);
     strcat(cookie, "; expires=");
     strcat(cookie, gmt);
@@ -387,21 +389,19 @@ char *qURLencode(char *str){
 
   for(i = j = 0; str[i]; i++){
     c = (unsigned char)str[i];
-    switch(c){
-      case ' ': {
-        encstr[j++] = '+';
-        break;
-      }
-      default : {
-        sprintf(buf, "%02x", c);
-        encstr[j++] = '%';
-        encstr[j++] = buf[0];
-        encstr[j++] = buf[1];
-        break;
-      }
+         if (c == ' ') encstr[j++] = '+';
+    else if ((c >= '0') && (c <= '9')) encstr[j++] = c;
+    else if ((c >= 'A') && (c <= 'Z')) encstr[j++] = c;
+    else if ((c >= 'a') && (c <= 'z')) encstr[j++] = c;
+    else {
+      sprintf(buf, "%02x", c);
+      encstr[j++] = '%';
+      encstr[j++] = buf[0];
+      encstr[j++] = buf[1];
     }
   }
   encstr[j] = '\0';
+
   return encstr;
 }
 
@@ -464,6 +464,8 @@ void qPuts(int mode, char *buf){
     char *ptr, retstop, *target, *token;
     int printhtml, autolink, linkflag, ignoreflag;
 
+    printhtml = autolink = 0;
+    target="";
     /* set defaults */
     printhtml = 1;
     autolink  = 1;
@@ -526,7 +528,9 @@ void qPuts(int mode, char *buf){
 void qError(char *format, ...){
   char buf[1000 + 1];
   int status;
+  int logstatus;
   va_list arglist;
+
   va_start(arglist, format);
 
   qContentType("text/html");
@@ -537,19 +541,48 @@ void qError(char *format, ...){
     exit(1);
   }
 
+  logstatus = 0;
+  if(_error_log_file != NULL) {
+    FILE *fp;
+
+    if((fp = fopen(_error_log_file, "at")) == NULL) logstatus = -1;
+    else {
+      char *http_user_agent, *remote_host;
+      struct tm *time;
+
+      time = qGetTime();
+
+      if((http_user_agent = getenv("HTTP_USER_AGENT")) == NULL) http_user_agent = "null";
+      if((remote_host     = getenv("REMOTE_HOST"))     == NULL) remote_host     = "null";
+
+      fprintf(fp, "%04d/%02d/%02d(%02d:%02d) : '%s' from %s(%s)\n", time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min, buf, remote_host, http_user_agent);
+
+      fclose(fp);
+      logstatus = 1;
+    }
+  }
+
   printf("<html>\n");
   printf("<body bgcolor=white>\n\n");
   printf("  <font color=red size=6><B>Error !!!</B></font><br><br>\n\n");
   printf("  <font size=3><b><i>%s</i></b></font><br><br>\n\n", buf);
   printf("  <center><font size=2>\n");
-  printf("    [<a href='http://www.hongik.ac.kr' target=_top>Hongik University</a> <a href='http://shinan.hongik.ac.kr' target=_top>Shinan Campus</a>]\n");
-  printf("    [<a href='http://hsns.hongik.ac.kr' target=_top>Hongik Shinan Network Security</a>]<br>\n");
-  printf("    Made in Korea by '<a href='mailto:nobreak@shinan.hongik.ac.kr'>Seung-young, Kim</a>'<p>\n");
-  printf("    <a href='javascript:history.back()'>BACK</a>\n");
+  printf("    %s<p>\n", CONTACT_INFO);
+  printf("    <a href='javascript:history.back()'>BACK</a><p>\n");
+  if(logstatus == -1) printf("    Error logging failed.\n");
   printf("  </font></center>\n\n");
   printf("</body>\n");
   printf("</html>\n");
+
   exit(1);
+}
+
+/**********************************************
+** Usage : qErrLog(logFilename);
+** Do    : Turn Error log on
+**********************************************/
+void qErrLog(char *filename) {
+  _error_log_file = filename;
 }
 
 /**********************************************
@@ -561,23 +594,27 @@ void qCgienv(Cgienv *env){
 
   envtime = qGetTime();
 
-  env->server_software   = getenv("SERVER_SOFTWARE");
-  env->server_name       = getenv("SERVER_NAME");
+  env->auth_type         = getenv("AUTH_TYPE");
+  env->content_length    = getenv("CONTENT_LENGTH");
+  env->content_type      = getenv("CONTENT_TYPE");
+  env->document_root     = getenv("DOCUMENT_ROOT");
   env->gateway_interface = getenv("GATEWAY_INTERFACE");
+  env->http_accept       = getenv("HTTP_ACCEPT");
+  env->http_cookie       = getenv("HTTP_COOKIE");
+  env->http_user_agent   = getenv("HTTP_USER_AGENT");
+  env->query_string      = getenv("QUERY_STRING");
+  env->remote_addr       = getenv("REMOTE_ADDR");
+  env->remote_host       = getenv("REMOTE_HOST");
+  env->remote_user       = getenv("REMOTE_USER");
+  env->remote_port       = getenv("REMOTE_PORT");
+  env->request_method    = getenv("REQUEST_METHOD");
+  env->script_name       = getenv("SCRIPT_NAME");
+  env->script_filename   = getenv("SCRIPT_FILENAME");
+  env->server_name       = getenv("SERVER_NAME");
   env->server_protocol   = getenv("SERVER_PROTOCOL");
   env->server_port       = getenv("SERVER_PORT");
-  env->request_method    = getenv("REQUEST_METHOD");
-  env->http_accept       = getenv("HTTP_ACCEPT");
-  env->path_info         = getenv("PATH_INFO");
-  env->path_translated   = getenv("PATH_TRANSLATED");
-  env->script_name       = getenv("SCRIPT_NAME");
-  env->query_string      = getenv("QUERY_STRING");
-  env->remote_host       = getenv("REMOTE_HOST");
-  env->remote_addr       = getenv("REMOTE_ADDR");
-  env->remote_user       = getenv("REMOTE_USER");
-  env->auth_type         = getenv("AUTH_TYPE");
-  env->content_type      = getenv("CONTENT_TYPE");
-  env->content_length    = getenv("CONTENT_LENGTH");
+  env->server_software   = getenv("SERVER_SOFTWARE");
+  env->server_admin      = getenv("SERVER_ADMIN");
 
   env->year = envtime->tm_year;
   env->mon  = envtime->tm_mon;
@@ -814,19 +851,21 @@ char *_get_query(char *method){
   int cl, i;
 
   if(!strcmp(method, "GET")){
-        if(getenv("QUERY_STRING") == NULL) return NULL;
-	query = (char *)malloc(sizeof(char) * (strlen(getenv("QUERY_STRING")) + 1));
-	strcpy(query, getenv("QUERY_STRING"));
-	return query;
+    if(getenv("QUERY_STRING") == NULL) return NULL;
+    query = (char *)malloc(sizeof(char) * (strlen(getenv("QUERY_STRING")) + 1));
+    strcpy(query, getenv("QUERY_STRING"));
+    return query;
   }
   if(!strcmp(method, "POST")){
-        if(getenv("REQUEST_METHOD") == NULL) return NULL;
-	if(strcmp("POST", getenv("REQUEST_METHOD")))return NULL;
-	cl = atoi(getenv("CONTENT_LENGTH"));
-	query = (char *)malloc(sizeof(char) * (cl + 1));
-	for(i = 0; i < cl; i++)query[i] = fgetc(stdin);
-	query[i] = '\0';
-	return query;
+    if(getenv("REQUEST_METHOD") == NULL) return NULL;
+    if(strcmp("POST", getenv("REQUEST_METHOD")))return NULL;
+    if(getenv("CONTENT_LENGTH") == NULL) qError("Your browser sent a non-HTTP compliant message.");
+
+    cl = atoi(getenv("CONTENT_LENGTH"));
+    query = (char *)malloc(sizeof(char) * (cl + 1));
+    for(i = 0; i < cl; i++)query[i] = fgetc(stdin);
+    query[i] = '\0';
+    return query;
   }
   return NULL;
 }
@@ -842,19 +881,19 @@ void _decode_query(char *str){
   if(!str)return;
   for(i = j = 0; str[j]; i++, j++){
     switch(str[j]){
-	  case '+':{
-		str[i] = ' ';
-		break;
-	  }
-	  case '%':{
-		str[i] = _x2c(str[j + 1], str[j + 2]);
-		j += 2;
-		break;
-	  }
-	  default:{
-		str[i] = str[j];
-		break;
-	  }
+      case '+':{
+        str[i] = ' ';
+        break;
+      }
+      case '%':{
+        str[i] = _x2c(str[j + 1], str[j + 2]);
+        j += 2;
+        break;
+      }
+      default:{
+        str[i] = str[j];
+        break;
+      }
     }
   }
   str[i]='\0';

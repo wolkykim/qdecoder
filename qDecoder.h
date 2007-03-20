@@ -12,23 +12,28 @@ struct Entry{
 
 typedef struct Cgienv Cgienv;
 struct Cgienv{
-  char *server_software;
-  char *server_name;
+  char *auth_type;
+  char *content_length;
+  char *content_type;
+  char *document_root;
   char *gateway_interface;
+  char *http_accept;
+  char *http_cookie;
+  char *http_user_agent;
+  char *query_string;
+  char *remote_addr;
+  char *remote_host;
+  char *remote_user;
+  char *remote_port;
+  char *request_method;
+  char *script_name;
+  char *script_filename;
+  char *server_name;
   char *server_protocol;
   char *server_port;
-  char *request_method;
-  char *http_accept;
-  char *path_info;
-  char *path_translated;
-  char *script_name;
-  char *query_string;
-  char *remote_host;
-  char *remote_addr;
-  char *remote_user;
-  char *auth_type;
-  char *content_type;
-  char *content_length;
+  char *server_software;
+  char *server_admin;
+
   /*** Extended Information ***/
   int  year, mon, day, hour, min, sec;
 };
@@ -49,13 +54,14 @@ char      *qcValue(char *name);
 void      qcPrint(void);
 void      qcFree(void);
 
-void      qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure);
+void      qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure);
 
 char      *qURLencode(char *str);
 void      qContentType(char *mimetype);
 int       qPrintf(int mode, char *format, ...);
 void      qPuts(int mode, char *buf);
 void      qError(char *format, ...);
+void      qErrLog(char *filename);
 
 void      qCgienv(Cgienv *env);
 
@@ -73,5 +79,7 @@ int       qCheckEmail(char *email);
 int       qCheckURL(char *url);
 char      *qRemoveSpace(char *str);
 int       qStr09AZaz(char *str);
+
+#define   CONTACT_INFO	"Made in Korea by '<a href='mailto:nobreak@shinan.hongik.ac.kr'>Seung-young, Kim</a>'"
 
 #endif
