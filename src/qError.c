@@ -48,10 +48,14 @@ static char *_error_log_filename = NULL;
 ** Do    : Print error message.
 **********************************************/
 void qError(char *format, ...) {
+  static int cnt = 0;
   char buf[1024];
   int status;
   int logstatus;
   va_list arglist;
+
+  if (cnt != 0) exit(1);
+  cnt++;
 
   va_start(arglist, format);
 

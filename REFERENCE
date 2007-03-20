@@ -15,8 +15,10 @@ qDecoder Function Reference
         o qValueNext()
         o qValueAdd()
         o qValueRemove()
+        o qValueType()
         o qCookieSet()
         o qCookieRemove()
+        o qCookieValue()
         o qPrint()
         o qFree()
 
@@ -99,6 +101,8 @@ qDecoder Function Reference
         o qitocomma()
 
    * File Handling Functions
+        o qfopen()
+        o qfclose()
         o qCheckFile()
         o qCatFile()
         o qReadFile()
@@ -158,13 +162,15 @@ Function: Interprets encoded query strings and stores them in the linked-list.
           qValue() or related functions, so you do not need to call directly.
 
           In case of multipart/form-data encoding(used for file uploading), the
-          variables of "variable_name.length" and "variable_name.name" are
-          automatically inserted. The number of bytes of data is stored in
-          "variable_name.length", and the file names(file name itself, path
-          information will be removed) transmitted by users are stored in
-          "variable_name.name". (In case of "C:Dataa.gif", only "a.gif" is
-          stored.) In counter of return values, a total of 3 lists are stored
-          but since the 3 lists are for one data, they are regarded as 1 list.
+          variables of "variable_name.length", "variable_name.contenttype" and
+          "variable_name.name" are automatically inserted. The number of bytes
+          of data is stored in "variable_name.length", and the content type of
+          data is stored in "variable_name.contenttype" and the file names(file
+          name itself, path information will be removed) transmitted by users
+          are stored in "variable_name.name". (In case of "C:Dataa.gif", only
+          "a.gif" is stored.) In counter of return values, a total of 4 lists
+          are stored but since the 4 lists are for one data, they are regarded
+          as 1 list.
  Example: Example 1: application/x-www-form-urlencoded (GET/POST Method)
 
           [HTML]
@@ -424,6 +430,19 @@ qValueRemove()
  Function: Remove entry from linked list.
   Example: qValueRemove("NAME");
 
+qValueType()
+
+   Syntax: char qValueType(char *format, ...);
+ Function: Returns type(Cookie, GET, POST) of query.
+   Return: Cookie `C`, Get method `G`, Post method `P`, New
+           data(qValueAdd)  `N`, Not found `-`.
+  Example: switch(qValueType(name)) {
+             case 'C' : { _cookie_cnt--; break; }
+             case 'G' : { _get_cnt--; break; }
+             case 'P' : { _post_cnt--; break; }
+             case 'N' : { _new_cnt--; break; }
+           }
+
 qCookieSet()
 
   Syntax: void qCookieSet(char *name, char *value, int exp_days, char *path, char *domain,
@@ -442,18 +461,18 @@ Function: Sets up those cookies that correspond to name=value.
  Example: char *name = "NAME", *value = "Kim";
 
           // Apply the NAME=Kim information in the current domain and directory for 30 days.
-          qSetCookie(name, value, 30, NULL, NULL, NULL);
+          qCookieSet(name, value, 30, NULL, NULL, NULL);
 
           // Apply the NAME=Kim information to the "/" directory of "ANYTHING.qdecoder.org"
           // until the browser is shut down.
-          qSetCookie(name, value, 0, "/", ".qdecoder.org", NULL);
+          qCookieSet(name, value, 0, "/", ".qdecoder.org", NULL);
 
           // As for the followings, cookies will be set up only when security
           // requirements are satisfied.
-          qSetCookie(name, value, 0, NULL, NULL, "SECURE");
+          qCookieSet(name, value, 0, NULL, NULL, "SECURE");
 
           // As for the followings, you can remove cookies.
-          qSetCookie(name, "", -1, NULL, NULL, NULL);
+          qCookieSet(name, "", -1, NULL, NULL, NULL);
 
 qCookieRemove()
 
@@ -482,6 +501,17 @@ qCookieRemove()
           qCookieSet("NAME", "VALUE", 0, "/", "www.qdecoder.org", NULL);
           qCookieRemove("NAME", "/", "www.qdecoder.org", NULL);
 
+qCookieValue()
+
+   Syntax: char *qCookieValue(char *format, ...);
+ Function: Return cookie value.
+   Return: The pointer of the cookie value if a cookie name exists. NULL
+           if there is no cookie name.
+  Example: char *cookie;
+
+           cookie = qCookieValue("NAME");
+           if(cookie == NULL) qError("Cookies are not set.");
+
 qPrint()
 
    Syntax: int qPrint(void);
@@ -503,8 +533,9 @@ Session Functions
 
 qSession()
 
-  Syntax: void qSession(char *repository);
+  Syntax: int qSession(char *repository);
 Function: Start Session.
+  Return: New session 1, else 0.
     Note: To use session, you must call qSession() at the start. qSession() stores
           32 bytes session id to client using cookie, then stores session data to
           server side. By default, session data will be expired in 1800 seconds
@@ -1163,26 +1194,36 @@ Function: Usage is same as that of printf(). Checks whether the HTML tag is appl
   Return: In case of success - returns the number of displayed bytes. In case of failure, returns EOF.
     Note: The maximum size of the assembled strings should not exceed 10K(1024 * 10 - 1).
 
-          Mode 0 : Same as printf(). Means HTML is applied.
-          Mode 1 : Displays the HTML tag itself. No linking parts.
-          Mode 2 : Mode 1 + automatic linking.
-          Mode 3 : Mode 2 + Displays the previous screen(target=_top) when link is clicked.
-          Mode 4 : Disregards the HTML tag. Not displayed.
-          Mode 5 : Mode 4 + automatic linking.
-          Mode 6 : Mode 5 + Displays the previous screen(target=_top) when link is clicked.
-          Mode 10 : Mode 0 + Convert
+          Mode 00 : Same as printf()
+          Mode 10  :Mode 0 + Convert
+
+          Mode 01 : Print HTML TAG
           Mode 11 : Print HTML TAG + Convert
-          Mode 12 : Mode 11 + Auto Link
-          Mode 13 : Mode 12 + Auto Link to _top frame
+
+          Mode 02 : Print HTML TAG + Auto Link
+          Mode 12 : Print HTML TAG + Auto Link + Convert
+
+          Mode 03 : Print HTML TAG + Auto Link(_top)
+          Mode 13 : Print HTML TAG + Auto Link(_top) + Convert
+          Mode 23 : Print HTML TAG + Auto Link(new window)
+          Mode 33 : Print HTML TAG + Auto Link(new window) + Convert
+
+          Mode 04 : Waste HTML TAG
           Mode 14 : Waste HTML TAG + Convert
-          Mode 15 : Mode 14 + Auto Link
-          Mode 16 : Mode 15 + Auto Link to _top frame
+
+          Mode 05 : Waste HTML TAG + Auto Link
+          Mode 15 : Waste HTML TAG + Auto Link + Convert
+
+          Mode 06 : Waste HTML TAG + Auto Link(_top)
+          Mode 16 : Waste HTML TAG + Auto Link(_top) + Convert
+          Mode 26 : Waste HTML TAG + Auto Link(new window)
+          Mode 36 : Waste HTML TAG + Auto Link(new window) + Convert
 
           Convert : " "   -> " "
                    "  "  -> "  "
                    "   " -> "   "
-                   "\r"  -> disregard
-                   "\n"  -> "<br>\n"
+                   "\n"   -> "<br>\n"
+                   "\r\n" -> "<br>\n"
 
           The Mode values of 10 and over can be efficiently used when successive
           blank is to be displayed on the screen without using the <pre> tag.
@@ -1191,19 +1232,19 @@ Function: Usage is same as that of printf(). Checks whether the HTML tag is appl
  Example: qPrintf(i, "Mode %d: <font>\"http://www.qdecoder.org\"</font>\n", i);
 
           Mode 0: <font>"http://www.qdecoder.org"</font>
-          Mode 1: &lt;font&gt;&quot;http://www.qdecoder.org&quot;&lt;/font&gt;
-          Mode 2: &lt;font&gt;&quot;<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>&quot;&lt;/font&gt;
-          Mode 3: &lt;font&gt;&quot;<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>&quot;&lt;/font&gt;
-          Mode 4: &quot;http://www.qdecoder.org&quot;
-          Mode 5: &quot;<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>&quot;
-          Mode 6: &quot;<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>&quot;
+          Mode 1: <font>"http://www.qdecoder.org"</font>
+          Mode 2: <font>"<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>"</font>
+          Mode 3: <font>"<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>"</font>
+          Mode 4: "http://www.qdecoder.org"
+          Mode 5: "<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>"
+          Mode 6: "<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>"
           Mode 10: <font>"http://www.qdecoder.org"</font><br>
-          Mode 11: &lt;font&gt;&quot;http://www.qdecoder.org&quot;&lt;/font&gt;<br>
-          Mode 12: &lt;font&gt;&quot;<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>&quot;&lt;/font&gt;<br>
-          Mode 13: &lt;font&gt;&quot;<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>&quot;&lt;/font&gt;<br>
-          Mode 14: &quot;http://www.qdecoder.org&quot;<br>
-          Mode 15: &quot;<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>&quot;<br>
-          Mode 16: &quot;<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>&quot;<br>
+          Mode 11: <font>"http://www.qdecoder.org"</font><br>
+          Mode 12: <font>"<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>"</font><br>
+          Mode 13: <font>"<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>"</font><br>
+          Mode 14: "http://www.qdecoder.org"<br>
+          Mode 15: "<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>"<br>
+          Mode 16: "<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>"<br>
 
           qPrintf(i, "Mode %d: ' ', '  ', '   ', '    '\n", i);
 
@@ -1423,6 +1464,24 @@ qitocomma()
 
 File Handling Functions
 
+qfopen()
+
+   Syntax: FILE *qfopen(char *path, char *mode);
+ Function: Open file with file lock.
+   Return: Same as fopen().
+     Note: A file which is opened by qfopen() must be closed by qfclose().
+  Example: FILE *fp;
+
+           fp = qfopen("/tmp/report.txt", "w");
+           ...
+           qfclose(fp);
+
+qfclose()
+
+   Syntax: int qfclose(FILE *stream);
+ Function: Close the file stream which is opened by qfopen().
+   Return: Same as fclose().
+
 qCheckFile()
 
    Syntax: int qCheckFile(char *format, ...);
@@ -1615,7 +1674,6 @@ qCGIenv()
              char *remote_addr;
              char *remote_host;
              char *remote_port;
-
              char *remote_user;
              char *request_method;
              char *request_uri;
@@ -1763,3 +1821,4 @@ qUniqueID()
            uniqueid = qUniqueID();
 
   ------------------------------------------------------------------------
+                         Powered by OpenBIRD, Inc.

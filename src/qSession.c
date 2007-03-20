@@ -87,18 +87,19 @@ static time_t _session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERV
 
 /**********************************************
 ** Usage : qSession(Repository Path);
+** Return: New session 1 else 0.
 ** Do    : Start Session.
-**
+** 
 ** ex) qSession(NULL);   // use default storage
 **     qSession("/tmp"); // use /tmp for session storage
 **********************************************/
 /* Initialize session data */
-void qSession(char *repository) {
+int qSession(char *repository) {
   int new_session;
   char *sessionkey;
 
   /* check if session already started */
-  if(_session_started) return;
+  if(_session_started) return _session_new;
   _session_first_entry = NULL;
   _session_started = 1;
   _session_modified = 0;
@@ -127,9 +128,9 @@ void qSession(char *repository) {
     if(_isValidSession(_session_timeout_path) <= 0) { /* expired or not found */
       unlink(_session_storage_path);
       unlink(_session_timeout_path);
-      sessionkey = qUniqueID();
-
+  
       /* remake storage path */
+      sessionkey = qUniqueID();
       sprintf(_session_storage_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
       sprintf(_session_timeout_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
@@ -177,6 +178,7 @@ void qSession(char *repository) {
 
   /* set globals */
   _session_new = new_session;
+  return _session_new;
 }
 
 /**********************************************
@@ -455,7 +457,7 @@ static int _clearRepository(void) {
   return 0;
 #else
   DIR *dp;
-  struct dirent *dirp;/* GCC일경우 활성화 */
+  struct dirent *dirp;
   char timeoutpath[1024];
   int clearcnt;
 
@@ -489,6 +491,7 @@ static int _clearRepository(void) {
       }
     }
   }
+  closedir(dp);
 
   return clearcnt;
 #endif
@@ -500,9 +503,9 @@ static int _isValidSession(char *filename) {
   time_t timeout, timenow;
   double timediff;
 
-  if((fp = fopen(filename, "rt")) == NULL) return 0;
+  if((fp = qfopen(filename, "rt")) == NULL) return 0;
   fscanf(fp, "%ld", &timeout);
-  fclose(fp);
+  qfclose(fp);
 
   timenow = time(NULL);
   timediff = difftime(timeout, timenow); /* return timeout - timenow */
@@ -519,9 +522,9 @@ static time_t _updateTimeout(char *filename, time_t timeout_interval) {
   timeout = time(NULL);
   timeout += timeout_interval;
 
-  if((fp = fopen(filename, "wt")) == NULL) return 0;
+  if((fp = qfopen(filename, "wt")) == NULL) return 0;
   fprintf(fp, "%ld\n", (long)timeout);
-  fclose(fp);
+  qfclose(fp);
 
   return timeout;
 }

@@ -41,7 +41,7 @@ Author:
 #define BASEPATH	"upload/"
 
 int main(void) {
-  char *filedata, *filename, filepath[1024];
+  char *filedata, *filename, *contenttype, filepath[1024];
   int filelength;
 
   qContentType("text/html");
@@ -50,13 +50,14 @@ int main(void) {
   filedata   = qValue("binary");
   if((filelength = qiValue("binary.length")) == 0) qError("Select file, please.");
   filename   = qValue("binary.filename");
+  contenttype = qValue("binary.contenttype");
   sprintf(filepath, "%s%s", BASEPATH, filename);
 
   if(qSaveStr(filedata, filelength, filepath, "wb") < 0) {
     qError("File(%s) open(wb) fail. Please make sure CGI(6755) or Directory(777) has right permission.", filepath);
   }
 
-  printf("<a href=\"%s\">%s</a> (%d bytes) saved.", filepath, filename, filelength);
+  printf("<a href=\"%s\">%s</a> (%d bytes, %s) saved.", filepath, filename, filelength, contenttype);
   qFree();
   return 0;
 }

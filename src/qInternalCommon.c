@@ -121,3 +121,32 @@ char *_fgets(char *str, int size, FILE *stream) {
   return str;
 }
 
+/*********************************************
+** Usage : apply an advisory lock on an open file.
+**********************************************/
+int _flockopen(FILE *fp) {
+#ifdef _WIN32
+  return 0;
+#else
+#ifdef HAVE_FLOCK
+  return flock(fileno(fp), LOCK_EX);
+#else
+  return 0;
+#endif
+#endif
+}
+
+/*********************************************
+** Usage : remove an advisory lock on an open file.
+**********************************************/
+int _flockclose(FILE *fp) {
+#ifdef _WIN32
+  return 0;
+#else
+#ifdef HAVE_FLOCK
+  return flock(fileno(fp), LOCK_UN);
+#else
+  return 0;
+#endif
+#endif
+}

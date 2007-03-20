@@ -52,6 +52,7 @@ static Q_Entry *_first_entry = NULL;
 static Q_Entry *_multi_last_entry = NULL;
 static char _multi_last_key[1024];
 
+static int _cookie_cnt = 0, _get_cnt = 0, _post_cnt = 0, _new_cnt = 0; /* counts per methods */
 
 /**********************************************
 ** Usage : qDecoder();
@@ -90,7 +91,7 @@ int qDecoder(void) {
 static int _parse_urlencoded(void) {
   Q_Entry *entries, *back;
   char *query;
-  int  amount;
+  int  amount, cnt;
   int  loop;
 
   entries = back = NULL;
@@ -101,7 +102,7 @@ static int _parse_urlencoded(void) {
     else if(loop == 2 ) { query = _get_query("GET"); sepchar = '&'; }
     else if(loop == 3 ) { query = _get_query("POST"); sepchar = '&'; }
     else break;
-    for(; query && *query; amount++) {
+    for(cnt = 0; query && *query; amount++, cnt++) {
       back = entries;
       entries = (Q_Entry *)malloc(sizeof(Q_Entry));
       if(back != NULL) back->next = entries;
@@ -115,6 +116,10 @@ static int _parse_urlencoded(void) {
       qURLdecode(entries->value);
     }
     if(query)free(query);
+    
+    if(loop == 1 )      _cookie_cnt = cnt;
+    else if(loop == 2 ) _get_cnt = cnt;
+    else if(loop == 3 ) _post_cnt = cnt;
   }
 
   return amount;
@@ -166,8 +171,9 @@ static int _parse_multipart_data(void) {
   char *query;
   int  amount;
   int  loop;
+  int  cnt;
 
-  char *name = NULL, *value = NULL, *filename = NULL;
+  char *name, *value, *filename, *contenttype;
   int  valuelen;
 
   char boundary[256], boundaryEOF[256];
@@ -194,7 +200,7 @@ static int _parse_multipart_data(void) {
     else if(loop == 2 ) { query = _get_query("GET"); sepchar = '&'; }
     else break;
 
-    for(; query && *query; amount++) {
+    for(cnt = 0; query && *query; amount++, cnt++) {
       back = entries;
       entries = (Q_Entry *)malloc(sizeof(Q_Entry));
       if(back != NULL) back->next = entries;
@@ -208,6 +214,10 @@ static int _parse_multipart_data(void) {
       qURLdecode(entries->value);
     }
     if(query)free(query);
+
+    if(loop == 1 )      _cookie_cnt = cnt;
+    else if(loop == 2 ) _get_cnt = cnt;
+
   }
 
   /* For parse multipart/form-data method */
@@ -259,43 +269,48 @@ static int _parse_multipart_data(void) {
 
   if(strncmp(buf, boundary, boundarylen) != 0) qError("_parse_multipart_data(): String format invalid.");
 
-  for(finish = 0; finish != 1; amount++) {
-    /* get name field */
-    _fgets(buf, sizeof(buf), stdin);
-    name = (char *)malloc(sizeof(char) * (strlen(buf) - strlen("Content-Disposition: form-data; name=\"") + 1));
-    strcpy(name, buf + strlen("Content-Disposition: form-data; name=\""));
-    for(c_count = 0; (name[c_count] != '\"') && (name[c_count] != '\0'); c_count++);
-    name[c_count] = '\0';
+  for(finish = 0, cnt = 0; finish != 1; amount++, cnt++) {
 
-    /* get filename field */
-    if(strstr(buf, "; filename=\"") != NULL) {
-      int erase;
-      filename = (char *)malloc(sizeof(char) * (strlen(buf) - strlen("Content-Disposition: form-data; name=\"") + 1));
-      strcpy(filename, strstr(buf, "; filename=\"") + strlen("; filename=\""));
-      for(c_count = 0; (filename[c_count] != '\"') && (filename[c_count] != '\0'); c_count++);
-      filename[c_count] = '\0';
-      /* erase '\' */
-      for(erase = 0, c_count = strlen(filename) - 1; c_count >= 0; c_count--) {
-        if(erase == 1) filename[c_count]= ' ';
-        else {
-          if(filename[c_count] == '\\') {
-            erase = 1;
-            filename[c_count] = ' ';
+    /* parse header */
+    name = "";
+    filename = "";
+    contenttype = "";
+
+    while(_fgets(buf, sizeof(buf), stdin)) {
+      if(!strcmp(buf, "\r\n")) break;
+      else if(!qStrincmp(buf, "Content-Disposition: ", strlen("Content-Disposition: "))) {
+        /* get name field */
+        name = strdup(buf + strlen("Content-Disposition: form-data; name=\""));
+        for(c_count = 0; (name[c_count] != '\"') && (name[c_count] != '\0'); c_count++);
+        name[c_count] = '\0';
+
+        /* get filename field */
+        if(strstr(buf, "; filename=\"") != NULL) {
+          int erase;
+          filename = strdup(strstr(buf, "; filename=\"") + strlen("; filename=\""));
+          for(c_count = 0; (filename[c_count] != '\"') && (filename[c_count] != '\0'); c_count++);
+          filename[c_count] = '\0';
+          /* erase '\' */
+          for(erase = 0, c_count = strlen(filename) - 1; c_count >= 0; c_count--) {
+            if(erase == 1) filename[c_count]= ' ';
+            else {
+              if(filename[c_count] == '\\') {
+                erase = 1;
+                filename[c_count] = ' ';
+              }
+            }
           }
+          qRemoveSpace(filename);
         }
       }
-      qRemoveSpace(filename);
+      else if(!qStrincmp(buf, "Content-Type: ", strlen("Content-Type: "))) {
+        contenttype = strdup(buf + strlen("Content-Type: "));
+        qRemoveSpace(contenttype);
+      }
     }
-    else filename = "";
-
-    /* skip header */
-    for(;;) {
-      _fgets(buf, sizeof(buf), stdin);
-      if(!strcmp(buf, "\r\n")) break;
-    }
-
+    
     /* get value field */
-    for(valuelen = (1024 * 16), c_count = 0; (c = fgetc(stdin)) != EOF; ) {
+    for(value = NULL, valuelen = (1024 * 16), c_count = 0; (c = fgetc(stdin)) != EOF; ) {
       if(c_count == 0) {
         value = (char *)malloc(sizeof(char) * valuelen);
         if(value == NULL) qError("_parse_multipart_data(): Memory allocation fail.");
@@ -379,7 +394,7 @@ static int _parse_multipart_data(void) {
       sprintf(entries->name,  "%s.length", name);
       sprintf(entries->value, "%d", valuelen);
 
-      /* store transfer filename, 'NAME.filename'*/
+      /* store filename, 'NAME.filename'*/
       back = entries;
       entries = (Q_Entry *)malloc(sizeof(Q_Entry));
       back->next = entries;
@@ -388,8 +403,22 @@ static int _parse_multipart_data(void) {
       entries->value = filename;
       sprintf(entries->name,  "%s.filename", name);
       entries->next  = NULL;
+
+      /* store contenttype, 'NAME.contenttype'*/
+      back = entries;
+      entries = (Q_Entry *)malloc(sizeof(Q_Entry));
+      back->next = entries;
+
+      entries->name  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".contenttype") + 1));
+      entries->value = contenttype;
+      sprintf(entries->name,  "%s.contenttype", name);
+      entries->next  = NULL;
+      
+      cnt += 3;
     }
   }
+
+  _post_cnt = cnt;
 
   return amount;
 }
@@ -589,6 +618,8 @@ char *qValueAdd(char *name, char *format, ...) {
   va_end(arglist);
 
   if(_first_entry == NULL) qDecoder();
+
+  if(qValue(name) == NULL) _new_cnt++; // if it's new entry, count up.
   new_entry = _EntryAdd(_first_entry, name, value);
   if(!_first_entry) _first_entry = new_entry;
 
@@ -613,7 +644,43 @@ void qValueRemove(char *format, ...) {
 
   if(!strcmp(name, "")) qError("qValueRemove(): can not remove empty name.");
 
+  switch(qValueType(name)) {
+    case 'C' : { _cookie_cnt--; break; }
+    case 'G' : { _get_cnt--; break; }
+    case 'P' : { _post_cnt--; break; }
+    case 'N' : { _new_cnt--; break; }
+  }
+
   _first_entry = _EntryRemove(_first_entry, name);
+}
+
+/**********************************************
+** Usage : qValueType(name);
+** Return: Cookie 'C', Get method 'G', Post method 'P', New data 'N', Not found '-' 
+** Do    : Returns type of query.
+**
+** ex) qValueRemove("NAME");
+**********************************************/
+char qValueType(char *format, ...) {
+  char name[1024];
+  int status;
+  va_list arglist;
+  int v_no;
+
+  va_start(arglist, format);
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValue(): Message is too long or invalid.");
+  va_end(arglist);
+
+  if(_first_entry == NULL) qDecoder();
+
+  v_no = _EntryNo(_first_entry, name);
+  if((1 <= v_no) && (v_no <= _cookie_cnt)) return 'C';
+  else if((_cookie_cnt+1 <= v_no) && (v_no <= _cookie_cnt+_get_cnt)) return 'G';
+  else if((_cookie_cnt+_get_cnt+1 <= v_no) && (v_no <= _cookie_cnt+_get_cnt+_post_cnt)) return 'P';
+  else if((_cookie_cnt+_get_cnt+_post_cnt <= v_no)) return 'N';
+
+  return '-';
 }
 
 /**********************************************
@@ -631,8 +698,12 @@ Q_Entry *qGetFirstEntry(void) {
 ** Do    : Print all parsed values & names for debugging.
 **********************************************/
 int qPrint(void) {
+  int amount;
   if(_first_entry == NULL) qDecoder();
-  return _EntryPrint(_first_entry);
+  amount = _EntryPrint(_first_entry);
+  printf("<hr>\n");
+  printf("COOKIE = %d , GET = %d , POST = %d, NEW = %d\n", _cookie_cnt, _get_cnt, _post_cnt, _new_cnt);
+  return amount;
 }
 
 /**********************************************
@@ -644,6 +715,7 @@ void qFree(void) {
   _first_entry = NULL;
   _multi_last_entry = NULL;
   strcpy(_multi_last_key, "");
+  _cookie_cnt = 0, _get_cnt = 0, _post_cnt = 0, _new_cnt = 0;
 }
 
 
@@ -719,5 +791,29 @@ void qCookieRemove(char *name, char *path, char *domain, char *secure) {
   /*
   qValueRemove(name);
   */
+}
+
+/**********************************************
+** Usage : qCookieValue(cookie name);
+** Return: Success pointer of value string, Fail NULL.
+** Do    : It only finds cookie value in the linked-list.
+**********************************************/
+char *qCookieValue(char *format, ...) {
+  char name[1024];
+  int status;
+  va_list arglist;
+
+  va_start(arglist, format);
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValue(): Message is too long or invalid.");
+  va_end(arglist);
+
+  if(_first_entry == NULL) qDecoder();
+  
+  if(qValueType(name) == 'C') {
+    return _EntryValue(_first_entry, name);
+  }
+  
+  return NULL;
 }
 

@@ -47,7 +47,7 @@ int main(void) {
      Also, you can use qValueDefault() or qValueNotEmpty() instead. */
   if(!(value = qValue("query"))) value = "";
 
-  printf("You typed: <b>%s</b> \n", value);
+  printf("You typed: <b>%s</b>\n", value);
 
   /* Do not free variables directly using free() function such like free(value)
      You must use qFree() or qFreeAll() to deallocate memories */

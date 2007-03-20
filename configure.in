@@ -1,4 +1,4 @@
-dnl qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+dnl qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 dnl
 dnl Copyright (C) 2001 The qDecoder Project.
 dnl Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -53,7 +53,7 @@ dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(ctype.h time.h sys/stat.h sys/types.h)
+AC_CHECK_HEADERS(stdio.h stdlib.h string.h stdarg.h ctype.h time.h sys/stat.h sys/types.h dirent.h unistd.h sys/time.h sys/file.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
@@ -62,6 +62,6 @@ AC_STRUCT_TM
 dnl Checks for library functions.
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(strdup strstr)
+AC_CHECK_FUNCS(strdup strstr gettimeofday opendir closedir flock)
 
-AC_OUTPUT(Makefile src/Makefile examples/Makefile contrib/qValue-1.0.1/Makefile contrib/qcValue-1.0/Makefile)
+AC_OUTPUT(Makefile src/Makefile examples/Makefile contrib/qValue-1.0.2/Makefile)

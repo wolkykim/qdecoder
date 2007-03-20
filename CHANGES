@@ -6,17 +6,26 @@ qDecoder Changes
 ``FIX'', ``ADD'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``Added'', ``Replaced'' and ``Removed''.
 
+   * Release 7.0.1
+        o ADD) qDecoder() - Added another argument,
+          "variable_name.contenttype", when file is uploaded.
+        o ADD) qCookieValue() - Return only cookie data.
+        o ADD) qValueType() - Return the type of query.
+        o ADD) qfopen(), qfclose() - Open file stream with file lock.
+        o FIX) qPrintf(), qPuts() - Added new modes.
+        o FIX) qSession() : Changed return type.
+
    * Release 7.0
         o ADD) qSession...() - Session related functions
         o ADD) qMD5Str(), qMD5File() - Calculate a message-digest
-          fingerprint (checksum)
-        o ADD) qUniqueID() - Always returns unique 32 bytes string
-        o ADD) qCookieRemove() - Remove cookie from client(browser)
+          fingerprint(checksum).
+        o ADD) qUniqueID() - Always returns unique 32 bytes string.
+        o ADD) qCookieRemove() - Remove cookie from client(browser).
         o ADD) qfValueFirst(), qfValueNext() - Used for patching the
-          arguments having an identical variable name inregular sequence
+          arguments having an identical variable name inregular sequence.
         o ADD) qsValueFirst(), qsValueNext() - Used for patching the
-          arguments having an identical variable name inregular sequence
-        o ADD) qGetContentFlag() - qCheck execution of qContentType()
+          arguments having an identical variable name inregular sequence.
+        o ADD) qGetContentFlag() - qCheck execution of qContentType().
         o ADD) qFreeAll() - Deallocates the all allocated memories by
           qDecoder.
         o FIX) qDecoder() - qcDecoder() is merged
@@ -301,3 +310,4 @@ qDecoder Changes
         o ADD) qSendFile()
 
   ------------------------------------------------------------------------
+                         Powered by OpenBIRD, Inc.

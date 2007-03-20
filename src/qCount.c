@@ -44,9 +44,9 @@ int qCountRead(char *filename) {
   FILE *fp;
   int  counter;
 
-  if((fp = fopen(filename, "rt")) == NULL) return 0;
+  if((fp = qfopen(filename, "rt")) == NULL) return 0;
   fscanf(fp, "%d", &counter);
-  fclose(fp);
+  qfclose(fp);
   return counter;
 }
 
@@ -58,9 +58,9 @@ int qCountRead(char *filename) {
 int qCountSave(char *filename, int number) {
   FILE *fp;
 
-  if((fp = fopen(filename, "wt")) == NULL) return 0;
+  if((fp = qfopen(filename, "wt")) == NULL) return 0;
   fprintf(fp, "%d\n", number);
-  fclose(fp);
+  qfclose(fp);
 
   return 1;
 }
@@ -74,14 +74,14 @@ int qCountUpdate(char *filename, int number) {
   FILE *fp;
   int counter = 0;
 
-  if((fp = fopen(filename, "r+t")) != NULL) {
+  if((fp = qfopen(filename, "r+t")) != NULL) {
     fscanf(fp, "%d", &counter);
     fseek(fp, 0, SEEK_SET);
   }
   else if((fp = fopen(filename, "wt")) == NULL) return 0;
   counter += number;
   fprintf(fp, "%d\n", counter);
-  fclose(fp);
+  qfclose(fp);
   return counter;
 }
 

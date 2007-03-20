@@ -58,21 +58,31 @@ int qPrintf(int mode, char *format, ...) {
 /**********************************************
 ** Usage : qPuts(mode, string pointer);
 ** Do    : print HTML link as multi mode.
-**         Mode 0  : Same as printf()
-**         Mode 1  : Print HTML TAG
-**         Mode 2  : Mode 1 + Auto Link
-**         Mode 3  : Mode 2 + Auto Link to _top frame
-**         Mode 4  : Waste HTML TAG
-**         Mode 5  : Mode 4 + Auto Link
-**         Mode 6  : Mode 5 + Auto Link to _top frame
 **
+**         Mode 00 : Same as printf()
 **         Mode 10  :Mode 0 + Convert
+**
+**         Mode 01 : Print HTML TAG
 **         Mode 11 : Print HTML TAG + Convert
-**         Mode 12 : Mode 11 + Auto Link
-**         Mode 13 : Mode 12 + Auto Link to _top frame
+**
+**         Mode 02 : Print HTML TAG + Auto Link
+**         Mode 12 : Print HTML TAG + Auto Link + Convert
+**
+**         Mode 03 : Print HTML TAG + Auto Link(_top)
+**         Mode 13 : Print HTML TAG + Auto Link(_top) + Convert
+**         Mode 23 : Print HTML TAG + Auto Link(new window)
+**         Mode 33 : Print HTML TAG + Auto Link(new window) + Convert
+**
+**         Mode 04 : Waste HTML TAG
 **         Mode 14 : Waste HTML TAG + Convert
-**         Mode 15 : Mode 14 + Auto Link
-**         Mode 16 : Mode 15 + Auto Link to _top frame
+**
+**         Mode 05 : Waste HTML TAG + Auto Link
+**         Mode 15 : Waste HTML TAG + Auto Link + Convert
+**
+**         Mode 06 : Waste HTML TAG + Auto Link(_top)
+**         Mode 16 : Waste HTML TAG + Auto Link(_top) + Convert
+**         Mode 26 : Waste HTML TAG + Auto Link(new window)
+**         Mode 36 : Waste HTML TAG + Auto Link(new window) + Convert
 **
 **         Convert : " "   -> " "
 **                   "  "  -> " &nbsp;"
@@ -112,28 +122,38 @@ void qPuts(int mode, char *buf) {
     }
   }
   else {
-    char *ptr, retstop, lastretstop, *target, *token;
+    char *ptr, retstop, lastretstop, *target, *deftarget, *token;
     int printhtml, autolink, convert, linkflag, ignoreflag;
 
     /* set defaults, mode 2*/
     printhtml = 1;
     autolink  = 1;
     target    = "_top";
+    deftarget = "qnewwin";
     convert   = 0;
 
     switch(mode) {
-      case 1  : {printhtml = 1, autolink = 0, target = "";     convert = 0; break;}
-      case 2  : {printhtml = 1, autolink = 1, target = "";     convert = 0; break;}
-      case 3  : {printhtml = 1, autolink = 1, target = "_top"; convert = 0; break;}
-      case 4  : {printhtml = 0, autolink = 0, target = "";     convert = 0; break;}
-      case 5  : {printhtml = 0, autolink = 1, target = "";     convert = 0; break;}
-      case 6  : {printhtml = 0, autolink = 1, target = "_top"; convert = 0; break;}
+      case 01 : {printhtml = 1, autolink = 0, target = "";     convert = 0; break;}
       case 11 : {printhtml = 1, autolink = 0, target = "";     convert = 1; break;}
+
+      case 02 : {printhtml = 1, autolink = 1, target = "";     convert = 0; break;}
       case 12 : {printhtml = 1, autolink = 1, target = "";     convert = 1; break;}
+
+      case 03 : {printhtml = 1, autolink = 1, target = "_top"; convert = 0; break;}
       case 13 : {printhtml = 1, autolink = 1, target = "_top"; convert = 1; break;}
+      case 23 : {printhtml = 1, autolink = 1, target = deftarget; convert = 0; break;}
+      case 33 : {printhtml = 1, autolink = 1, target = deftarget; convert = 1; break;}
+
+      case 04 : {printhtml = 0, autolink = 0, target = "";     convert = 0; break;}
       case 14 : {printhtml = 0, autolink = 0, target = "";     convert = 1; break;}
+
+      case 05 : {printhtml = 0, autolink = 1, target = "";     convert = 0; break;}
       case 15 : {printhtml = 0, autolink = 1, target = "";     convert = 1; break;}
+
+      case 06 : {printhtml = 0, autolink = 1, target = "_top"; convert = 0; break;}
       case 16 : {printhtml = 0, autolink = 1, target = "_top"; convert = 1; break;}
+      case 26 : {printhtml = 0, autolink = 1, target = deftarget; convert = 0; break;}
+      case 36 : {printhtml = 0, autolink = 1, target = deftarget; convert = 1; break;}
 
       default: {qError("_autolink(): Invalid Mode (%d).", mode); break;}
     }
@@ -469,7 +489,7 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
     free(newstr);
     retp = srcstr;
   }
-  else qError("qReplaceToken(): Unknown mode \"%s\".", mode);
+  else qError("qStrReplace(): Unknown mode \"%s\".", mode);
 
   return retp;
 }

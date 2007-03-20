@@ -45,14 +45,15 @@ Copyright Disclaimer:
 
 #ifdef _WIN32
 /* WIN32 ONLY */
-/*To use setmode() function for converting WIN32's stream mode to _O_BINARY */
+/* to use setmode() function for converting WIN32's stream mode to _O_BINARY */
 #include <io.h>
 #include <fcntl.h>
 #else
 /* UNIX ONLY */
-#include <dirent.h>	/* To use opendir() */
-#include <unistd.h>	/* To use unlink() */
-#include <sys/time.h>	/* To use struct timeval */
+#include <dirent.h>	/* to use opendir() */
+#include <unistd.h>	/* to use unlink() */
+#include <sys/time.h>	/* to use struct timeval */
+#include <sys/file.h>   /* to use flock */
 #endif
 
 typedef struct Q_Entry Q_Entry;
@@ -112,20 +113,22 @@ int       qiValue(char *format, ...);
 char      *qValueDefault(char *defstr, char *format, ...);
 char      *qValueNotEmpty(char *errmsg, char *format, ...);
 char      *qValueReplace(char *mode, char *name, char *tokstr, char *word);
+Q_Entry   *qGetFirstEntry(void);
 char      *qValueFirst(char *format, ...);
 char      *qValueNext(void);
 char      *qValueAdd(char *name, char *format, ...);
 void      qValueRemove(char *format, ...);
-Q_Entry   *qGetFirstEntry(void);
+char      qValueType(char *format, ...);
 int       qPrint(void);
 void      qFree(void);
 void      qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
 void      qCookieRemove(char *name, char *path, char *domain, char *secure);
+char      *qCookieValue(char *format, ...);
 
 /*
  * qSession.c
  */
-void      qSession(char *repository);
+int       qSession(char *repository);
 char      *qSessionAdd(char *name, char *format, ...);
 int       qSessionAddInteger(char *name, int valueint);
 int       qSessionUpdateInteger(char *name, int plusint);
@@ -210,6 +213,8 @@ char      *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
 /*
  * qFile.c
  */
+FILE      *qfopen(char *path, char *mode);
+int       qfclose(FILE *stream);
 int       qCheckFile(char *format, ...);
 int       qCatFile(char *format, ...);
 char      *qReadFile(char *filename, int *size);

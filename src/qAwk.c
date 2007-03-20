@@ -52,7 +52,7 @@ static char _awksep = ' ';
 **********************************************/
 int qAwkOpen(char *filename, char separator) {
   if(_awkfp != NULL) qError("qAwkOpen(): There is already opened handle.");
-  if((_awkfp = fopen(filename, "rt")) == NULL) return 0;
+  if((_awkfp = qfopen(filename, "rt")) == NULL) return 0;
   _awksep = separator;
   return 1;
 }
@@ -91,7 +91,7 @@ int qAwkNext(char array[][256]) {
 **********************************************/
 int qAwkClose(void) {
   if(_awkfp == NULL) return 0;
-  fclose(_awkfp);
+  qfclose(_awkfp);
   _awkfp = NULL;
   _awksep = ' ';
 
