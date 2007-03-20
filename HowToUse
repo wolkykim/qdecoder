@@ -4,7 +4,7 @@
 **  Source  Code Name : qDecoder.c                 **
 **  Include Code Name : qDecoder.h                 **
 **                                                 **
-** Programmed by 'Kim Seung-young'                 **
+** Programmed by 'Seung-young, Kim'                **
 **                                                 **
 ** Email : nobreak@shinan.hongik.ac.kr             **
 ** Home  : http://shinan.hongik.ac.kr/~nobreak     **
@@ -20,22 +20,39 @@
   2. 각 function 기능 설명
   3. 예제
   4. Compile
+  5. Example Makefile
 
 0. 서론
 
   명    칭 : qDecoder
-  개 발 자 : 김 승 영
+  개 발 자 : 김 승 영 (nobreak@shinan.hongik.ac.kr)
   소    속 : 홍익대학교 신안 캠퍼스
   사용환경 : Unix
   Language : C Language
-  목    적 : CGI 구현을 보다 편리하고 빠르게
-  특    징 : 사용자는 인자의 갯수를 미리 파악할 필요가 없으며
-             GET, POST 방식을 구분할 필요가 없다.
+  배포장소 : http://cgi.hongik.ac.kr
+  목    적 : CGI 구현을 보다 빠르고 편리하게
+  특    징 : CGI 구현에 공통되는 부분들을 모듈화하여 제공함으로써,
+             프로그래밍의 가독성과 효율을 극대화 한다.
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
 
+  [Version 3.4]
+    ** Patch functions
+    qCheckEmail() : '-' , '_'가 포함된 Email도 가능토록 수정
+    qPrintf(), qPuts() :
+    - 문자열의 내용중 &lt , &gt를 '<' , '>'로 보여주는점 수정
+      (&amp;lt , &amp;gt로 출력함)
+    - 'mailto:guest@hongik.ac.kr' 같은 문자열만을 자동 링크하였으나,
+      'guest@hongik.ac.kr' 의 형태도 자동 링크 수행함 
+
+    ** New functions
+    void      qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure);
+    char      *qURLencode(char *str);
+    time_t    qGetGMTTime(char *gmt, time_t plus_sec);
+
   [Version 3.3.1]
-    qDecoder() Bug Patch
+    ** Patch functions
+    qDecoder() : Query value내의 '&' 문자를 분리자로 인식하던점 수정
 
   [Version 3.3]
     int       qcDecoder(void);
@@ -59,7 +76,6 @@
     void      qError(char *format, ...);
 
   [Version 3.0]
-
     Entry     *qfDecoder(char *filename);
     char      *qfValue(Entry *first, char *name);
     void      qfPrint(Entry *first);
@@ -108,6 +124,12 @@
   기능 : qDecoder()에 의해 할당된 Memory를 해제한다.
   사용 : qFree();
 
+  char   *qURLencode(char *str);
+  기능 : 문자열을 URL Encoding규칙으로 변환한다.
+  복귀 : Encoding된 string pointer, 해제(free)는 사용자가 하여야 한다.
+  사용 : char *encstr;
+         encstr = qURLencode("안녕하세요?");
+
   void   qContentType(char *mimetype);
   기능 : MimeType을 출력한다.
          여러번 호출되어도 단 한번만 수행한다.
@@ -119,6 +141,39 @@
          구조체의 멤버구성은 qDecoder.h를 참조하기 바란다.
   사용 : Cgienv *myenv;
          qCgienv(myenv);
+
+  ****************************************
+  ** COOKIE 관련 함수군
+  ****************************************
+
+  void   qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure);
+  기능 : name=value에 해당하는 COOKIE를 설정함.
+  주의 : qContentType()이 호출되기 전에 사용하여야 한다.
+  사용 : char *name, *value;
+         name = "NAME", value = "Kim";
+         /* NAME=Kim 이란 정보를 30일간 클라이언트에 저장한다 */
+         qSetCookie(name, value, '30', NULL, NULL, NULL);
+
+  int    qcDecoder(void);
+  기능 : COOKIE를 해석하여 Linked List에 저장
+  복귀 : 성공시 전달받은 인자의 갯수, 에러시 -1
+  사용 : int num;
+         num = qcDecoder();
+  
+  char   *qcValue(char *name);
+  기능 : Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌
+         qcDecoder()이 사전에 호출이 안되었으면, 자동으로 수행
+  복귀 : 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL
+  사용 : char *test;
+         test = qcValue("변수명");
+
+  void   qcPrint(void);
+  기능 : 프로그램의 Debugging용으로 COOKIE값을 모두 출력한다.
+  사용 : qcPrint();
+
+  void   qcFree(void);
+  기능 : qcDecoder()에 의해 할당된 Memory를 해제한다.
+  사용 : qcFree();
 
   ****************************************
   ** 형식화된 Configuration FILE을 다루는 함수군  
@@ -175,31 +230,6 @@
          count = qUpdateCounter("number.dat");
   
   ****************************************
-  ** COOKIE 관련 함수군
-  ****************************************
-
-  int    qcDecoder(void);
-  기능 : COOKIE를 해석하여 Linked List에 저장
-  복귀 : 성공시 전달받은 인자의 갯수, 에러시 -1
-  사용 : int num;
-         num = qcDecoder();
-  
-  char   *qcValue(char *name);
-  기능 : Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌
-         qcDecoder()이 사전에 호출이 안되었으면, 자동으로 수행
-  복귀 : 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL
-  사용 : char *test;
-         test = qcValue("변수명");
-
-  void   qcPrint(void);
-  기능 : 프로그램의 Debugging용으로 COOKIE값을 모두 출력한다.
-  사용 : qcPrint();
-
-  void   qcFree(void);
-  기능 : qcDecoder()에 의해 할당된 Memory를 해제한다.
-  사용 : qcFree();
-
-  ****************************************
   ** FILE 관련 함수군
   ****************************************
 
@@ -217,7 +247,6 @@
 
          qContentType("text/html");
          qSendFile("myhtml.html");
-
 
   ****************************************
   ** 화면 출력 함수군
@@ -280,7 +309,6 @@
   복귀 : 성공시 문자열의 포인터, 실패시 NULL
   주의 : qRemoveSpace("문자열"); 이런식의 사용은 오류를 잃으킬수 있다.
          이때에는 아래의 사용법처럼 인자를 복사한후 사용한다.
-
   사용 : char teststr[100];
          strcpy(teststr, " Hello, world    \r\n");
          qRemoveSpace(teststr);
@@ -292,11 +320,19 @@
   사용 : struct tm *mytime;
          mytime = qGetTime();
 
+  time_t qGetGMTTime(char *gmt, time_t plus_sec);
+  기능 : '현재시간+plus_sec'을 Cookie에서 사용하는 GMT 문자열 시간으로 변환한다.
+  복귀 : 1970/1/1(00:00:00)부터 현제까지의 초 + plus_sec
+  사용 : time_t plus_sec;
+         char gmt[0xff];
+         plus_sec = (time_t)300; /* 5분 */
+         qGetGMTTime(gmt, plus_sec);
+         printf("%s", gmt);         /* "Fri, 22-Aug-1997 15:11:30 GMT" */
+
   int    qStr09AZaz(char *str);
-  기능 : 문자열이 0-9, A-Z, a-z로 이루어졌는지 판별한다.
+  기능 : 문자열이 '0' - '9', 'A' - 'Z', 'a' - 'z'로 이루어졌는지 판별한다.
   복귀 : 조건에 부합하면 1, 오류시 0
   사용 : if(qStr09AZaz("abc1234") == 1) printf("True");
-
 
 3. 예제
 
@@ -371,5 +407,33 @@
   CC 사용자
     cc -o 실행화일명 작성한소스.c qDecoder.c
     ex) cc -o test.cgi main.c qDecoder.c
+
+5. Example Makefile
+
+---- Cut Here ----
+## Define
+CC      = gcc -Wall        # For GNU C Compiler(gcc)
+#CC      = cc               # For the other C Compiler
+
+OBJ  = $(OBJ1) $(OBJ2)
+OBJ1 = qDecoder.o
+OBJ2 =
+
+PRG_NAME = test.cgi
+
+## Main
+all:    $(PRG_NAME)
+
+## Link Module
+$(PRG_NAME): $(OBJ)
+        $(CC) -o $(PRG_NAME) $(OBJ)
+
+## Compile Module
+%.o:    %.c
+        $(CC) -c -o $@ $<
+
+## Clear Module
+clean:  rm -f $(OBJ) $(PRG_NAME)
+---- Cut Here ----
 
 --- END ---

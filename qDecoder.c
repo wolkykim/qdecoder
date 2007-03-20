@@ -1,10 +1,12 @@
 /***********************************************
-** [Query String Decoder Version 3.3.1]
+** [Query String Decoder Version 3.4]
+**
+** Last Modified : 1997/08/22
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
 **
-** Programmed by 'Kim Seung-young'
+** Programmed by 'Seung-young, Kim'
 ** Email : nobreak@shinan.hongik.ac.kr
 **
 ** Hongik University Shinan Campus
@@ -118,6 +120,15 @@ char *qValue(char *name){
   }
   return NULL;
 }
+
+int qiValue(char *name){
+  char *str;
+
+  str = qValue(name);
+  if(str == NULL) return 0;
+  return atoi(str);
+}
+
 
 /**********************************************
 ** Usage : qPrint();
@@ -327,6 +338,83 @@ void qcFree(void){
 }
 
 /**********************************************
+** Usage : qSetCookie();
+** Do    : Set Cookie
+**
+** The 'exp_days' is number of days which expire the cookie
+** The current time + exp_days will be set
+** This is must called before qContentType();
+**
+** ex) qSetCookie("NAME", "Kim", "30", NULL, NULL, NULL);
+**********************************************/
+void qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure){
+  char *Name, *Value;
+  char cookie[(4 * 1024) + (0xFF) + 1];
+
+  /* Name=Value */
+  Name = qURLencode(name), Value = qURLencode(value);
+  sprintf(cookie, "%s=%s", Name, Value);
+  free(Name), free(Value);
+
+  if(exp_days != NULL) {
+    time_t plus_sec;
+    char gmt[0xff];
+    plus_sec = (time_t)(atoi(exp_days) * 24 * 60 * 60);
+    qGetGMTTime(gmt, plus_sec);
+    strcat(cookie, "; expires=");
+    strcat(cookie, gmt);
+  }
+
+  if(domain != NULL) {
+    strcat(cookie, "; domain=");
+    strcat(cookie, domain);
+  }
+
+  if(path != NULL) {
+    strcat(cookie, "; path=");
+    strcat(cookie, path);
+  }
+
+  if(secure != NULL) {
+    strcat(cookie, "; secure");
+  }
+
+  printf("Set-Cookie: %s\n", cookie);
+}
+
+/**********************************************
+** Usage : qURLencode(string to encode);
+** Return: Pointer of encoded str which is memory allocated.
+** Do    : Encode string
+**********************************************/
+char *qURLencode(char *str){
+  char *encstr, buf[2+1];
+  int i, j;
+  unsigned char c;
+  if(str == NULL) return NULL;
+  if((encstr = (char *)malloc((strlen(str) * 3) + 1)) == NULL) return NULL;
+
+  for(i = j = 0; str[i]; i++){
+    c = (unsigned char)str[i];
+    switch(c){
+      case ' ': {
+        encstr[j++] = '+';
+        break;
+      }
+      default : {
+        sprintf(buf, "%02x", c);
+        encstr[j++] = '%';
+        encstr[j++] = buf[0];
+        encstr[j++] = buf[1];
+        break;
+      }
+    }
+  }
+  encstr[j] = '\0';
+  return encstr;
+}
+
+/**********************************************
 ** Usage : qContentType(Mime Type);
 ** Do    : Print Content Type Once
 **********************************************/
@@ -395,27 +483,33 @@ void qPuts(int mode, char *buf){
       default: {qError("_autolink() : Invalid Mode (%d)", mode); break;}
     }
 
-    if(autolink == 1) token = " `(){}[]<>\"',\r\n";
-    else token = "<>\r\n";
+    /* &를 삽입함은 자동링크에서 & 캐릭터 전까지만 링크가 됨을 뜻하나
+      &lt;와 같은 문자를 < 가아닌 &lt;로 찍기위해 필요하다 */
+    token = " `(){}[]<>&\"',\r\n";
 
     ptr = _strtok2(buf, token, &retstop);
     for(linkflag = ignoreflag = 0; ptr != NULL;){
-      if(autolink == 1){
-        if(!strncmp(ptr, "http://", 7))linkflag = 1;
-        else if(!strncmp(ptr, "ftp://", 6))linkflag = 1;     
-        else if(!strncmp(ptr, "telnet://", 9))linkflag = 1;
-        else if(!strncmp(ptr, "mailto:", 7))linkflag = 1;
-        else if(!strncmp(ptr, "news:", 5))linkflag = 1;
-        else linkflag = 0;
+
+      if(ignoreflag == 0) {
+        if(autolink == 1){
+          if(!strncmp(ptr, "http://",        7)) linkflag = 1;
+          else if(!strncmp(ptr, "ftp://",    6)) linkflag = 1;     
+          else if(!strncmp(ptr, "telnet://", 9)) linkflag = 1;
+          else if(!strncmp(ptr, "news:",     5)) linkflag = 1;
+          else if(!strncmp(ptr, "mailto:",   7)) linkflag = 1;
+          else if(qCheckEmail(ptr) == 1)         linkflag = 2;
+          else linkflag = 0;
+        }
+        if(linkflag == 1) printf("<a href='%s' target='%s'>%s</a>", ptr, target, ptr);
+        else if(linkflag == 2) printf("<a href='mailto:%s' target='%s'>%s</a>", ptr, target, ptr);
+        else printf("%s", ptr);
       }
-      if(linkflag == 1 && ignoreflag == 0)
-        printf("<a href='%s' target='%s'>%s</a>", ptr, target, ptr);
-      else if(linkflag == 0 && ignoreflag == 0)
-        printf("%s", ptr);
 
       if(printhtml == 1){
-        if(retstop == '<') printf("&lt");
-        else if(retstop == '>') printf("&gt");
+        if(retstop == '<') printf("&lt;");
+        else if(retstop == '>') printf("&gt;");
+        else if(retstop == 34 ) printf("&quot;");  /* " */
+        else if(retstop == '&') printf("&amp;");
         else printf("%c", retstop);
       }
       else {
@@ -452,15 +546,15 @@ void qError(char *format, ...){
   printf("  <font color=red size=6><B>Error !!!</B></font><br><br>\n\n");
   printf("  <font size=3><b><i>%s</i></b></font><br><br>\n\n", buf);
   printf("  <center><font size=2>\n");
-  printf("    Made in Korea by '<a href='mailto:nobreak@shinan.hongik.ac.kr'>Kim Seung-young</a>', [<a href='http://hsns.hongik.ac.kr' target=_top>Hongik Shinan Network Security</a>]<br>\n");
-  printf("    <a href='http://www.hongik.ac.kr' target=_top>홍익대학교</a> <a href='http://shinan.hongik.ac.kr' target=_top>신안캠퍼스</a> <a href='http://elecom.hongik.ac.kr' target=_top>전자전산공학과</a> <a href='mailto:nobreak@shinan.hongik.ac.kr'>김승영</a><br><br>\n");
+  printf("    [<a href='http://www.hongik.ac.kr' target=_top>Hongik University</a> <a href='http://shinan.hongik.ac.kr' target=_top>Shinan Campus</a>]\n");
+  printf("    [<a href='http://hsns.hongik.ac.kr' target=_top>Hongik Shinan Network Security</a>]<br>\n");
+  printf("    Made in Korea by '<a href='mailto:nobreak@shinan.hongik.ac.kr'>Seung-young, Kim</a>'<p>\n");
   printf("    <a href='javascript:history.back()'>BACK</a>\n");
   printf("  </font></center>\n\n");
   printf("</body>\n");
   printf("</html>\n");
   exit(1);
 }
-
 
 /**********************************************
 ** Usage : qCgienv(Pointer of Cgienv);
@@ -508,11 +602,34 @@ struct tm *qGetTime(void){
 
   nowtime = time(NULL);
   nowlocaltime = localtime(&nowtime);
+  nowlocaltime->tm_year += 1900;
   nowlocaltime->tm_mon++;
 
   return nowlocaltime;
 }
 
+/**********************************************
+** Usage : qGetGMTTime(gmt, plus_sec);
+** Do    : Make string of GMT Time for Cookie
+** Return: Amount second from 1970/00/00 00:00:00
+**
+** plus_sec will be added to current time;
+**********************************************/
+time_t qGetGMTTime(char *gmt, time_t plus_sec) {
+  time_t nowtime;
+  char *buf;
+  char gmt_wdy[3+1], gmt_dd[2+1], gmt_mon[3+1], gmt_yyyy[4+1];
+  char gmt_hh[2+1],  gmt_mm[2+1], gmt_ss[2+1];
+
+  nowtime = time(NULL);
+  nowtime += plus_sec;
+  buf = ctime(&nowtime);
+
+  sscanf(buf, "%3s %3s %2s %2s:%2s:%2s %4s", gmt_wdy, gmt_mon, gmt_dd, gmt_hh, gmt_mm, gmt_ss, gmt_yyyy);
+  sprintf(gmt, "%3s, %2s-%3s-%4s %2s:%2s:%2s GMT", gmt_wdy, gmt_dd, gmt_mon, gmt_yyyy, gmt_hh, gmt_mm, gmt_ss);
+
+  return nowtime;
+}
 
 /**********************************************
 ** Usage : qCheckFile(Filename);
@@ -602,24 +719,37 @@ int qUpdateCounter(char *filename){
 ** Do    : Check E-mail address
 **********************************************/
 int qCheckEmail(char *email){
-  char *ptr, *token, retstop, buf[60+1];
-  int i, flag;
+  int i, dotcount;
 
   if(email == NULL) return 0;
 
   if(strlen(email) > 60) return 0;
-  strcpy(buf, email);
 
-  token = "@.";
-  ptr = _strtok2(buf, token, &retstop);
-  for(flag = i = 1; ptr != NULL; i++){
-    if(qStr09AZaz(ptr) == 0) flag = 0;
-    if((i == 1) && (retstop != '@'))flag = 0;
-    if((i >= 2) && !(retstop == '.' || retstop == '\0'))flag = 0;
-    ptr = _strtok2(NULL, token, &retstop);
+  for(i = dotcount = 0; email[i] != '\0'; i++){
+    switch(email[i]) {
+      case '@' : {
+        dotcount++;
+        if(dotcount != 1 || i == 0) return 0;
+        break;
+      }
+      case '.' : {
+        dotcount++;
+        if(dotcount < 2 || dotcount > 5) return 0;
+        if(email[i - 1] == '@' || email[i-1] == '.') return 0;
+        break;
+      }
+      default  : {
+             if((email[i] >= '0') && (email[i] <= '9')) break;
+        else if((email[i] >= 'A') && (email[i] <= 'Z')) break;
+        else if((email[i] >= 'a') && (email[i] <= 'z')) break;
+        else if((email[i] == '-') || (email[i] == '_')) break;
+        else return 0;
+      }
+    }
   }
-  if((i >=4) && (i <= 7)) return flag;
-  return 0;
+
+  if(dotcount < 2 || dotcount > 5) return 0;
+  return 1;
 }
 
 /**********************************************
@@ -785,7 +915,7 @@ char *_strtok2(char *str, char *token, char *retstop){
   else tokensp = tokenep;
 
   for(i = strlen(token);*tokenep;tokenep++){
-    for(j=0; j < i; j++){
+    for(j = 0; j < i; j++){
       if(*tokenep == token[j]){
         *retstop = token[j];
         *tokenep = '\0';

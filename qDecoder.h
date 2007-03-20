@@ -1,3 +1,8 @@
+#ifndef _QDECODER_H
+#define _QDECODER_H
+
+#include <time.h>
+
 typedef struct Entry Entry;
 struct Entry{
   char *name;
@@ -30,6 +35,7 @@ struct Cgienv{
 
 int       qDecoder(void);
 char      *qValue(char *name);
+int       qiValue(char *name);
 void      qPrint(void);
 void      qFree(void);
 
@@ -43,13 +49,18 @@ char      *qcValue(char *name);
 void      qcPrint(void);
 void      qcFree(void);
 
+void      qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure);
+
+char      *qURLencode(char *str);
 void      qContentType(char *mimetype);
 int       qPrintf(int mode, char *format, ...);
 void      qPuts(int mode, char *buf);
 void      qError(char *format, ...);
 
 void      qCgienv(Cgienv *env);
+
 struct tm *qGetTime(void);
+time_t    qGetGMTTime(char *gmt, time_t plus_sec);
 
 int       qCheckFile(char *filename);
 int       qSendFile(char *filename);
@@ -62,4 +73,5 @@ int       qCheckEmail(char *email);
 int       qCheckURL(char *url);
 char      *qRemoveSpace(char *str);
 int       qStr09AZaz(char *str);
-char      *qfgets(char *str, int length, FILE *fp);
+
+#endif
