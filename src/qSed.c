@@ -46,7 +46,7 @@ Copyright Disclaimer:
 **********************************************/
 Q_Entry *qSedArgAdd(Q_Entry *first, char *name, char *format, ...) {
   Q_Entry *new_entry;
-  char value[1024*64];
+  char value[1024];
   int status;
   va_list arglist;
 

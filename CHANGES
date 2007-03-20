@@ -6,6 +6,10 @@ qDecoder Changes
 
 ``FIX'', ``ADD'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``Added'', ``Replaced'' and ``Removed''.
+
+  Release 7.1.1
+    FIX) qSedArgAdd() : Adjust miss typed variable length. (1024*64 => 1024)
+
   Release 7.1
     ADD) qGetTimeStr() - Generate date string formatted as 'YYYYMMDDhhmmss'.
     ADD) qJavaScript() - Print out some JavaScript code.
@@ -268,18 +272,18 @@ qDecoder Changes
     ADD) qReadCounter()
     ADD) qSaveCounter()
     ADD) qStr09AZaz()
-  Release 3.1 
-    ADD) qPrintf() 
-    ADD) qCheckEmail() 
-    ADD) qError() 
-  Release 3.0 
-    ADD) *qfDecoder() 
-    ADD) *qfValue() 
-    ADD) qfPrint() 
-    ADD) qError() 
-    ADD) *qRemoveSpace() 
-  Release 2.2 
-    ADD) qDecoder() 
+  Release 3.1
+    ADD) qPrintf()
+    ADD) qCheckEmail()
+    ADD) qError()
+  Release 3.0
+    ADD) *qfDecoder()
+    ADD) *qfValue()
+    ADD) qfPrint()
+    ADD) qError()
+    ADD) *qRemoveSpace()
+  Release 2.2
+    ADD) qDecoder()
     ADD) *qValue()
     ADD) qPrint()
     ADD) qFree()
