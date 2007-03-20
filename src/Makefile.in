@@ -35,60 +35,73 @@
 #   Tel: +82-2-562-8988, Fax: +82-2-562-8987
 ###########################################################################
 
-# System library directory
-LIBDIR		= /usr/local/lib
-HEADERDIR	= /usr/local/include
+prefix		= @prefix@
+exec_prefix	= ${prefix}
 
-# Where are include files kept
-INCLUDE = -I./
+# Name
+PRGNAME		= qDecoder
+
+# Static Library Name
+LIBNAME		= lib${PRGNAME}.a
+
+# Shared Library Name
+SLIBVERSION	= 1
+SLIBNAME	= lib${PRGNAME}.so
+SLIBREALNAME	= ${SLIBNAME}.${SLIBVERSION}
+
+# System library directory
+LIBDIR		= @libdir@
+HEADERDIR	= @includedir@
 
 # Which compiler & options for release
-CC      = gcc
-CFLAGS  = -Wall
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+DEFS		= @DEFS@
+INCLUDE		= -I.
 
-# Which library archiver
-AR	= ar
-ARFLAGS = -q
+# Utilities
+AR		= @AR@
+ARFLAGS		= -rc
+CHMOD		= @CHMOD@
+INSTALL		= @INSTALL@ -m 444
+LD		= @LD@
+LDFLAGS		= -G
+LN_S		= @LN_S@
+RANLIB		= @RANLIB@
+RM		= @RM@
 
-# Which library indexer
-RANLIB	= ranlib
-LD	= ld -G
 
-# Objects list
-LIBNAME = libqDecoder.a
-LIBSONAME = libqDecoder.so
-OBJ = qDecoder.o
+# Objects List
+OBJ		= qDecoder.o
 
 ## Make Library
-all: $(OBJ)
-	$(AR) $(ARFLAGS) $(LIBNAME) $(OBJ)
-	$(RANLIB) $(LIBNAME)
-	$(LD) -o $(LIBSONAME) $(OBJ)
-	chmod 644 $(LIBSONAME)
-
-reall: clean all
+all: ${OBJ}
+	${AR} ${ARFLAGS} ${LIBNAME} ${OBJ}
+	${RANLIB} ${LIBNAME}
+	${LD} ${LDFLAGS} -o ${SLIBREALNAME} ${OBJ}
+	${CHMOD} 0644 ${SLIBREALNAME}
+	${RM} -f ${SLIBNAME}
+	${LN_S} ${SLIBREALNAME} ${SLIBNAME}
 
 ## Compile Module
 .c.o:
-	$(CC) $(INCLUDE) $(CFLAGS) -c -o $@ $<
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -c -o $@ $<
 
 ## Install Module
 install: all
-	cp qDecoder.h $(HEADERDIR)/qDecoder.h
-	chmod 0444 $(HEADERDIR)/qDecoder.h
-	cp $(LIBNAME) $(LIBDIR)/$(LIBNAME)
-	chmod 0444 $(LIBDIR)/$(LIBNAME)
-	cp $(LIBSONAME) $(LIBDIR)/$(LIBSONAME)
-	chmod 0444 $(LIBDIR)/$(LIBSONAME)
-
-deinstall:
-	rm -f $(HEADERDIR)/qDecoder.h
-	rm -f $(LIBDIR)/$(LIBNAME)
-	rm -f $(LIBDIR)/$(LIBSONAME)
+	${INSTALL} qDecoder.h ${HEADERDIR}/qDecoder.h
+	${INSTALL} ${LIBNAME} ${LIBDIR}/${LIBNAME}
+	${INSTALL} ${SLIBREALNAME} ${LIBDIR}/${SLIBREALNAME}
+	${RM} -f ${LIBDIR}/${SLIBNAME}
+	${LN_S} ${LIBDIR}/${SLIBREALNAME} ${LIBDIR}/${SLIBNAME}
 
 uninstall: deinstall
+deinstall:
+	${RM} -f ${HEADERDIR}/qDecoder.h
+	${RM} -f ${LIBDIR}/${LIBNAME}
+	${RM} -f ${LIBDIR}/${SLIBREALNAME}
+	${RM} -f ${LIBDIR}/${SLIBNAME}
 
 ## Clear Module
 clean:
-	rm -f $(OBJ) $(LIBNAME) $(LIBSONAME)
-
+	${RM} -f ${OBJ} ${LIBNAME} ${SLIBREALNAME} ${SLIBNAME}

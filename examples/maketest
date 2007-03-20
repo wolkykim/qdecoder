@@ -36,17 +36,17 @@
 ###########################################################################
 
 # Which compiler
-CC      = gcc
+CC	= gcc
 
 # Where are include files kept
-INCLUDE = -I../
+INCLUDE	= -I../
 
 # Options for release
-CFLAGS  = -Wall
+CFLAGS	 = -Wall
 
 # qDecoder Library Path
-QLIB = ../libqDecoder.a
-#QLIB = ../libqDecoder.so
+QLIB	= ../libqDecoder.a
+#QLIB	= ../libqDecoder.so
 
 ## Main
 all:	fetch.cgi multivalue.cgi upload.cgi streamedit.cgi arglist.cgi
@@ -77,5 +77,3 @@ $(QLIB):
 ## Clear Module
 clean:
 	rm -f *.o *.cgi
-
-reall: clean all
