@@ -34,9 +34,14 @@ struct Cgienv{
   char *server_software;
   char *server_admin;
 
-  /*** Extended Information ***/
+  /*** qDecoder Supported Extended Informations ***/
   int  year, mon, day, hour, min, sec;
 };
+
+/* qDecoder C++ support */
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 int       qDecoder(void);
 char      *qValue(char *name);
@@ -48,6 +53,11 @@ Entry     *qfDecoder(char *filename);
 char      *qfValue(Entry *first, char *name);
 void      qfPrint(Entry *first);
 void      qfFree(Entry *first);
+
+Entry     *qsDecoder(char *str);
+#define   qsValue(A, B) qfValue(A, B)
+#define   qsPrint(A) qfPrint(A)
+#define   qsFree(A) qfFree(A)
 
 int       qcDecoder(void);
 char      *qcValue(char *name);
@@ -67,12 +77,16 @@ void      qErrorLog(char *filename);
 void      qErrorContact(char *msg);
 
 void      qCgienv(Cgienv *env);
+char      *qGetEnv(char *envname, char *nullstr);
+char      *qCGIname(void);
 
 struct tm *qGetTime(void);
-time_t    qGetGMTTime(char *gmt, time_t plus_sec);
+time_t    qGetGMTime(char *gmt, time_t plus_sec);
 
 int       qCheckFile(char *filename);
 int       qSendFile(char *filename);
+
+void      qDownload(char *filename);
 
 int       qReadCounter(char *filename);
 int       qSaveCounter(char *filename, int number);
@@ -82,5 +96,12 @@ int       qCheckEmail(char *email);
 int       qCheckURL(char *url);
 char      *qRemoveSpace(char *str);
 int       qStr09AZaz(char *str);
+
+char      *qStrBig(char *str);
+int       qStrFind(char *orgstr, char *tokstr);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

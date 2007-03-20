@@ -1,19 +1,17 @@
 /***********************************************
-** [Query String Decoder Version 4.0.1]
+** [Query String Decoder Version 4.2]
 **
-** Last Modified : 1997/11/10
+** Source  Code Name : qDecoder.c
+** Include Code Name : qDecoder.h
 **
-**  Source  Code Name : qDecoder.c
-**  Include Code Name : qDecoder.h
+** Last updated at July 7, 1998
 **
-** Programmed by 'Seung-young, Kim'
-** Email : nobreak@shinan.hongik.ac.kr
+** Developed by       'Seung-young, Kim'
+** Technical contact : nobreak@nobreak.com
 **
-** Hongik University Shinan Campus
-**
+** (c) Nobreak Technologies, Inc.
 **
 ** Designed by Perfectionist for Perfectionist!!!
-**
 **
 ** Example Usage :
 **
@@ -39,7 +37,6 @@
 #include <time.h>
 
 #include "qDecoder.h"
-
 
 /**********************************************
 ** Internal Functions Definition
@@ -72,7 +69,7 @@ static char  *_error_log_filename = NULL;
 **         It doesn't care Method
 **********************************************/
 int qDecoder(void){
-  int  amount;
+  int  amount = -1;
   char *content_type;
 
   if(_first_entry != NULL) return -1;
@@ -91,8 +88,8 @@ int qDecoder(void){
   else if(!strncmp(content_type, "multipart/form-data", strlen("multipart/form-data"))) {
     amount = _parse_multipart_data();
   }
-  else {
-    qError("qDecoder() : This encoding type is not supported.");
+  else { /* For Oracle Web Server */
+    amount = _parse_urlencoded();
   }
 
   return amount;
@@ -147,8 +144,7 @@ char *_get_query(char *method){
 
   if(!strcmp(method, "GET")){
     if(getenv("QUERY_STRING") == NULL) return NULL;
-    query = (char *)malloc(sizeof(char) * (strlen(getenv("QUERY_STRING")) + 1));
-    strcpy(query, getenv("QUERY_STRING"));
+    query = strdup(getenv("QUERY_STRING"));
     return query;
   }
   if(!strcmp(method, "POST")){
@@ -170,7 +166,7 @@ int _parse_multipart_data(void) {
   Entry *entries, *back;
   int  amount;
 
-  char *name, *value, *filename;
+  char *name = NULL, *value = NULL, *filename = NULL;
   int  valuelen;
 
   char boundary[0xff],     boundaryEOF[0xff];
@@ -209,7 +205,7 @@ int _parse_multipart_data(void) {
     for(i=0; boundary[i] !='\0'; i++) printf("%02X ",boundary[i]);
     printf("<p>\n");
 
-    for(j = 1; _fgetstring(buf, 1000, stdin) != NULL; j++) {
+    for(j = 1; _fgetstring(buf, sizeof(buf), stdin) != NULL; j++) {
       printf("Line %d, len %d : %s<br>\n", j, strlen(buf), buf);
       for(i=0; buf[i] !='\0'; i++) printf("%02X ",buf[i]);
       printf("<p>\n");
@@ -218,16 +214,16 @@ int _parse_multipart_data(void) {
   }
 
   /* check boundary */
-  if(_fgetstring(buf, 1000, stdin) == NULL) qError("_parse_multipart_data() : Your browser sent a non-HTTP compliant message.");
+  if(_fgetstring(buf, sizeof(buf), stdin) == NULL) qError("_parse_multipart_data() : Your browser sent a non-HTTP compliant message.");
 
   /* for explore 4.0 of NT, it sent \r\n before starting, fucking Micro$oft */
-  if(!strcmp(buf, "\r\n")) _fgetstring(buf, 1000, stdin);
+  if(!strcmp(buf, "\r\n")) _fgetstring(buf, sizeof(buf), stdin);
 
   if(strncmp(buf, boundary, boundarylen) != 0) qError("_parse_multipart_data() : String format invalid.");
 
   for(amount = 0, finish = 0; finish != 1; amount++){
     /* get name field */
-    _fgetstring(buf, 1000, stdin);
+    _fgetstring(buf, sizeof(buf), stdin);
     name = (char *)malloc(sizeof(char) * (strlen(buf) - strlen("Content-Disposition: form-data; name=\"") + 1));
     strcpy(name, buf + strlen("Content-Disposition: form-data; name=\""));
     for(c_count = 0; (name[c_count] != '\"') && (name[c_count] != '\0'); c_count++);
@@ -256,7 +252,7 @@ int _parse_multipart_data(void) {
 
     /* skip header */
     for(;;) {
-      _fgetstring(buf, 1000, stdin);
+      _fgetstring(buf, sizeof(buf), stdin);
       if (!strcmp(buf, "\r\n")) break;
     }
 
@@ -300,10 +296,29 @@ int _parse_multipart_data(void) {
             break;
           }
         }
+
+        /* For Micro$oft Explore on MAC, they do not follow rules */
+        if((c_count - (boundarylen + 2)) == 0) {
+          char boundaryrn[0xff];
+          sprintf(boundaryrn, "%s\r\n", boundary);
+          if(!strcmp(value, boundaryrn)) {
+            value[0] = '\0';
+            valuelen = 0;
+            break;
+          }
+        }
+        if((c_count - boundaryEOFlen) == 0) {
+          if(!strcmp(value, boundaryEOF)) {
+            value[0] = '\0';
+            valuelen = 0;
+            finish = 1;
+            break;
+          }
+        }
       }
     }
 
-    if(c == EOF) qError("_parse_multipart_data() : Internal bug.");
+    if(c == EOF) qError("_parse_multipart_data() : Internal bug at '%s'.", name);
 
     /* store in linked list */
     /* store data */
@@ -425,8 +440,7 @@ Entry *qfDecoder(char *filename){
     if(back != NULL) back->next = entries;
     if(first == NULL) first = entries;
 
-    entries->value = (char *)malloc(sizeof(char) * (strlen(buf) + 1));
-    strcpy(entries->value, buf);
+    entries->value = strdup(buf);
     entries->name  = _makeword(entries->value, '=');
     entries->next  = NULL;
 
@@ -486,6 +500,49 @@ void qfFree(Entry *first){
 }
 
 /**********************************************
+** Usage : qsDecoder(string);
+** Return: Success pointer of the first entry, Fail NULL
+** Do    : Save string into linked list
+           # is used for comments
+**********************************************/
+Entry *qsDecoder(char *str){
+  Entry *first, *entries, *back;
+  char  *org, *buf, *offset;
+  int  eos;
+
+  if(str == NULL) return NULL;
+
+  first = entries = back = NULL;
+
+  if((org = strdup(str)) == NULL) qError("qsDecoder() : Memory allocation fail.");
+
+  for(buf = offset = org, eos = 0; eos == 0; ) {
+    for(buf = offset; *offset != '\n' && *offset != '\0'; offset++);
+    if(*offset == '\0') eos = 1;
+    else *offset = '\0', offset++;
+
+    qRemoveSpace(buf);
+    if((buf[0] == '#') || (buf[0] == '\0')) continue;
+
+    back = entries;
+    entries = (Entry *)malloc(sizeof(Entry));
+    if(back != NULL) back->next = entries;
+    if(first == NULL) first = entries;
+
+    entries->value = strdup(buf);
+    entries->name  = _makeword(entries->value, '=');
+    entries->next  = NULL;
+
+    qRemoveSpace(entries->name);
+    qRemoveSpace(entries->value);
+  }
+
+  free(org);
+
+  return first;
+}
+
+/**********************************************
 ** Usage : qcDecoder();
 ** Return: Success number of values, Fail -1
 ** Do    : Decode COOKIES & Save it in linked list
@@ -498,8 +555,7 @@ int qcDecoder(void){
   if(_cookie_first_entry != NULL) return -1;
 
   if(getenv("HTTP_COOKIE") == NULL) return 0;
-  query = (char *)malloc(sizeof(char) * (strlen(getenv("HTTP_COOKIE")) + 1));
-  strcpy(query, getenv("HTTP_COOKIE"));
+  query = strdup(getenv("HTTP_COOKIE"));
 
   entries = back = NULL;
 
@@ -594,7 +650,7 @@ void qSetCookie(char *name, char *value, int exp_days, char *domain, char *path,
     time_t plus_sec;
     char gmt[0xff];
     plus_sec = (time_t)(exp_days * 24 * 60 * 60);
-    qGetGMTTime(gmt, plus_sec);
+    qGetGMTime(gmt, plus_sec);
     strcat(cookie, "; expires=");
     strcat(cookie, gmt);
   }
@@ -681,7 +737,7 @@ void qURLdecode(char *str){
 ** Do    : Print Content Type Once
 **********************************************/
 void qContentType(char *mimetype){
-  static flag = 0;  
+  static int flag = 0;  
   
   if(flag)return;
 
@@ -739,6 +795,8 @@ int qPrintf(int mode, char *format, ...){
 ** Note) It modify argument string...
 **********************************************/
 void qPuts(int mode, char *buf){
+
+  if(buf == NULL) return;
 
   if(mode == 0) printf("%s", buf);
   else if(mode == 10) {
@@ -866,8 +924,6 @@ void qError(char *format, ...){
 
   va_start(arglist, format);
 
-  qContentType("text/html");
-
   status = vsprintf(buf, format, arglist);
   if(strlen(buf) > 1000 || status == EOF){
     printf("qError() : Message is too long or not valid");
@@ -886,9 +942,12 @@ void qError(char *format, ...){
       time = qGetTime();
 
       if((http_user_agent = getenv("HTTP_USER_AGENT")) == NULL) http_user_agent = "null";
-      if((remote_host     = getenv("REMOTE_HOST"))     == NULL) remote_host     = "null";
+      if((remote_host     = getenv("REMOTE_HOST"))     == NULL) {
+        /* Fetch for Apache 1.3 */
+        if((remote_host     = getenv("REMOTE_ADDR"))   == NULL) remote_host = "null";
+      }
 
-      fprintf(fp, "%04d/%02d/%02d(%02d:%02d) : '%s' from %s(%s)\n",
+      fprintf(fp, "%04d/%02d/%02d(%02d:%02d) : '%s' from %s (%s)\n",
               time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min,
               buf, remote_host, http_user_agent);
 
@@ -897,28 +956,32 @@ void qError(char *format, ...){
     }
   }
 
-  printf("<html>\n");
-  printf("<body bgcolor=white>\n\n");
-  printf("  <font color=red size=6><B>Error !!!</B></font><br><br>\n\n");
-  printf("  <font size=3><b><i>%s</i></b></font><br><br>\n\n", buf);
-  if(!strcmp(buf, "_get_query() : Your browser sent a non-HTTP compliant message.")) {
-    printf("    <font size=3 color=red><b><i>\n");
-    printf("    There is a little PROBLEM in your COOKIE information of 'Netscape' browser.<br>\n");
-    printf("    You can fix that problem by following below procedure.<p>\n");
-    printf("    <font size=2 color=darkred>\n");
-    printf("    1. COMPLETELY turn your 'Netscape' browser OFF.<br>\n");
-    printf("    2. DELETE 'cookies.txt' file in your 'Netscape' directory.<br>\n");
-    printf("    3. Turn it ON & TRY AGAIN.<br>\n");
-    printf("    </font>\n");
-    printf("    </i></b></font><br>\n\n");
+  if(getenv("REMOTE_ADDR") == NULL)  {
+    printf("Error: %s\n", buf);
   }
-  printf("  <center><font size=2>\n");
-  if(_error_contact_info != NULL) printf("    %s<p>\n", _error_contact_info);
-  printf("    <a href='javascript:history.back()'>BACK</a><p>\n");
-  if(logstatus == -1) printf("    Error logging failed.\n");
-  printf("  </font></center>\n\n");
-  printf("</body>\n");
-  printf("</html>\n");
+  else {
+    qContentType("text/html");
+
+    if(_error_contact_info != NULL) {
+      strcat(buf, " [Administrator:");
+      strcat(buf, _error_contact_info);
+      strcat(buf, "]");
+    }
+    if(logstatus == -1) strcat(buf, " [ERROR LOGGING FAIL]");
+
+    printf("<html>\n");
+    printf("<head>\n");
+    printf("<title>Error: %s</title>\n", buf);
+    printf("<script language='JavaScript'>\n");
+    printf("  alert(\"%s\");\n", buf);
+    printf("  history.back();\n");
+    printf("</script>\n");
+    printf("</head>\n");
+    printf("</html>\n");
+  }
+
+  qFree();
+  qcFree();
 
   exit(1);
 }
@@ -949,34 +1012,69 @@ void qCgienv(Cgienv *env){
 
   envtime = qGetTime();
 
-  env->auth_type         = getenv("AUTH_TYPE");
-  env->content_length    = getenv("CONTENT_LENGTH");
-  env->content_type      = getenv("CONTENT_TYPE");
-  env->document_root     = getenv("DOCUMENT_ROOT");
-  env->gateway_interface = getenv("GATEWAY_INTERFACE");
-  env->http_accept       = getenv("HTTP_ACCEPT");
-  env->http_cookie       = getenv("HTTP_COOKIE");
-  env->http_user_agent   = getenv("HTTP_USER_AGENT");
-  env->query_string      = getenv("QUERY_STRING");
-  env->remote_addr       = getenv("REMOTE_ADDR");
-  env->remote_host       = getenv("REMOTE_HOST");
-  env->remote_user       = getenv("REMOTE_USER");
-  env->remote_port       = getenv("REMOTE_PORT");
-  env->request_method    = getenv("REQUEST_METHOD");
-  env->script_name       = getenv("SCRIPT_NAME");
-  env->script_filename   = getenv("SCRIPT_FILENAME");
-  env->server_name       = getenv("SERVER_NAME");
-  env->server_protocol   = getenv("SERVER_PROTOCOL");
-  env->server_port       = getenv("SERVER_PORT");
-  env->server_software   = getenv("SERVER_SOFTWARE");
-  env->server_admin      = getenv("SERVER_ADMIN");
+  env->auth_type         = qGetEnv("AUTH_TYPE", NULL);
+  env->content_length    = qGetEnv("CONTENT_LENGTH", NULL);
+  env->content_type      = qGetEnv("CONTENT_TYPE", NULL);
+  env->document_root     = qGetEnv("DOCUMENT_ROOT", NULL);
+  env->gateway_interface = qGetEnv("GATEWAY_INTERFACE", NULL);
+  env->http_accept       = qGetEnv("HTTP_ACCEPT", NULL);
+  env->http_cookie       = qGetEnv("HTTP_COOKIE", NULL);
+  env->http_user_agent   = qGetEnv("HTTP_USER_AGENT", NULL);
+  env->query_string      = qGetEnv("QUERY_STRING", NULL);
+  env->remote_addr       = qGetEnv("REMOTE_ADDR", NULL);
+  env->remote_host       = qGetEnv("REMOTE_HOST", env->remote_addr);
+  env->remote_user       = qGetEnv("REMOTE_USER", NULL);
+  env->remote_port       = qGetEnv("REMOTE_PORT", NULL);
+  env->request_method    = qGetEnv("REQUEST_METHOD", NULL);
+  env->script_name       = qGetEnv("SCRIPT_NAME", NULL);
+  env->script_filename   = qGetEnv("SCRIPT_FILENAME", NULL);
+  env->server_name       = qGetEnv("SERVER_NAME", NULL);
+  env->server_protocol   = qGetEnv("SERVER_PROTOCOL", NULL);
+  env->server_port       = qGetEnv("SERVER_PORT", NULL);
+  env->server_software   = qGetEnv("SERVER_SOFTWARE", NULL);
+  env->server_admin      = qGetEnv("SERVER_ADMIN", NULL);
 
+  /* qDecoder Supported Extended Informations */
   env->year = envtime->tm_year;
   env->mon  = envtime->tm_mon;
   env->day  = envtime->tm_mday;
   env->hour = envtime->tm_hour;
   env->min  = envtime->tm_min;
   env->sec  = envtime->tm_sec;
+}
+
+/**********************************************
+** Usage : qGetEnv(Environment string name, Fail return string pointer);
+** Return: Environment string or 'nullstr'.
+** Do    : Get environment string.
+**         When 'getenv' does not find 'envname', it will return 'nullstr.
+**********************************************/
+char *qGetEnv(char *envname, char *nullstr) {
+  char *envstr;
+
+  if((envstr = getenv(envname)) != NULL) return envstr;
+
+  return nullstr;
+}
+
+/**********************************************
+** Usage : qCGIname();
+** Return: CGI filename.
+**********************************************/
+char *qCGIname(void) {
+  static char cgi_name[0xff];
+  char *c;
+
+  if(getenv("SCRIPT_NAME") == NULL) return NULL;
+
+  strcpy(cgi_name, getenv("SCRIPT_NAME"));
+
+  /* Fetch filename in string which include directory name */
+  for(c = cgi_name + strlen(cgi_name) - 1; c >= cgi_name && !(*c == '/' || *c == '\\'); c--);
+  for(; c >= cgi_name; c--) *c = ' ';
+  qRemoveSpace(cgi_name);
+
+  return cgi_name;
 }
 
 /**********************************************
@@ -997,24 +1095,21 @@ struct tm *qGetTime(void){
 }
 
 /**********************************************
-** Usage : qGetGMTTime(gmt, plus_sec);
+** Usage : qGetGMTime(gmt, plus_sec);
 ** Do    : Make string of GMT Time for Cookie
 ** Return: Amount second from 1970/00/00 00:00:00
 **
 ** plus_sec will be added to current time;
 **********************************************/
-time_t qGetGMTTime(char *gmt, time_t plus_sec) {
+time_t qGetGMTime(char *gmt, time_t plus_sec) {
   time_t nowtime;
-  char *buf;
-  char gmt_wdy[3+1], gmt_dd[2+1], gmt_mon[3+1], gmt_yyyy[4+1];
-  char gmt_hh[2+1],  gmt_mm[2+1], gmt_ss[2+1];
+  struct tm *nowgmtime;
 
   nowtime = time(NULL);
   nowtime += plus_sec;
-  buf = ctime(&nowtime);
+  nowgmtime = gmtime(&nowtime);
 
-  sscanf(buf, "%3s %3s %2s %2s:%2s:%2s %4s", gmt_wdy, gmt_mon, gmt_dd, gmt_hh, gmt_mm, gmt_ss, gmt_yyyy);
-  sprintf(gmt, "%3s, %2s-%3s-%4s %2s:%2s:%2s GMT", gmt_wdy, gmt_dd, gmt_mon, gmt_yyyy, gmt_hh, gmt_mm, gmt_ss);
+  strftime(gmt, 0xff, "%a, %d-%b-%Y %H:%M:%S %Z", nowgmtime);
 
   return nowtime;
 }
@@ -1046,6 +1141,30 @@ int qSendFile(char *filename){
   while((tmp = fgetc(fp)) != EOF)printf("%c", tmp);  
   fclose(fp);
   return 1;
+}
+
+/**********************************************
+** Usage : qDownload(filename);
+** Do    : Pump file to stdout, do not call qContentType().
+**********************************************/
+void qDownload(char *filename) {
+  char *file, *c;
+
+  if(filename == NULL) qError("qDownload() : Null pointer can not be used.");
+  if(qCheckFile(filename) == 0) qError("qDownload() : File(%s) not found.", filename);
+
+  file = strdup(filename);
+
+  /* Fetch filename in string which include directory name */
+  for(c = file + strlen(file) - 1; c >= file && !(*c == '/' || *c == '\\'); c--);
+  for(; c >= file; c--) *c = ' ';
+  qRemoveSpace(file);
+
+  printf ("Content-type: application/octet-stream\n");
+  printf ("Content-disposition: attachment; filename=\"%s\"\n\n", file);
+  free(file);
+
+  qSendFile(filename);
 }
 
 /**********************************************
@@ -1190,6 +1309,45 @@ int qStr09AZaz(char *str){
 }
 
 /**********************************************
+** Usage : qStrBig(string);
+** Return: Pointer of converted string
+** Do    : Convert small char to big char
+**********************************************/
+char *qStrBig(char *str) {
+  char *tmp;
+
+  if(str == NULL) return NULL;
+  tmp = str;
+  for( ; *str; str++) if(*str >= 'a' && *str <= 'z') *str -= 32;
+  return tmp;
+}
+
+/**********************************************
+** Usage : qStrFind(string, token);
+** Return: Finded 1, Fail 0
+** Do    : Find token whih no case-censitive
+**********************************************/
+int qStrFind(char *orgstr, char *tokstr) {
+  char *org, *tok;
+  int  findflag;
+
+  if(orgstr == NULL || tokstr == NULL) return 0;
+
+  if((org = strdup(orgstr)) == NULL) return 0;
+  if((tok = strdup(tokstr)) == NULL) { free(org); return 0; }
+
+  qStrBig(org), qStrBig(tok);
+
+  if(strstr(org, tok) == NULL) findflag = 0;
+  else                         findflag = 1;
+
+  free(org), free(tok);
+
+  return findflag;
+}
+
+
+/**********************************************
 ***********************************************
 ** You don't need to use below functions
 ** It is used by qDecoder();
@@ -1290,8 +1448,7 @@ char *_fgetstring(char *buf, int maxlen, FILE *fp) {
 char *_fgetline(FILE *fp) {
   int memsize;
   int c, c_count;
-  char *string;
-
+  char *string = NULL;
 
   for(memsize = 1000, c_count = 0; (c = fgetc(fp)) != EOF;) {
     if(c_count == 0) {

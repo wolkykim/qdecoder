@@ -5,12 +5,15 @@
 **  Include Code Name : qDecoder.h                        **
 **                                                        **
 **  Official distribution site : http://www.cgiserver.net **
-**           Technical contact : nobreak@cgiserver.net    **
+**           Technical contact : nobreak@nobreak.com      **
 **                                                        **
-**                       Programmed by 'Seung-young, Kim' **
+**                        Developed by 'Seung-young, Kim' **
 **                                                        **
 **    Designed by Perfectionist for Perfectionist!!!      **
 ************************************************************
+
+주의) CrazyWWWBoard 98 PE에 포함된 본 qDecoder는 제작사의
+동의없이 상용소프트웨어에 사용될 수 없다.
 
 ** Index
   0. 서론
@@ -23,13 +26,23 @@
 0. 서론
 
   명    칭 : qDecoder
-  개 발 자 : 김 승 영 (nobreak@shinan.hongik.ac.kr)
-  소    속 : Nobreak Technologies
+  개 발 자 : 김 승 영 (nobreak@nobreak.com)
+  소    속 : Nobreak Technologies, Inc.
   사용환경 : Unix
-  Language : C Language
-  배포장소 : http://www.cgiserver.net
+  Language : C/C++ Language
+  배포장소 : http://download.cgiserver.net
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
+  [Version 4.2]
+    Macintosh 관련 패치
+    Apache 1.3 관련 패치
+    GMTime 개선
+    qGetEnv()
+    qCGIname()
+    qStrBig()
+    qStrFind()
+    qDownload()
+
   [Version 4.0.1]
     ** Patch functions
     qfDecoder()
@@ -91,7 +104,7 @@
     ** New functions
     void      qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure);
     char      *qURLencode(char *str);
-    time_t    qGetGMTTime(char *gmt, time_t plus_sec);
+    time_t    qGetGMTime(char *gmt, time_t plus_sec);
 
   [Version 3.3.1]
     ** Patch functions
@@ -185,7 +198,7 @@
          [HTML]
          <form method="post" action="upload.cgi" enctype='multipart/form-data'>
            사용자번호 <input type="text" name="userID"><br>
-           업로드파일 <input type="file" name="binary>"<br>
+           업로드파일 <input type="file" name="binary"><br>
            <input type="submit">
          </form>
 
@@ -360,7 +373,7 @@
   기능 : 화일명의 카운터 화일을 읽는다.
   복귀 : 성공시 카운터값, 에러시 0
   사용 : int count;
-         count = qReadCount("number.dat");
+         count = qReadCounter("number.dat");
 
   int    qSaveCounter(char *filename, int number);
   기능 : 지정된 화일명에 카운터 값을 저장(갱신)한다.
@@ -493,13 +506,13 @@
   사용 : struct tm *mytime;
          mytime = qGetTime();
 
-  time_t qGetGMTTime(char *gmt, time_t plus_sec);
+  time_t qGetGMTime(char *gmt, time_t plus_sec);
   기능 : '현재시간+plus_sec'을 Cookie에서 사용하는 GMT 문자열 시간으로 변환한다.
   복귀 : 1970/1/1(00:00:00)부터 현제까지의 초 + plus_sec
   사용 : time_t plus_sec;
          char gmt[0xff];
          plus_sec = (time_t)300; /* 5분 */
-         qGetGMTTime(gmt, plus_sec);
+         qGetGMTime(gmt, plus_sec);
          printf("%s", gmt);         /* "Fri, 22-Aug-1997 15:11:30 GMT" */
 
   int    qStr09AZaz(char *str);
