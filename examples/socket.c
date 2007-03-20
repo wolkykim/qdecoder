@@ -32,56 +32,61 @@ Copyright Disclaimer:
 ************************************************************************/
 
 #include "qDecoder.h"
-#include "qInternal.h"
 
+#define SOCKET_TIMEOUT		(10)
 
-/**********************************************
-** Usage : qCountRead(filename);
-** Return: Success counter value, Fail 0.
-** Do    : Read counter value.
-**********************************************/
-int qCountRead(char *filename) {
-  FILE *fp;
-  int  counter;
+int dumpHttp(char *hostname) {
+  int sockfd;
+  char buf[1024];
+  int lineno;
 
-  if((fp = qfopen(filename, "r")) == NULL) return 0;
-  fscanf(fp, "%d", &counter);
-  qfclose(fp);
-  return counter;
-}
+  // open socket
+  sockfd = qSocketOpen(hostname, 80);
+  if(sockfd < 0) return sockfd;
 
-/**********************************************
-** Usage : qCountSave(filename, number);
-** Return: Success 1, Fail 0.
-** Do    : Save counter value.
-**********************************************/
-int qCountSave(char *filename, int number) {
-  FILE *fp;
+  // send data
+  qSocketPrintf(sockfd, "GET / HTTP/1.1\n");
+  qSocketPrintf(sockfd, "Host: %s\n", hostname);
+  qSocketPrintf(sockfd, "Accept: */*\n");
+  qSocketPrintf(sockfd, "User-Agent: qDecoder Bot\n");
+  qSocketPrintf(sockfd, "Connection: close\n");
+  qSocketPrintf(sockfd, "\n");
 
-  if((fp = qfopen(filename, "w")) == NULL) return 0;
-  fprintf(fp, "%d\n", number);
-  qfclose(fp);
+  // read data
+  for(lineno = 1; ; lineno++) {
+    // read line from socket
+    if(qSocketGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) == NULL) qError("Timeout occured.");
 
-  return 1;
-}
+    // if the http header block ended, stop reading.
+    if(strlen(buf) == 0) break;
 
-/**********************************************
-** Usage : qCountUpdate(filename, number);
-** Return: Success current value + number, Fail 0.
-** Do    : Update counter value.
-**********************************************/
-int qCountUpdate(char *filename, int number) {
-  FILE *fp;
-  int counter = 0;
-
-  if((fp = qfopen(filename, "r+")) != NULL) {
-    fscanf(fp, "%d", &counter);
-    fseek(fp, 0, SEEK_SET);
+    // print header
+    printf("%d: %s\n", lineno, buf);
   }
-  else if((fp = fopen(filename, "w")) == NULL) return 0;
-  counter += number;
-  fprintf(fp, "%d\n", counter);
-  qfclose(fp);
-  return counter;
+
+  // close socket
+  qSocketClose(sockfd);
+
+  return 0;
+}
+
+int main(void) {
+  char *hostname;
+  int retflag;
+
+  qContentType("text/plain");
+
+  hostname = qValueDefault("", "hostname");
+  if(strlen(hostname) == 0) qError("Invalid usages.");
+
+  retflag = dumpHttp(hostname);
+  if(retflag < 0) {
+    if(retflag == -1) qError("Invalid hostname.");
+    else if(retflag == -2) qError("Can't create socket.");
+    else if(retflag == -3) qError("Connection failed.");
+    else qError("Unknown error.");
+  }
+
+  return 0;
 }
 

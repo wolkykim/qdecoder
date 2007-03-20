@@ -55,7 +55,7 @@ int qfclose(FILE *stream) {
 ** Do    : Check filethat file is existGet environment of CGI.
 **********************************************/
 int qCheckFile(char *format, ...) {
-  FILE *fp;
+  struct stat finfo;
   char filename[1024];
   int status;
   va_list arglist;
@@ -65,9 +65,7 @@ int qCheckFile(char *format, ...) {
   if(strlen(filename) + 1 > sizeof(filename) || status == EOF) qError("qCheckFile(): File name is too long or invalid.");
   va_end(arglist);
 
-  fp = qfopen(filename, "rb");
-  if(fp == NULL) return 0;
-  qfclose(fp);
+  if(stat(filename, &finfo) < 0) return 0;
 
   return 1;
 }
@@ -122,7 +120,7 @@ char *qReadFile(char *filename, int *size) {
   for(tmp = sp, i = 0; (c = fgetc(fp)) != EOF; tmp++, i++) *tmp = (char)c;
   *tmp = '\0';
 
-  if(fstat.st_size != i) qError("qReadFile: Size(File:%d, Readed:%s) mismatch.", fstat.st_size, i);
+  if(fstat.st_size != i) qError("qReadFile: Size(File:%d, Readed:%d) mismatch.", fstat.st_size, i);
   fclose(fp);
   if(size != NULL) *size = i;
   return sp;

@@ -56,7 +56,7 @@ struct tm *qGetTime(void) {
 ** Usage : qGetGMTime(gmt, plus_sec);
 ** Do    : Make string of GMT Time for Cookie.
 ** Return: Amount second from 1970/00/00 00:00:00.
-** Note   : plus_sec will be added to current time.
+** Note  : plus_sec will be added to current time.
 **********************************************/
 time_t qGetGMTime(char *gmt, time_t plus_sec) {
   time_t nowtime;
@@ -71,3 +71,17 @@ time_t qGetGMTime(char *gmt, time_t plus_sec) {
   return nowtime;
 }
 
+/**********************************************
+** Usage : qGetTimeStr();
+** Return: returns the string formatted by 'YYYYMMDDhhmmss'.
+** Do    : get time string.
+**********************************************/
+char *qGetTimeStr(void) {
+  static char datestr[14+1];
+  struct tm *time;
+
+  time = qGetTime();
+  sprintf(datestr, "%04d%02d%02d%02d%02d%02d", time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
+
+  return datestr;
+}

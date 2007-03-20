@@ -42,7 +42,7 @@ QLIB	= ../src/libqDecoder.a
 #QLIB	= ../src/libqDecoder.so
 
 ## Main
-all:	fetch.cgi cookie.cgi multivalue.cgi upload.cgi download.cgi streamedit.cgi arglist.cgi session.cgi confparser.cgi
+all:	fetch.cgi cookie.cgi multivalue.cgi upload.cgi download.cgi streamedit.cgi arglist.cgi session.cgi confparser.cgi socket.cgi
 
 fetch.cgi: ${QLIB} fetch.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o fetch.cgi fetch.o ${QLIB}
@@ -72,7 +72,9 @@ session.cgi: ${QLIB} session.o
 
 confparser.cgi: ${QLIB} confparser.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o confparser.cgi confparser.o ${QLIB}
-	chmod 6755 confparser.cgi
+
+socket.cgi: ${QLIB} socket.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o socket.cgi socket.o ${QLIB}
 
 ${QLIB}:
 	(cd ../src/; make all)

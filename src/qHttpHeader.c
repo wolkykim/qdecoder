@@ -64,7 +64,7 @@ int qGetContentFlag(void) {
 
 /**********************************************
 ** Usage : qResetContentFlag();
-** Do    : Sets the internal flag of qContentType() to the initial status. 
+** Do    : Sets the internal flag of qContentType() to the initial status.
 **********************************************/
 void qResetContentFlag(void) {
   _content_type_flag = 0;
@@ -79,3 +79,26 @@ void qRedirect(char *url) {
   printf("Location: %s\n\n", url);
 }
 
+/**********************************************
+** Usage : qJavaScript(...);
+** Do    : Print out some JavaScript code.
+**********************************************/
+void qJavaScript(char *format, ...) {
+  char jscode[1024];
+  int status;
+  va_list arglist;
+
+  va_start(arglist, format);
+  status = vsprintf(jscode, format, arglist);
+  if(strlen(jscode) + 1 > sizeof(jscode) || status == EOF) qError("qJavaScript(): Message is too long or invalid.");
+  va_end(arglist);
+
+  qContentType("text/html");
+  printf("<html>\n");
+  printf("<head>\n");
+  printf("<script language='JavaScript'>\n");
+  printf("%s\n", jscode);
+  printf("</script>\n");
+  printf("</head>\n");
+  printf("</html>\n");
+}

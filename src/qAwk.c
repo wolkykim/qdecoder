@@ -40,20 +40,20 @@ Copyright Disclaimer:
 **********************************************/
 
 static FILE *_awkfp = NULL;
-static char _awksep = ' ';
+static char _awkdelim = ' ';
 
 
 /**********************************************
-** Usage : qAwkOpen(filename, field-separator);
+** Usage : qAwkOpen(filename, field-delimeter);
 ** Return: Success 1, Fail 0.
 ** Do    : Open file to scan pattern. (similar to unix command awk)
 **
 ** ex) qAwkOpen("source.dat", ':');
 **********************************************/
-int qAwkOpen(char *filename, char separator) {
+int qAwkOpen(char *filename, char delim) {
   if(_awkfp != NULL) qError("qAwkOpen(): There is already opened handle.");
-  if((_awkfp = qfopen(filename, "rt")) == NULL) return 0;
-  _awksep = separator;
+  if((_awkfp = qfopen(filename, "r")) == NULL) return 0;
+  _awkdelim = delim;
   return 1;
 }
 
@@ -62,10 +62,10 @@ int qAwkOpen(char *filename, char separator) {
 ** Return: Success number of field, End of file -1.
 ** Do    : Scan one line. (Unlimited line length)
 **
-** ex) char array[10][256];
+** ex) char array[10][1024];
 **     qAwkNext(array);
 **********************************************/
-int qAwkNext(char array[][256]) {
+int qAwkNext(char array[][1024]) {
   char *buf;
   char *bp1, *bp2;
   int i, exitflag;
@@ -73,14 +73,9 @@ int qAwkNext(char array[][256]) {
   if(_awkfp == NULL) qError("qAwkNext(): There is no opened handle.");
   if((buf = qRemoveSpace(qfGetLine(_awkfp))) == NULL) return -1;
 
-  for(i = exitflag = 0, bp1 = bp2 = buf; exitflag == 0; i++) {
-    for(; *bp2 != _awksep && *bp2 != '\0'; bp2++);
-    if(*bp2 == '\0') exitflag = 1;
-    *bp2 = '\0';
-    strcpy(array[i], bp1);
-    bp1 = ++bp2;
-  }
+  i = qAwkStr(array, buf, _awkdelim);
   free(buf);
+
   return i;
 }
 
@@ -93,8 +88,27 @@ int qAwkClose(void) {
   if(_awkfp == NULL) return 0;
   qfclose(_awkfp);
   _awkfp = NULL;
-  _awksep = ' ';
+  _awkdelim = ' ';
 
   return 1;
 }
 
+/**********************************************
+** Usage : qAwkStr(**array, srouce_string_pointer, );
+** Return: returns the number of parsed fields.
+** Do    : scan pattern from the string.
+**********************************************/
+int qAwkStr(char array[][1024], char *str, char delim) {
+ char *bp1, *bp2;
+ int i, exitflag;
+
+  for(i = exitflag = 0, bp1 = bp2 = str; exitflag == 0; i++) {
+    for(; *bp2 != delim && *bp2 != '\0'; bp2++);
+    if(*bp2 == '\0') exitflag = 1;
+    *bp2 = '\0';
+    strcpy(array[i], bp1);
+    bp1 = ++bp2;
+  }
+
+  return i;
+}

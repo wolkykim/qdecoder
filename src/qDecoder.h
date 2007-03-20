@@ -42,12 +42,12 @@ Copyright Disclaimer:
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 
 #ifdef _WIN32
 /* WIN32 ONLY */
 /* to use setmode() function for converting WIN32's stream mode to _O_BINARY */
 #include <io.h>
-#include <fcntl.h>
 #else
 /* UNIX ONLY */
 #include <dirent.h>	/* to use opendir() */
@@ -172,6 +172,7 @@ void      qContentType(char *mimetype);
 int       qGetContentFlag(void);
 void      qResetContentFlag(void);
 void      qRedirect(char *url);
+void      qJavaScript(char *format, ...);
 
 /*
  * qError.c
@@ -241,8 +242,9 @@ void      qArgFree(char **qlist);
  * qAwk.c
  */
 int       qAwkOpen(char *filename, char separator);
-int       qAwkNext(char array[][256]);
+int       qAwkNext(char array[][1024]);
 int       qAwkClose(void);
+int       qAwkStr(char array[][1024], char *str, char delim);
 
 /*
  * qSed.c
@@ -271,6 +273,23 @@ int       qDownloadMime(char *filename, char *mime);
  */
 struct tm *qGetTime(void);
 time_t    qGetGMTime(char *gmt, time_t plus_sec);
+char      *qGetTimeStr(void);
+
+/*
+ * qSocket.c
+ */
+int       qSocketOpen(char *hostname, int port);
+int       qSocketClose(int sockfd);
+int       qSocketWaitReadable(int sockfd, int timeoutsec);
+int       qSocketRead(char *binary, int size, int sockfd, int timeoutsec);
+char      *qSocketGets(char *str, int size, int sockfd, int timeoutsec);
+int       qSocketWrite(char *binary, int size, int sockfd);
+int       qSocketPuts(char *str, int sockfd);
+int       qSocketPrintf(int sockfd, char *format, ...);
+int       qSocketSendFile(char *filepath, int offset, int sockfd);
+int       qSocketSaveIntoFile(int sockfd, int size, int timeoutsec, char *filepath, char *mode);
+int       qSocketSetNonblock(int sockfd);
+FILE      *qSocketConv2file(int sockfd);
 
 /*
  * qMisc.c
@@ -278,7 +297,6 @@ time_t    qGetGMTime(char *gmt, time_t plus_sec);
 void      qFreeAll(void);
 void      qReset(void);
 char      *qUniqueID(void);
-
 
 #ifdef __cplusplus
 }

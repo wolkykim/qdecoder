@@ -85,6 +85,7 @@ OBJ		= qDecoder.o \
 		qCount.o \
 		qDownload.o \
 		qTime.o \
+		qSocket.o \
 		qMisc.o \
 		qInternalCommon.o \
 		qInternalEntry.o \

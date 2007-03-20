@@ -82,4 +82,3 @@ char *qUniqueID(void) {
 
   return uniqid;
 }
-

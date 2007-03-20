@@ -503,7 +503,7 @@ static int _isValidSession(char *filename) {
   time_t timeout, timenow;
   double timediff;
 
-  if((fp = qfopen(filename, "rt")) == NULL) return 0;
+  if((fp = qfopen(filename, "r")) == NULL) return 0;
   fscanf(fp, "%ld", &timeout);
   qfclose(fp);
 
@@ -522,7 +522,7 @@ static time_t _updateTimeout(char *filename, time_t timeout_interval) {
   timeout = time(NULL);
   timeout += timeout_interval;
 
-  if((fp = qfopen(filename, "wt")) == NULL) return 0;
+  if((fp = qfopen(filename, "w")) == NULL) return 0;
   fprintf(fp, "%ld\n", (long)timeout);
   qfclose(fp);
 
