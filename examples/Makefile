@@ -1,5 +1,5 @@
 ##############################################################
-## Makefile for 'qDecoder'                                  ##
+## Makefile for 'qDecoder Samples'                          ##
 ##                                                          ##
 ##    Official distribution : ftp://ftp.hongik.com          ##
 ##        Technical contact : nobreak@hongik.com            ##
@@ -9,56 +9,35 @@
 ##                               (c) Hongik Internet, Inc.  ##
 ##############################################################
 
-#
-# Define
-#
-LIBNAME = libqDecoder.a
-
 # Which compiler
 CC      = gcc
 
-# System library directory
-LIBDIR		= /usr/lib/
-HEADERDIR	= /usr/include/
-
 # Where are include files kept
-INCLUDE = -I./
+INCLUDE = -I../
 
 # Options for release
 CFLAGS  = -Wall
+LIB     = ../libqDecoder.a
 
-# Which library archiver
-AR	= ar
-ARFLAGS = -q
+## Main
+all:	fetch.cgi multivalue.cgi upload.cgi
 
-# Which ranlib
-RANLIB	= ranlib
+fetch.cgi:	fetch.o
+	$(CC) $(INCLUDE) $(CFLAGS) -o fetch.cgi fetch.o $(LIB)
 
-OBJ  = $(OBJ1) $(OBJ2)
-OBJ1 = qDecoder.o
-OBJ2 = 
+multivalue.cgi:	multivalue.o
+	$(CC) $(INCLUDE) $(CFLAGS) -o multivalue.cgi multivalue.o $(LIB)
 
-## Make Library
-all: $(OBJ)
-	$(AR) $(ARFLAGS) $(LIBNAME) $(OBJ)
-	$(RANLIB) $(LIBNAME)
-
-reall: clean all
+upload.cgi:	upload.o
+	$(CC) $(INCLUDE) $(CFLAGS) -o upload.cgi upload.o $(LIB)
+	chmod 6755 upload.cgi
 
 ## Compile Module
 .c.o:
 	$(CC) $(INCLUDE) $(CFLAGS) -c -o $@ $<
 
-## Install Module
-install: all
-	cp qDecoder.h $(HEADERDIR)/qDecoder.h
-	cp $(LIBNAME) $(LIBDIR)/$(LIBNAME)
-
-deinstall:
-	rm -f $(HEADERDIR)/qDecoder.h
-	rm -f $(LIBDIR)/$(LIBNAME)
-
 ## Clear Module
 clean:
-	rm -f $(OBJ) $(LIBNAME)
+	rm -f *.o *.cgi
 
+reall: clean all

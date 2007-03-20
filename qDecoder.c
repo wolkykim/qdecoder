@@ -1,15 +1,15 @@
 /*************************************************************
-** qDecoder CGI Library v4.3.1                              **
+** qDecoder CGI Library v5.0                                **
 **                                                          **
-**  Official distribution site : ftp://ftp.nobreak.com      **
-**           Technical contact : nobreak@nobreak.com        **
+**  Official distribution site : ftp://ftp.hongik.com       **
+**           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
 **                        Last updated at March 28, 1999    **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **
-**      Copyright (c) 1996-1999 Nobreak Technologies, Inc.. **
+**         Copyright (c) 1999 Hongik Internet, Inc.         **
 *************************************************************/
 
 /*************************************************************
@@ -65,6 +65,9 @@ static char  *_error_log_filename = NULL;
 
 static FILE  *_awkfp = NULL;
 static char  _awksep = ' ';
+
+static Entry *_multi_last_entry = NULL;
+static char  _multi_last_key[1024];
 
 /**********************************************
 ** Main Routines
@@ -366,24 +369,76 @@ int _parse_multipart_data(void) {
 }
 
 /**********************************************
-** Usage : qValue(Pointer of the first Entry, Name);
+** Usage : qValue(Query Name);
 ** Return: Success pointer of value string, Fail NULL
 ** Do    : Find value string pointer
 **         It find value in linked list
 **********************************************/
-char *qValue(char *name){
-  if(_first_entry == NULL)qDecoder();
+char *qValue(char *format, ...){
+  char name[1024];
+  va_list arglist;
+
+  va_start(arglist, format);
+  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qValue() : Key is too long or not valid");
+  va_end(arglist);
+
+  if(_first_entry == NULL) qDecoder();
   return _EntryValue(_first_entry, name);
 }
 
 /**********************************************
-** Usage : qiValue(Pointer of the first Entry, Name);
-** Return: Success integer of value string, Fail NULL
+** Usage : qiValue(Query Name);
+** Return: Success integer of value string, Fail 0
 ** Do    : Find value string pointer and convert to integer
 **********************************************/
-int qiValue(char *name){
+int qiValue(char *format, ...){
+  char name[1024];
+  va_list arglist;
+
+  va_start(arglist, format);
+  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qiValue() : Key is too long or not valid");
+  va_end(arglist);
+
   if(_first_entry == NULL)qDecoder();
   return _EntryiValue(_first_entry, name);
+}
+
+/**********************************************
+** Usage : qValueFirst(Query Name);
+** Return: Success pointer of first value string, Fail NULL
+** Do    : Find first value string pointer
+**********************************************/
+char *qValueFirst(char *format, ...){
+  va_list arglist;
+
+  va_start(arglist, format);
+  if(vsnprintf(_multi_last_key, sizeof(_multi_last_key), format, arglist) >= sizeof(_multi_last_key)) qError("qValueFirst() : Key is too long or not valid");
+  va_end(arglist);
+
+  if(_first_entry == NULL) qDecoder();
+  _multi_last_entry = _first_entry;
+  
+  return qValueNext();
+}
+
+/**********************************************
+** Usage : qValueNext();
+** Return: Success pointer of next value string, Fail NULL
+** Do    : Find next value string pointer
+**********************************************/
+char *qValueNext(void) {
+  Entry *entries;
+
+  for(entries = _multi_last_entry; entries; entries = entries->next){
+    if(!strcmp(_multi_last_key, entries->name)) {
+      _multi_last_entry = entries->next;
+      return (entries->value);
+    }
+  }
+  _multi_last_entry = NULL;
+  strcpy(_multi_last_key, "");
+
+  return NULL;
 }
 
 /**********************************************
@@ -451,11 +506,25 @@ Entry *qfDecoder(char *filename){
   return first;
 }
 
-char *qfValue(Entry *first, char *name){
+char *qfValue(Entry *first, char *format, ...){
+  char name[1024];
+  va_list arglist;
+
+  va_start(arglist, format);
+  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qfValue() : Key is too long or not valid");
+  va_end(arglist);
+
   return _EntryValue(first, name);
 }
 
-int qfiValue(Entry *first, char *name){
+int qfiValue(Entry *first, char *format, ...){
+  char name[1024];
+  va_list arglist;
+
+  va_start(arglist, format);
+  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qfiValue() : Key is too long or not valid");
+  va_end(arglist);
+
   return _EntryiValue(first, name);
 }
 
@@ -510,11 +579,25 @@ Entry *qsDecoder(char *str){
   return first;
 }
 
-char *qsValue(Entry *first, char *name){
+char *qsValue(Entry *first, char *format, ...){
+  char name[1024];
+  va_list arglist;
+
+  va_start(arglist, format);
+  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qsValue() : Key is too long or not valid");
+  va_end(arglist);
+
   return _EntryValue(first, name);
 }
 
-int qsiValue(Entry *first, char *name){
+int qsiValue(Entry *first, char *format, ...){
+  char name[1024];
+  va_list arglist;
+
+  va_start(arglist, format);
+  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qsiValue() : Key is too long or not valid");
+  va_end(arglist);
+
   return _EntryiValue(first, name);
 }
 
@@ -562,13 +645,27 @@ int qcDecoder(void){
   return amount;
 }
 
-char *qcValue(char *name){
+char *qcValue(char *format, ...){
+  char name[1024];
+  va_list arglist;
+
+  va_start(arglist, format);
+  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qcValue() : Key is too long or not valid");
+  va_end(arglist);
+
   if(_cookie_first_entry == NULL)qcDecoder();
   return _EntryValue(_cookie_first_entry, name);
 }
 
-int qciValue(char *name){
-  if(_cookie_first_entry == NULL)qcDecoder();
+int qciValue(char *format, ...){
+  char name[1024];
+  va_list arglist;
+
+  va_start(arglist, format);
+  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qciValue() : Key is too long or not valid");
+  va_end(arglist);
+
+  if(_cookie_first_entry == NULL) qcDecoder();
   return _EntryiValue(_cookie_first_entry, name);
 }
 
@@ -852,7 +949,7 @@ void qPuts(int mode, char *buf){
       default: {qError("_autolink() : Invalid Mode (%d)", mode); break;}
     }
 
-    token = " `(){}[]<>&\"',\r\n";
+    token = " `(){}[]<>\"',\r\n";
 
     lastretstop = '0'; /* any character except space */
     ptr = _strtok2(buf, token, &retstop);
@@ -1131,19 +1228,21 @@ int qCheckFile(char *filename){
 }
 
 /**********************************************
-** Usage : qSendFile(filename);
-** Return: Success 1, Fail 0
-** Do    : Print file to stdout
+** Usage : qFileCat(filename);
+** Return: Success number of characters, Fail -1
+** Do    : Stream out file.
 **********************************************/
-int qSendFile(char *filename){
+int qFileCat(char *filename) {
   FILE *fp;
-  int tmp;
+  int c, counter;
 
-  fp = fopen(filename, "rb");
-  if(fp == NULL)return 0;
-  while((tmp = fgetc(fp)) != EOF)printf("%c", tmp);  
+  if((fp = fopen(filename, "rb")) == NULL) return -1;
+  for(counter = 0; (c = fgetc(fp)) != EOF; counter++) {
+    printf("%c", c);
+  }
+
   fclose(fp);
-  return 1;
+  return counter;
 }
 
 /**********************************************
@@ -1169,7 +1268,15 @@ void qDownload(char *filename) {
   printf ("\n");
   free(file);
 
-  qSendFile(filename);
+  qFileCat(filename);
+}
+
+/**********************************************
+** Usage : qRedirect(url);
+** Do    : Redirect page using Location response-header.
+**********************************************/
+void qRedirect(char *url) {
+  printf("Location: %s\n\n", url);
 }
 
 /**********************************************
@@ -1181,8 +1288,7 @@ int qReadCounter(char *filename){
   FILE *fp;
   int  counter;
 
-  fp = fopen(filename, "rt");
-  if(fp == NULL) return 0;
+  if((fp = fopen(filename, "rt")) == NULL) return 0;
   fscanf(fp, "%d", &counter);
   fclose(fp);
   return counter;
@@ -1196,8 +1302,7 @@ int qReadCounter(char *filename){
 int qSaveCounter(char *filename, int number){
   FILE *fp;
 
-  fp = fopen(filename, "wt");
-  if(fp == NULL)return 0;
+  if((fp = fopen(filename, "wt")) == NULL) return 0;
   fprintf(fp, "%d\n", number);
   fclose(fp);
   return 1;
@@ -1502,7 +1607,6 @@ char *_fgetline(FILE *fp) {
   return string;
 }
 
-
 /**********************************************
 ** Linked List(Entry) Routines
 **********************************************/
@@ -1524,7 +1628,7 @@ char *_EntryValue(Entry *first, char *name){
 
 /**********************************************
 ** Usage : _EntryiValue(Pointer of the first Entry, Name);
-** Return: Success integer of value string, Fail NULL
+** Return: Success integer of value string, Fail 0
 ** Do    : Find value string pointer and convert to integer
 **********************************************/
 int _EntryiValue(Entry *first, char *name){

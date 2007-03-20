@@ -44,27 +44,29 @@ extern "C" {
 #endif
 
 int       qDecoder(void);
-char      *qValue(char *name);
-int       qiValue(char *name);
+char      *qValue(char *format, ...);
+int       qiValue(char *format, ...);
+char      *qValueFirst(char *format, ...);
+char      *qValueNext(void);
 void      qPrint(void);
 void      qFree(void);
 Entry     *qGetFirstEntry(void);
 
 Entry     *qfDecoder(char *filename);
-char      *qfValue(Entry *first, char *name);
-int       qfiValue(Entry *first, char *name);
+char      *qfValue(Entry *first, char *format, ...);
+int       qfiValue(Entry *first, char *format, ...);
 void      qfPrint(Entry *first);
 void      qfFree(Entry *first);
 
 Entry     *qsDecoder(char *str);
-char      *qsValue(Entry *first, char *name);
-int       qsiValue(Entry *first, char *name);
+char      *qsValue(Entry *first, char *format, ...);
+int       qsiValue(Entry *first, char *format, ...);
 void      qsPrint(Entry *first);
 void      qsFree(Entry *first);
 
 int       qcDecoder(void);
-char      *qcValue(char *name);
-int       qciValue(char *name);
+char      *qcValue(char *format, ...);
+int       qciValue(char *format, ...);
 void      qcPrint(void);
 void      qcFree(void);
 
@@ -92,9 +94,10 @@ struct tm *qGetTime(void);
 time_t    qGetGMTime(char *gmt, time_t plus_sec);
 
 int       qCheckFile(char *filename);
-int       qSendFile(char *filename);
+int       qFileCat(char *filename);
 
 void      qDownload(char *filename);
+void      qRedirect(char *url);
 
 int       qReadCounter(char *filename);
 int       qSaveCounter(char *filename, int number);

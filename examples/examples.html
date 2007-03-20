@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+  <title>qDecoder Examples</title>
+</head>
+
+<body>
+<p><h1>qDecoder Examples</h1>
+
+<!-- ex) fetch.cgi -->
+<hr>
+<h3>Example: <a href="fetch.c">fetch.c</a></h3>
+<form method="post" action="fetch.cgi">
+  Input string: <input type="text" name="text" value="">
+  <input type="submit">
+</form>
+
+<!-- ex) multivalue.cgi -->
+<hr>
+<h3>Example: <a href="multivalue.c">multivalue.c</a></h3>
+<form method="post" action="multivalue.cgi">
+  <input name="checklist" type=checkbox value="Hamburger"> Hamburger
+  <input name="checklist" type=checkbox value="Chicken"> Chicken
+  <input name="checklist" type=checkbox value="Photato"> Photato
+  <input name="checklist" type=checkbox value="Coke"> Coke
+  <input name="checklist" type=checkbox value="Orange Juice"> Orange Juice
+  <input type="submit">
+</form>
+
+<!-- ex) upload.cgi -->
+<hr>
+<h3>Example: <a href="upload.c">upload.c</a></h3>
+<form method="post" action="upload.cgi" enctype="multipart/form-data">
+   Select file <input type="file" name="binary"><br>
+  <input type="submit">
+</form>
+         
+</body>
+</html>
