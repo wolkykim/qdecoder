@@ -1,5 +1,5 @@
 /***********************************************
-** [Query String Decoder Version 3.3]
+** [Query String Decoder Version 3.3.1]
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
@@ -71,22 +71,24 @@ int qDecoder(void){
   _first_entry = entries -> next = entries;
 
   query = _get_query("GET");
-  _decode_query(query);
   for(amount = 0; query && *query; amount++){
     entries = entries->next;
     entries->value = _makeword(query, '&');
     entries->name  = _makeword(entries->value, '=');
     entries->next = (Entry *)malloc(sizeof(Entry));
+    _decode_query(entries->name);
+    _decode_query(entries->value);
   }
   if(query)free(query);
 
   query = _get_query("POST");
-  _decode_query(query);
   for(; query && *query; amount++){
     entries = entries->next;
     entries->value = _makeword(query, '&');
     entries->name  = _makeword(entries->value, '=');
     entries->next = (Entry *)malloc(sizeof(Entry));
+    _decode_query(entries->name);
+    _decode_query(entries->value);
   }
   if(query)free(query);
   if(entries->next == _first_entry){
@@ -249,7 +251,6 @@ int qcDecoder(void){
   if(getenv("HTTP_COOKIE") == NULL) return 0;
   query = (char *)malloc(sizeof(char) * (strlen(getenv("HTTP_COOKIE")) + 1));
   strcpy(query, getenv("HTTP_COOKIE"));
-  _decode_query(query);
 
   entries = (Entry *)malloc(sizeof(Entry));
   _cookie_first_entry = entries -> next = entries;
@@ -259,6 +260,8 @@ int qcDecoder(void){
     entries->value = _makeword(query, ';');
     entries->name  = _makeword(entries->value, '=');
     entries->next = (Entry *)malloc(sizeof(Entry));
+    _decode_query(entries->name);
+    _decode_query(entries->value);
     qRemoveSpace(entries->name);
   }
   free(query);

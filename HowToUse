@@ -34,6 +34,9 @@
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
 
+  [Version 3.3.1]
+    qDecoder() Bug Patch
+
   [Version 3.3]
     int       qcDecoder(void);
     char      *qcValue(char *name);
