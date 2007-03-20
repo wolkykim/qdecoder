@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -29,12 +29,6 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
-
-Author:
-  Seung-young Kim <nobreak@hongik.com>
-  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
-  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
-  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"
@@ -43,70 +37,74 @@ Author:
 #define	SSI_INCLUDE_START	"<!--#include file=\""
 #define SSI_INCLUDE_END		"\"-->"
 
+/**********************************************
+** Usage : qSedArgAdd(entry pointer, name, value);
+** Do    : Add given name and value to linked list.
+**         If same name exists, it'll be replaced.
+**
+** ex) qValueAdd("NAME", "Seung-young Kim");
+**********************************************/
+Q_Entry *qSedArgAdd(Q_Entry *first, char *name, char *format, ...) {
+  Q_Entry *new_entry;
+  char value[1024];
+  int status;
+  va_list arglist;
+
+  if(!strcmp(name, "")) qError("qSedArgAdd(): can not add empty name.");
+
+  va_start(arglist, format);
+  status = vsprintf(value, format, arglist);
+  if(strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSedArgAdd(): Message is too long or invalid.");
+  va_end(arglist);
+
+  new_entry = _EntryAdd(first, name, value);
+  if(!first) first = new_entry;
+  
+  return first;
+}
 
 /**********************************************
-** Usage : qSedStr(string pointer, fpout, arg) {
-** Return: Success 1, Fail 0.
+** Usage : qPrint(pointer of the first Entry);
+** Return: Amount of entries.
+** Do    : Print all parsed values & names for debugging.
+**********************************************/
+int qSedArgPrint(Q_Entry *first) {
+  return _EntryPrint(first);
+}
+
+/**********************************************
+** Usage : qFree(pointer of the first Entry);
+** Do    : Make free of linked list memory.
+**********************************************/
+void qSedArgFree(Q_Entry *first) {
+  _EntryFree(first);
+}
+
+/**********************************************
+** Usage : qSedStr(Entry pointer, fpout, arg);
+** Return: Success 1, Fail open fail 0.
 ** Do    : Stream Editor.
 **********************************************/
-int qSedStr(char *srcstr, FILE *fpout, char **arg) {
-  int argc, i, j, k;
-  char *mode, **name, **value;
-  char sep, *tmp;
+int qSedStr(Q_Entry *first, char *srcstr, FILE *fpout) {
+  Q_Entry *entries;
+  char *sp;
 
   if(srcstr == NULL) return 0;
 
-  /* Arguments count */
-  if(arg == NULL) argc = 0;
-  else for(argc = 0; arg[argc] != NULL; argc++);
-
-  /* Memory allocation */
-  if(argc == 0) {
-    mode = NULL;
-    name = value = NULL;
-  }
-  else {
-    mode  = (char *)malloc(sizeof(char) * argc);
-    name  = (char **)malloc(sizeof(char *) * argc);
-    value = (char **)malloc(sizeof(char *) * argc);
-  }
-
-  /* Make arguments comparision list */
-  for(i = 0; i < argc; i++) {
-    mode[i] = arg[i][0];
-    sep = arg[i][1];
-
-    /* name */
-    name[i] = (char *)malloc(strlen(arg[i]) + 1);
-    for(j = 2, k = 0; arg[i][j] != sep; j++, k++) {
-      if(arg[i][j] == '\0') qError("qSedStr(): Premature end of argument '%s'.", arg[i]);
-      name[i][k] = arg[i][j];
-    }
-    name[i][k] = '\0';
-
-    /* value */
-    value[i] = (char *)malloc(strlen(arg[i]) + 1);
-    for(j++, k = 0; arg[i][j] != sep; j++, k++) {
-      if(arg[i][j] == '\0') qError("qSedStr(): Premature end of argument '%s'.", arg[i]);
-      value[i][k] = arg[i][j];
-    }
-    value[i][k] = '\0';
-  }
-
   /* Parsing */
-  for(tmp = srcstr; *tmp != '\0'; tmp++) {
+  for(sp = srcstr; *sp != '\0'; sp++) {
     int flag;
 
     /* SSI invocation */
-    if(!strncmp(tmp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
+    if(!strncmp(sp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
       char ssi_inc_file[1024], *endp;
-      if((endp = strstr(tmp, SSI_INCLUDE_END)) != NULL) {
-        tmp += strlen(SSI_INCLUDE_START);
-        strncpy(ssi_inc_file, tmp, endp - tmp);
-        ssi_inc_file[endp-tmp] = '\0';
-        tmp = (endp + strlen(SSI_INCLUDE_END)) - 1;
+      if((endp = strstr(sp, SSI_INCLUDE_END)) != NULL) {
+        sp += strlen(SSI_INCLUDE_START);
+        strncpy(ssi_inc_file, sp, endp - sp);
+        ssi_inc_file[endp-sp] = '\0';
+        sp = (endp + strlen(SSI_INCLUDE_END)) - 1;
 
-        if(qCheckFile(ssi_inc_file) == 1) qSedFile(ssi_inc_file, fpout, arg);
+        if(qCheckFile(ssi_inc_file) == 1) qSedFile(first, ssi_inc_file, fpout);
         else printf("[qSedStr: an error occurred while processing 'include' directive - file(%s) open fail]", ssi_inc_file);
       }
       else printf("[qSedStr: an error occurred while processing 'include' directive - ending tag not found]");
@@ -114,34 +112,15 @@ int qSedStr(char *srcstr, FILE *fpout, char **arg) {
     }
 
     /* Pattern Matching */
-    for(i = flag = 0; i < argc && flag == 0; i++) {
-      switch(mode[i]) {
-        case 's': {
-          if(!strncmp(tmp, name[i], strlen(name[i]))) {
-            fprintf(fpout, "%s", value[i]);
-            tmp += strlen(name[i]) - 1;
-            flag = 1;
-          }
-          break;
-        }
-        default : {
-          qError("qSedStr(): Unknown mode '%c'.", mode[i]);
-          break;
-        }
+    for(entries = first, flag = 0; entries && flag == 0; entries = entries->next) {
+      if(!strncmp(sp, entries->name, strlen(entries->name))) {
+        fprintf(fpout, "%s", entries->value);
+        sp += strlen(entries->name) - 1;
+        flag = 1;
       }
-      if(flag == 1) break;  /* No more comparison is necessary. */
     }
-    if(flag == 0) fprintf(fpout, "%c", *tmp);
+    if(flag == 0) fprintf(fpout, "%c", *sp);
   }
-
-  /* Free */
-  for(i = 0; i < argc; i++) {
-    free(name[i]);
-    free(value[i]);
-  }
-  if(mode  != NULL) free(mode);
-  if(name  != NULL) free(name);
-  if(value != NULL) free(value);
 
   return 1;
 }
@@ -151,13 +130,14 @@ int qSedStr(char *srcstr, FILE *fpout, char **arg) {
 ** Return: Success 1, Fail open fail 0.
 ** Do    : Stream Editor.
 **********************************************/
-int qSedFile(char *filename, FILE *fpout, char **arg) {
+int qSedFile(Q_Entry *first, char *filename, FILE *fpout) {
   char *sp;
   int flag;
 
   if((sp = qReadFile(filename, NULL)) == NULL) return 0;
-  flag = qSedStr(sp, fpout, arg);
+  flag = qSedStr(first, sp, fpout);
   free(sp);
 
   return flag;
 }
+

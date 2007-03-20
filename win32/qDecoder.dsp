@@ -63,8 +63,8 @@ LIB32=link.exe -lib
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ  /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ  /c
+# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x412 /d "_DEBUG"
 # ADD RSC /l 0x412 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -85,6 +85,10 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=..\src\md5\md5c.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\qArg.c
 # End Source File
 # Begin Source File
@@ -93,11 +97,7 @@ SOURCE=..\src\qAwk.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\qcDecoder.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\qCounter.c
+SOURCE=..\src\qCount.c
 # End Source File
 # Begin Source File
 
@@ -129,7 +129,7 @@ SOURCE=..\src\qFile.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\qHeader.c
+SOURCE=..\src\qHttpHeader.c
 # End Source File
 # Begin Source File
 
@@ -153,6 +153,10 @@ SOURCE=..\src\qSed.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\qSession.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\qString.c
 # End Source File
 # Begin Source File
@@ -167,6 +171,14 @@ SOURCE=..\src\qValid.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\src\md5\md5.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\md5\md5_global.h
+# End Source File
 # Begin Source File
 
 SOURCE=..\src\qDecoder.h

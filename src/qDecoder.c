@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -29,12 +29,6 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
-
-Author:
-  Seung-young Kim <nobreak@hongik.com>
-  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
-  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
-  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"
@@ -62,7 +56,7 @@ static char _multi_last_key[1024];
 /**********************************************
 ** Usage : qDecoder();
 ** Return: Success number of values, Fail -1.
-** Do    : Decode Query & Save it in linked list.
+** Do    : Decode Query & Cookie then save it in linked list.
 **         It doesn't care Method.
 **********************************************/
 int qDecoder(void) {
@@ -101,9 +95,11 @@ static int _parse_urlencoded(void) {
 
   entries = back = NULL;
 
-  for(amount = 0, loop = 1; loop <= 2; loop++) {
-    if(loop == 1 ) query = _get_query("GET");
-    else if(loop == 2 ) query = _get_query("POST");
+  for(amount = 0, loop = 1; loop <= 3; loop++) {
+    char sepchar;
+    if(loop == 1 )      { query = _get_query("COOKIE"); sepchar = ';'; }
+    else if(loop == 2 ) { query = _get_query("GET"); sepchar = '&'; }
+    else if(loop == 3 ) { query = _get_query("POST"); sepchar = '&'; }
     else break;
     for(; query && *query; amount++) {
       back = entries;
@@ -111,8 +107,8 @@ static int _parse_urlencoded(void) {
       if(back != NULL) back->next = entries;
       if(_first_entry == NULL) _first_entry = entries;
 
-      entries->value = _makeword(query, '&');
-      entries->name  = _makeword(entries->value, '=');
+      entries->value = _makeword(query, sepchar);
+      entries->name  = qRemoveSpace(_makeword(entries->value, '='));
       entries->next  = NULL;
 
       qURLdecode(entries->name);
@@ -155,6 +151,12 @@ static char *_get_query(char *method) {
     query[i] = '\0';
     return query;
   }
+  if(!strcmp(method, "COOKIE")) {
+    if(getenv("HTTP_COOKIE") == NULL) return NULL;
+    query = strdup(getenv("HTTP_COOKIE"));
+    return query;
+  }
+
   return NULL;
 }
 
@@ -163,6 +165,7 @@ static int _parse_multipart_data(void) {
   Q_Entry *entries, *back;
   char *query;
   int  amount;
+  int  loop;
 
   char *name = NULL, *value = NULL, *filename = NULL;
   int  valuelen;
@@ -178,26 +181,34 @@ static int _parse_multipart_data(void) {
 
 #ifdef _WIN32
   setmode(fileno(stdin), _O_BINARY);
+  setmode(fileno(stdout), _O_BINARY);
 #endif
 
   entries = back = NULL;
 
-  /* For parse GET method */
-  query = _get_query("GET");
-  for(amount = 0; query && *query; amount++) {
-    back = entries;
-    entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-    if(back != NULL) back->next = entries;
-    if(_first_entry == NULL) _first_entry = entries;
+  /* For parse GET method & Cookie */
+  for(amount = 0, loop = 1; loop <= 2; loop++) {
+    char sepchar;
 
-    entries->value = _makeword(query, '&');
-    entries->name  = _makeword(entries->value, '=');
-    entries->next  = NULL;
+    if(loop == 1 ) { query = _get_query("COOKIE"); sepchar = ';'; }
+    else if(loop == 2 ) { query = _get_query("GET"); sepchar = '&'; }
+    else break;
 
-    qURLdecode(entries->name);
-    qURLdecode(entries->value);
+    for(; query && *query; amount++) {
+      back = entries;
+      entries = (Q_Entry *)malloc(sizeof(Q_Entry));
+      if(back != NULL) back->next = entries;
+      if(_first_entry == NULL) _first_entry = entries;
+
+      entries->value = _makeword(query, sepchar);
+      entries->name  = qRemoveSpace(_makeword(entries->value, '='));
+      entries->next  = NULL;
+
+      qURLdecode(entries->name);
+      qURLdecode(entries->value);
+    }
+    if(query)free(query);
   }
-  if(query)free(query);
 
   /* For parse multipart/form-data method */
 
@@ -232,7 +243,7 @@ static int _parse_multipart_data(void) {
     for(i=0; boundary[i] !='\0'; i++) printf("%02X ",boundary[i]);
     printf("<p>\n");
 
-    for(j = 1; _fgetstring(buf, sizeof(buf), stdin) != NULL; j++) {
+    for(j = 1; _fgets(buf, sizeof(buf), stdin) != NULL; j++) {
       printf("Line %d, len %d : %s<br>\n", j, (int)strlen(buf), buf);
       for(i=0; buf[i] !='\0'; i++) printf("%02X ",buf[i]);
       printf("<p>\n");
@@ -241,16 +252,16 @@ static int _parse_multipart_data(void) {
   }
 
   /* check boundary */
-  if(_fgetstring(buf, sizeof(buf), stdin) == NULL) qError("_parse_multipart_data(): Your browser sent a non-HTTP compliant message.");
+  if(_fgets(buf, sizeof(buf), stdin) == NULL) qError("_parse_multipart_data(): Your browser sent a non-HTTP compliant message.");
 
   /* for explore 4.0 of NT, it sent \r\n before starting, fucking Micro$oft */
-  if(!strcmp(buf, "\r\n")) _fgetstring(buf, sizeof(buf), stdin);
+  if(!strcmp(buf, "\r\n")) _fgets(buf, sizeof(buf), stdin);
 
   if(strncmp(buf, boundary, boundarylen) != 0) qError("_parse_multipart_data(): String format invalid.");
 
   for(finish = 0; finish != 1; amount++) {
     /* get name field */
-    _fgetstring(buf, sizeof(buf), stdin);
+    _fgets(buf, sizeof(buf), stdin);
     name = (char *)malloc(sizeof(char) * (strlen(buf) - strlen("Content-Disposition: form-data; name=\"") + 1));
     strcpy(name, buf + strlen("Content-Disposition: form-data; name=\""));
     for(c_count = 0; (name[c_count] != '\"') && (name[c_count] != '\0'); c_count++);
@@ -279,7 +290,7 @@ static int _parse_multipart_data(void) {
 
     /* skip header */
     for(;;) {
-      _fgetstring(buf, sizeof(buf), stdin);
+      _fgets(buf, sizeof(buf), stdin);
       if(!strcmp(buf, "\r\n")) break;
     }
 
@@ -291,14 +302,13 @@ static int _parse_multipart_data(void) {
       }
       else if(c_count == valuelen - 1) {
         char *valuetmp;
-        int  i;
 
         valuelen *= 2;
 
         /* Here, we do not use realloc(). Because sometimes it is unstable. */
         valuetmp = (char *)malloc(sizeof(char) * valuelen);
         if(valuetmp == NULL) qError("_parse_multipart_data(): Memory allocation fail.");
-        for(i = 0; i < c_count; i++) valuetmp[i] = value[i];
+        memcpy(valuetmp, value, c_count);
         free(value);
         value = valuetmp;
       }
@@ -345,7 +355,7 @@ static int _parse_multipart_data(void) {
       }
     }
 
-    if(c == EOF) qError("_parse_multipart_data(): Internal bug at '%s'.", name);
+    if(c == EOF) qError("_parse_multipart_data(): Broken stream at end of '%s'.", name);
 
     /* store in linked list */
     /* store data */
@@ -397,7 +407,7 @@ char *qValue(char *format, ...) {
 
   va_start(arglist, format);
   status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValue(): Message is too long or invalid");
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValue(): Message is too long or invalid.");
   va_end(arglist);
 
   if(_first_entry == NULL) qDecoder();
@@ -416,7 +426,7 @@ int qiValue(char *format, ...) {
 
   va_start(arglist, format);
   status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qiValue(): Message is too long or invalid");
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qiValue(): Message is too long or invalid.");
   va_end(arglist);
 
   if(_first_entry == NULL) qDecoder();
@@ -436,7 +446,7 @@ char *qValueDefault(char *defstr, char *format, ...) {
 
   va_start(arglist, format);
   status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValueDefault(): Message is too long or invalid");
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValueDefault(): Message is too long or invalid.");
   va_end(arglist);
 
   if(_first_entry == NULL) qDecoder();
@@ -460,7 +470,7 @@ char *qValueNotEmpty(char *errmsg, char *format, ...) {
 
   va_start(arglist, format);
   status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValueNotEmpty(): Message is too long or invalid");
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValueNotEmpty(): Message is too long or invalid.");
   va_end(arglist);
 
   if(_first_entry == NULL) qDecoder();
@@ -481,6 +491,9 @@ char *qValueNotEmpty(char *errmsg, char *format, ...) {
 char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
   Q_Entry *entries;
   char *retstr, *repstr, method, memuse, newmode[2+1];
+
+  /* initialize pointers to avoid compile warnings */
+  retstr = repstr = NULL;
 
   if(_first_entry == NULL) qDecoder();
 
@@ -526,7 +539,7 @@ char *qValueFirst(char *format, ...) {
 
   va_start(arglist, format);
   status = vsprintf(_multi_last_key, format, arglist);
-  if(strlen(_multi_last_key) + 1 > sizeof(_multi_last_key) || status == EOF) qError("qValueFirst(): Message is too long or invalid");
+  if(strlen(_multi_last_key) + 1 > sizeof(_multi_last_key) || status == EOF) qError("qValueFirst(): Message is too long or invalid.");
   va_end(arglist);
 
   if(_first_entry == NULL) qDecoder();
@@ -556,21 +569,70 @@ char *qValueNext(void) {
 }
 
 /**********************************************
+** Usage : qValueAdd(name, value);
+** Do    : Force to add given name and value to linked list.
+**         If same name exists, it'll be replaced.
+**
+** ex) qValueAdd("NAME", "Seung-young Kim");
+**********************************************/
+char *qValueAdd(char *name, char *format, ...) {
+  Q_Entry *new_entry;
+  char value[1024];
+  int status;
+  va_list arglist;
+
+  if(!strcmp(name, "")) qError("qValueAdd(): can not add empty name.");
+
+  va_start(arglist, format);
+  status = vsprintf(value, format, arglist);
+  if(strlen(value) + 1 > sizeof(value) || status == EOF) qError("qValueAdd(): Message is too long or invalid.");
+  va_end(arglist);
+
+  if(_first_entry == NULL) qDecoder();
+  new_entry = _EntryAdd(_first_entry, name, value);
+  if(!_first_entry) _first_entry = new_entry;
+
+  return qValue(name);
+}
+
+/**********************************************
+** Usage : qValueRemove(name);
+** Do    : Remove entry from linked list.
+**
+** ex) qValueRemove("NAME");
+**********************************************/
+void qValueRemove(char *format, ...) {
+  char name[1024];
+  int status;
+  va_list arglist;
+
+  va_start(arglist, format);
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionRemove(): Message is too long or invalid.");
+  va_end(arglist);
+
+  if(!strcmp(name, "")) qError("qValueRemove(): can not remove empty name.");
+
+  _first_entry = _EntryRemove(_first_entry, name);
+}
+
+/**********************************************
 ** Usage : qGetFirstEntry();
 ** Do    : Return _first_entry.
 **********************************************/
 Q_Entry *qGetFirstEntry(void) {
-  if(_first_entry == NULL)qDecoder();
+  if(_first_entry == NULL) qDecoder();
   return _first_entry;
 }
 
 /**********************************************
 ** Usage : qPrint(pointer of the first Entry);
+** Return: Amount of entries.
 ** Do    : Print all parsed values & names for debugging.
 **********************************************/
-void qPrint(void) {
+int qPrint(void) {
   if(_first_entry == NULL) qDecoder();
-  _EntryPrint(_first_entry);
+  return _EntryPrint(_first_entry);
 }
 
 /**********************************************
@@ -583,3 +645,79 @@ void qFree(void) {
   _multi_last_entry = NULL;
   strcpy(_multi_last_key, "");
 }
+
+
+/**********************************************
+** Usage : qCookieSet(name, value, expire days, path, domain, secure);
+** Do    : Set cookie.
+**
+** The 'exp_days' is number of days which expire the cookie.
+** The current time + exp_days will be set.
+** This function should be called before qContentType().
+**
+** ex) qCookieSet("NAME", "Kim", 30, NULL, NULL, NULL);
+**********************************************/
+void qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure) {
+  char *Name, *Value;
+  char cookie[(4 * 1024) + 256];
+
+  /* check content flag */
+  if(qGetContentFlag() == 1) qError("qCookieSet(): must be called before qContentType() and any stream out.");
+
+  /* Name=Value */
+  Name = qURLencode(name), Value = qURLencode(value);
+  sprintf(cookie, "%s=%s", Name, Value);
+  free(Name), free(Value);
+
+  if(exp_days != 0) {
+    time_t plus_sec;
+    char gmt[256];
+    plus_sec = (time_t)(exp_days * 24 * 60 * 60);
+    qGetGMTime(gmt, plus_sec);
+    strcat(cookie, "; expires=");
+    strcat(cookie, gmt);
+  }
+
+  if(path != NULL) {
+    if(path[0] != '/') qError("qCookieSet(): Path string(%s) must start with '/' character.", path);
+    strcat(cookie, "; path=");
+    strcat(cookie, path);
+  }
+
+  if(domain != NULL) {
+    if(strstr(domain, "/") != NULL || strstr(domain, ".") == NULL) qError("qCookieSet(): Invalid domain name(%s).", domain);
+    strcat(cookie, "; domain=");
+    strcat(cookie, domain);
+  }
+
+  if(secure != NULL) {
+    strcat(cookie, "; secure");
+  }
+
+  printf("Set-Cookie: %s\n", cookie);
+
+  /* if you want to use cookie variable immediately, uncommnet below */
+  /*
+  qValueAdd(name, value);
+  */
+}
+
+/**********************************************
+** Usage : qCookieRemove(name);
+** Do    : Remove cookie.
+**
+** ex) qCookieRemove("NAME");
+**********************************************/
+void qCookieRemove(char *name, char *path, char *domain, char *secure) {
+
+  /* check content flag */
+  if(qGetContentFlag() == 1) qError("qCookieRemove(): must be called before qContentType() and any stream out.");
+
+  qCookieSet(name, "", -1, path, domain, secure);
+
+  /* if you want to remove cookie variable immediately, uncomment below */
+  /*
+  qValueRemove(name);
+  */
+}
+

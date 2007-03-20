@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -29,12 +29,6 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
-
-Author:
-  Seung-young Kim <nobreak@hongik.com>
-  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
-  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
-  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"
@@ -42,12 +36,12 @@ Author:
 
 
 /**********************************************
-** Usage : qGetEnv(environment string name, fail return string pointer);
+** Usage : qGetenvDefault(default string, environment string name);
 ** Return: Environment string or 'nullstr'.
 ** Do    : Get environment string.
 **         When it does not find 'envname', it will return 'nullstr'.
 **********************************************/
-char *qGetEnv(char *envname, char *nullstr) {
+char *qGetenvDefault(char *nullstr, char *envname) {
   char *envstr;
 
   if((envstr = getenv(envname)) != NULL) return envstr;
@@ -64,35 +58,35 @@ void qCGIenv(Q_CGIenv *env) {
 
   envtime = qGetTime();
 
-  env->auth_type		= qGetEnv("AUTH_TYPE",	NULL);
-  env->content_length		= qGetEnv("CONTENT_LENGTH", NULL);
-  env->content_type		= qGetEnv("CONTENT_TYPE", NULL);
-  env->document_root		= qGetEnv("DOCUMENT_ROOT", NULL);
-  env->gateway_interface	= qGetEnv("GATEWAY_INTERFACE",	NULL);
-  env->http_accept		= qGetEnv("HTTP_ACCEPT", NULL);
-  env->http_accept_encoding	= qGetEnv("HTTP_ACCEPT_ENCODING", NULL);
-  env->http_accept_language	= qGetEnv("HTTP_ACCEPT_LANGUAGE", NULL);
-  env->http_connection		= qGetEnv("HTTP_CONNECTION", NULL);
-  env->http_cookie		= qGetEnv("HTTP_COOKIE", NULL);
-  env->http_host		= qGetEnv("HTTP_HOST",	NULL);
-  env->http_referer		= qGetEnv("HTTP_REFERER", NULL);
-  env->http_user_agent		= qGetEnv("HTTP_USER_AGENT", NULL);
-  env->query_string		= qGetEnv("QUERY_STRING", NULL);
-  env->remote_addr		= qGetEnv("REMOTE_ADDR", NULL);
-  env->remote_host		= qGetEnv("REMOTE_HOST", env->remote_addr);
-  env->remote_port		= qGetEnv("REMOTE_PORT", NULL);
-  env->remote_user		= qGetEnv("REMOTE_USER", NULL);
-  env->request_method		= qGetEnv("REQUEST_METHOD", NULL);
-  env->request_uri		= qGetEnv("REQUEST_URI", NULL);
-  env->script_filename		= qGetEnv("SCRIPT_FILENAME", NULL);
-  env->script_name		= qGetEnv("SCRIPT_NAME", NULL);
-  env->server_admin		= qGetEnv("SERVER_ADMIN", NULL);
-  env->server_name		= qGetEnv("SERVER_NAME", NULL);
-  env->server_port		= qGetEnv("SERVER_PORT", NULL);
-  env->server_protocol		= qGetEnv("SERVER_PROTOCOL", NULL);
-  env->server_signature		= qGetEnv("SERVER_SIGNATURE", NULL);
-  env->server_software		= qGetEnv("SERVER_SOFTWARE", NULL);
-  env->unique_id		= qGetEnv("UNIQUE_ID",	NULL);
+  env->auth_type		= qGetenvDefault(NULL, "AUTH_TYPE");
+  env->content_length		= qGetenvDefault(NULL, "CONTENT_LENGTH");
+  env->content_type		= qGetenvDefault(NULL, "CONTENT_TYPE");
+  env->document_root		= qGetenvDefault(NULL, "DOCUMENT_ROOT");
+  env->gateway_interface	= qGetenvDefault(NULL, "GATEWAY_INTERFACE");
+  env->http_accept		= qGetenvDefault(NULL, "HTTP_ACCEPT");
+  env->http_accept_encoding	= qGetenvDefault(NULL, "HTTP_ACCEPT_ENCODING");
+  env->http_accept_language	= qGetenvDefault(NULL, "HTTP_ACCEPT_LANGUAGE");
+  env->http_connection		= qGetenvDefault(NULL, "HTTP_CONNECTION");
+  env->http_cookie		= qGetenvDefault(NULL, "HTTP_COOKIE");
+  env->http_host		= qGetenvDefault(NULL, "HTTP_HOST");
+  env->http_referer		= qGetenvDefault(NULL, "HTTP_REFERER");
+  env->http_user_agent		= qGetenvDefault(NULL, "HTTP_USER_AGENT");
+  env->query_string		= qGetenvDefault(NULL, "QUERY_STRING");
+  env->remote_addr		= qGetenvDefault(NULL, "REMOTE_ADDR");
+  env->remote_host		= qGetenvDefault(env->remote_addr, "REMOTE_HOST");
+  env->remote_port		= qGetenvDefault(NULL, "REMOTE_PORT");
+  env->remote_user		= qGetenvDefault(NULL, "REMOTE_USER");
+  env->request_method		= qGetenvDefault(NULL, "REQUEST_METHOD");
+  env->request_uri		= qGetenvDefault(NULL, "REQUEST_URI");
+  env->script_filename		= qGetenvDefault(NULL, "SCRIPT_FILENAME");
+  env->script_name		= qGetenvDefault(NULL, "SCRIPT_NAME");
+  env->server_admin		= qGetenvDefault(NULL, "SERVER_ADMIN");
+  env->server_name		= qGetenvDefault(NULL, "SERVER_NAME");
+  env->server_port		= qGetenvDefault(NULL, "SERVER_PORT");
+  env->server_protocol		= qGetenvDefault(NULL, "SERVER_PROTOCOL");
+  env->server_signature		= qGetenvDefault(NULL, "SERVER_SIGNATURE");
+  env->server_software		= qGetenvDefault(NULL, "SERVER_SOFTWARE");
+  env->unique_id		= qGetenvDefault(NULL, "UNIQUE_ID");
 
   /* qDecoder Supported Extended Informations */
   env->year = envtime->tm_year;
@@ -122,3 +116,4 @@ char *qCGIname(void) {
 
   return cgi_name;
 }
+

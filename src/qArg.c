@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -29,12 +29,6 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
-
-Author:
-  Seung-young Kim <nobreak@hongik.com>
-  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
-  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
-  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"
@@ -109,16 +103,20 @@ int qArgMatch(char *str, char **qlist) {
 
 /**********************************************
 ** Usage : qArgPrint(pointer of token array);
+** Return: Amount of tokens.
 ** Do    : Print all parsed tokens for debugging.
 **********************************************/
-void qArgPrint(char **qlist) {
+int qArgPrint(char **qlist) {
   char **qp;
+  int amount;
 
   qContentType("text/html");
 
-  for(qp = qlist; *qp; qp++) {
+  for(amount = 0, qp = qlist; *qp; amount++, qp++) {
     printf("'%s' (%d bytes)<br>\n" , *qp, strlen(*qp));
   }
+
+  return amount;
 }
 
 /**********************************************
@@ -183,3 +181,4 @@ void qArgFree(char **qlist) {
   for(qp = qlist; *qp; qp++) free(*qp);
   *qlist = NULL;
 }
+

@@ -123,7 +123,7 @@ BOOL CURLexamDlg::OnInitDialog()
 	
 	// TODO: Add extra initialization here
 	CheckDlgButton(IDC_RADIO1, TRUE);
-	m_edit2 = "-  URLexam / WWW Software Development & Debugging Tool -";
+	m_edit2 = "-  URLexam / Web Application Development&Debugging Tool -";
 	UpdateData(FALSE);
 	GetDlgItem(IDC_EDIT2)->EnableWindow(FALSE);
 

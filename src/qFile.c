@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -29,12 +29,6 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
-
-Author:
-  Seung-young Kim <nobreak@hongik.com>
-  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
-  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
-  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"
@@ -46,11 +40,21 @@ Author:
 ** Return: If file exist, return 1. Or return 0.
 ** Do    : Check filethat file is existGet environment of CGI.
 **********************************************/
-int qCheckFile(char *filename) {
+int qCheckFile(char *format, ...) {
   FILE *fp;
+  char filename[1024];
+  int status;
+  va_list arglist;
+
+  va_start(arglist, format);
+  status = vsprintf(filename, format, arglist);
+  if(strlen(filename) + 1 > sizeof(filename) || status == EOF) qError("qCheckFile(): File name is too long or invalid.");
+  va_end(arglist);
+
   fp = fopen(filename, "rb");
   if(fp == NULL) return 0;
   fclose(fp);
+
   return 1;
 }
 
@@ -59,13 +63,26 @@ int qCheckFile(char *filename) {
 ** Return: Success number of characters, Fail -1.
 ** Do    : Stream out file.
 **********************************************/
-int qCatFile(char *filename) {
+int qCatFile(char *format, ...) {
   FILE *fp;
+  char filename[1024];
+  int status;
+  va_list arglist;
   int c, counter;
+
+  va_start(arglist, format);
+  status = vsprintf(filename, format, arglist);
+  if(strlen(filename) + 1 > sizeof(filename) || status == EOF) qError("qCatFile(): File name is too long or invalid.");
+  va_end(arglist);
+
+#ifdef _WIN32
+  setmode(fileno(stdin), _O_BINARY);
+  setmode(fileno(stdout), _O_BINARY);
+#endif
 
   if((fp = fopen(filename, "rb")) == NULL) return -1;
   for(counter = 0; (c = fgetc(fp)) != EOF; counter++) {
-    printf("%c", c);
+    putc(c, stdout);
   }
 
   fclose(fp);
@@ -73,7 +90,7 @@ int qCatFile(char *filename) {
 }
 
 /**********************************************
-** Usage : qReadFile(filename, string pointer);
+** Usage : qReadFile(filename, integer pointer to store file size);
 ** Return: Success stream pointer, Fail NULL.
 ** Do    : Read file to malloced memory.
 **********************************************/
@@ -115,9 +132,9 @@ int qSaveStr(char *sp, int spsize, char *filename, char *mode) {
 /*********************************************
 ** Usage : qfGetLine(file pointer);
 ** Return: Success string pointer, End of file NULL.
-** Do    : Read one line from file pointer and alocate
-**         memory to save string. And there is no limit
-**         about length.
+** Do    : Read one line from file pointer without length
+**         limitation. String will be saved into dynamically
+**         allocated memory. The newline, if any, is retained.
 **********************************************/
 char *qfGetLine(FILE *fp) {
   int memsize;
@@ -131,14 +148,13 @@ char *qfGetLine(FILE *fp) {
     }
     else if(c_count == memsize - 1) {
       char *stringtmp;
-      int  i;
 
       memsize *= 2;
 
       /* Here, we do not use realloc(). Because sometimes it is unstable. */
       stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
       if(stringtmp == NULL) qError("qfGetLine(): Memory allocation fail.");
-      for(i = 0; i < c_count; i++) stringtmp[i] = string[i];
+      memcpy(stringtmp, string, c_count);
       free(string);
       string = stringtmp;
     }
@@ -164,3 +180,4 @@ long qFileSize(char *filename) {
 
   return finfo.st_size;
 }
+

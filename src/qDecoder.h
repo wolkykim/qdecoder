@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -29,12 +29,6 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
-
-Author:
-  Seung-young Kim <nobreak@hongik.com>
-  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
-  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
-  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #ifndef _QDECODER_H
@@ -50,9 +44,15 @@ Author:
 #include <sys/types.h>
 
 #ifdef _WIN32
-/* To use setmode() function for converting WIN32's stream mode to _O_BINARY */
+/* WIN32 ONLY */
+/*To use setmode() function for converting WIN32's stream mode to _O_BINARY */
 #include <io.h>
 #include <fcntl.h>
+#else
+/* UNIX ONLY */
+#include <dirent.h>	/* To use opendir() */
+#include <unistd.h>	/* To use unlink() */
+#include <sys/time.h>	/* To use struct timeval */
 #endif
 
 typedef struct Q_Entry Q_Entry;
@@ -114,29 +114,42 @@ char      *qValueNotEmpty(char *errmsg, char *format, ...);
 char      *qValueReplace(char *mode, char *name, char *tokstr, char *word);
 char      *qValueFirst(char *format, ...);
 char      *qValueNext(void);
+char      *qValueAdd(char *name, char *format, ...);
+void      qValueRemove(char *format, ...);
 Q_Entry   *qGetFirstEntry(void);
-void      qPrint(void);
+int       qPrint(void);
 void      qFree(void);
+void      qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
+void      qCookieRemove(char *name, char *path, char *domain, char *secure);
 
 /*
- * qcDecoder.c
+ * qSession.c
  */
-int       qcDecoder(void);
-char      *qcValue(char *format, ...);
-int       qciValue(char *format, ...);
-void      qcPrint(void);
-void      qcFree(void);
-void      qSetCookie(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
-void      qAddCookie(char *name, char *value);
+void      qSession(char *repository);
+char      *qSessionAdd(char *name, char *format, ...);
+int       qSessionAddInteger(char *name, int valueint);
+int       qSessionUpdateInteger(char *name, int plusint);
+void      qSessionRemove(char *format, ...);
+char      *qSessionValue(char *format, ...);
+int       qSessionValueInteger(char *format, ...);
+int       qSessionPrint(void);
+void      qSessionSave(void);
+void      qSessionFree(void);
+void      qSessionDestroy(void);
+time_t    qSessionSetTimeout(time_t seconds);
+char      *qSessionGetID(void);
+time_t    qSessionGetCreated(void);
 
 /*
  * qfDecoder.c
  */
 Q_Entry   *qfDecoder(char *filename);
-char      *qfValue(Q_Entry *first, char *format, ...);
-int       qfiValue(Q_Entry *first, char *format, ...);
-void      qfPrint(Q_Entry *first);
-void      qfFree(Q_Entry *first);
+#define   qfValue	qsValue
+#define   qfiValue	qsiValue
+#define   qfValueFirst	qsValueFirst
+#define   qfValueNext	qsValueNext
+#define   qfPrint	qsPrint
+#define   qfFree	qsFree
 
 /*
  * qsDecoder.c
@@ -144,13 +157,16 @@ void      qfFree(Q_Entry *first);
 Q_Entry   *qsDecoder(char *str);
 char      *qsValue(Q_Entry *first, char *format, ...);
 int       qsiValue(Q_Entry *first, char *format, ...);
-void      qsPrint(Q_Entry *first);
+char      *qsValueFirst(Q_Entry *first, char *format, ...);
+char      *qsValueNext(void);
+int       qsPrint(Q_Entry *first);
 void      qsFree(Q_Entry *first);
 
 /*
- * qHeader.c
+ * qHttpHeader.c
  */
 void      qContentType(char *mimetype);
+int       qGetContentFlag(void);
 void      qResetContentFlag(void);
 void      qRedirect(char *url);
 
@@ -164,7 +180,7 @@ void      qErrorContact(char *msg);
 /*
  * qEnv.c
  */
-char      *qGetEnv(char *envname, char *nullstr);
+char      *qGetenvDefault(char *nullstr, char *envname);
 void      qCGIenv(Q_CGIenv *env);
 char      *qCGIname(void);
 
@@ -173,6 +189,8 @@ char      *qCGIname(void);
  */
 char      *qURLencode(char *str);
 char      *qURLdecode(char *str);
+char      *qMD5Str(char *string);
+char      *qMD5File(char *filename);
 
 /*
  * qString.c
@@ -192,8 +210,8 @@ char      *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
 /*
  * qFile.c
  */
-int       qCheckFile(char *filename);
-int       qCatFile(char *filename);
+int       qCheckFile(char *format, ...);
+int       qCatFile(char *format, ...);
 char      *qReadFile(char *filename, int *size);
 int       qSaveStr(char *sp, int spsize, char *filename, char *mode);
 char      *qfGetLine(FILE *fp);
@@ -210,7 +228,7 @@ int       qCheckURL(char *url);
  */
 int       qArgMake(char *str, char **qlist);
 int       qArgMatch(char *str, char **qlist);
-void      qArgPrint(char **qlist);
+int       qArgPrint(char **qlist);
 int       qArgEmprint(int mode, char *str, char **qlist);
 void      qArgFree(char **qlist);
 
@@ -224,15 +242,18 @@ int       qAwkClose(void);
 /*
  * qSed.c
  */
-int       qSedStr(char *srcstr, FILE *fpout, char **arg);
-int       qSedFile(char *filename, FILE *fpout, char **arg);
+Q_Entry   *qSedArgAdd(Q_Entry *first, char *name, char *format, ...);
+int       qSedArgPrint(Q_Entry *first);
+void      qSedArgFree(Q_Entry *first);
+int       qSedStr(Q_Entry *first, char *srcstr, FILE *fpout);
+int       qSedFile(Q_Entry *first, char *filename, FILE *fpout);
 
 /*
- * qCounter.c
+ * qCount.c
  */
-int       qReadCounter(char *filename);
-int       qSaveCounter(char *filename, int number);
-int       qUpdateCounter(char *filename, int number);
+int       qCountRead(char *filename);
+int       qCountSave(char *filename, int number);
+int       qCountUpdate(char *filename, int number);
 
 /*
  * qDownload.c
@@ -249,10 +270,14 @@ time_t    qGetGMTime(char *gmt, time_t plus_sec);
 /*
  * qMisc.c
  */
+void      qFreeAll(void);
 void      qReset(void);
+char      *qUniqueID(void);
+
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+

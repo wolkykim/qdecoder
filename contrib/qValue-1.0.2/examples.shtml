@@ -15,7 +15,7 @@ The qDecoder Project
 <br>Below SSI command should be corrected where the path qValue located in the system.
 <pre>
     &lt;!--#exec cmd="<u>/ABSOLUTE_SYSTEM_PATH/</u>qValue.cgi query"--&gt;
-ex) &lt;!--#exec cmd="<u>/home/hongik/cgi-bin/</u>qValue.cgi query"--&gt;
+ex) &lt;!--#exec cmd="<u>/home/qdecoder/cgi-bin/</u>qValue.cgi query"--&gt;
 </pre>
 </blockquote>
 </i>

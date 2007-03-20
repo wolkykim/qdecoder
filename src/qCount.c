@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -29,12 +29,6 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
-
-Author:
-  Seung-young Kim <nobreak@hongik.com>
-  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
-  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
-  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"
@@ -42,35 +36,52 @@ Author:
 
 
 /**********************************************
-** Static Values Definition used only internal
+** Usage : qCountRead(filename);
+** Return: Success counter value, Fail 0.
+** Do    : Read counter value.
 **********************************************/
+int qCountRead(char *filename) {
+  FILE *fp;
+  int  counter;
 
-static int _content_type_flag = 0;
-
-
-/**********************************************
-** Usage : qContentType(mime type);
-** Do    : Print content type once.
-**********************************************/
-void qContentType(char *mimetype) {
-  if(_content_type_flag) return;
-
-  printf("Content-Type: %s%c%c", mimetype, 10, 10);
-  _content_type_flag = 1;
+  if((fp = fopen(filename, "rt")) == NULL) return 0;
+  fscanf(fp, "%d", &counter);
+  fclose(fp);
+  return counter;
 }
 
 /**********************************************
-** Usage : qResetContentFlag();
-** Do    : Reset content flag.
+** Usage : qCountSave(filename, number);
+** Return: Success 1, Fail 0.
+** Do    : Save counter value.
 **********************************************/
-void qResetContentFlag(void) {
-  _content_type_flag = 0;
+int qCountSave(char *filename, int number) {
+  FILE *fp;
+
+  if((fp = fopen(filename, "wt")) == NULL) return 0;
+  fprintf(fp, "%d\n", number);
+  fclose(fp);
+
+  return 1;
 }
 
 /**********************************************
-** Usage : qRedirect(url);
-** Do    : Redirect page using Location response-header.
+** Usage : qCountUpdate(filename, number);
+** Return: Success current value + number, Fail 0.
+** Do    : Update counter value.
 **********************************************/
-void qRedirect(char *url) {
-  printf("Location: %s\n\n", url);
+int qCountUpdate(char *filename, int number) {
+  FILE *fp;
+  int counter = 0;
+
+  if((fp = fopen(filename, "r+t")) != NULL) {
+    fscanf(fp, "%d", &counter);
+    fseek(fp, 0, SEEK_SET);
+  }
+  else if((fp = fopen(filename, "wt")) == NULL) return 0;
+  counter += number;
+  fprintf(fp, "%d\n", counter);
+  fclose(fp);
+  return counter;
 }
+

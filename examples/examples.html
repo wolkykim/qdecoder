@@ -7,17 +7,15 @@
 <body>
 <p><h1>qDecoder Examples</h1>
 <i>
-The qDecoder Project
+The qDecoder Project - Web Application Interface for C/C++
 <br><a href="http://www.qDecoder.org">http://www.qDecoder.org</a>
 
 <p><blockquote>
-qDecoder is a CGI library for C/C++ language programming and a solution
-product for developers. The Query Fetch algorithm of qDecoder which is
-based on linked-list gives developers more simple library interface
-without regard to a method of GET or POST. Also because it gives
-transperance with a subordinate layer, web-based softwares - CGI - is
-designed and embodied in reliability further. The source code for
-qDecoder is freely available to everyone.
+Being a Web Application Interface for C/C++ use, qDecoder is a solution product for developers.
+The Query Fetch algorithm of qDecoder based on the linked-list provides transparency
+with low layers by the simple library interface regardless of COOKIE/GET/POST(including File Upload).
+Thus, it enables the web based software to be more intuitively designed and implemented.
+qDecoder is developed according to the <a href="http://www.gnu.org/philosophy/free-software-for-freedom.html">free software</a> model and is publicly distributed.
 </blockquote>
 
 <p>It is only communication for qDecoder developers that is a qDecoder
@@ -32,10 +30,37 @@ Mailing-list archive can be founded at
 <!-- ex) fetch.cgi -->
 <p><hr noshade>
 <h3>Example: <a href="fetch.c">fetch.c</a></h3>
-<form method="post" action="fetch.cgi">
+<form method="get" action="fetch.cgi">
+  GET method: application/x-www-form-urlencoded<br>
   Type anything: <input type="text" name="query" value="">
-  <input type="submit">
+  <input type="submit" value="SUBMIT">
 </form>
+<form method="post" action="fetch.cgi">
+POST method: application/x-www-form-urlencoded<br>
+  Type anything: <input type="text" name="query" value="">
+  <input type="submit" value="SUBMIT">
+</form>
+<form method="post" enctype="multipart/form-data" action="fetch.cgi">
+  POST method: multipart/form-data<br>
+  Type anything: <input type="text" name="query" value="">
+  <input type="submit" value="SUBMIT">
+</form>
+
+<!-- ex) cookie.cgi -->
+<p><hr noshade>
+<h3>Example: <a href="cookie.c">cookie.c</a></h3>
+<form method="post" action="cookie.cgi">
+  <input type="hidden" name="mode" value="set">
+  <input type="text" name="cname" value="Name" size="10">
+  <input type="text" name="cvalue" value="Value">
+  <input type="submit" value="SET COOKIE">
+</form>
+<form method="post" action="cookie.cgi">
+  <input type="hidden" name="mode" value="remove">
+  <input type="text" name="cname" value="Name" size="10">
+  <input type="submit" value="REMOVE COOKIE">
+</form>
+<p>[<a href="cookie.cgi">View Cookie Variables</a>]
 
 <!-- ex) multivalue.cgi -->
 <hr size="1" noshade>
@@ -46,30 +71,30 @@ Mailing-list archive can be founded at
   <input name="checklist" type=checkbox value="Photato"> Photato
   <input name="checklist" type=checkbox value="Coke"> Coke
   <input name="checklist" type=checkbox value="Orange Juice"> Orange Juice
-  <input type="submit">
+  <input type="submit" value="SUBMIT">
 </form>
 
 <!-- ex) upload.cgi -->
 <hr size="1" noshade>
 <h3>Example: <a href="upload.c">upload.c</a></h3>
 <form method="post" action="upload.cgi" enctype="multipart/form-data">
-   Select file: <input type="file" name="binary"><br>
-  <input type="submit">
+   Select file: <input type="file" name="binary">
+  <input type="submit" value="UPLOAD FILE">
 </form>
 
 <!-- ex) download.cgi -->
 <hr size="1" noshade>
 <h3>Example: <a href="download.c">download.c</a></h3>
-Click <a href="download.cgi">here</a> to download source code.
+[<a href="download.cgi">Download example</a>]
 <p>
 
 <!-- ex) streamedit.cgi -->
 <hr size="1" noshade>
 <h3>Example: <a href="streamedit.c">streamedit.c</a>, <a href="streamedit.html">Parsed HTML files</a></h3>
 <form method="post" action="streamedit.cgi">
-  Name: <input type="text" name="name" value="">
-  <br>Hobby: <input type="text" name="hobby" value="">
-  <br><input type="submit">
+  Name: <input type="text" name="name" value="Eric Kim">
+  <br>Hobby: <input type="text" name="hobby" value="Playing Guitar">
+  <br><input type="submit" value="SUBMIT">
 </form>
 
 <!-- ex) arglist.cgi -->
@@ -78,8 +103,53 @@ Click <a href="download.cgi">here</a> to download source code.
 <form method="post" action="arglist.cgi">
   String: <input type="text" name="string" value="Hi, I'm a pretty boy. Are you pretty girl?" size="50"><br>
   Query:  <input type="text" name="query" value='I am a "pretty girl"'>
-  <input type="submit">
+  <input type="submit" value="SUBMIT">
 </form>
+
+<!-- ex) session.cgi -->
+<hr size="1" noshade>
+<h3>Example: <a href="session.c">session.c</a></h3>
+<form method="post" action="session.cgi">
+  <input type="hidden" name="mode" value="string">
+  <input type="text" name="name" value="Name" size="10">
+  <input type="text" name="value" value="Value">
+  <input type="submit" value="ADD(SIMPLE)">
+</form>
+
+<form method="post" action="session.cgi">
+  <input type="text" name="name" value="Name" size="10">
+  <input type="text" name="value" value="Value">
+  <select name="mode">
+    <option value="string">STRING TYPE
+    <option value="integer">INTEGER
+  </select>
+  <select name="expire">
+    <option value="5">5 sec
+    <option value="10">10 sec
+    <option value="30">30 sec
+    <option value="60">1 min
+    <option value="1800" selected>30 min (default)
+    <option value="3600">1 hour
+    <option value="86400">1 day
+    <option value="604800">1 week
+    <option value="2592000">1 month
+  </select>
+  <input type="submit" value="ADD(ADVANCED)">
+</form>
+
+<form method="post" action="session.cgi">
+  <input type="hidden" name="mode" value="remove">
+  <input type="text" name="name" value="Name" size="10">
+  <input type="submit" value="REMOVE">
+</form>
+
+[<a href="session.cgi?mode=view">View Session Variables</a>]
+[<a href="session.cgi?mode=destroy">Destroy Session</a>]
+
+<!-- ex) confparser.cgi -->
+<hr size="1" noshade>
+<h3>Example: <a href="confparser.c">confparser.c</a>, <a href="confparser.conf">Parsed Configuration File</a></h3>
+<p>[<a href="confparser.cgi">View Parsed Results</a>]
 
 <!-- End of examples -->
 <hr noshade>

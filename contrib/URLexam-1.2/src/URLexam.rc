@@ -99,14 +99,14 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "About URLexam"
 FONT 10, "Times New Roman"
 BEGIN
-    LTEXT           "URLexam Version 1.1\nCopyright (C) 2001 Seung-young Kim",
+    LTEXT           "URLexam Version 1.2\nCopyright (C) 2001 Seung-young Kim",
                     IDC_STATIC,83,3,117,18,SS_NOPREFIX
     CONTROL         132,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,2,1,
                     54,60,WS_EX_DLGMODALFRAME
     ICON            IDR_MAINFRAME,IDC_STATIC,59,3,20,20,SS_REALSIZEIMAGE
-    LTEXT           "Simple URL en/decoder for WWW developers.\nDistributed under freeware license.",
+    LTEXT           "Simple URL en/decoder for web developers.\nDistributed under freeware license.",
                     IDC_STATIC,63,31,143,17
-    LTEXT           "Seung-young Kim <nobreak@hongik.com>\n$Id: URLexam, v 1.1, 2001/02/14 $\nhttp://www.qDecoder.org/",
+    LTEXT           "Seung-young Kim <nobreak@hongik.com>\n$Id: URLexam, v 1.2, 2001/04/13 $\nhttp://www.qDecoder.org/",
                     IDC_STATIC,64,49,141,26
     GROUPBOX        "URLexam / The qDecoder Project",IDC_STATIC,58,22,151,56
     CONTROL         137,IDC_STATIC,"Static",SS_BITMAP | WS_BORDER,3,62,53,15

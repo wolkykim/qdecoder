@@ -1,148 +1,181 @@
+                          [The qDecoder Project]
+  ------------------------------------------------------------------------
+
 qDecoder Function Reference
 
-   * Query Handling Functions
+   * Query and Cookie Handling Functions
         o qDecoder()
         o qValue()
         o qiValue()
         o qValueDefault()
         o qValueNotEmpty()
         o qValueReplace()
+        o qGetFirstEntry()
         o qValueFirst()
         o qValueNext()
-        o qGetFirstEntry()
+        o qValueAdd()
+        o qValueRemove()
+        o qCookieSet()
+        o qCookieRemove()
         o qPrint()
         o qFree()
 
-   * Cookie Handling Functions
-        o qcDecoder()
-        o qcValue()
-        o qciValue()
-        o qcPrint()
-        o qcFree()
-        o qSetCookie()
-        o qAddCookie()
+   * Session Functions
+        o qSession()
+        o qSessionAdd()
+        o qSessionAddInteger()
+        o qSessionUpdateInteger()
+        o qSessionValue()
+        o qSessionValueInteger()
+        o qSessionRemove()
+        o qSessionGetID()
+        o qSessionGetCreated()
+        o qSessionSetTimeout()
+        o qSessionPrint()
+        o qSessionSave()
+        o qSessionFree()
+        o qSessionDestroy()
 
    * Configuration File Parsing Functions
         o qfDecoder()
         o qfValue()
         o qfiValue()
+        o qfValueFirst()
+        o qfValueNext()
         o qfPrint()
-        o qfFree()
+        o qfFree
 
    * Configuration String Parsing Functions
         o qsDecoder()
         o qsValue()
         o qsiValue()
+        o qsValueFirst()
+        o qsValueNext()
         o qsPrint()
-        o qsFree()
+        o qsFree
 
-   * HTTP Response Functions
-        o qContentType()
-        o qResetContentFlag()
-        o qRedirect()
-
-   * Error Handling Functions
-        o qError()
-        o qErrorLog()
-        o qErrorContact()
-
-   * Environment Related Functions
-        o qGetEnv()
-        o qCGIenv()
-        o qCGIname()
-
-   * Encoding/decoding Functions
-        o qURLencode()
-        o qURLdecode()
-
-   * String Handling Functions
-        o qPrintf()
-        o qPuts()
-        o qRemoveSpace()
-        o qStr09AZaz()
-        o qStrupr()
-        o qStristr()
-        o qStricmp()
-        o qitocomma()
-        o qStrReplace()
-
-   * File Handling Functions
-        o qCheckFile()
-        o qCatFile()
-        o qReadFile()
-        o qSaveStr()
-        o qfGetLine()
-        o qFileSize()
-
-   * Validation Functions
-        o qCheckEmail()
-        o qCheckURL()
-
-   * Sear Key Word Parsing & Pattern Matching Functions
-        o qArgMake()
-        o qArgMatch()
-        o qArgPrint()
-        o qArgEmprint()
-        o qArgFree()
+   * SED: Context Generation Functions
+        o qSedArgAdd()
+        o qSedArgPrint()
+        o qSedArgFree()
+        o qSedFile()
+        o qSedStr()
 
    * AWK: Pattern Scanning Functions
         o qAwkOpen()
         o qAwkNext()
         o qAwkClose()
 
-   * SED: Context Generation Functions
-        o qSedFile()
-        o qSedStr()
+   * Search Key Words & Pattern Matching Functions
+        o qArgMake()
+        o qArgMatch()
+        o qArgEmprint()
+        o qArgPrint()
+        o qArgFree()
 
-   * Counter Handling Functions
-        o qReadCounter()
-        o qSaveCounter()
-        o qUpdateCounter()
+   * HTTP Response Functions
+        o qContentType()
+        o qGetContentFlag()
+        o qResetContentFlag()
+        o qRedirect()
+
+   * Encoding/decoding Functions
+        o qURLencode()
+        o qURLdecode
+        o qMD5Str()
+        o qMD5File()
+
+   * String Handling Functions
+        o qPrintf()
+        o qPuts()
+        o qRemoveSpace()
+        o qStrReplace()
+        o qStr09AZaz()
+        o qStrupr()
+        o qStrlwr()
+        o qStristr()
+        o qStricmp()
+        o qStrincmp()
+        o qitocomma()
+
+   * File Handling Functions
+        o qCheckFile()
+        o qCatFile()
+        o qReadFile()
+        o qSaveStr()
+        o qFileSize()
+        o qfGetLine()
+
+   * Validation Functions
+        o qCheckEmail()
+        o qCheckURL()
 
    * Download Handling Functions
         o qDownload()
         o qDownloadMime()
 
+   * Counter Handling Functions
+        o qCountRead()
+        o qCountSave()
+        o qCountUpdate()
+
+   * Environment Related Functions
+        o qCGIenv()
+        o qCGIname()
+        o qGetenvDefault()
+
    * Time Functions
         o qGetTime()
         o qGetGMTime()
 
+   * Error Handling Functions
+        o qError()
+        o qErrorContact()
+        o qErrorLog()
+
    * Miscellaneous Functions
+        o qFreeAll()
         o qReset()
+        o qUniqueID()
 
   ------------------------------------------------------------------------
 
-Query Handling Functions
+Query and Cookie Handling Functions
 
 qDecoder()
 
-Syntax: int qDecoder(void);
-Function: 인코딩된 Query String을 해석하여 linked-list에 저장
-Return: 성공시 전달받은 인자의 갯수, 에러시 -1
-Example:
+  Syntax: int qDecoder(void);
+Function: Interprets encoded query strings and stores them in the linked-list.
+          COOKIE, GET, POST(including multipart/form-data encoding) are
+          supported.
+  Return: In case of success, returns the number of received arguments. In case
+          of failure, return -1.
+    Note: The parsing sequence is (1)COOKIE (2)GET (3)POST. Thus if same query
+          names (which are sent by different method) exist, qValue() will return
+          the value of COOKIE.
 
-          int num;
-          num = qDecoder();
+          This function, qDecoder(), is called automatically when you use
+          qValue() or related functions, so you do not need to call directly.
 
-     다음 형식의 인코딩된 쿼리를 지원한다.
-
-        * application/x-www-form-urlencoded (%xx로 인코딩되는 일반형)
-        * multipart/form-data (File Uploading에 사용됨)
-
-     Example 1: application/x-www-form-urlencoded
-     웹상에서 직접 사용자로부터 입력을 받을경우 주로 사용한다. 다음과
-     같은 URL Encoding 형식의 일반적 [HTML] 문이 전달될경우 링크드
-     리스트에는 [결과]와 같이 저장되고, [C]와 같이 사용한다.
+          In case of multipart/form-data encoding(used for file uploading), the
+          variables of "variable_name.length" and "variable_name.name" are
+          automatically inserted. The number of bytes of data is stored in
+          "variable_name.length", and the file names(file name itself, path
+          information will be removed) transmitted by users are stored in
+          "variable_name.name". (In case of "C:Dataa.gif", only "a.gif" is
+          stored.) In counter of return values, a total of 3 lists are stored
+          but since the 3 lists are for one data, they are regarded as 1 list.
+ Example: Example 1: application/x-www-form-urlencoded (GET/POST Method)
 
           [HTML]
           <form method="post" action="input.cgi">
-            사용자번호 <input type="text" name="userID"><br>
+            User ID <input type="text" name="userID"><br>
             <input type="submit">
           </form>
 
-          [결과]
+          [Parsed Queries]
           name  = "userID"
-          value = "사용자가 입력한 문자열"
+          value = "character strings users input"
 
           [C]
           #include <stdio.h>
@@ -154,25 +187,21 @@ Example:
             printf("%s", id);
           }
 
-     Example 2: multipart/form-data
-
-     파일 업로딩 등을 원할때 주로 사용된다. 다음과 같은 형식의 [HTML]
-     문이 사용되고, 로컬PC에서 'a.gif'란 128byte 파일을 업로드 할경우,
-     내부적으로 [결과]와 같이 저장되며 [C]와 같이 사용할수 있다.
+          Example 2: multipart/form-data
 
           [HTML]
           <form method="post" action="upload.cgi" enctype="multipart/form-data">
-            사용자번호 <input type="text" name="userID"><br>
-            업로드파일 <input type="file" name="binary"><br>
+            User ID <input type="text" name="userID"><br>
+            Attachment <input type="file" name="binary"><br>
             <input type="submit">
           </form>
 
-          [결과]
+          [Parsed Queries]
           name  = "userID"
-          value = "사용자가 입력한 문자열"
+          value = "character strings users input"
 
           name  = "binary"
-          value = "a.gif의 2진 자료"
+          value = "binary data of a.gif"
           name  = "binary.length"
           value = "128"
           name  = "binary.filename"
@@ -204,127 +233,116 @@ Example:
             printf("%s : %s(%s bytes) saved.", userID, filename, filelength);
           }
 
-     HTML상에서 type=text 일경우 사용은 동일하다. type=file 일경우에는
-     '변수명.length'와 '변수명.name'의 변수가 자동으로 삽입된다.
-     '변수명.length'는 자료의 바이트수가 저장되며, '변수명.name'은
-     사용자가 전송한 파일명이 저장된다. 저장할 파일명을 별도로
-     받고싶을경우, 입력을 type=text 로 받아 처리하면 되지만, 본
-     라이브러리에서는 사용자가 로컬 PC에서 브라우징한 파일명 자체를
-     알려준다. 파일명은 \ 등의 기호가 제거 되어 들어간다.
-     ("C:\Data\a.gif"일경우 "a.gif"만이 저장된다) 복귀값의 카운터는
-     type=file 일경우 총 3개의 리스트가 생성되지만 이것은 1개의 자료에
-     대한 처리이므로 1개로 처리한다. 내부적으로 저장되는 리스트는
-     qPrint() 를 활용하여 확인할수 있다.
-
-  ------------------------------------------------------------------------
-
 qValue()
 
-Syntax: char *qValue(char *format, ...);
-Function: Linked-list에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌.
-qDecoder()가 사전에 호출되지 않았다면 내부적으로 qDecoder 호출.
-Return: 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL
-Note: qValue()는 qDecoder()에 의해 생성된 쿼리 인덱스의 포인터만을
-복귀한다. 따라서 qValue로 전달받은 포인터를 free() 하여서는 안된다. 할당
-메모리 해제는 qFree() 함수를 통해(일반적으로 프로그램 종료전) 수행하여야
-한다.
-Example:
+   Syntax: char *qValue(char *format, ...);
+ Function: Finds out the value (COOKIE, GET, POST) for variable names at
+           the linked-list and hands over the pointers.
+   Return: The pointer of the variable value if a variable name exists.
+           NULL if there is no variable name.
+     Note: qValue() returns only the pointers of query index created by
+           qDecoder().Accordingly, you should not free() the pointers
+           received at qValue. The deallocation of allocated memory should
+           be performed through the qFree() function (generally before the
+           program is shut down).
 
-     char *test;
-     test = qValue("변수명");
+           Internally calls qDecoder if qDecoder() has not been called
+           before.
+  Example: char *test;
+           test = qValue("VARIABLE NAME");
 
-     char *test;
-     int i = 1;
-     test = qValue("COUNT.%d", i);
-
-  ------------------------------------------------------------------------
+           char *test;
+           int i = 1;
+           test = qValue("COUNT.%d", i);
 
 qiValue()
 
-Syntax: int qiValue(char *format, ...);
-Function: qValue()와 같으나, 값(숫자 문자열)을 정수로 변환하여 복귀함.
-Return: 성공시 변수값(숫자 문자열)에 대한 정수값. 변수명이 존재하지 않거나
-변환 불가능시 0
-Example:
+   Syntax: int qiValue(char *format, ...);
+ Function: Same as that of qValue(). But this returns the value(numeric
+           character string) after converting it into integers.
+   Return: In case of success, returns the integer value for the variable
+           value (numericcharacter string). If a variable name does not
+           exist or cannot be converted, returns 0.
+  Example: int test;
+           test = qiValue("VARIABLE NAME");
 
-     int test;
-     test = qiValue("변수명");
-
-     int test, i = 1;
-     test = qValue("COUNT.%d", i);
-
-  ------------------------------------------------------------------------
+           int test, i = 1;
+           test = qValue("COUNT.%d", i);
 
 qValueDefault()
 
-Syntax: char *qValueDefault(char *defstr, char *format, ...);
-Function: 쿼리가 없을때 기본 인자를 설정하기 위해 사용하는 qValue()의 간략
-함수이다.
-Return: qValue()와 같으나 NULL시 defstr의 포인터를 복귀.
-Example:
-
-     value = qValueDefault("서울", "COUNTRY");
-
-  ------------------------------------------------------------------------
+   Syntax: char *qValueDefault(char *defstr, char *format, ...);
+ Function: This is a simple function of qValue() used for setting up a
+           primary argument when there is no query.
+   Return: Same as that of qValue(). But this returns the pointer of
+           defstr when there is no query.
+  Example: value = qValueDefault("Seoul", "COUNTRY");
 
 qValueNotEmpty()
 
-Syntax: char *qValueNotEmpty(char *errmsg, char *format, ...);
-Function: 쿼리가 없거나 공백 문자열("")이 복귀될 시 qError()함수를 사용해
-지정된 에러메세지를 출력한다.
-Return: NULL에 대한 오류처리가 내장된 것을 제외하곤 qValue()와 같다.
-Example:
-
-     value = qValueNotEmpty("지역명을 입력해 주세요", "COUNTRY");
-
-  ------------------------------------------------------------------------
+   Syntax: char *qValueNotEmpty(char *errmsg, char *format, ...);
+ Function: Displays specified error messages by using the qError()
+           function when there is no query or blank character strings ("")
+           are returned.
+   Return: Same as qValue except that it has "error handling" within for
+           NULL.
+  Example: value = qValueNotEmpty("Enter country name", "COUNTRY");
 
 qValueReplace()
 
-Syntax: char *qValueReplace(char *mode, char *name, char *tokstr, char
-*word);
-Function: Linked-list 문자열에 대한 문자열 및 토큰 치환을 한다.
-Return: 치환된 문자열 포인터.
-Example:
+   Syntax:char *qValueReplace(char *mode, char *name, char *tokstr, char
+          *word);
+ Function:Transposes tokens and character strings for the linked-list
+          character strings.
+   Return:Transposed character-string pointers.
+     Note:Basically, qValueReplace() is the wrapping function of
+          qStrReplace(). The difference is that the source character
+          string is the query value (the value of the linked-list for
+          names) in it, and the conversion can be directly done to the
+          linked-list itself.
+          Accordingly, the usage of arguments of qValueReplace() is
+          basically the same as that of qStrReplace().
 
-     qValueReplace()는 기본적으로 qStrReplace()의 Wrapping 함수이다.
-     차이점은 소스 문자열을 쿼리 값(name에 대한 linked-list의
-     value)으로 한다는 점이며, 그 변환이 linked-list 자체에 직접적으로
-     가해질 수도 있음에 있다.
+          The 'name' argument is the query name of the linked-list to be
+          used as source character strings. And it is the source character
+          string to be used when the corresponding value is transposed.
 
-     따라서 qValueReplace()의 인자 사용법은 qStrReplace()와 기본적으로
-     동일하다.
+          The 'mode' argument is a character string made up of two
+          separate characters like "sr".
 
-     'name' 인자는 소스 문자열로 사용할 linked-list의 쿼리명이며 해당
-     value을 치환시 사용할 소스 문자열로 한다.
+          The first character defines the transposition method. 't' or 's'
+          can be located in its place. 't' stands for [t]oken. It compares
+          the source character strings (the value character string of the
+          linked-list for given names) using each character of the tokstr
+          character string as a token and transposes the matching
+          characters into a word character string. 's' stands for
+          [s]tring. It transposes into a word character string the tokstr
+          matching character strings appearing inside the source string
+          using the tokstr string itself as a token.
 
-     'mode' 인자는 "sr"와 같이 두개의 분리된 문자로 구성된 문자열이다.
+          The second character stands for the recording type of the
+          transposed character string. Eigher 'n' or 'r' can be used for
+          it. 'n' stands for [n]ew. It makes the corresponding pointer
+          returned by storing the transposed result character string in a
+          new memory space. Accordingly, the source string linked-list
+          should be maintained in its original state, and the pertinent
+          memory needs to be free() from the user's aspect. 'r' stands for
+          [r]eplace and means overwriting the transposition results on the
+          linked-list itself. This is accomplished through the internal
+          reallocation of memory.
 
-     첫번째 문자는 치환방법을 정의하며 't'나 's'가 위치할 수 있다.
-     't'는 [t]oken을 의미하며 tokstr 문자열의 각 문자를 토큰으로 소스
-     문자열 (주어진 name에 대한 linked-list의 value 문자열)을
-     비교하여, 매칭이 되는 문자를 word 문자열로 치환한다. 's'는
-     [s]tring을 의미하여 tokstr 스트링 자체를 하나의 토큰으로 하여
-     소스 스트링내에 나타나는 tokstr 매칭 문자열을 word 문자열로
-     치환한다.
+          As a result, there are 4 possible occasions in which the 'mode'
+          argument can be assembled.
 
-     두번째 문자는 치환된 문자열에 대한 기록 형태를 나타내며 'n'과
-     'r'이 사용될 수 있다. 'n'은 [n]ew를 나타내며 치환된 결과 문자열을
-     새로운 메모리 공간에 저장하여 해당 포인터를 리턴하게 한다. 따라서
-     소스 스트링 linked-list 자체는 원상태가 유지되고 해당 메모리는
-     사용자 측면에서 free() 되어야 한다. 'r'은 [r]eplace를 의미하며
-     치환 결과를 linked-list 자체에 덮어 씀을 의미한다. 이것은
-     내부적으로 메모리 재할당을 통해 이루어 진다.
-
-     결과적으로 'mode' 인자는 다음과 같이 4개의 조합 가능한 경우를
-     갖는다.
-
-            Mode "tn" : [t]oken 치환 & 새로운 공간에 결과를 담아 복귀
-            Mode "tr" : [t]oken 치환 & linked-list 자체를 수정
-            Mode "sn" : [s]tring 치환 & 새로운 공간에 결과를 담아 복귀
-            Mode "sr" : [s]tring 치환 & linked-list 자체를 수정
-
-          Example)
+           Mode "tn" : [t]oken transposition & stores results in a [n]ew
+          space and returns
+           Mode "tr" : [t]oken transposition & [r]eplaces the linked-list
+          itself
+           Mode "sn" : [s]tring transposition & stores results in a [n]ew
+          space and returns
+           Mode "sr" : [s]tring transposition & [r]eplaces the linked-list
+          itself
+  Example:Example 1)
             char *retstr, *mode;
             mode = qValue("mode");
             qContentType("text/plain");
@@ -356,317 +374,682 @@ Example:
             after  sr : srcstr = [?] world
                         retstr = [?] world
 
-  ------------------------------------------------------------------------
+qGetFirstEntry()
+
+   Syntax: Q_Entry *qGetFirstEntry(void);
+ Function: Returns the first Q_Entry pointer of the linked-list.
+   Return: If there is stored data in linked-list, return Q_Entry first
+           pointer. Or return NULL.
+     Note: This is used to acquire a root pointer when the linked-list
+           used by qDecoder() is to be directly manipulated.
+  Example: Q_Entry *first;
+           first = qGetFirstEntry();
 
 qValueFirst()
 
-Syntax: char *qValueFirst(char *format, ...);
-Function: 동일한 변수명을 갖는 인자들을 순차적으로 패치할 때 사용.
-Return: 성공시 동일한 변수명을 갖는 인자들에 대한 첫번째 변수값 포인터를
-복귀, 변수명이 없을시 NULL.
-Example:
-
-     qValueFirst("checklist");
-
-  ------------------------------------------------------------------------
+  Syntax: char *qValueFirst(char *format, ...);
+Function: Used for patching the arguments having an identical variable name
+          inregular sequence.
+  Return: In case of success, returns the first variable-value pointer for
+          the arguments having an identical variable name. If there is no
+          variable name, returns NULL.
+ Example: char *list;
+          for(list = qValueFirst("checklist"); list; list = qValueNext()) {
+            printf("checklist = %s<br>\n", list);
+          }
 
 qValueNext()
 
-Syntax: char *qValueNext(void);
-Function: qValueFirst()로 찾는 것을 계속한다.
-Return: 성공시 변수값의 포인터, 더이상의 동일 변수명이 없을때 NULL.
-Example:
+  Syntax: char *qValueNext(void);
+Function: Continues to find out with qValueFirst().
+  Return: In case of success, returns the pointer of the variable value. If
+          there is no more identical variable name, returns NULL.
+ Example: char *list;
+          for(list = qValueFirst("checklist"); list; list = qValueNext()) {
+            printf("checklist = %s<br>\n", list);
+          }
 
-     char *list;
-     for(list = qValueFirst("checklist"); list; list = qValueNext()) {
-       printf("checklist = %s<br>\n", list);
-     }
+qValueAdd()
 
-  ------------------------------------------------------------------------
+   Syntax: char *qValueAdd(char *name, char *format, ...);
+ Function: Force to add given name and value to linked list.
+   Return: String pointer of added entry in linked-list.
+     Note: If same name exists, it'll be replaced.
+  Example: qValueAdd("NAME", "Seung-young Kim");
+           name = qValue("NAME");
 
-qGetFirstEntry()
+qValueRemove()
 
-Syntax: Q_Entry *qGetFirstEntry(void);
-Function: Linked-list의 첫번째 Q_Entry 포인터를 복귀한다. qDecoder()에 의해
-사용되는 linked-list를 직접 조작하고자 할때 루트 포인터를 얻기위해
-사용한다.
-Example:
+   Syntax: void qValueRemove(char *format, ...);
+ Function: Remove entry from linked list.
+  Example: qValueRemove("NAME");
 
-     Q_Entry *first;
-     first = qGetFirstEntry();
+qCookieSet()
 
-  ------------------------------------------------------------------------
+  Syntax: void qCookieSet(char *name, char *value, int exp_days, char *path, char *domain,
+          char *secure);
+Function: Sets up those cookies that correspond to name=value.
+    Note: When cookies are set up through qCookieSet(), the point of time when values are
+          handed over through qValue() is when the next program is called. In some
+          implementations, however, cookies need to be set up for the simplicity of logic
+          while, at the same time, this needs to be applied to other routines. In this case,
+          qValueAdd() can prevent the alteration of logic and the waste of additional codes
+          by adding values to the cookie linked-list. But with regard to qCookieSet(),
+          setting up cookies at clients (browsers) does not succeed always. Thus, users
+          should be careful when using qValueAdd().
+
+          This should be used before qContentType() is called.
+ Example: char *name = "NAME", *value = "Kim";
+
+          // Apply the NAME=Kim information in the current domain and directory for 30 days.
+          qSetCookie(name, value, 30, NULL, NULL, NULL);
+
+          // Apply the NAME=Kim information to the "/" directory of "ANYTHING.qdecoder.org"
+          // until the browser is shut down.
+          qSetCookie(name, value, 0, "/", ".qdecoder.org", NULL);
+
+          // As for the followings, cookies will be set up only when security
+          // requirements are satisfied.
+          qSetCookie(name, value, 0, NULL, NULL, "SECURE");
+
+          // As for the followings, you can remove cookies.
+          qSetCookie(name, "", -1, NULL, NULL, NULL);
+
+qCookieRemove()
+
+   Syntax:void qCookieRemove(char *name, char *path, char *domain, char
+          *secure);
+ Function:Remove cookie from client(browser).
+     Note:The arguments(path, domain, secure) must be exactly same as the
+          arguments of qCookieSet().
+
+          When cookies are removed through qCookieRemove(), the point of
+          time when values in linked-list removed is when the next program
+          is called. In some implementations, however, cookies need to be
+          removed for the simplicity of logic while, at the same time,
+          this needs to be applied to other routines. In this case,
+          qValueRemove() can prevent the alteration of logic and the waste
+          of additional codes by removing values to the linked-list. But
+          with regard to qCookieRemove(), removing cookies at clients
+          (browsers) does not succeed always. Thus, users should be
+          careful when using qValueRemove().
+  Example:qCookieSet("NAME", "VALUE", 0, NULL, NULL, NULL);
+          qCookieRemove("NAME", NULL, NULL, NULL);
+
+          qCookieSet("NAME", "VALUE", 0, "/", NULL, NULL);
+          qCookieRemove("NAME", "/", NULL, NULL);
+
+          qCookieSet("NAME", "VALUE", 0, "/", "www.qdecoder.org", NULL);
+          qCookieRemove("NAME", "/", "www.qdecoder.org", NULL);
 
 qPrint()
 
-Syntax: void qPrint(void);
-Function: 프로그램의 디버깅용으로 전달된 인자를 모두 출력한다.
-Example:
-
-     qPrint();
-
-  ------------------------------------------------------------------------
+   Syntax: int qPrint(void);
+ Function: Displays all the arguments transmitted for the purpose of
+           debugging programs.
+   Return: The number of arguments.
+  Example: qPrint();
 
 qFree()
 
-Syntax: void qFree(void);
-Function: qDecoder()에 의해 할당된 Memory를 해제한다.
-Example:
-
-     qFree();
-
-  ------------------------------------------------------------------------
-
-Cookie Handling Functions
-
-qcDecoder()
-
-Syntax: int qcDecoder(void);
-Function: 쿠키를 해석하여 linked-list에 저장
-Return: 성공시 전달받은 인자의 갯수, 에러시 -1
-Note:
-Example:
-
-     int num;
-     num = qcDecoder();
+   Syntax: void qValueAdd(char *name, char *value);
+ Function: Deallocates the allocated memory by qDecoder().
+     Note: Please refer qFreeAll() too.
+  Example: qFree();
 
   ------------------------------------------------------------------------
 
-qcValue()
+Session Functions
 
-Syntax: char *qcValue(char *format, ...);
-Function: Linked-list에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌.
-Return: 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL.
-Note: qcDecoder()가 사전에 호출이 안되었으면, 자동 수행.
-Example:
+qSession()
 
-     char *value;
-     value = qcValue("변수명");
+  Syntax: void qSession(char *repository);
+Function: Start Session.
+    Note: To use session, you must call qSession() at the start. qSession() stores
+          32 bytes session id to client using cookie, then stores session data to
+          server side. By default, session data will be expired in 1800 seconds
+          since last access. You can adjust this period by using
+          qSessionSetTimeout().
 
-  ------------------------------------------------------------------------
+          To use session on clients which does not support cookie such like WAP
+          phone.
+          add QSESSIONID into your link below.
 
-qciValue()
+          http://domain/application?QSESSIONID=ab77bbb49dd61cd510db121a948ab4d9&other=arguments
 
-Syntax: int qciValue(char *format, ...);
-Function: Linked-list에서 변수명에대한 값(숫자 문자열)을 찾아 정수로 변환후
-넘겨줌.
-Return: 성공시 변수값(숫자 문자열)에 대한 정수값. 변수명이 존재하지 않거나
-변환 불가능시 0.
-Note: qcDecoder()가 사전에 호출이 안되었으면 자동 수행
-Example:
+          qSession() will store default session values below.
 
-     int value;
-     value = qciValue("변수명");
+           _Q_SESSIONID   : Session ID (ex: ab77bbb49dd61cd510db121a948ab4d9)
+           _Q_CREATED-GMT : Created GMT Time (ex: Thu, 19-Jul-2001 21:50:19 GMT)
+           _Q_CREATED     : Created Time (ex: 995579419)
+           _Q_CONNECTIONS : Connection Count (ex: 15)
+           _Q_INTERVAL    : Expire Period/Seconds (ex: 1800)
 
-  ------------------------------------------------------------------------
+          Session data is stored in filesystem(unix: "/tmp", win32:
+          "C:\Windows\Temp").
+          You can change storage path using argument 'repository' when you call
+          qSession(). qSession() generates "qsession-" prefixed files in session
+          storage and manage automatically. (In case of WIN32 environment, the
+          session files in repository are not managed automatically, so you would
+          better to clean periodically repository)
 
-qcPrint()
+          Session data will be stored when qSessionFree(), qSessionSave() or
+          qFreeAll() is called.
+ Example: qSession(NULL);   // use default storage
+          qSession("/tmp"); // use /tmp for session storage
 
-Syntax: void qcPrint(void);
-Function: 프로그램의 디버깅용으로 쿠키값을 모두 출력한다.
-Example:
+qSessionAdd()
 
-     qcPrint();
+   Syntax: char *qSessionAdd(char *name, char *format, ...);
+ Function: Add session value.
+   Return: Stored String pointer of value.
+  Example: qSessionAdd("name", "qDecoder");
+           qSessionAdd("cginame", "%s", qCGIname());
 
-  ------------------------------------------------------------------------
+qSessionAddInteger()
 
-qcFree()
+   Syntax: int qSessionAddInteger(char *name, int valueint);
+ Function: Add session value of integer type.
+   Return: Stored integer value.
+  Example: qSessionAddInteger("count", 32);
 
-Syntax: void qcFree(void);
-Function: qcDecoder()에 의해 할당된 Memory를 해제한다.
-Example:
+qSessionUpdateInteger()
 
-     qcFree();
+   Syntax: int qSessionUpdateInteger(char *name, int plusint);
+ Function: Update session value of integer type.
+   Return: Updated integer value.
 
-  ------------------------------------------------------------------------
+qSessionValue()
 
-qSetCookie()
+   Syntax: char *qSessionValue(char *format, ...);
+ Function: Return session value.
+   Return: Success pointer of value string, Fail NULL.
+  Example: char *value;
+           value = qSessionValue("name");
+           value = qSessionValue("%d.name", i);
 
-Syntax: void qSetCookie(char *name, char *value, int exp_days, char *path,
-char *domain, char *secure);
-Function: name=value 에 해당하는 쿠키를 설정함.
-Note: qContentType()이 호출되기 전에 사용하여야 한다.
-Example:
+qSessionValueInteger()
 
-     char *name = "NAME", *value = "Kim";
+   Syntax: int qSessionValueInteger(char *format, ...);
+ Function: Return session value of integer type.
+   Return: Success integer of value, Fail 0.
+  Example: int value;
+           value = qSessionValueInteger("count");
 
-     // NAME=Kim 이란 정보를 현재 도메인과 현재 디렉토리에 30일간 적용한다.
-     qSetCookie(name, value, 30, NULL, NULL, NULL);
+qSessionRemove()
 
-     // NAME=Kim 이란 정보를 "ANYTHING.qdecoder.org"의 "/" 디렉토리에 대해
-     // 브라우저가 종료될 때 까지 적용한다.
-     qSetCookie(name, value, 0, "/", ".qdecoder.org", NULL);
+   Syntax: void qSessionRemove(char *format, ...);
+ Function: Remove session variable.
+  Example: qSessionRemove("name");
+           qSessionRemove("%d.name", i);
 
-     // 다음은 보안 요구가 충족될 경우에만 쿠키가 설정될 것이다.
-     qSetCookie(name, value, 0, NULL, NULL, "SECURE");
+qSessionGetID()
 
-  ------------------------------------------------------------------------
+   Syntax: char *qSessionGetID(void);
+ Function: Return current session id.
+   Return: String pointer of session id(32bytes).
+  Example: char *sessionid;
+           char *sessionidstr[32+1];
 
-qAddCookie()
+           sessionid = qSessionGetID();
+           strcpy(sessionidstr, sessionid);
 
-Syntax: void qAddCookie(char *name, char *value);
-Function: name=value 에 해당하는 쿠키를 쿠키 링크드 리스트에 강제 추가함.
-Suggested By: Jun-seon Oh <holywar@holynet.co.kr>
-Note:qSetCookie()를 통해 쿠키를 설정했을 경우 특성상 qcValue()를 통해 값이
-넘겨지는 시점은 다음번 프로그램 호출시가 된다. 그러나 몇몇 구현에 있어서는
-로직의 간결함을 위해 쿠키를 설정하면서 동시에 이를 다름 루틴에 적용 할
-필요가 있다. qAddCookie()는 명시적으로 쿠키 링크드 리스트에 값을 추가해
-줌으로써 이러한 경우에 로직의 변경이나 추가 코드 낭비를 막아줄 수 있다. 단
-qSetCookie()는 모든 경우에 클라이언트(브라우저)에 쿠키 설정이 성공하는 것이
-아니므로, qAddCookie()의 사용은 조심스러워야 한다.
-Example:
+qSessionGetCreated()
 
-     char *name = "NAME", *value = "Kim";
+   Syntax: time_t qSessionGetCreated(void);
+ Function: Return session created time in seconds.
+   Return: Value of created time in seconds since 0 hours, 0 minutes, 0
+           seconds, January 1, 1970.
+  Example: time_t created;
+           struct tm *gmtime;
+           created = qSessionGetCreated();
+           gmtime = gmtime(&created);
 
-     qSetCookie(name, value, 0, NULL, NULL, NULL);
-     qAddCookie(name, value);
+qSessionSetTimeout()
+
+   Syntax: void qSessionSetTimeout(time_t seconds);
+ Function: Change current session expiration period.
+   Return: New expiration period.
+     Note: By default, expiration period is 1800 seconds.
+  Example: qSessionSetTimeout((time_t)3600);
+
+qSessionPrint()
+
+   Syntax: int qSessionPrint(void);
+ Function: Displays all the session variables for the purpose of debugging
+           programs.
+   Return: The number of variables.
+  Example: qSessionPrint();
+
+qSessionSave()
+
+   Syntax: void qSessionSave(void);
+ Function: Save session data immediately.
+     Note: qSessionSave() will be automatically called, when you
+           callqSessionFree() at the end of program. If program can be
+           quitted before qSessionFree(), you can use
+           qSessionSave() directly to protect session data.
+  Example: qSessionSave();
+
+qSessionFree()
+
+   Syntax: void qSessionFree(void);
+ Function: Save session data and deallocate memories.
+  Example: qSessionFree();
+
+qSessionDestroy()
+
+   Syntax: void qSessionDestroy(void);
+ Function: Destroy current session.
+  Example: qSessionDestroy();
 
   ------------------------------------------------------------------------
 
 Configuration File Parsing Functions
 
-다음과 같은 형식의 파일을 읽어 linked-list에 저장한다.
-
-     ---- test.conf ----
-     # this is comment.
-     name  = Kim
-     phone = 123-4567
-     addr  = 한국
-     -------------------
-
-  ------------------------------------------------------------------------
-
 qfDecoder()
 
-Syntax: Q_Entry *qfDecoder(char *filename);
-Function: 파일을 읽어 linked-list에 저장한다. (파일의 행길이 제약없음)
-Return: Linked-list의 첫번째 레코드 포인터, 에러시 NULL.
-Note: 샵(#)으로 시작되는 행은 주석으로 처리해 해석하지 않는다.
-Example:
+   Syntax: Q_Entry *qfDecoder(char *filename);
+ Function: Reads file and stores in the linked-list. (no limitations to
+           the line length of files)
+   Return: The first record pointer of the linked-list, NULL in case of
+           failure.
+     Note: Reads the file of the following format and stores them in the
+           linked-list.
 
-     Q_Entry *firstRecord;
-     firstRecord = qfDecoder("test.conf");
+           ---- test.conf ----
+           # this is comment.
+           name  = Seung-young Kim
+           age   = 30
+           addr  = Korea
+           -------------------
 
-  ------------------------------------------------------------------------
+           Regarded as explanatory notes, those lines starting with
+           sharps(#) are not interpreted.
+  Example: Q_Entry *first;
+           first = qfDecoder("test.conf");
+           if(first == NULL) qError("File not found.");
 
 qfValue()
 
-Syntax: char *qfValue(Q_Entry *first, char *format, ...);
-Function: 변수명의 변수값을 얻는다.
-Return: 성공시 변수값의 포인터, 실패시 NULL.
-Example:
-
-     char *value;
-     value = qfValue(FirstRecord, "name");
-
-  ------------------------------------------------------------------------
+   Syntax: char *qfValue(Q_Entry *first, char *format, ...);
+ Function: Acquires the variable value of variable names.
+   Return: In case of success, returns the pointer of the variable value.
+           In case of failure, returns NULL.
+  Example: char *value;
+           value = qfValue(first, "name");
 
 qfiValue()
 
-Syntax: int qfiValue(Q_Entry *first, char *format, ...);
-Function: 변수값을 정수로 변환후 넘겨준다.
-Return: 설공시 변수값(숫자 문자열)에 대한 정수값. 변수명이 존재하지 않거나,
-해당 값이 정수로 변환 불가능 하면 0
-Example:
+   Syntax: int qfiValue(Q_Entry *first, char *format, ...);
+ Function: Converts the variable values into integers and hands them over.
+   Return: In case of success, reurns the integer value for the variable
+           value (numericcharacter strings). When a variable name does not
+           exist or the pertinent value cannot be convertedinto integers,
+           returns 0.
+  Example: int count;
+           count = qfiValue(first, "count");
 
-     int counter;
-     counter = qfiValue(FirstRecord, "counter");
+qfValueFirst()
 
-  ------------------------------------------------------------------------
+  Syntax: char *qfValueFirst(Q_Entry *first, char *format, ...);
+Function: Used for patching the arguments having an identical variable name
+          inregular sequence.
+  Return: In case of success, returns the first variable-value pointer for
+          the arguments having an identical variable name. If there is no
+          variable name, returns NULL.
+ Example: char *list;
+          for(list = qfValueFirst("checklist"); list; list = qfValueNext()) {
+            printf("checklist = %s<br>\n", list);
+          }
+
+qfValueNext()
+
+  Syntax: char *qfValueNext(void);
+Function: Continues to find out with qfValueFirst().
+  Return: In case of success, returns the pointer of the variable value. If
+          there is no more identical variable name, returns NULL.
+ Example: char *list;
+          for(list = qfValueFirst("checklist"); list; list = qfValueNext()) {
+            printf("checklist = %s<br>\n", list);
+          }
 
 qfPrint()
 
-Syntax: void qfPrint(Q_Entry *first);
-Function: 프로그램의 디버깅용으로 해석한 인자를 모두 출력한다.
-Example:
+   Syntax: int qfPrint(Q_Entry *first);
+ Function: Displays all the interpreted arguments for debugging programs.
+   Return: The number of arguments.
+  Example: qfPrint(first);
 
-     qfPrint(FirstRecord);
+qfFree
 
-  ------------------------------------------------------------------------
-
-qfFree()
-
-Syntax: void qfFree(Q_Entry *first);
-Function: 할당된 Memory를 반환한다.
-Example:
-
-     qfFree(FirstRecord);
+   Syntax: void qfFree(Q_Entry *first);
+ Function: Deallocates allocated memory.
+  Example: qfFree(first);
 
   ------------------------------------------------------------------------
 
 Configuration String Parsing Functions
 
-다음과 같은 형식의 문자열을 읽어 linked-list에 저장한다.
-
-     ---- test.conf ----
-     # this is comment.
-     name  = Seung-young Kim
-     age   = 26
-     addr  = 한국
-     -------------------
-
-  ------------------------------------------------------------------------
-
 qsDecoder()
 
-Syntax: Q_Entry *qsDecoder(char *str);
-Function: 문자열을 읽어 linked-list에 저장한다. (파일의 행길이 제약없음)
-Return: Linked-list의 첫번째 레코드 포인터, 에러시 NULL.
-Note:
-Example:
+   Syntax: Q_Entry *qsDecoder(char *str);
+ Function: Reads string and stores in the linked-list. (no limitations to
+           the line length of files)
+   Return: The first record pointer of the linked-list, NULL in case of
+           failure.
+     Note: Reads the file of the following format and stores them in the
+           linked-list.
 
-     Q_Entry *FirstRecord;
-     char *str="name=Seung-young Kim\nage=26\naddr=한국";
-     FirstRecord = qsDecoder(str);
+           ---- test.conf ----
+           # this is comment.
+           name  = Seung-young Kim
+           age   = 30
+           addr  = Korea
+           -------------------
 
-  ------------------------------------------------------------------------
+           Regarded as explanatory notes, those lines starting with
+           sharps(#) are not interpreted.
+  Example: Q_Entry *FirstRecord;
+           char *str="name=Seung-young Kim\nage=26\naddr=Korea";
+           FirstRecord = qsDecoder(str);
 
 qsValue()
 
-Syntax: char *qsValue(Q_Entry *first, char *name);
-Function: 변수명의 변수값을 얻는다.
-Return: 성공시 변수값의 포인터, 실패시 NULL.
-Note:
-Example:
-
-     char *name;
-     name = qsValue(FirstRecord, "name");
-
-  ------------------------------------------------------------------------
+   Syntax: char *qsValue(Q_Entry *first, char *format, ...);
+ Function: Acquires the variable value of variable names.
+   Return: In case of success, returns the pointer of the variable value.
+           In case of failure, returns NULL.
+  Example: char *value;
+           value = qsValue(first, "name");
 
 qsiValue()
 
-Syntax: int qsiValue(char *format, ...);
-Function: 변수값을 정수로 변환후 넘겨준다.
-Return: 설공시 변수값(숫자 문자열)에 대한 정수값. 변수명이 존재하지 않거나,
-해당 값이 정수로 변환 불가능 하면 0.
-Note:
-Example:
+   Syntax: int qsiValue(Q_Entry *first, char *format, ...);
+ Function: Converts the variable values into integers and hands them over.
+   Return: In case of success, reurns the integer value for the variable
+           value (numericcharacter strings). When a variable name does not
+           exist or the pertinent value cannot be convertedinto integers,
+           returns 0.
+  Example: int count;
+           count = qsiValue(first, "count");
 
-     int age;
-     age = qsiValue(FirstRecord, "age");
+qsValueFirst()
 
-  ------------------------------------------------------------------------
+  Syntax: char *qsValueFirst(Q_Entry *first, char *format, ...);
+Function: Used for patching the arguments having an identical variable name
+          inregular sequence.
+  Return: In case of success, returns the first variable-value pointer for
+          the arguments having an identical variable name. If there is no
+          variable name, returns NULL.
+ Example: char *list;
+          for(list = qsValueFirst("checklist"); list; list = qsValueNext()) {
+            printf("checklist = %s<br>\n", list);
+          }
+
+qsValueNext()
+
+  Syntax: char *qsValueNext(void);
+Function: Continues to find out with qfValueFirst().
+  Return: In case of success, returns the pointer of the variable value. If
+          there is no more identical variable name, returns NULL.
+ Example: char *list;
+          for(list = qsValueFirst("checklist"); list; list = qsValueNext()) {
+            printf("checklist = %s<br>\n", list);
+          }
 
 qsPrint()
 
-Syntax: void qsPrint(Q_Entry *first);
-Function: 프로그램의 디버깅용으로 해석한 인자를 모두 출력한다.
-Example:
+   Syntax: int qsPrint(Q_Entry *first);
+ Function: Displays all the interpreted arguments for debugging programs.
+   Return: The number of arguments.
+  Example: qsPrint(first);
 
-     qsPrint(FirstRecord);
+qsFree
+
+   Syntax: void qsFree(Q_Entry *first);
+ Function: Deallocates allocated memory.
+  Example: qsFree(first);
 
   ------------------------------------------------------------------------
 
-qsFree()
+SED: Context Generation Functions
 
-Syntax: void qsFree(Q_Entry *first);
-Function: 할당된 Memory를 반환한다.
-Return:
-Note:
-Example:
+qSedArgAdd()
 
-     qsFree(FirstRecord);
+   Syntax: Q_Entry *qSedArgAdd(Q_Entry *first, char *name, char *format,
+           ...);
+ Function: Add a variable to argument list for use of qSedFile() and
+           qSedStr().
+   Return: Pointer of argument list.
+  Example: Q_Entry *args;
+
+           args = NULL;
+           args = qSedArgAdd(args, "${NAME}", "Seung-young Kim");
+           args = qSedArgAdd(args, "${HOBBY}", "Playing Guitar");
+
+qSedArgPrint()
+
+   Syntax: int qSedArgPrint(Q_Entry *first);
+ Function: Displays all the variables for debugging programs.
+   Return: The number of arguments.
+  Example: qSedArgPrint(first);
+
+qSedArgFree()
+
+   Syntax: void qSedArgFree(Q_Entry *first);
+ Function: Deallocates allocated memory by qSedArgAdd().
+  Example: qSedArgFree(first);
+
+qSedFile()
+
+  Syntax: int qSedFile(Q_Entry *first, char *filename, FILE *fpout);
+Function: Replaces specified symbols with defined character strings in files and displays
+          them. And supports part of the SSI grammar.
+  Return: In case of success, returns 1. When files cannot be opened, returns 0.
+    Note: Plays a similar function to the SED command of UNIX systems.
+
+          ---- ex) streamedit.html.in ----
+          <!--#include file="streamedit-header.html.in"-->
+          <p>Hi <b>${NAME}</b>.
+          <p>You got a really cool hobby.
+          <br>I'm sure that your hobby, <b>${HOBBY}</b>, can make your life more
+          compatible.
+          <p>Bye :)
+          <!--#include file="streamedit-tailer.html.in"-->
+          ---------------------
+
+          By utilizing qSedFile, CGI programming can be performed even without including
+          HTML codes in the programs. Thus, UI-related debugging time can be reduced to a
+          great extent, and the design and development works can be separately performed.
+          Package products can be easily customized by users.
+          filename is an input(target) file while fpout stands for output streams. When
+          you wish to display the results in files, open files in "w" and then, hand over
+          the corresponding file pointers. And if you wish to display them on-screen, just
+          specify stdout.
+
+          It interprets the SSI grammar. (Currently, only [an error occurred while
+          processing this directive] is supported.) If there is the following lines in a
+          document, the corresponding document is included in the display. And the
+          replacement and SSI functions are valid for the included document. (Cascading)
+
+          <!--#include file="streamedit-header.html.in"-->
+
+          Note) The included file can be marked by relative paths on the basis of the
+          location where CGI is executed. Or it may be marked by system absolute paths.
+
+          If you wish to use the SSI function only without replacing character strings,
+          transmit the NULL value using the arg argument as follows:
+
+          ex) qSedFile(NULL, "streamedit.html.in", stdout);
+ Example: Q_Entry *args;
+          char *name, *hobby;
+
+          qContentType("text/html");
+
+          name = qValueDefault("Not Found", "name");
+          hobby = qValueDefault("Not Found", "hobby");
+
+          args = NULL;
+          args = qSedArgAdd(args, "${NAME}", name);
+          args = qSedArgAdd(args, "${HOBBY}", hobby);
+
+          if(qSedFile(args, "streamedit.html.in", stdout) == 0) qError("File not found.");
+
+          qSedArgFree(args);
+
+qSedStr()
+
+   Syntax: int qSedStr(Q_Entry *first, char *srcstr, FILE *fpout);
+ Function: Plays same functions as qSedFile(), but input is done in
+           character strings.
+   Return: Same as that of qSedFile().
+  Example: Q_Entry *args;
+           char *sp;
+
+           sp = "My name is ${NAME}.";
+           args = NULL;
+           args = qSedArgAdd(args, "${NAME}", "Seung-young Kim");
+
+           qSedStr(args, sp, stdout);
+
+           qSedArgFree(args);
+
+  ------------------------------------------------------------------------
+
+AWK: Pattern Scanning Functions
+
+qAwkOpen()
+
+   Syntax: int qAwkOpen(char *filename, char separator);
+ Function: Opens files and sets up delimiters.
+   Return: In case of success, returns 1. When files cannot be opened,
+           return 0.
+     Note: Plays a similar function to the AWK command of UNIX systems.
+
+           ---- ex) /etc/passwd ----
+           shpark:x:1008:1000:Sang-hyun Park:/home/shpark:/bin/csh
+           teamwork:x:1011:1000:Seung-young Kim:/home/teamwork:/bin/csh
+           kikuchi:x:1015:2000:KIKUCHI:/home/kikuchi:/bin/csh
+           -------------------------
+  Example: qAwkOpen("/etc/passwd", ':');
+
+qAwkNext()
+
+  Syntax: int qAwkNext(char array[][256]);
+Function: Reads a line and stores it in an array given as a argument.
+  Return: In case of success, returns the number of fields. The end of files, -1.
+    Note: There is no limitation to the length of lines. But each field should not
+          exceed 256 bytes.
+ Example: char array[7][256];
+          qAwkOpen("/etc/passwd", ':');
+          for( ; qAwkNext(array) > 0; ) printf("ID=%s, Name=%s", array[0], array[5]);
+          qAwkClose();
+
+qAwkClose()
+
+   Syntax: int qAwkClose(void);
+ Function: Closes open files.
+   Return: In case of success, returns 1. When there is no open file,
+           returns 0.
+  Example: qAwkClose();
+
+  ------------------------------------------------------------------------
+
+Search Key Words & Pattern Matching Functions
+
+qArgMake()
+
+   Syntax: int qArgMake(char *str, char **qlist);
+ Function: Divides queries into tokens. The delimiters are generally space
+           characters. And the redundant spaces between tokens and the
+           spaces before and after queries are disregarded.
+   Return: The number of divided tokens.
+     Note: A group of functions related to search words classifies query
+           character strings on the basis of spaces and double quotation
+           marks(") and then, stores them in the lists. And it provides a
+           group of functions connected with the matching tests and display
+           of target character strings.
+
+           ---- Example ----
+           Query Input: I am a "pretty girl"
+           -----------------
+                |  |
+                V  V
+           ---- qArgMake() ----
+           qlist[0] = I
+           qlist[1] = am
+           qlist[2] = a
+           qlist[3] = pretty girl
+           qlist[4] = NULL
+           Return: 4 (4 Tokens)
+           --------------------
+                |  |
+                V  V
+           ---- qArgPrint() ----
+           'I' (1 bytes)
+           'am' (2 bytes)
+           'a' (1 bytes)
+           'pretty girl' (11 bytes)
+           ---------------------
+                |  |
+                V  V
+           ---- qArgMatch() ----
+           Target String: Hi, I'm a pretty boy. Are you pretty girl?
+                          =  =   =             =       ===========
+                          0  0   2             2             3
+           Return: 3 (3 matches: qlist[0], qlist[2], qlist[3])
+           ---------------------
+                |  |
+                V  V
+           ---- qArgEmprint() ----
+           Target String..: Hi, I'm a pretty boy. Are you pretty girl?
+           Result.........: Hi, I'm a pretty boy. Are you pretty girl?
+                            =  =   =             =       ===========
+                            1  2   3             4             5
+           Return: 5 (5 matches)
+           -----------------------
+  Example: char *query="I am a \"pretty girl\".", *qlist[MAX_TOKENS];
+           int queries;
+           queries = qArgMake(query, qlist);
+
+qArgMatch()
+
+  Syntax: int qArgMatch(char *str, char **qlist);
+Function: Performs token-matching tests without distinguishing lowercase/uppercase
+          letters.
+  Return: Returns the number of tokens found in a specific character string.
+    Note: Counts only once the same tokens even if they are matched repeatedly.
+          Refer to the return value of qArgemprint() for the total matching counts
+          in a character string including repeated matchings. Being divided into a
+          hundred parts by the total number of the tokens acquired at qArgMake(),
+          these values can be used for calculating the search accuracy.
+ Example: int matches;
+          matches = qArgMatch("Hi, I'm a pretty boy. Are you pretty girl?", qlist);
+
+qArgEmprint()
+
+  Syntax: int qArgEmprint(int mode, char *str, char **qlist);
+Function: Bold-prints the parts matched with tokens in a character string.
+          This does not distinguish lowercase/uppercase letters.
+  Return: Returns the number of tokens found in a character string. And unlike
+          qArgMatch(), this returns all the matching counts including repeated
+          matchings.
+    Note: The mode value is same as that of qPrintf(). For a general purpose,
+          1 can be generally used.
+ Example: qArgEmprint(1, "Hi, I'm a pretty boy. Are you pretty girl?", qlist);
+
+qArgPrint()
+
+   Syntax: int qArgPrint(char **qlist);
+ Function: Displays all the tokens interpreted for debugging programs.
+  Example: qArgPrint(qlist);
+
+qArgFree()
+
+   Syntax: void qArgFree(char **qlist);
+ Function: Deallocates qlist which memory is allocated to.
+  Example: qArgFree(qlist);
 
   ------------------------------------------------------------------------
 
@@ -674,153 +1057,44 @@ HTTP Response Functions
 
 qContentType()
 
-Syntax: void qContentType(char *mimetype);
-Function: MimeType을 출력한다.
-Note: 여러번 호출되어도 단 한번만 수행된다.
-Example:
+   Syntax: void qContentType(char *mimetype);
+ Function: Prints MimeType.
+     Note: Executed only once even if it is called many times.
+  Example: qContentType("text/html");  // when displaying HTML
+           qContentType("image/gif");  // when displaying the GIF image
 
-     qContentType("text/html");  // HTML 출력시
-     qContentType("image/gif");  // GIF 이미지 출력시
+qGetContentFlag()
 
-  ------------------------------------------------------------------------
+  Syntax: int qGetContentFlag(void);
+Function: Check execution of qContentType().
+  Return: If qContentType() is executed before, returns 1. Or returns 0.
+ Example: if(qGetContentFlag() == 0) qCookieRemove("NAME", NULL, NULL, NULL);
 
 qResetContentFlag()
 
-Syntax: void qResetContentFlag(void);
-Function: qContentType()의 내부 플래그를 초기 상태로 셋팅한다.
-Note: qContentType()은 여러번 호출되어도 한번만 수행이 되는데, 이를
-강제적으로 다시 출력하고자 할 경우에 qResetContentFlag()를 수행한 후
-qContentType()을 호출하면 중복 출력이 가능하다.
-  ------------------------------------------------------------------------
+   Syntax: void qResetContentFlag(void);
+ Function: Sets the internal flag of qContentType() to the initial status.
+     Note: qContentType() is executed only once even if it is called many
+           times. When you need to forcibly display it again, call
+           qContentType() after executing qResetContentFlag().
+  Example: qContentType("text/html");
+           ...some business logic here...
+
+           qResetContentFlag();
+           qContentType("text/html");
+           ...some business logic here...
+
+           qResetContentFlag();
+           qContentType("text/html");
+           ...some business logic here...
 
 qRedirect()
 
-Syntax: void qRedirect(char *url);
-Function: HTTP의 Location: 헤더를 사용해 특정 페이지로 점프한다.
-Note: qRedirect는 HTTP 헤더를 사용하므로 qConteneType() 등을 이전에
-사용하여서는 안되고, 해당 프로세스에서 스트림 아웃하는 유일한 명령이어야
-한다.
-Example:
-
-     qRedirect("http://www.hongik.com/");
-
-  ------------------------------------------------------------------------
-
-Error Handling Functions
-
-qError()
-
-Syntax: void qError(char *format, ...);
-Function: 오류에대한 Message를 출력한다. printf() 함수와 사용법 동일.
-Note: 조합된 오류 메시지의 최대 크기는 1024-1 byte를 넘지 않아야 한다.
-Example:
-
-     qError("오류메시지");
-     qError("%s에 오류", buf);
-
-  ------------------------------------------------------------------------
-
-qErrorLog()
-
-Syntax: void qErrorLog(char *filename);
-Function: qError() 함수를 부를때 전달되는 오류 메시지들이 기록되는
-로그파일을 설정한다.
-Note: 로그를 기록할때 본파일을 직접 호출하는것이 아니라,
-qErrorLog("logs/error.log") 와같이 프로그램 초기에 호출하면 그 후
-qError()가 호출될때마다, 'logs/error.log' 파일에 로그가 자동 기록 된다.
-Example:
-
-     qErrorLog("로그파일명");        // enable log
-     qErrorLog(NULL);                // disable log (default)
-
-  ------------------------------------------------------------------------
-
-qErrorContact()
-
-Syntax: void qErrorContact(char *msg);
-Function: 오류 메시지의 꼬리말로 qError() 호출시 항상 붙어 출력된다.
-일반적으로 제작처등의 고정 정보를 제공하기 위해 사용한다.
-Return:
-Note:
-Example:
-
-     qErrorContact("- Author");
-     qErrorContact(NULL);            // disable (default)
-
-  ------------------------------------------------------------------------
-
-Environment Related Functions
-
-qGetEnv()
-
-Syntax: char *qGetEnv(char *envname, char *nullstr);
-Function: getenv()함수와 동일하게 동작하나, NULL 대신 디폴드 스트링을
-복귀한다.
-Example:
-
-     char *name;
-     name = qGetEnv("SCRIPT_NAME", "/cgi-bin/CrazyWWWBoard.cgi");
-     name = qGetEnv("SCRIPT_NAME", NULL);
-
-  ------------------------------------------------------------------------
-
-qCGIenv()
-
-Syntax: void qCGIenv(Q_CGIenv *env);
-Function: CGI의 환경변수와 시간을 구조체에 저장한다.
-Example:
-
-     Q_CGIenv myenv;
-     qCGIenv(&myenv);
-
-     typedef struct Q_CGIenv Q_CGIenv;
-     struct Q_CGIenv{
-       char *auth_type;
-       char *content_length;
-       char *content_type;
-       char *document_root;
-       char *gateway_interface;
-       char *http_accept;
-       char *http_accept_encoding;
-       char *http_accept_language;
-       char *http_connection;
-       char *http_cookie;
-       char *http_host;
-       char *http_referer;
-       char *http_user_agent;
-       char *query_string;
-       char *remote_addr;
-       char *remote_host;
-       char *remote_port;
-       char *remote_user;
-       char *request_method;
-       char *request_uri;
-       char *script_filename;
-       char *script_name;
-       char *server_admin;
-       char *server_name;
-       char *server_port;
-       char *server_protocol;
-       char *server_software;
-       char *server_signature;
-       char *unique_id;
-
-       /* Miscellaneous Informations Supported by qDecoder */
-       int  year, mon, day, hour, min, sec;
-     };
-
-  ------------------------------------------------------------------------
-
-qCGIname()
-
-Syntax: char *qCGIname(void);
-Function: 환경변수 SCRIPT_NAME에서 프로그램명만을 해석하여 복귀한다.
-Return:
-Note:
-Example:
-
-     char *cginame;
-     cginame = qCGIname();
+   Syntax: void qRedirect(char *url);
+ Function: Jumps to a specific page using the Location: headers of HTTP.
+     Note: Since qRedirect uses the HTTP headers, qConteneType() should be
+           the only command that streams out in the corresponding process.
+  Example: qRedirect("http://www.qdecoder.org/");
 
   ------------------------------------------------------------------------
 
@@ -828,27 +1102,55 @@ Encoding/decoding Functions
 
 qURLencode()
 
-Syntax: char *qURLencode(char *str);
-Function: 문자열을 URL Encoding 한다.
-Return: URL Encoding된 문자열이 메모리 할당되어 복귀된다. 해제(free)는
-사용자가 하여야 한다.
-Example:
+   Syntax: char *qURLencode(char *str);
+ Function: Encodes character strings in URL.
+   Return: The character strings encoded in URL are returned with memory
+           allocation. Deallocation(free) needs to be done by users.
+     Note: It does not encode '@', '.', '/', '\', '-', '_', ':'
+           characters.
+  Example: char *encstr;
+           encstr = qURLencode("Hello!");
 
-     char *encstr;
-     encstr = qURLencode("안녕하세요?");
+qURLdecode
 
-  ------------------------------------------------------------------------
+   Syntax: char *qURLdecode(char *str);
+ Function: Decodes the character string that is URL-encoded into %xx.
+   Return: Decoded string pointer.
+     Note: It stores decoded string into str directly.
+  Example: char *encstr;
+           qURLdecode(encstr);
 
-qURLdecode()
+qMD5Str()
 
-Syntax: char *qURLdecode(char *str);
-Function: %xx로 URL Encoding된 문자열을 해독한다.
-Return: 문자열 포인터
-Note: 해독된 문자열은 메모리 할당되지 않고 str 자체에 덮어 쓰여진다.
-Example:
+   Syntax: char *qMD5Str(char *string);
+ Function: Calculate a message-digest fingerprint (checksum) for a string.
+   Return: String pointer of 32 bytes fingerprint.
+     Note: The return string pointer is declared as static inside the
+           functions instead of being returned with memory allocation.
+           This is to remove the inconvenience that users have to free()
+           memory every tiem. Accordingly, it should be noted that the
+           previous value is deleted whenever the functions are performed.
+           And you should not modify or free() it directly.
+  Example: printf("Hash Result = %s", MD5Str("Hello"));
 
-     char *encstr;
-     qURLdecode(encstr);
+           [Result]
+           Hash Result = 8b1a9953c4611296a827abf8c47804d7
+
+qMD5File()
+
+   Syntax: char *qMD5File(char *string);
+ Function: Calculate a message-digest fingerprint (checksum) for a file.
+   Return: String pointer of 32 bytes fingerprint.
+     Note: The return string pointer is declared as static inside the
+           functions instead of being returned with memory allocation.
+           This is to remove the inconvenience that users have to free()
+           memory every tiem. Accordingly, it should be noted that the
+           previous value is deleted whenever the functions are performed.
+           And you should not modify or free() it directly.
+  Example: printf("Hash Result = %s", MD5File("qDecoder.tar.Z"));
+
+           [Result]
+           Hash Result = 499589b930e48996a64317c79e6cc36b
 
   ------------------------------------------------------------------------
 
@@ -856,253 +1158,266 @@ String Handling Functions
 
 qPrintf()
 
-Syntax: int qPrintf(int mode, char *format, ...);
-Function: printf()와 동일한 사용방법으로 HTML TAG의 적용 유뮤와 자동 Link를
-행한다.
-Return: 성공시 출력한 bytes 갯수, 에러시 EOF
-Note: 조합된 스트링의 최대 크기가 10K(1024 * 10 - 1)을 넘으면 안된다.
-Example:
+  Syntax: int qPrintf(int mode, char *format, ...);
+Function: Usage is same as that of printf(). Checks whether the HTML tag is applied and performs automatic links.
+  Return: In case of success - returns the number of displayed bytes. In case of failure, returns EOF.
+    Note: The maximum size of the assembled strings should not exceed 10K(1024 * 10 - 1).
 
-     Mode 0 : printf()와 동일하다, HTML이 적용됨을 뜻한다.
-     Mode 1 : HTML TAG 자체를 출력한다. Link되는 부분 없음.
-     Mode 2 : Mode 1 + 자동으로 link 시킴.
-     Mode 3 : Mode 2 + link를 클릭했을시 전화면(target=_top) 출력한다.
-     Mode 4 : HTML TAG를 무시한다. 출력되지 않음.
-     Mode 5 : Mode 4 + 자동으로 Link 시킴.
-     Mode 6 : Mode 5 + link를 클릭했을시 전화면(target=_top) 출력한다.
-     Mode 10  :Mode 0 + Convert
-     Mode 11 : Print HTML TAG + Convert
-     Mode 12 : Mode 11 + Auto Link
-     Mode 13 : Mode 12 + Auto Link to _top frame
-     Mode 14 : Waste HTML TAG + Convert
-     Mode 15 : Mode 14 + Auto Link
-     Mode 16 : Mode 15 + Auto Link to _top frame
+          Mode 0 : Same as printf(). Means HTML is applied.
+          Mode 1 : Displays the HTML tag itself. No linking parts.
+          Mode 2 : Mode 1 + automatic linking.
+          Mode 3 : Mode 2 + Displays the previous screen(target=_top) when link is clicked.
+          Mode 4 : Disregards the HTML tag. Not displayed.
+          Mode 5 : Mode 4 + automatic linking.
+          Mode 6 : Mode 5 + Displays the previous screen(target=_top) when link is clicked.
+          Mode 10 : Mode 0 + Convert
+          Mode 11 : Print HTML TAG + Convert
+          Mode 12 : Mode 11 + Auto Link
+          Mode 13 : Mode 12 + Auto Link to _top frame
+          Mode 14 : Waste HTML TAG + Convert
+          Mode 15 : Mode 14 + Auto Link
+          Mode 16 : Mode 15 + Auto Link to _top frame
 
-     Convert : " "   -> " "
-               "  "  -> " &nbsp;"
-               "   " -> " &nbsp;&nbsp;"
-               "\r"  -> 무시
-               "\n"  -> "<br>\n"
+          Convert : " "   -> " "
+                   "  "  -> "  "
+                   "   " -> "   "
+                   "\r"  -> disregard
+                   "\n"  -> "<br>\n"
 
-     10 이상의 Mode 값은 <pre> 태그를 사용치 않고서도, 연속된 공백을 화면에 보여주고자 할 때
-     사용하면 효과적이다. 또한 이 경우엔 화면폭의 변화에 따라 자동으로 줄바꿈이 수행된다.
+          The Mode values of 10 and over can be efficiently used when successive
+          blank is to be displayed on the screen without using the <pre> tag.
+          In this case, the line change is automatically performed according to
+          the changes of  screen width.
+ Example: qPrintf(i, "Mode %d: <font>\"http://www.qdecoder.org\"</font>\n", i);
 
-     qPrintf(i, "Mode %d: <font>\"http://www.hongik.com\"</font>\n", i);
+          Mode 0: <font>"http://www.qdecoder.org"</font>
+          Mode 1: &lt;font&gt;&quot;http://www.qdecoder.org&quot;&lt;/font&gt;
+          Mode 2: &lt;font&gt;&quot;<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>&quot;&lt;/font&gt;
+          Mode 3: &lt;font&gt;&quot;<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>&quot;&lt;/font&gt;
+          Mode 4: &quot;http://www.qdecoder.org&quot;
+          Mode 5: &quot;<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>&quot;
+          Mode 6: &quot;<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>&quot;
+          Mode 10: <font>"http://www.qdecoder.org"</font><br>
+          Mode 11: &lt;font&gt;&quot;http://www.qdecoder.org&quot;&lt;/font&gt;<br>
+          Mode 12: &lt;font&gt;&quot;<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>&quot;&lt;/font&gt;<br>
+          Mode 13: &lt;font&gt;&quot;<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>&quot;&lt;/font&gt;<br>
+          Mode 14: &quot;http://www.qdecoder.org&quot;<br>
+          Mode 15: &quot;<a href="http://www.qdecoder.org" target="">http://www.qdecoder.org</a>&quot;<br>
+          Mode 16: &quot;<a href="http://www.qdecoder.org" target="_top">http://www.qdecoder.org</a>&quot;<br>
 
-     Mode 0: <font>"http://www.hongik.com"</font>
-     Mode 1: &lt;font&gt;&quot;http://www.hongik.com&quot;&lt;/font&gt;
-     Mode 2: &lt;font&gt;&quot;<a href="http://www.hongik.com" target="">http://www.hongik.com</a>&quot;&lt;/font&gt;
-     Mode 3: &lt;font&gt;&quot;<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>&quot;&lt;/font&gt;
-     Mode 4: &quot;http://www.hongik.com&quot;
-     Mode 5: &quot;<a href="http://www.hongik.com" target="">http://www.hongik.com</a>&quot;
-     Mode 6: &quot;<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>&quot;
-     Mode 10: <font>"http://www.hongik.com"</font><br>
-     Mode 11: &lt;font&gt;&quot;http://www.hongik.com&quot;&lt;/font&gt;<br>
-     Mode 12: &lt;font&gt;&quot;<a href="http://www.hongik.com" target="">http://www.hongik.com</a>&quot;&lt;/font&gt;<br>
-     Mode 13: &lt;font&gt;&quot;<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>&quot;&lt;/font&gt;<br>
-     Mode 14: &quot;http://www.hongik.com&quot;<br>
-     Mode 15: &quot;<a href="http://www.hongik.com" target="">http://www.hongik.com</a>&quot;<br>
-     Mode 16: &quot;<a href="http://www.hongik.com" target="_top">http://www.hongik.com</a>&quot;<br>
+          qPrintf(i, "Mode %d: ' ', '  ', '   ', '    '\n", i);
 
-     qPrintf(i, "Mode %d: ' ', '  ', '   ', '    '\n", i);
-
-     Mode 0: ' ', '  ', '   ', '    '
-     Mode 1: ' ', '  ', '   ', '    '
-     Mode 2: ' ', '  ', '   ', '    '
-     Mode 3: ' ', '  ', '   ', '    '
-     Mode 4: ' ', '  ', '   ', '    '
-     Mode 5: ' ', '  ', '   ', '    '
-     Mode 6: ' ', '  ', '   ', '    '
-     Mode 10: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
-     Mode 11: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
-     Mode 12: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
-     Mode 13: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
-     Mode 14: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
-     Mode 15: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
-     Mode 16: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
-
-  ------------------------------------------------------------------------
+          Mode 0: ' ', '  ', '   ', '    '
+          Mode 1: ' ', '  ', '   ', '    '
+          Mode 2: ' ', '  ', '   ', '    '
+          Mode 3: ' ', '  ', '   ', '    '
+          Mode 4: ' ', '  ', '   ', '    '
+          Mode 5: ' ', '  ', '   ', '    '
+          Mode 6: ' ', '  ', '   ', '    '
+          Mode 10: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+          Mode 11: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+          Mode 12: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+          Mode 13: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+          Mode 14: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+          Mode 15: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
+          Mode 16: ' ', ' &nbsp;', ' &nbsp;&nbsp;', ' &nbsp;&nbsp;&nbsp;'<br>
 
 qPuts()
 
-Syntax: void qPuts(int mode, char *buf);
-Function: 포맷에 의한 인자 전달이 안된다는 점을 제외하면 qPrintf()와
-동일하나 주어진 인자 buf 자체를 수정하기 때문에, 상수 문자열(ex: str =
-"문자열")이나 다시 사용되어야 하는 변수를 qPuts()로 출력하진 말아햐 한다.
-qPuts()가 존재하는 이유는 qPrintf()에서와 같은 인자 스트링의 길이 제한이
-없으며 strdup() 함수가 사용되지 않기에 조금 더 빠르기 때문이다.
-Note: 인자로 전해준 문자열이 변형된다. 따라서 qPuts(mode, "문자열");
-이런식의 상수 문자열 사용은 오류를 잃으킨다. 이때에는 아래의 사용법처럼
-인자를 복사한후 사용한다.
-Example:
+  Syntax: void qPuts(int mode, char *buf);
+Function: Same as that of qPrintf() except that arguments cannot be
+          transmitted by formats.
+    Note: since the given argument of buf is modified, constant character
+          strings(ex: str = "character string") or the variables that need
+          to be used again should not be displayed in qPuts(). The reason
+          why qPuts() exists is that there is no limitation to the length of
+          argument strings unlike in qPrintf() and that the speed is a bit
+          faster because the strdup() function is not used.
 
-     char buf[100];
-     strcpy(buf, "http://www.hongik.com mailto:nobreak@hongik.com");
-     qPuts(2, buf);
+          The character strings transmitted to arguments are transformed.
+          Accordingly if a constant character string like qPuts(mode,
+          "character string"); is used, errors occur. In this case, copy the
+          arguments as example.
+ Example: char buf[100];
+          strcpy(buf, "http://www.qdecoder.org mailto:nobreak@hongik.com");
+          qPuts(2, buf);
 
-     char *buf;
-     buf = strdup("http://www.hongik.com mailto:nobreak@hongik.com");
-     qPuts(2, buf);
-     free(buf);
-
-  ------------------------------------------------------------------------
+          char *buf;
+          buf = strdup("http://www.qdecoder.org mailto:nobreak@hongik.com");
+          qPuts(2, buf);
+          free(buf);
 
 qRemoveSpace()
 
-Syntax: char *qRemoveSpace(char *str);
-Function: 문자열의 앞뒤 공백과 CR, LF를 제거한다.
-Return: 성공시 문자열의 포인터, 실패시 NULL.
-Note: qRemoveSpace("문자열"); 이런식의 사용은 오류를 잃으킬수 있다.
-이때에는 아래의 사용법처럼 인자를 복사한후 사용한다.
-Example:
+  Syntax: char *qRemoveSpace(char *str);
+Function: Removes white spaces(including CR, LF) before and after character strings.
+  Return: In case of success, returns the pointer of character strings. In case of
+          failure, returns NULL.
+    Note: If this is used like qRemoveSpace("character string");, errors may occur. In
+          this case, copy the arguments as example.
+ Example: char teststr[100];
+          strcpy(teststr, "  Hello, world    \r\n  ");
+          qRemoveSpace(teststr); // After deletion, "Hello, world" is inserted in teststr.
 
-     char teststr[100];
-     strcpy(teststr, "  Hello, world    \r\n  ");
-     qRemoveSpace(teststr); // 삭제후 teststr에는 "Hello, world"가 들어간다.
-
-  ------------------------------------------------------------------------
-
-qStr09AZaz()
-
-Syntax: int qStr09AZaz(char *str);
-Function: 문자열이 '0' - '9', 'A' - 'Z', 'a' - 'z'로 이루어졌는지 판별한다.
-
-Return: 조건에 부합하면 1, 오류시 0
-Example:
-
-     if(qStr09AZaz("abc1234") == 1) printf("True");
-
-  ------------------------------------------------------------------------
-
-qStrupr()
-
-Syntax: char *qStrupr(char *str);
-Function: 인자로 주어진 문자열을 모두 대문자로 변환한다.
-Return: 해당 문자열의 포인터
-Example:
-
-     char *str;
-     str = strdup("Hello World");
-     qStrupr(str);
-
-  ------------------------------------------------------------------------
-
-qStristr()
-
-Syntax: char *qStristr(char *big, char *small);
-Function: strstr() 함수와 같으나, 대소문자를 구분하지 않고 비교한다.
-Return: strstr()과 같음
-Example:
-
-     printf("%s", qStristr("Hello World", "WORLD"));
-
-  ------------------------------------------------------------------------
-
-qStricmp()
-
-Syntax: int qStricmp(char *s1, char *s2);
-Function: strcmp() 함수와 같으나, 대소문자를 구분하지 않는다.
-Return: strcmp()와 같음
-Example:
-
-     if(!qStricmp("Hello", "HELLO")) printf("Equal");
-     else printf("Differ");
-
-  ------------------------------------------------------------------------
-
-qitocomma()
-
-Syntax: char *qitocomma(int value);
-Function: 숫자를 콤마 문자열로 변환한다.
-Return: 문자로 변환된 스트링 포인터.
-Note: 복귀 스트링 포인터는 사용자가 매번 free()하는 번거로움을 없애기 위해
-메모리를 할당하여 반환치 않고 함수 내부에 static 선언되어 있다. 따라서
-qitocomma()는 매번 동일한 스트링 포인터를 반환하게 되며 함수가 수행될 때
-마다 이전 값이 지워짐에 유의하여야 한다.
-Example:
-
-     1) (O) 바른 사용 예, 단일 인자 사용시
-        printf("Price = %s", qitocomma(1234567));
-        Price = 1,234,567
-
-     2) (O) 바른 사용 예, 복수 인자 사용시
-        char a[14+1], b[14+1];
-        strcpy(a, qitocomma(1234));
-        strcpy(b, qitocomma(5678));
-        printf("Price = %s + %s\n", a, b);
-        Price = 1,234 + 5,678
-
-     3) (X) 잘못된 사용예
-        printf("%s %s\n", qitocomma(1234), qitocomma(5678));
-        Price = 1,234 + 1,234
-
-  ------------------------------------------------------------------------
+          char *teststr;
+          teststr = strdup("  Hello, world    \r\n  ");
+          qRemoveSpace(teststr); // After deletion, "Hello, world" is inserted in teststr.
 
 qStrReplace()
 
-Syntax: char *qStrReplace(char *mode, char *srcstr, char *tokstr, char
-*word);
-Function: 문자열에 대한 문자열 및 토큰 치환을 한다.
-Return: 치환된 스트링 포인터.
-Example:
+   Syntax: char *qStrReplace(char *mode, char *srcstr, char *tokstr, char
+           *word);
+ Function: Transposes character strings and tokens for character strings.
+   Return: Transposed string pointers.
+     Note: The 'mode' argument is a character string consisting of two
+           separate characters like "sr".
+           The first character defines the transposition method, and 't'
+           or 's' can be located in its place. 't' stands for [t]oken. It
+           compares the source character string of srcstr using each
+           character of the tokstr character string as tokens and
+           transposes matching characters into the word character strings.
+           's' stands for [s]tring. Using the tokstr string itself as the
+           token, it transposes into the word character string the tokstr
+           matching character strings appearing inside the source strings.
 
-     'mode' 인자는 "sr"와 같이 두개의 분리된 문자로 구성된 문자열이다.
+           The second character represents the record type of transposed
+           character strings, and 'n' and 'r' can be used in its place.
+           'n' stands for [n]ew. It makes the corresponding pointers
+           returned by storing the transposed result character strings in
+           a new memory space. Accordingly, the source string should
+           maintain its original state, and the corresponding memory
+           should be free() from the user aspect. 'r' stands for [r]eplace
+           and means overwriting the transposition results on srcstr.
+           Here, srcstr is assumed to allow some leeway (it's not
+           reallocatied for convenience sake). This should be noted when
+           the [r]eplace mode is to be used.
 
-     첫번째 문자는 치환방법을 정의하며 't'나 's'가 위치할 수 있다.
-     't'는 [t]oken을 의미하며 tokstr 문자열의 각 문자를 토큰으로 소스
-     문자열 srcstr을 비교하여, 매칭이 되는 문자를 word 문자열로
-     치환한다. 's'는 [s]tring을 의미하여 tokstr 스트링 자체를 하나의
-     토큰으로 하여 소스 스트링내에 나타나는 tokstr 매칭 문자열을 word
-     문자열로 치환한다.
+           As a result, the 'mode' argument has 4 possible occasions of
+           assembly as follows:
 
-     두번째 문자는 치환된 문자열에 대한 기록 형태를 나타내며 'n'과
-     'r'이 사용될 수 있다. 'n'은 [n]ew를 나타내며 치환된 결과 문자열을
-     새로운 메모리 공간에 저장하여 해당 포인터를 리턴하게 한다. 따라서
-     소스 스트링 자체는 원상태가 유지되고 해당 메모리는 사용자
-     측면에서 free() 되어야 한다. 'r'은 [r]eplace를 의미하며 치환
-     결과를 srcstr에 덮어 씀을 의미한다. 이때 srcstr이 충분히
-     여유있다고 가정하므로(편리성의 이유로 메모리 재할당을 하지 않음)
-     [r]eplace 모드를 사용하고자 할 때에는 이 점에 유의하여야 한다.
+            Mode "tn" : [t]oken transposition & stores results in a [n]ew
+           space and returns
+            Mode "tr" : [t]oken transposition & [r]eplaces the linked-list
+           itself
+            Mode "sn" : [s]tring transposition & stores results in a [n]ew
+           space and returns
+            Mode "sr" : [s]tring transposition & [r]eplaces the
+           linked-list itself
+  Example: Example)
+             int  i;
+             char srcstr[256], *retstr;
+             char mode[4][2+1] = {"tn", "tr", "sn", "sr"};
 
-     결과적으로 'mode' 인자는 다음과 같이 4개의 조합 가능한 경우를
-     갖는다.
+             for(i = 0; i < 4; i++) {
+               strcpy(srcstr, "Welcome to the qDecoder project.");
+               printf("before %s : srcstr = %s\n", mode[i], srcstr);
 
-            Mode "tn" : [t]oken 치환 & 새로운 공간에 결과를 담아 복귀
-            Mode "tr" : [t]oken 치환 & linked-list 자체를 수정
-            Mode "sn" : [s]tring 치환 & 새로운 공간에 결과를 담아 복귀
-            Mode "sr" : [s]tring 치환 & linked-list 자체를 수정
+               retstr = qStrReplace(mode[i], srcstr, "the", "_");
+               printf("after  %s : srcstr = %s\n", mode[i], srcstr);
+               printf("            retstr = %s\n\n", retstr);
+               if(mode[i][1] == 'n') free(retstr);
+             }
 
-          Example)
-            int  i;
-            char srcstr[256], *retstr;
-            char mode[4][2+1] = {"tn", "tr", "sn", "sr"};
+           Result)
+             before tn : srcstr = Welcome to the qDecoder project.
+             after  tn : srcstr = Welcome to the qDecoder project.
+                         retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
 
-            for(i = 0; i < 4; i++) {
-              strcpy(srcstr, "Welcome to the qDecoder project.");
-              printf("before %s : srcstr = %s\n", mode[i], srcstr);
+             before tr : srcstr = Welcome to the qDecoder project.
+             after  tr : srcstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+                         retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
 
-              retstr = qStrReplace(mode[i], srcstr, "the", "_");
-              printf("after  %s : srcstr = %s\n", mode[i], srcstr);
-              printf("            retstr = %s\n\n", retstr);
-              if(mode[i][1] == 'n') free(retstr);
-            }
+             before sn : srcstr = Welcome to the qDecoder project.
+             after  sn : srcstr = Welcome to the qDecoder project.
+                         retstr = Welcome to _ qDecoder project.
 
-          Result)
-            before tn : srcstr = Welcome to the qDecoder project.
-            after  tn : srcstr = Welcome to the qDecoder project.
-                        retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+             before sr : srcstr = Welcome to the qDecoder project.
+             after  sr : srcstr = Welcome to _ qDecoder project.
+                         retstr = Welcome to _ qDecoder project.
 
-            before tr : srcstr = Welcome to the qDecoder project.
-            after  tr : srcstr = W_lcom_ _o ___ qD_cod_r proj_c_.
-                        retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+           Example 2) Convert to SQL String
 
-            before sn : srcstr = Welcome to the qDecoder project.
-            after  sn : srcstr = Welcome to the qDecoder project.
-                        retstr = Welcome to _ qDecoder project.
+             qStrReplace("sr", sqlvalue, "\\", "\\\\");
+             qStrReplace("sr", sqlvalue, "'", "\\'");
 
-            before sr : srcstr = Welcome to the qDecoder project.
-            after  sr : srcstr = Welcome to _ qDecoder project.
-                        retstr = Welcome to _ qDecoder project.
+qStr09AZaz()
+
+   Syntax: int qStr09AZaz(char *str);
+ Function: Checks to see if character strings consist of 0-9, A-Z, a-z.
+   Return: If the condition is satisfied, return 1. If not, return 0.
+  Example: if(qStr09AZaz("abc1234") == 1) printf("True");
+
+qStrupr()
+
+   Syntax: char *qStrupr(char *str);
+ Function: Converts into uppercase letters the character strings given in
+           arguments.
+   Return: The pointer of the pertinent characher string.
+  Example: char *str;
+           str = strdup("Hello World");
+           qStrupr(str);
+
+qStrlwr()
+
+   Syntax: char *qStrlwr(char *str);
+ Function: Converts into lowercase letters the character strings given in
+           arguments.
+   Return: The pointer of the pertinent characher string.
+  Example: char *str;
+           str = strdup("Hello World");
+           qStrlwr(str);
+
+qStristr()
+
+   Syntax: char *qStristr(char *big, char *small);
+ Function: Same as that of the strstr() function. But makes a comparison
+           without distinguishing lowercase/uppercase letters.
+   Return: Same as that of strstr().
+  Example: printf("%s", qStristr("Hello World", "WORLD"));
+
+qStricmp()
+
+   Syntax: int qStricmp(char *s1, char *s2);
+ Function: Same as that of the strcmp() function. But this does not
+           distinguish lowercase/uppercase letters.
+   Return: Same as that of strcmp().
+  Example: if(!qStricmp("Hello", "HELLO")) printf("Equal");
+           else printf("Differ");
+
+qStrincmp()
+
+   Syntax: int qStrincmp(char *s1, char *s2, size_t len);
+ Function: Same as that of the strncmp() function. But this does not
+           distinguish lowercase/uppercase letters.
+   Return: Same as that of strncmp().
+  Example: if(!qStrincmp("Hello World", "HELLO", 5)) printf("Equal");
+           else printf("Differ");
+
+qitocomma()
+
+   Syntax:char *qitocomma(int value);
+ Function:Converts numeric characters into comma character strings.
+   Return:The string pointer converted into characters.
+     Note:The return string pointer is declared as static inside the
+          functions instead of being returned with memory allocation. This
+          is to remove the inconvenience that users have to free() memory
+          every tiem. Accordingly, qitocomma() comes to return the same
+          string pointer every time. And it should be noted that the
+          previous value is deleted whenever the functions are performed.
+  Example:1) (O) example of right usage, when single arguments are used
+             printf("Price = %s", qitocomma(1234567));
+             Price = 1,234,567
+
+          2) (O) example of right usage, when plural arguments are used
+             char a[14+1], b[14+1];
+             strcpy(a, qitocomma(1234));
+             strcpy(b, qitocomma(5678));
+             printf("Price = %s + %s\n", a, b);
+             Price = 1,234 + 5,678
+
+          3) (X) example of wrong usage
+             printf("%s %s\n", qitocomma(1234), qitocomma(5678));
+             Price = 1,234 + 1,234
 
   ------------------------------------------------------------------------
 
@@ -1110,91 +1425,76 @@ File Handling Functions
 
 qCheckFile()
 
-Syntax: int qCheckFile(char *filename);
-Function: 파일의 존재여부를 파악한다.
-Return: 파일이 존재 하면 1, 파일이 없으면 0.
-Note: Permission에 의해 접근 불가능한 파일도 파일이 없다고 판단한다.
-Example:
-
-     if(qCheckFile("test.dat") == 0) qError("File not found");
-
-  ------------------------------------------------------------------------
+   Syntax: int qCheckFile(char *format, ...);
+ Function: Identifies the existence of files.
+   Return: If files exist, return 1. If not, return 0.
+     Note: When files cannot be accessed due to "permission", it judges
+           that there is no file.
+  Example: if(qCheckFile("test.dat") == 0) qError("File not found");
 
 qCatFile()
 
-Syntax: int qCatFile(char *filename);
-Function: 파일의 내용을 출력한다.
-Return: 정상시 출력된 문자수, 에러시 -1
-Note:
-Example:
+   Syntax: int qCatFile(char *format, ...);
+ Function: Displays the contents of files.
+   Return: In normal cases, the number of displayed characters. In case of
+           errors, returns -1.
+  Example: qContentType("image/gif");
+           qCatFile("mypic.gif");
 
-     qContentType("image/gif");
-     qCatFile("mypic.gif");
-
-     qContentType("text/html");
-     qCatFile("myhtml.html");
-
-  ------------------------------------------------------------------------
+           qContentType("text/html");
+           qCatFile("myhtml.html");
 
 qReadFile()
 
-Syntax: char *qReadFile(char *filename, int &size);
-Function: 파일을 읽어 메모리에 저장후 포인터 반환
-Return: 정상시 스트링 포인터, 오류시 NULL.
-Note: qReadFile은 실제 파일의 크기보다 1바이트 크게 메모리 할당 하여 스트링
-종료문자 '\0'를 삽입한다. 이는 텍스트 파일을 읽어 다루기 편리하도록 함이다.
-spsize에는 파일에서 읽어들인 캐릭터 개수가 저장된다. 캐릭터 개수가 필요치
-않다면 spsize 항목에 NULL 인자를 전달한다.
-Example:
-
-     char *sp, *sp2;
-     int spsize;
-     sp  = qReadFile("filename", &spsize);
-     sp2 = qReadFile("filename2", NULL);
-     ...
-     free(sp), free(sp2);
-
-  ------------------------------------------------------------------------
+   Syntax: char *qReadFile(char *filename, int *size);
+ Function: Returns pointers after it reads files and stores them in
+           memory.
+   Return: In normal cases, returns string pointers. In case of errors,
+           returns NULL.
+     Note: When memory is allocated to qReadFile, additional 1 byte needs
+           to be allocated (1 byte more than the actual file size) for
+           string termination character '\0'. This is for easy-to-manage
+           purpose by reading text files. The number of characters of
+           files is stored in size. The NULL argument is transmitted to
+           the size item when the number of characters is not needed.
+  Example: char *sp, *sp2;
+           int spsize;
+           sp  = qReadFile("filename", &spsize);
+           sp2 = qReadFile("filename2", NULL);
+           ...
+           free(sp), free(sp2);
 
 qSaveStr()
 
-Syntax: int qSaveStr(char *sp, int spsize, char *filename, char *mode);
-Function: 스트링의 내용을 파일에 저장한다.
-Return: 정상시 저장한 캐릭터 갯수(파일 크기), 오류시 -1, 퍼미션 조정 실패
--2
-Note: mode 인자는 fopen 시에 사용되는 mode 값과 같다. qSaveStr은 해당
-mode로 파일을 오픈할 것이다. 파일 퍼미션은 호출전의 umask() 설정값에
-의존선을 갖는다.
-Example:
-
-     char *sp = "To subscribe qDecoder mailing list\nSend mail to majordomo@hongik.com";
-     int len;
-     umask(0);
-     len = qSaveStr(sp, strlen(sp), "Howto-mailing.txt", "wt", 0644);
-
-  ------------------------------------------------------------------------
-
-qfGetLine()
-
-Syntax: char *qfGetLine(FILE *fp);
-Function: 파일에서 길이 제약없이 라인을 읽는다.
-Return: 할당된 메모리 포인터, 파일 끝 NULL.
-Note: 복귀된 스트링 포인터의 메모리 해제는 사용자가 하여야 한다.
-Example:
-
-     line = qfGetLine(fp);
-
-  ------------------------------------------------------------------------
+  Syntax: int qSaveStr(char *sp, int spsize, char *filename, char *mode);
+Function: Stores the contents of strings in the files.
+  Return: In normal cases - the number of stored characters(file size). In case of errors,
+          returns -1.
+    Note: The mode argument is same as the mode value used in case of fopen. qSaveStr will open
+          files via corresponding modes. File permission depends on the umask() settings value
+          existing before calls.
+ Example: char *sp = "To subscribe qDecoder mailing list\nSend mail to majordomo@qdecoder.org";
+          int len;
+          umask(022);
+          len = qSaveStr(sp, strlen(sp), "howto-mailing.txt", "wt");
 
 qFileSize()
 
-Syntax: long qFileSize(char *filename);
-Function: 파일의 용량을 byte 단위로 돌려줌
-Return: 성공 파일의 용량, 파일 없음 -1
-Example:
+   Syntax: long qFileSize(char *filename);
+ Function: Returns the file size by the unit of byte.
+   Return: In case of success, returns the file size. No files, returns
+           -1.
+  Example: long size;
+           size = qFileSize("/home/nobreak/sample.pdf");
 
-     long size;
-     size = qFileSize("/home/nobreak/sample.pdf");
+qfGetLine()
+
+   Syntax: char *qfGetLine(FILE *fp);
+ Function: Reads lines of files without the length limitations.
+   Return: 할당된 메모리 포인터, 파일 끝 NULL.
+     Note: Users need to deallocated the memory of the returned string
+           pointer.
+  Example: line = qfGetLine(fp);
 
   ------------------------------------------------------------------------
 
@@ -1202,321 +1502,17 @@ Validation Functions
 
 qCheckEmail()
 
-Syntax: int qCheckEmail(char *email);
-Function: E-mail 주소의 오류를 판별한다.
-Return: 오류가 없으면 1, 문제가 발생하면 0.
-Note:
-Example:
-
-     qCheckEmail("nobreak@hongik.com");
-
-  ------------------------------------------------------------------------
+   Syntax: int qCheckEmail(char *email);
+ Function: Checks the validation of e-mail addresses.
+   Return: No errors, 1. Invalid email, 0.
+  Example: qCheckEmail("nobreak@openbird.com");
 
 qCheckURL()
 
-Syntax: int qCheckURL(char *url);
-Function: URL 주소의 오류를 판별한다.
-Return: 오류가 없으면 1, 규칙에 준하지 않으면 0
-Example:
-
-     qCheckURL("http://www.hongik.com");
-
-  ------------------------------------------------------------------------
-
-Sear Key Word Parsing & Pattern Matching Functions
-
-검색어 관련 함수군은 질의 문자열을 스페이스와 큰따옴표(") 기준으로 나누어
-리스트에 담아주며, 대상 문자열과의 매칭 테스트와 출력에 관련된 함수군을
-제공한다.
-
-     ---- Example ----
-     Query Input: I am a "pretty girl"
-     -----------------
-           |  |
-           V  V
-     ---- qArgMake() ----
-     qlist[0] = I
-     qlist[1] = am
-     qlist[2] = a
-     qlist[3] = pretty girl
-     qlist[4] = NULL
-     Return: 4 (4 Tokens)
-     --------------------
-           |  |
-           V  V
-     ---- qArgPrint() ----
-     'I' (1 bytes)
-     'am' (2 bytes)
-     'a' (1 bytes)
-     'pretty girl' (11 bytes)
-     ---------------------
-           |  |
-           V  V
-     ---- qArgMatch() ----
-     Target String: Hi, I'm a pretty boy. Are you pretty girl?
-                     =  =   =             =       ===========
-                     0  0   2             2             3
-     Return: 3 (3 matches: qlist[0], qlist[2], qlist[3])
-     ---------------------
-           |  |
-           V  V
-     ---- qArgEmprint() ----
-     Target String..: Hi, I'm a pretty boy. Are you pretty girl?
-     Result.........: Hi, I'm a pretty boy. Are you pretty girl?
-                       =  =   =             =       ===========
-                       1  2   3             4             5
-     Return: 5 (5 matches)
-     -----------------------
-
-  ------------------------------------------------------------------------
-
-qArgMake()
-
-Syntax: int qArgMake(char *str, char **qlist);
-Function: 쿼리를 토큰으로 분리한다. 구분자는 기본적으로 스페이스 문자 이며
-쿼리의 앞뒤 공백과 토큰 사이의 중복된 스페이스는 무시된다.
-Return: 구분된 토큰 수
-Note: 쿼리내 큰따옴표(")로 둘러싸인 문자열은 그 자체를 하나의 토큰으로
-취급한다.
-Example:
-
-     char *query="I am a \"pretty girl\".", *qlist[MAX_TOKENS];
-     int queries;
-     queries = qArgMake(query, qlist);
-
-  ------------------------------------------------------------------------
-
-qArgMatch()
-
-Syntax: int qArgMatch(char *str, char **qlist);
-Function: 대소문자를 구분하지 않고 토큰 매칭 테스트를 한다.
-Return: 특정 문자열에서 발견되는 토큰의 개수를 복귀하며, 같은 토큰에
-대해서는 중복되어 매칭되어도 1회로 계산한다. 중복 매칭을 포함하여 문자열내
-총 매칭 카운트를 위해서는 qArgEmprint()의 복귀값을 참고하라. 이 값들은
-qArgMake()에서 얻은 토큰의 총 개수로 백분율하여 검색 정확도를 계산하는데
-쓰일 수 있다.
-Example:
-
-     int matches;
-     matches = qArgMatch("Hi, I'm a pretty boy. Are you pretty girl?", qlist);
-
-  ------------------------------------------------------------------------
-
-qArgEmprint()
-
-Syntax: int qArgEmprint(int mode, char *str, char **qlist);
-Function: 문자열에서 토큰과 매칭되는 부분을 볼드(bold)처리하여 출력한다.
-대소문자를 구분하지 않는다.
-Return: 문자열에서 발견된 토큰의 개수를 복귀하며, qArgMatch()와는 다르게
-중복 매칭을 포함하여 총 매칭 카운트를 복귀한다.
-Note: mode값은 qPrintf()와 동일하며, 일반적인 목적엔 1이 주로 사용될 수
-있겠다.
-Example:
-
-     qArgEmprint(1, "Hi, I'm a pretty boy. Are you pretty girl?", qlist);
-
-  ------------------------------------------------------------------------
-
-qArgPrint()
-
-Syntax: void qArgPrint(char **qlist);
-Function: 프로그램의 디버깅용으로 해석된 토큰을 모두 출력한다.
-Example:
-
-     qArgPrint(qlist);
-
-  ------------------------------------------------------------------------
-
-qArgFree()
-
-Syntax: void qArgFree(char **qlist);
-Function: 메모리 할당된 qlist를 해제한다.
-Example:
-
-     qArgFree(qlist);
-
-  ------------------------------------------------------------------------
-
-AWK: Pattern Scanning Functions
-
-UNIX 시스템의 AWK 명령과 흡사한 기능을 한다.
-
-     ---- ex) /etc/passwd ----
-     shpark:x:1008:1000:Sang-hyun Park:/home/shpark:/bin/csh
-     teamwork:x:1011:1000:Seung-young Kim:/home/teamwork:/bin/csh
-     kikuchi:x:1015:2000:KIKUCHI:/home/kikuchi:/bin/csh
-     -------------------------
-
-  ------------------------------------------------------------------------
-
-qAwkOpen()
-
-Syntax: int qAwkOpen(char *filename, char separator);
-Function: 파일을 열고, 구분자를 설정한다.
-Return: 성공시 1, 파일을 열 수 없을경우 0
-Example:
-
-     qAwkOpen("/etc/passwd", ':');
-
-  ------------------------------------------------------------------------
-
-qAwkNext()
-
-Syntax: int qAwkNext(char array[][256]);
-Function: 한행을 읽어 들여, 인자로 주어진 배열에 저장한다.
-Return: 성공시 필드 수, 파일의 끝 -1
-Note: 행길이는 제한이 없으나, 각 필드는 256 바이트를 넘어선 안된다.
-Example:
-
-     char array[7][256];
-     qAwkOpen("/etc/passwd", ':');
-     for( ; qAwkNext(array) > 0; ) printf("ID=%s, Name=%s", array[0], array[5]);
-     qAwkClose();
-
-  ------------------------------------------------------------------------
-
-qAwkClose()
-
-Syntax: int qAwkClose(void);
-Return: 성공시 1, 열려있는 파일이 없을때 0.
-Function: 오픈된 파일을 닫는다.
-Example:
-
-     qAwkClose();
-
-  ------------------------------------------------------------------------
-
-SED: Context Generation Functions
-
-UNIX 시스템의 SED 명령과 흡사한 기능을 한다.
-
-     ---- ex) streamedit.html.in ----
-     Hi "${NAME}" <${EMAIL}>.
-     <p>You got a really cool hobby.
-     <br>I'm sure that your hobby, ${HOBBY},
-     can make your life more compatible.
-     ---------------------
-
-  ------------------------------------------------------------------------
-
-qSedFile()
-
-Syntax: int qSedFile(char *filename, FILE *fpout, char **arg);
-Function: 파일에서 지정된 기호를 정의된 문자열로 교체하여 출력하며, 일부
-SSI 문법을 지원한다.
-Return: 성공시 1, 파일을 열 수 없을경우 0
-Note: 본 함수은 Unix 시스템의 Sed와 SSI 를 포괄적으로 지원하도록 확장될
-예정이다.
-Example:
-
-     qSedFile를 활용하면, 프로그램내에 HTML 코드를 전혀 포함하지
-     않고도 CGI 프로그래밍을 할 수 있다. UI와 관련된 디버깅 시간을
-     대폭 줄일 수 있고, 디자인과 개발의 분리작업이 가능하며, 패키지
-     제품의 경우 사용자 측면에서 손쉽게 커스터 마이징이 가능할 수
-     있는등의 효용성을 동반할 수 있다.
-
-     filename은 입력(대상)파일이고, fpout은 출력 스트림을 의미한다.
-     결과를 파일로 출력을 하고 자 할경우엔 파일을 "wt"로 열어, 해당
-     파일 포인터를 건네어 주면 되고, 화면 출력하고자 한다면, 그냥
-     stdout 을 지정하면 된다.
-
-     인자 목록은 다음과 같은 형식을 취한다.
-
-     "명령+구분자+지정문자열+구분자+교체문자열+구분자"
-
-          ex) char *arg[3 + 1] = { "s/${NAME}/Seung-young Kim/",
-                                   "s%${EMAIL}%nobreak@hongik.com%",
-                                   "s:${HOBBY}:Playing with Ji-su Hwang:",
-                                   NULL };
-
-     명령은 현재 's' 만이 지원되며, 이는 교체(replacement)를 의미한다.
-     구분자는 1바이트의 특정 문자열로 사용자가 임의 지정하면 된다.
-     보통 구분자로는 '/'나 '%'를 많이 사용하지만, 문자열내에 해당
-     캐릭터가 나올 경우엔 '#', 'A'등의 임의 문자열을 사용하기 바란다.
-     지정 문자열도 임의대로 지정이 가능하지만, 가시성과 원치않는
-     교체를 막기위해 특별한 이유가 없다면, ${STING}과 같이
-     쉘스크립트의 변수 명명법을 따르도록 하라.
-
-     앞의 streamedit.html.in 파일을 위의 인자 목록으로 다음과 같이
-     수행하였을 경우의 출력을 보자.
-
-          ex) qSedFile("streamedit.html.in", stdout, arg);
-
-          Hi "Seung-young Kim" <nobreak@hongik.com>.
-          <p>You got a really cool hobby.
-          <br>I'm sure that your hobby, Playing with Ji-su Hwang,
-          can make your life more compatible.
-
-     SSI 문법을 해석한다. (현재는 <!--#include file="FILEPATH"--> 만이
-     지원됨) 문서내 다음과 같은 라인이 있을 경우, 해당 문서를 포함하여
-     출력되며, 포함되는 문서에 대해서도 교체및 SSI 기능은 그대로
-     유효하다. (Cascading)
-
-          [an error occurred while processing this directive]
-
-     주의) include 되는 파일은 CGI가 실행되는 위치를 기준으로 상대경로
-     표기 하거나, 시스템 절대경로 표기한다.
-
-     문자열 교체를 하지않고, SSI 기능만을 사용코자 할 경우엔 다음과
-     같이 arg 인자로 NULL 값을 전달한다.
-
-          ex) qSedFile("streamedit.html.in", stdout, NULL);
-
-  ------------------------------------------------------------------------
-
-qSedStr()
-
-Syntax: int qSedStr(char *srcstr, FILE *fpout, char **arg);
-Function: qSedFile()과 동일한 기능을 하나, 입력을 문자열로 받는다.
-Return: qSedFile()과 동일
-Example:
-
-     qSedStr("Hi my name is ${NAME}.", stdout, arg);
-
-  ------------------------------------------------------------------------
-
-Counter Handling Functions
-
-다음과 같은 형식의 카운터 파일을 다룬다.
-
-     ---- number.dat ----
-     74
-     --------------------
-
-  ------------------------------------------------------------------------
-
-qReadCounter()
-
-Syntax: int qReadCounter(char *filename);
-Function: 파일명의 카운터 파일을 읽는다.
-Return: 성공시 카운터값, 에러시 0
-Example:
-
-     int count;
-     count = qReadCounter("number.dat");
-
-  ------------------------------------------------------------------------
-
-qSaveCounter()
-
-Syntax: int qSaveCounter(char *filename, int number);
-Function: 지정된 파일명에 카운터 값을 저장(갱신)한다.
-Return: 성공시 1, 에러시 0
-Example:
-
-     qSaveCounter("number.dat", 75);
-
-  ------------------------------------------------------------------------
-
-qUpdateCounter()
-
-Syntax: int qUpdateCounter(char *filename, int number);
-Function: 지정된 파일명의 카운터 값을 number만큼 증가시킨다.
-Return: 성공시 기존 카운터값 + number, 에러시 0
-Example:
-
-     int count;
-     count = qUpdateCounter("number.dat", -3);
+   Syntax: int qCheckURL(char *url);
+ Function: Checks the errors of URL addresses.
+   Return: No errors, 1. If the addresses fail to meet rules, return 0.
+  Example: qCheckURL("http://www.qdecoder.org/");
 
   ------------------------------------------------------------------------
 
@@ -1524,32 +1520,136 @@ Download Handling Functions
 
 qDownload()
 
-Syntax: int qDownload(char *filename);
-Function: 클라이언트로 파일을 전송하는데, 파일의 종류에 상관없이 브라우저에
-다운로딩 상자가 나타나도록 한다.
-Return: 성공 전송한 바이트수, 파일 없음 -1
-Note: 본 함수는 편의를 위한 qDownloadMime()의 껍대기 함수이다.
-Example:
-
-     qDownload("/home/nobreak/myprg.exe");
-
-  ------------------------------------------------------------------------
+   Syntax: int qDownload(char *filename);
+ Function: Transmits files to clients. Displays downloading boxes in
+           browsers regardless of the kinds of files.
+   Return: In case of success, returns the number of transmitted bytes. If
+           there is no file, returns -1.
+     Note: This function is a shell function of qDownloadMime() that is
+           for convenience.
+  Example: qDownload("/home/nobreak/myprg.exe");
 
 qDownloadMime()
 
-Syntax: int qDownloadMime(char *filename, char *mime);
-Function: 클라이언트로 마임에 준하여 파일을 전송한다.
-Return: 성공 전송한 바이트수, 파일 없음 -1
-Note: 본 함수는 해당 파일을 웹상에 직접 링크하였을 때와 동일한 결과를
-갖지만, 사용자 인증이 되어야만 다운로드 할 수 있도록 전처리를 하거나,
-웹상에 공개될 수 없는 파일을 특정 프로그램을 통해서만 다운받을 수 있게
-하는데 유용하다. mime이 'application/octet-stream'일 경우에는 qDownload()와
-동일하다. 또한 스트림이 종료될때 까지 프로세스가 실행되게 되므로, 웹상에도
-링크가 걸릴 수 있는 파일인데 다운로딩 카운트등을 위한 전처리로 사용할
-경우라면 qRedirect()를 활용하는 것이 좋다.
-Example:
+   Syntax: int qDownloadMime(char *filename, char *mime);
+ Function: Transmits files to clients in accordance with MIME.
+   Return: In case of success, returns the number of transmitted bytes. If
+           there is no file, returns -1.
+     Note: The results of this function are the same as those acquired
+           when the corresponding files are directly linked to the Web.
+           But this is especially useful in preprocessing files to be
+           downloaded only with user certification and in enabling
+           downloading those files, which cannot be opned on the Web, only
+           through specific programs. When MIME is
+           'application/octet-stream', it isthe same as qDownload(). And
+           since processes are executed until streams are terminated, this
+           is a file that can be linked on the Web. When it is to be used
+           as preprocessing for the downloading count, it is better to
+           utilize qRedirect().
+  Example: qDownloadMime("/home/nobreak/myprg.gif", "image/gif");
 
-     qDownload("/home/nobreak/myprg.gif", "image/gif");
+  ------------------------------------------------------------------------
+
+Counter Handling Functions
+
+qCountRead()
+
+   Syntax: int qCountRead(char *filename);
+ Function: Reads counter file.
+   Return: In case of success, returns the counter value. In case of
+           failure, returns 0.
+     Note: Handles the following types of counter files.
+
+           ---- number.dat ----
+           74
+           --------------------
+  Example: int count;
+           count = qCountRead("number.dat");
+
+qCountSave()
+
+   Syntax: int qCountSave(char *filename, int number);
+ Function: Stores(updates) the counter value in the specified file name.
+   Return: In case of success, returns 1. In case of failure, returns 0.
+  Example: qCountSave("number.dat", 75);
+
+qCountUpdate()
+
+   Syntax: int qCountUpdate(char *filename, int number);
+ Function: Increases the counter value of specified file names as much as
+           number.
+   Return: In case of success, returns the updated counter value. In case
+           of failure, returns 0.
+  Example: int count;
+           count = qCountUpdate("number.dat", -3);
+
+  ------------------------------------------------------------------------
+
+Environment Related Functions
+
+qCGIenv()
+
+   Syntax: void qCGIenv(Q_CGIenv *env);
+ Function: Stores the environment variable of CGI and time in the
+           structure.
+  Example: Q_CGIenv myenv;
+           qCGIenv(&myenv);
+
+           /* Q_CGIenv Data Structure */
+           typedef struct Q_CGIenv Q_CGIenv;
+           struct Q_CGIenv{
+             char *auth_type;
+             char *content_length;
+             char *content_type;
+             char *document_root;
+             char *gateway_interface;
+             char *http_accept;
+             char *http_accept_encoding;
+             char *http_accept_language;
+             char *http_connection;
+             char *http_cookie;
+             char *http_host;
+             char *http_referer;
+             char *http_user_agent;
+             char *query_string;
+             char *remote_addr;
+             char *remote_host;
+             char *remote_port;
+
+             char *remote_user;
+             char *request_method;
+             char *request_uri;
+             char *script_filename;
+             char *script_name;
+             char *server_admin;
+             char *server_name;
+             char *server_port;
+             char *server_protocol;
+             char *server_software;
+             char *server_signature;
+             char *unique_id;
+
+             /* Miscellaneous Informations Supported by qDecoder */
+             int  year, mon, day, hour, min, sec;
+           };
+
+qCGIname()
+
+   Syntax: char *qCGIname(void);
+ Function: Interprets only the program names at the environment variable
+           of SCRIPT_NAME and returns.
+   Return: The string pointer containing CGI name.
+  Example: char *cginame;
+           cginame = qCGIname();
+
+qGetenvDefault()
+
+  Syntax: qGetenvDefault(char *nullstr, char *envname);
+Function: Operates the same as the getenv() function. But returns default
+          strings instead of NULL.
+ Example: char *name;
+          name = qGetenvDefault("/cgi-bin/CrazyWWWBoard.cgi", "SCRIPT_NAME");
+          name = qGetenvDefault(NULL, "SCRIPT_NAME");
 
   ------------------------------------------------------------------------
 
@@ -1557,44 +1657,109 @@ Time Functions
 
 qGetTime()
 
-Syntax: struct tm *qGetTime(void);
-Function: 시간을 구조체 tm에 저장한다.
-Return: 구조체 tm의 포인터
-Note:
-Example:
-
-     struct tm *mytime;
-     mytime = qGetTime();
-
-  ------------------------------------------------------------------------
+   Syntax: struct tm *qGetTime(void);
+ Function: Stores time in the tm structure.
+   Return: The pointer of the tm structure.
+  Example: struct tm *mytime;
+           mytime = qGetTime();
 
 qGetGMTime()
 
-Syntax: time_t qGetGMTime(char *gmt, time_t plus_sec);
-Function: '현재시간+plus_sec'을 쿠키에서 사용하는 GMT 문자열 시간으로
-변환한다.
-Return: 1970/1/1(00:00:00)부터 현제까지의 초 + plus_sec
-Note:
-Example:
+   Syntax: time_t qGetGMTime(char *gmt, time_t plus_sec);
+ Function: Converts present time+plus_sec into the GMT character-string
+           time that is used in cookies.
+   Return: The seconds from 1970/1/1(00:00:00) to the present + plus_sec.
+  Example: time_t plus_sec;
+           char gmt[32];
+           plus_sec = (time_t)300; /* 5min */
+           qGetGMTime(gmt, plus_sec);
+           printf("%s", gmt); // "Fri, 22-Aug-1997 15:11:30 GMT"
 
-     time_t plus_sec;
-     char gmt[0xff];
-     plus_sec = (time_t)300; /* 5분 */
-     qGetGMTime(gmt, plus_sec);
-     printf("%s", gmt); // "Fri, 22-Aug-1997 15:11:30 GMT"
+  ------------------------------------------------------------------------
+
+Error Handling Functions
+
+qError()
+
+   Syntax: void qError(char *format, ...);
+ Function: Displays the messages for errors. Usage is same as that of the
+           printf() function.
+     Note: The maximum size of the assembled error message should not
+           exceed 1023(1024-1) byte.
+  Example: qError("error message");
+           qError("errors at %s", buf);
+
+qErrorContact()
+
+   Syntax: void qErrorContact(char *msg);
+ Function: As the footer of error messages, always displayed together when
+           qError() is called. This is generally used to provide fixed
+           information such as producers.
+  Example: qErrorContact("- qDecoder Project.");
+           qErrorContact(NULL);            // disable (default)
+
+qErrorLog()
+
+   Syntax: void qErrorLog(char *filename);
+ Function: Sets up the log files on which the error messages--which are
+           transmitted when the qError() function is called--are recorded.
+     Note: When logs are recorded, the main file is not directly called.
+           Like qErrorLog("logs/error.log"), once it is called at the
+           initial period of programs, logs are automatically recorded in
+           the 'logs/error.log' file whenever qError() is called
+           afterwards.
+  Example: qErrorLog("LogFileName.ext");   // enable log
+           qErrorLog(NULL);                // disable log (default)
 
   ------------------------------------------------------------------------
 
 Miscellaneous Functions
 
+qFreeAll()
+
+   Syntax: void qFreeAll(void);
+ Function: Deallocates the all allocated memories by qDecoder.
+     Note: Internally, qFreeAll() calls qFree(), qSessionFree(). You can
+           use qFreeAll() instead qFree() and qSessionFree() at the end of
+           program to deallocate all allocated memories by qDecoder.
+  Example: qDecoder();
+           qSession(NULL);
+           ...
+           ...
+           ...
+           qFreeAll();
+
 qReset()
 
-Syntax: void qReset(void);
-Function: qDecoder를 초기화 한다.
-Note: Daemon 형태의 반복적 프로그램을 작성하거나 qDecoder를 새롭게 초기화
-하고자 할 때 본 함수가 사용될 수 있다. qReset()은 linked-list를 포함하여
-자체적으로 할당한 메모리를 모두 반환하고 내부 정적 변수들을 초기 상태로
-환원시키는 작업을 한다.
-Example:
+   Syntax: void qReset(void);
+ Function: Deallocates the all allocated memories and Initialize qDecoder.
+     Note: When you wish to make a daemon-type repetitive program or to
+           initialize qDecoder anew, you can use this function. qReset()
+           returns all the allocated memory including the linked-list and
+           restores internal static variables to the initial condition.
+           You do not need to call qFreeAll() when you use qReset().
+  Example: while(1) {
+             qDecoder();
+             qSession(NULL);
+             ...
+             ...
+             ...
+             qReset();
+           }
 
-     qReset();
+qUniqueID()
+
+   Syntax: char *qUniqueID(void);
+ Function: Always returns unique 32 bytes string .
+   Return: String pointer of 32 bytes unique string.
+     Note: The return string pointer is declared as static inside the
+           functions instead of being returned with memory allocation.
+           This is to remove the inconvenience that users have to free()
+           memory every tiem. Accordingly, it should be noted that the
+           previous value is deleted whenever the functions are performed.
+           And you should not modify or free() it directly.
+  Example: char *uniqueid;
+
+           uniqueid = qUniqueID();
+
+  ------------------------------------------------------------------------

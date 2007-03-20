@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -38,11 +38,11 @@ Author:
 ************************************************************************/
 
 #include "qDecoder.h"
+#define BASEPATH	"upload/"
 
 int main(void) {
-  FILE *fp;
-  char *filedata, *filename;
-  int filelength, i;
+  char *filedata, *filename, filepath[1024];
+  int filelength;
 
   qContentType("text/html");
   qDecoder();
@@ -50,12 +50,14 @@ int main(void) {
   filedata   = qValue("binary");
   if((filelength = qiValue("binary.length")) == 0) qError("Select file, please.");
   filename   = qValue("binary.filename");
+  sprintf(filepath, "%s%s", BASEPATH, filename);
 
-  if((fp = fopen(filename, "wb")) == NULL) qError("File open(wb) fail. Please make sure CGI(6755) or Directory(777) has right permission.");
-  for(i = filelength; i > 0; i--) fprintf(fp, "%c", *(filedata++));
-  fclose(fp);
+  if(qSaveStr(filedata, filelength, filepath, "wb") < 0) {
+    qError("File(%s) open(wb) fail. Please make sure CGI(6755) or Directory(777) has right permission.", filepath);
+  }
 
-  printf("<a href=\"%s\">%s</a> (%d bytes) saved.", filename, filename, filelength);
+  printf("<a href=\"%s\">%s</a> (%d bytes) saved.", filepath, filename, filelength);
   qFree();
   return 0;
 }
+

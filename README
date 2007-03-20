@@ -1,8 +1,10 @@
+                          [The qDecoder Project]
+  ------------------------------------------------------------------------
+
 About qDecoder
 
    * What's qDecoder?
-   * Why C/C++ language is still necessary for developing web-based CGI
-     programs?
+   * Why C/C++ language is necessary for developing web applications?
    * Inspected Compatible Platforms
    * License Agreement
    * Copyright Disclaimer
@@ -10,98 +12,108 @@ About qDecoder
 
 What's qDecoder?
 
-qDecoder는 C/C++용 CGI 라이브러리로서, 개발자를 위한 솔루션 제품 입니다.
-Linked-list에 기반한 qDecoder의 Query Fetch 알고리즘은 GET/POST에 상관없이
-심플한 라이브러리 인터페이스로 하위 레이어와의 투명성을 제공하기 때문에
-웹기반 소프트웨어(CGI)가 더욱 직관적으로 설계되고 구현될 수 있도록 합니다.
-qDecoder는 오픈 소스 모델에 따라 개발되며 공개 배포됩니다.
+Being a Web Application Interface for C/C++ use, qDecoder is a solution
+product for developers. The Query Fetch algorithm of qDecoder based on the
+linked-list provides transparency with low layers by the simple library
+interface regardless of COOKIE/GET/POST(including File Upload). Thus, it
+enables the web based software to be more intuitively designed and
+implemented. qDecoder is developed according to the free software model and
+is publicly distributed.
 
-qDecoder is a free CGI library for C/C++ language programming and a
-solution product for developers. The Query Fetch algorithm of qDecoder
-which is based on linked-list gives developers more simple library
-interface without regard to a method of GET or POST. Also because it gives
-transperance with a subordinate layer, web-based softwares - CGI - is
-designed and embodied in reliability further. The source code for qDecoder
-is freely available to everyone.
+Why C/C++ language is necessary for developing web applications?
 
-Why C/C++ language is still necessary for developing web-based CGI
-programs?
+It is true that such recent languages as JSP, ASP, Perl, and PHP make the
+Web programming easier. These authoring languages make the database
+interoperability easier through simple codes. And they also provide rich
+libraries through CPAN. When things are like this, we sometimes ask
+ourselves if we really need to develop web application using the difficult
+and complicated C/C++ language.
 
-근래의 JSP, ASP, Perl, PHP와 같은 언어는 웹 프로그램을 더욱 손쉽게 함이
-사실입니다. 이러한 저작 언어들은 간략한 코드로 데이터베이스 연동을 손쉽게
-하며 CPAN 등을 통해 풍부한 라이브러리 또한 제공 됩니다. 이러한 상황에서
-우리는 때때로 ``어렵고 복잡한 C/C++ 언어로 굳이 CGI를 개발 할 필요가
-있을까?''라는 생각을 하게 됩니다.
+Actually in many cases, we come to develop things using handy tools like
+PHP that guarantees speedy development. But when critical requirements are
+to be satisfied, many developers still want to select C/C++ which is the
+industry standard language.
 
-실로 많은 일반적 경우에 우리는 PHP와 같이 빠른 개발속도를 보장해주는 손쉬운
-도구를 선택하여 개발에 임하게 되지만 몇몇 크리티컬한 요구 사항이
-충족되어야만 할 경우에 많은 개발자들은 여전히 산업계 표준 언어인 C/C++을
-개발 언어로 선택하고 싶어합니다.
+The processing of critical regions like file-locking techniques, the
+processing of communications and piping between processes, the securing of
+performance for bottleneck looping codes, low-level control, and the
+manipulation of the character/bit units under a race condition occurring
+due to many simultaneous processing works can be good examples. Moreover,
+programs constructed by C/C++ can be easily transplanted on most platforms
+without much dependence.
 
-동시 다발적인 프로세스로 인한 레이스 컨디션 상황에서의 파일 잠금 기법과
-같은 임계 영역 처리, 프로세스간 통신 및 파이핑 처리, 병목 루핑 코드에 대한
-퍼포먼스 보장, 저수준 컨트롤, 캐릭터/비트 단위 조작 등은 한 예가 될 수
-있습니다. 또한 C/C++로 제작된 프로그램은 가장 넓은 플랫폼에 별다른 의존성
-없이 손쉽게 이식이 가능하다는 장점을 갖습니다.
+What we make reluctant to pick up C/C++ will be fears of the possible
+development delay and the cumbersome implementation due to its unique
+fastidiousness. Language is a tool for creation. And a tool is created
+because it is needed. And now the tool is restricting creativity. What an
+embarrassing situation it is!
 
-그 선택의 가장 큰 갈림길은 무엇보다 C/C++ 언어 특유의 까다로움으로 인한
-개발 지연과 구현의 번거로움에 대한 두려움일 것입니다. 언어는 창조를 위한
-도구일 뿐인데, 필요에 의해 만들어진 도구가 역으로 창조성에 제약을 준다면
-이는 실로 주객이 전도된 상황이 아니라 할 수 없겠죠.
+It was 1996 when I was using a few public C/C++ libraries including
+"util.c" of NCSA. I did not think any of them really satisfied me at that
+time. And I started to compose the initial code of qDecoder. Since the
+version of 6.0, qDecoder reached its majority and is capable of
+constructing most programs with the advantages of C/C++ and with the speed
+of PHP or Perl that are embodied in it (This is what I think about
+qDecoder, and from now on, I will try to perfect it).
 
-1996년 초 NCSA의 ``util.c''를 비롯해 공개된 몇몇 C/C++ CGI 라이브러리를
-접하며 마음에 꼭 맞는 라이브러리를 찾지 못하던 즈음에 작성하기 시작한
-qDecoder의 초벌 코드는 5.0에 접어들며 이제 어느정도 기본 골격을 갖추어
-웬만한 프로그램은 C/C++ 만의 장점을 최대한 살린체 PHP나 Perl처럼 빠르게
-프로그램할 수 있을 정도가 되었습니다. (아직 보강되어야 할 부분이 많이 남아
-있지만, 적어도 저자에게는 틀림없는 사실 입니다.)
+Handy authoring tools will be continuously developed. But the proper
+territory of C/C++ will persist. That's the import of the existence, the
+continuous development and maintenance of qDecoder.
 
-손쉬운 저작 도구는 계속 발전 할 터이이지만, C/C++만의 영역은 여전히 존재할
-것입니다. 그것이 qDecoder가 존재하는 의미이며 지속적으로 개발되고 유지되는
-이유입니다.
-
-자, 우리가 C/C++ 옹호자가 아니며, 왜 PHP와 같은 편리한 도구가 있음에도
-여전히 qDecoder와 같은 C/C++ CGI 라이브러리가 필요한지에 대해서는 충분히
-설명을 한 듯 합니다. 귀하의 개발이 C/C++의 특성을 필요로 할 때 qDecoder가
-조그마한 도움이 될 수 있고, 우리가 배운 오픈 소스의 교훈을 미약하나마
-실천할 수 있다면, qDecoder는 환호할 것입니다. 냐하하~ :)
+Now, we believe that we have fully explained that we are not a defender of
+C/C++ and have made clear the reason why C/C++ Web Application Interface
+such as qDecoder are needed inspite of such convenient tools as JSP. It
+will be our pleasure if qDecoder can help you when your development needs
+the characteristics of C/C++. And we will be satisfied if the lesson of
+free software is disseminated through qDecoder.
 
 Inspected Compatible Platforms
 
    * Web Server: Apache Web Server, Netscape Enterprise Server, Oracle
-     Application Server
-   * Operating System: AIX, BSDI, DG/UX, FreeBSD, HP/UX, IRIX, Linux,
+     Application Server, Microsoft Internet Information Server
+   * Operating System: AIX, BSDI, DG/UX, FreeBSD, HP/UX, IRIX, GNU/Linux,
      Digital Unix(OSF), Solaris
-   * C/C++ Compiler: GNU C Compiler, SUN C Compiler
+   * C/C++ Compiler: GNU C Compiler
 
 qDecoder is developed and tested under below platforms..
 
-   * GNU C Compiler on FreeBSD and Linux with Apache Web Server.
-   * GNU C & SUN C Compiler on Solaris 2.5, 2.6, 7, 8 with Apache, Netscape
-     Enterprise and OAS.
+   * GNU C Compiler on FreeBSD with Apache Web Server.
    * MicroSoft Visual C++ on Windows NT 4.0 with IIS.
 
 License Agreement
 
-qDecoder는 Free Software이며, 버젼 5.0.9 부터 GNU Lesser General Public
-License 하에 배포 됩니다. GNU LGPL 보다 더욱 일반적으로 사용되는 GNU GPL
-라이센스는 소프트웨어가 개작되거나 재배포 될 때 반드시 GPL을 따라야 하며
-상업적 목적으로 사용할 수 없다는 제약을 둡니다만, qDecoder는 성격이 조금
-다른 라이브러리이기에 상업적 목적으로도 그 사용이 가능하도록 GNU Lesser
-GPL를 따라 더욱 자유롭고자 하였습니다.
+qDecoder is a Free Software. And qDecoder is distributed under the GNU
+Lesser General Public License since the version of 6.0(May 8, 2000).
 
-GNU 그룹에서는 몇가지 악용될 수 있는 소지에 대한 저작권자의 보호 차원에서
-GNU Lesser GPL을 사용치 말기를 권고하고 있습니다만, qDecoder는 몇몇
-부도덕한 개발자들에 대한 우려보다는 진정한 자유를 추구합니다.
+Free software is a matter of liberty(in other word, freedom), not price.
+So, the purpose of this License is to make a software free to assure
+everyone the effective freedom to copy and redistribute it, with or without
+modifying it, either commercially or non-commercially.
 
-qDecoder is a Free Software and distributed under GNU Lesser General Public
-License. This is a free software license, but not a strong copyleft
-license, because it permits linking with non-free modules. It is compatible
-with the GNU GPL.
+The GNU Project provides two principal licenses for libraries for Free
+Software. One is the GNU Lesser General Public License (Simply Lesser GPL
+or LGPL) and the other is the ordinary GNU General Public License (Simply
+GPL). Using the Lesser GPL permits use of the library in proprietary
+programs and using the ordinary GPL for a library makes it available only
+for free programs.
+
+The GNU group advises not to use GNU Lesser GPL because it does less to
+protect the user's freedom than the ordinary GPL. It's right, Lesser GPL is
+not a strong copyleft license. But in case of qDecoder, permitting of
+linking with non-free modules can bring some kinds of other advantages to
+users. That's why qDecoder has been distributed under Lesser GPL.
+
+        SUMMARY: qDecoder is a Free Software and distributed under GNU
+        Lesser General Public License. This is a free software license, but
+not a strong copyleft license, because it permits linking with non-free
+modules. It is compatible with the GNU GPL.
+
+NOTE: It's very good idea to use one of GNU Licenses for your free
+software. It will protect your rights and future problems.
 
 Copyright Disclaimer
 
-     qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+     qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
      Copyright (C) 2001 The qDecoder Project.
      Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -133,16 +145,21 @@ Copyright Disclaimer
        Author, Seung-young Kim, 6 April 2000
 
      Author:
-       Seung-young Kim <nobreak@hongik.com>
-       Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
+       Seung-young Kim <nobreak@openbird.com>
+       OpenBIRD, Inc. 17th Fl., Marine Center Bldg.,
        51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
        Tel: +82-2-753-2553, Fax: +82-2-753-1302
 
 Project Contributors (Alphabetic Order)
 
-   * CHOI Junho, The maintainer of the qDecoder ports of the FreeBSD. Thank
-     you a lot.
+   * CHOI Junho, The maintainer of the qDecoder ports of the FreeBSD.
+     Thanks a lot.
    * Christopher Roh, President of Hongik Internet, Inc., He always leads
-     me where I should go.
+     me to where I should go.
+   * Dae-heung Park, Project leader of Simple Form Mail Project.
    * Jin-ho You, Graduated student of Junnam Univ., He notified qDecoder's
      vulnerability of overflow attack.
+   * Jun-seon Oh He've positively assisted qDecoder Project with new ideas,
+     bug reporting, new advanced codes.
+
+  ------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -29,16 +29,18 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
-
-Author:
-  Seung-young Kim <nobreak@hongik.com>
-  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
-  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
-  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"
 #include "qInternal.h"
+
+
+/**********************************************
+** Static Values Definition used only internal
+**********************************************/
+
+static Q_Entry *_multi_last_entry = NULL;
+static char _multi_last_key[1024];
 
 
 /**********************************************
@@ -91,7 +93,7 @@ char *qsValue(Q_Entry *first, char *format, ...) {
 
   va_start(arglist, format);
   status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsValue(): Message is too long or invalid");
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsValue(): Message is too long or invalid.");
   va_end(arglist);
 
   return _EntryValue(first, name);
@@ -104,16 +106,47 @@ int qsiValue(Q_Entry *first, char *format, ...) {
 
   va_start(arglist, format);
   status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsiValue(): Message is too long or invalid");
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsiValue(): Message is too long or invalid.");
   va_end(arglist);
 
   return _EntryiValue(first, name);
 }
 
-void qsPrint(Q_Entry *first) {
-  _EntryPrint(first);
+char *qsValueFirst(Q_Entry *first, char *format, ...) {
+  int status;
+  va_list arglist;
+
+  va_start(arglist, format);
+  status = vsprintf(_multi_last_key, format, arglist);
+  if(strlen(_multi_last_key) + 1 > sizeof(_multi_last_key) || status == EOF) qError("qfValueFirst(): Message is too long or invalid.");
+  va_end(arglist);
+
+  if(first == NULL) return NULL;
+  _multi_last_entry = first;
+
+  return qfValueNext();
+}
+
+char *qsValueNext(void) {
+  Q_Entry *entries;
+
+  for(entries = _multi_last_entry; entries; entries = entries->next) {
+    if(!strcmp(_multi_last_key, entries->name)) {
+      _multi_last_entry = entries->next;
+      return (entries->value);
+    }
+  }
+  _multi_last_entry = NULL;
+  strcpy(_multi_last_key, "");
+
+  return NULL;
+}
+
+int qsPrint(Q_Entry *first) {
+  return _EntryPrint(first);
 }
 
 void qsFree(Q_Entry *first) {
   _EntryFree(first);
 }
+

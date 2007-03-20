@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -29,17 +29,10 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
-
-Author:
-  Seung-young Kim <nobreak@hongik.com>
-  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
-  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
-  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"
 #include "qInternal.h"
-
 
 /**********************************************
 ** Usage : qfDecoder(filename);
@@ -48,68 +41,13 @@ Author:
            # is used for comments.
 **********************************************/
 Q_Entry *qfDecoder(char *filename) {
-  FILE  *fp;
-  Q_Entry *first, *entries, *back;
-  char  *buf;
+  Q_Entry *first;
+  char *sp;
 
-  fp = fopen(filename, "rt");
-  if(fp == NULL) return NULL;
+  if((sp = qReadFile(filename, NULL)) == NULL) return NULL;
+  first = qsDecoder(sp);
+  free(sp);
 
-  first = entries = back = NULL;
-
-  while((buf = qfGetLine(fp)) != NULL) {
-    qRemoveSpace(buf);
-    if((buf[0] == '#') || (buf[0] == '\0')) continue;
-
-    back = entries;
-    entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-    if(back != NULL) back->next = entries;
-    if(first == NULL) first = entries;
-
-    entries->value = strdup(buf);
-    entries->name  = _makeword(entries->value, '=');
-    entries->next  = NULL;
-
-    qRemoveSpace(entries->name);
-    qRemoveSpace(entries->value);
-
-    free(buf);
-  }
-
-  fclose(fp);
   return first;
 }
-
-char *qfValue(Q_Entry *first, char *format, ...) {
-  char name[1024];
-  int status;
-  va_list arglist;
-
-  va_start(arglist, format);
-  status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qfValue(): Message is too long or invalid");
-  va_end(arglist);
-
-  return _EntryValue(first, name);
-}
-
-int qfiValue(Q_Entry *first, char *format, ...) {
-  char name[1024];
-  int status;
-  va_list arglist;
-
-  va_start(arglist, format);
-  status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qfiValue(): Message is too long or invalid");
-  va_end(arglist);
-
-  return _EntryiValue(first, name);
-}
-
-void qfPrint(Q_Entry *first) {
-  _EntryPrint(first);
-}
-
-void qfFree(Q_Entry *first) {
-  _EntryFree(first);
-}
+  

@@ -1,5 +1,5 @@
 /************************************************************************
-qDecoder - C/C++ CGI Library                      http://www.qDecoder.org
+qDecoder - Web Application Interface for C/C++    http://www.qDecoder.org
 
 Copyright (C) 2001 The qDecoder Project.
 Copyright (C) 1999,2000 Hongik Internet, Inc.
@@ -29,17 +29,12 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
-
-Author:
-  Seung-young Kim <nobreak@hongik.com>
-  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
-  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
-  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"
 #include "qInternal.h"
-
+#include "md5/md5_global.h"
+#include "md5/md5.h"
 
 /**********************************************
 ** Usage : qURLencode(string to encode);
@@ -59,9 +54,8 @@ char *qURLencode(char *str) {
          if((c >= '0') && (c <= '9')) encstr[j++] = c;
     else if((c >= 'A') && (c <= 'Z')) encstr[j++] = c;
     else if((c >= 'a') && (c <= 'z')) encstr[j++] = c;
-    else if((c == '@') || (c == '.') || (c == '/') || (c == '-')
-         || (c == '?') || (c == '&') || (c == '=') || (c == '#')
-         || (c == '\\') || (c == ':') || (c == '_')) encstr[j++] = c;
+    else if((c == '@') || (c == '.') || (c == '/') || (c == '\\')
+         || (c == '-') || (c == '_') || (c == ':') ) encstr[j++] = c;
     else {
       sprintf(buf, "%02x", c);
       encstr[j++] = '%';
@@ -103,5 +97,42 @@ char *qURLdecode(char *str) {
   str[i]='\0';
 
   return str;
+}
+
+/**********************************************
+** Usage : qMD5Str(string);
+** Return: MD5 digested static string pointer.
+** Do    : Digest string through MD5 algorithm.
+**********************************************/
+char *qMD5Str(char *string) {
+  MD5_CTX context;
+  unsigned char digest[16];
+  static char md5hex[16 * 2 + 1];
+  int i;
+
+  MD5Init(&context);
+  MD5Update(&context, string, strlen(string));
+  MD5Final(digest, &context);
+
+  for(i = 0; i < 16; i++) {
+    sprintf(md5hex + (i * 2), "%02x", digest[i]);
+  }
+
+  return md5hex;
+}
+
+/**********************************************
+** Usage : qMD5File(filename);
+** Return: MD5 digested static string pointer.
+** Do    : Digest string through MD5 algorithm.
+**********************************************/
+char *qMD5File(char *filename) {
+  char *sp, *md5hex;
+
+  if((sp = qReadFile(filename, NULL)) == NULL) return NULL;
+  md5hex = qMD5Str(sp);
+  free(sp);
+
+  return md5hex;
 }
 
