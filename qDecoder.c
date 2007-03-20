@@ -1,11 +1,11 @@
 /*************************************************************
-** qDecoder CGI Library v5.0                                **
+** qDecoder CGI Library v5.0.1                              **
 **                                                          **
 **  Official distribution site : ftp://ftp.hongik.com       **
 **           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
-**                        Last updated at March 28, 1999    **
+**                        Last updated at August 14, 1999   **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **
@@ -92,7 +92,7 @@ int qDecoder(void){
     amount = _parse_urlencoded();
   }
   /* for application/x-www-form-urlencoded */
-  else if(!strcmp (content_type, "application/x-www-form-urlencoded")) {
+  else if(!strncmp (content_type, "application/x-www-form-urlencoded", strlen("application/x-www-form-urlencoded"))) {
     amount = _parse_urlencoded();
   }
   /* for multipart/form-data */
@@ -112,7 +112,7 @@ int _parse_urlencoded(void){
   char *query;
   int  amount = 0;
   int  loop;
- 
+
   entries = back = NULL;
 
   for(loop = 1; loop <= 2; loop++) {
@@ -376,10 +376,12 @@ int _parse_multipart_data(void) {
 **********************************************/
 char *qValue(char *format, ...){
   char name[1024];
+  int status;
   va_list arglist;
 
   va_start(arglist, format);
-  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qValue() : Key is too long or not valid");
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValue(): Message is too long or invalid");
   va_end(arglist);
 
   if(_first_entry == NULL) qDecoder();
@@ -393,10 +395,12 @@ char *qValue(char *format, ...){
 **********************************************/
 int qiValue(char *format, ...){
   char name[1024];
+  int status;
   va_list arglist;
 
   va_start(arglist, format);
-  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qiValue() : Key is too long or not valid");
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qiValue(): Message is too long or invalid");
   va_end(arglist);
 
   if(_first_entry == NULL)qDecoder();
@@ -409,15 +413,17 @@ int qiValue(char *format, ...){
 ** Do    : Find first value string pointer
 **********************************************/
 char *qValueFirst(char *format, ...){
+  int status;
   va_list arglist;
 
   va_start(arglist, format);
-  if(vsnprintf(_multi_last_key, sizeof(_multi_last_key), format, arglist) >= sizeof(_multi_last_key)) qError("qValueFirst() : Key is too long or not valid");
+  status = vsprintf(_multi_last_key, format, arglist);
+  if(strlen(_multi_last_key) + 1 > sizeof(_multi_last_key) || status == EOF) qError("qValueFirst(): Message is too long or invalid");
   va_end(arglist);
 
   if(_first_entry == NULL) qDecoder();
   _multi_last_entry = _first_entry;
-  
+
   return qValueNext();
 }
 
@@ -479,7 +485,7 @@ Entry *qfDecoder(char *filename){
   char  *buf;
 
   fp = fopen(filename, "rt");
-  if(fp == NULL) return NULL;    
+  if(fp == NULL) return NULL;
 
   first = entries = back = NULL;
 
@@ -508,10 +514,12 @@ Entry *qfDecoder(char *filename){
 
 char *qfValue(Entry *first, char *format, ...){
   char name[1024];
+  int status;
   va_list arglist;
 
   va_start(arglist, format);
-  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qfValue() : Key is too long or not valid");
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qfValue(): Message is too long or invalid");
   va_end(arglist);
 
   return _EntryValue(first, name);
@@ -519,10 +527,12 @@ char *qfValue(Entry *first, char *format, ...){
 
 int qfiValue(Entry *first, char *format, ...){
   char name[1024];
+  int status;
   va_list arglist;
 
   va_start(arglist, format);
-  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qfiValue() : Key is too long or not valid");
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qfiValue(): Message is too long or invalid");
   va_end(arglist);
 
   return _EntryiValue(first, name);
@@ -551,7 +561,7 @@ Entry *qsDecoder(char *str){
 
   first = entries = back = NULL;
 
-  if((org = strdup(str)) == NULL) qError("qsDecoder() : Memory allocation fail.");
+  if((org = strdup(str)) == NULL) qError("qsDecoder(): Memory allocation fail.");
 
   for(buf = offset = org, eos = 0; eos == 0; ) {
     for(buf = offset; *offset != '\n' && *offset != '\0'; offset++);
@@ -581,10 +591,12 @@ Entry *qsDecoder(char *str){
 
 char *qsValue(Entry *first, char *format, ...){
   char name[1024];
+  int status;
   va_list arglist;
 
   va_start(arglist, format);
-  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qsValue() : Key is too long or not valid");
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsValue(): Message is too long or invalid");
   va_end(arglist);
 
   return _EntryValue(first, name);
@@ -592,10 +604,12 @@ char *qsValue(Entry *first, char *format, ...){
 
 int qsiValue(Entry *first, char *format, ...){
   char name[1024];
+  int status;
   va_list arglist;
 
   va_start(arglist, format);
-  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qsiValue() : Key is too long or not valid");
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsiValue(): Message is too long or invalid");
   va_end(arglist);
 
   return _EntryiValue(first, name);
@@ -647,10 +661,12 @@ int qcDecoder(void){
 
 char *qcValue(char *format, ...){
   char name[1024];
+  int status;
   va_list arglist;
 
   va_start(arglist, format);
-  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qcValue() : Key is too long or not valid");
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qcValue(): Message is too long or invalid");
   va_end(arglist);
 
   if(_cookie_first_entry == NULL)qcDecoder();
@@ -659,10 +675,12 @@ char *qcValue(char *format, ...){
 
 int qciValue(char *format, ...){
   char name[1024];
+  int status;
   va_list arglist;
 
   va_start(arglist, format);
-  if(vsnprintf(name, sizeof(name), format, arglist) >= sizeof(name)) qError("qciValue() : Key is too long or not valid");
+  status = vsprintf(name, format, arglist);
+  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qciValue(): Message is too long or invalid");
   va_end(arglist);
 
   if(_cookie_first_entry == NULL) qcDecoder();
@@ -730,7 +748,7 @@ void qSetCookie(char *name, char *value, int exp_days, char *domain, char *path,
 ** ex) qAwkOpen("source.dat", ':');
 **********************************************/
 int qAwkOpen(char *filename, char separator) {
-  if (_awkfp != NULL) qError("qAwk: There is already opened handle.");
+  if (_awkfp != NULL) qError("qAwkOpen(): There is already opened handle.");
   if((_awkfp = fopen(filename, "rt")) == NULL) return 0;
   _awksep = separator;
   return 1;
@@ -748,7 +766,7 @@ int qAwkNext(char array[][256]) {
   char *bp1, *bp2;
   int i, exitflag;
 
-  if (_awkfp == NULL) qError("qAwk: There is no opened handle.");
+  if (_awkfp == NULL) qError("qAwkNext(): There is no opened handle.");
   if(fgets(buf, sizeof(buf), _awkfp) == NULL) return -1;
 
   qRemoveSpace(buf);
@@ -756,7 +774,7 @@ int qAwkNext(char array[][256]) {
     for(; *bp2 != _awksep && *bp2 != '\0'; bp2++);
     if(*bp2 == '\0') exitflag = 1;
     *bp2 = '\0';
-    strcpy(array[i], bp1); 
+    strcpy(array[i], bp1);
     bp1 = ++bp2;
   }
   return i;
@@ -767,10 +785,115 @@ int qAwkNext(char array[][256]) {
 ** Do    : Close file.
 **********************************************/
 void qAwkClose(void) {
-  if (_awkfp == NULL) qError("qAwk: There is no opened handle.");
+  if (_awkfp == NULL) qError("qAwkClose(): There is no opened handle.");
   fclose(_awkfp);
   _awkfp = NULL;
 }
+
+
+#define	SSI_INCLUDE_START	"<!--#include file=\""
+#define SSI_INCLUDE_END		"\"-->"
+/**********************************************
+** Usage : int qSed(fpin, fpout, arg) {
+** Return: Success 1, File open fail 0
+** Do    : Stream Editor.
+**********************************************/
+int qSed(char *filename, FILE *fpout, char **arg) {
+  int argc, i, j, k;
+  char *mode, **name, **value;
+  char sep;
+
+  FILE *fpin;
+  char *str, *tmp;
+  int flag;
+
+  if((fpin = fopen(filename, "rt")) == NULL) return 0;
+
+  /* Arguments count */
+  for(argc = 0; arg[argc] != NULL; argc++);
+
+  /* Memory allocation */
+  mode  = (char *)malloc(sizeof(char) * argc);
+  name  = (char **)malloc(sizeof(char *) * argc);
+  value = (char **)malloc(sizeof(char *) * argc);
+
+  /* Make arguments comparision list */
+  for(i = 0; i < argc; i++) {
+    mode[i] = arg[i][0];
+    sep = arg[i][1];
+
+    /* name */
+    name[i] = (char *)malloc(strlen(arg[i]) + 1);
+    for(j = 2, k = 0; arg[i][j] != sep; j++, k++) {
+      if (arg[i][j] == '\0') qError("qSed(): Premature end of argument '%s'.", arg[i]);
+      name[i][k] = arg[i][j];
+    }
+    name[i][k] = '\0';
+
+    /* value */
+    value[i] = (char *)malloc(strlen(arg[i]) + 1);
+    for(j++, k = 0; arg[i][j] != sep; j++, k++) {
+      if (arg[i][j] == '\0') qError("qSed(): Premature end of argument '%s'.", arg[i]);
+      value[i][k] = arg[i][j];
+    }
+    value[i][k] = '\0';
+  }
+
+  /* Parsing */
+  while((str = _fgetline(fpin)) != NULL) {
+    for(tmp = str; *tmp != '\0'; tmp++) {
+      /* SSI invacation */
+      if(!strncmp(tmp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
+        char ssi_inc_file[1024], *endp;
+        if((endp = strstr(tmp, SSI_INCLUDE_END)) != NULL) {
+          tmp += strlen(SSI_INCLUDE_START);
+          strncpy(ssi_inc_file, tmp, endp - tmp);
+          ssi_inc_file[endp-tmp] = '\0';
+          tmp = (endp + strlen(SSI_INCLUDE_END)) - 1;
+          
+          if(qCheckFile(ssi_inc_file) == 1) qSed(ssi_inc_file, fpout, arg);
+          else printf("[qSed: an error occurred while processing 'include' directive - file(%s) open fail]", ssi_inc_file);
+        }
+        else printf("[qSed: an error occurred while processing 'include' directive - ending tag not found]");
+        continue;
+      }
+
+      /* Fatten Matching */
+      for(i = flag = 0; i < argc && flag == 0; i++) {
+        switch(mode[i]) {
+          case 's': {
+            if(!strncmp(tmp, name[i], strlen(name[i]))) {
+              fprintf(fpout, "%s", value[i]);
+              tmp += strlen(name[i]) - 1;
+              flag = 1;
+            }
+            break;
+          }
+          default : {
+            qError("qSed(): Unknown mode '%c'.", mode[i]);
+            break;
+          }
+        }
+        if(flag == 1) break;  /* No more comparison is necessary. */
+      }
+      if(flag == 0) fprintf(fpout, "%c", *tmp);
+    }
+  }
+
+  /* Free */
+  for(i = 0; i < argc; i++) {
+    free(name[i]);
+    free(value[i]);
+  }
+  free(mode);
+  free(name);
+  free(value);
+
+  fclose(fpin);
+  return 1;
+}
+
+
 
 /**********************************************
 ** Usage : qURLencode(string to encode);
@@ -790,7 +913,7 @@ char *qURLencode(char *str){
     else if ((c >= '0') && (c <= '9')) encstr[j++] = c;
     else if ((c >= 'A') && (c <= 'Z')) encstr[j++] = c;
     else if ((c >= 'a') && (c <= 'z')) encstr[j++] = c;
-    else if ((c == '@') || (c == '.')) encstr[j++] = c;
+    else if ((c == '@') || (c == '.') || (c == '/') || (c == '_') || (c == '-')) encstr[j++] = c;
     else {
       sprintf(buf, "%02x", c);
       encstr[j++] = '%';
@@ -837,8 +960,8 @@ void qURLdecode(char *str){
 ** Do    : Print Content Type Once
 **********************************************/
 void qContentType(char *mimetype){
-  static int flag = 0;  
-  
+  static int flag = 0;
+
   if(flag)return;
 
   printf("Content-type: %s%c%c", mimetype, 10, 10);
@@ -857,9 +980,8 @@ int qPrintf(int mode, char *format, ...){
   va_list arglist;
 
   va_start(arglist, format);
-  status = vsprintf(buf, format, arglist);
-  if(status == EOF) return status;
-  if(strlen(buf) > 256 - 1)qError("qprintf() : Message is too long");
+  if((status = vsprintf(buf, format, arglist)) == EOF) return status;
+  if(strlen(buf) + 1 > sizeof(buf))qError("qPrintf(): Message is too long");
 
   qPuts(mode, buf);
 
@@ -960,7 +1082,7 @@ void qPuts(int mode, char *buf){
       if(ignoreflag == 0) {
         if(autolink == 1){
           if(!strncmp(ptr, "http://",        7)) linkflag = 1;
-          else if(!strncmp(ptr, "ftp://",    6)) linkflag = 1;     
+          else if(!strncmp(ptr, "ftp://",    6)) linkflag = 1;
           else if(!strncmp(ptr, "telnet://", 9)) linkflag = 1;
           else if(!strncmp(ptr, "news:",     5)) linkflag = 1;
           else if(!strncmp(ptr, "mailto:",   7)) linkflag = 1;
@@ -1025,8 +1147,8 @@ void qError(char *format, ...){
   va_start(arglist, format);
 
   status = vsprintf(buf, format, arglist);
-  if(strlen(buf) + 1 > 1024 || status == EOF){
-    printf("qError() : Message is too long or not valid");
+  if(strlen(buf) + 1 > sizeof(buf) || status == EOF){
+    printf("qError(): Message is too long or invalid");
     exit(1);
   }
 
@@ -1252,8 +1374,8 @@ int qFileCat(char *filename) {
 void qDownload(char *filename) {
   char *file, *c;
 
-  if(filename == NULL) qError("qDownload() : Null pointer can not be used.");
-  if(qCheckFile(filename) == 0) qError("qDownload() : File(%s) not found.", filename);
+  if(filename == NULL) qError("qDownload(): Null pointer can not be used.");
+  if(qCheckFile(filename) == 0) qError("qDownload(): File(%s) not found.", filename);
 
   file = strdup(filename);
 
@@ -1377,7 +1499,7 @@ int qCheckEmail(char *email){
 **********************************************/
 int qCheckURL(char *url){
   if(!strncmp(url, "http://", 7)) return 1;
-  else if(!strncmp(url, "ftp://", 6)) return 1;     
+  else if(!strncmp(url, "ftp://", 6)) return 1;
   else if(!strncmp(url, "telnet://", 9)) return 1;
   else if(!strncmp(url, "mailto:", 7)) return 1;
   else if(!strncmp(url, "news:", 5)) return 1;
@@ -1392,7 +1514,7 @@ int qCheckURL(char *url){
 **********************************************/
 char *qRemoveSpace(char *str){
   int i, j;
-  
+
   if(!str)return NULL;
 
   for(j = 0; str[j] == ' ' || str[j] == 9 || str[j] == '\r' || str[j] == '\n'; j++);
@@ -1464,7 +1586,7 @@ char *qStrStr(char *orgstr, char *tokstr) {
 char *qitocomma(int value) {
   static char str[10+1];
   char buf[10+1], *strp, *bufp;
-  
+
   sprintf(buf, "%d", value);
   for (strp = str, bufp = buf; *bufp != '\0'; strp++, bufp++) {
     *strp = *bufp;

@@ -14,7 +14,7 @@ C O N T E N T S
 4. 함수별 기능 설명
   1. CGI 관련 함수군
   2. COOKIE 관련 함수군
-  3. 형식화된 설정 파일및 문자열을 다루는 함수군  
+  3. 형식화된 설정 파일및 문자열을 다루는 함수군
   4. FILE 관련 함수군
   5. 화면 출력 함수군
   6. 문자열 관련 함수군
@@ -79,16 +79,27 @@ I-6. 저작권, 소유권
 
 II-1. 소프트웨어 정보 (Software Information)
   - 명    칭 : qDecoder
-  - 판 번 호 : 5.0
+  - 판 번 호 : 5.0.1
   - 종    류 : C/C++용 CGI Library
   - 사용환경 : All kind Unix (Solaris, HP/UX, FreeBSD, Linux, Etc.)
   - 제작회사 : (주)홍익인터넷 (Hongik Internet, Inc.)
+  - 개 발 자 : Seung-young Kim(김승영) <nobreak@hongik.com>
   - 배 포 처 : ftp://ftp.hongik.com/pub/qDecoder/
-  - 배포일자 : 1999년 8월 5일
+  - 배포일자 : 1999년 8월 16일
 
 +--------------------------------------------------------------------+
 | III. 버젼별 수정사항                                               |
 +--------------------------------------------------------------------+
+[Version 5.0.1]
+    * Patched functions
+    qValue(), qiValue(), qfValue(), qfiValue(), qsValue(), qsiValue(),
+    qcValue(), qciValue()
+    - 호환성의 문제로 vsnprintf() 함수 대신 vsprintf() 사용.
+
+    * New functions
+    qSed()
+    - 파일에서 지정된 기호를 정의된 문자열로 교체하여 출력
+
 [Version 5.0]
     * Patched functions
     qValue(), qiValue(), qfValue(), qfiValue(), qsValue(), qsiValue(),
@@ -136,7 +147,7 @@ II-1. 소프트웨어 정보 (Software Information)
     - Apache 1.3 관련 패치
     qGetGMTime
     - 성능 향상
-    
+
     * New functions
     char      *qCGIname(void);
     void      qDownload(char *filename);
@@ -186,7 +197,7 @@ II-1. 소프트웨어 정보 (Software Information)
     qDecoder(), qfDecoder(), qcDecoder() :
     - Linked List 알고리즘 수정
     qPuts() :
-    - 몇몇 시스템에서 컴파일시 warning을 일으키던 문제 수정 
+    - 몇몇 시스템에서 컴파일시 warning을 일으키던 문제 수정
 
 [Version 3.4.1]
     * Patched functions
@@ -200,7 +211,7 @@ II-1. 소프트웨어 정보 (Software Information)
     - 문자열의 내용중 &lt , &gt를 '<' , '>'로 보여주는점 수정
       (&amp;lt , &amp;gt로 출력함)
     - 'mailto:guest@hongik.ac.kr' 같은 문자열만을 자동 링크하였으나,
-      'guest@hongik.ac.kr' 의 형태도 자동 링크 수행함 
+      'guest@hongik.ac.kr' 의 형태도 자동 링크 수행함
 
     * New functions
     void      qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure);
@@ -271,7 +282,7 @@ IV-1. CGI 관련 함수군
          다음과 같은 URL Encoding 형식의 일반적 [HTML] 문이 전달될경우
          링크드 리스트에는 [결과]와 같이 저장되고, [C]와 같이 사용한다.
 
-         [HTML] 
+         [HTML]
          <form method="post" action="input.cgi">
            사용자번호 <input type="text" name="userID"><br>
            <input type="submit">
@@ -331,7 +342,7 @@ IV-1. CGI 관련 함수군
            userID = qValue("userID");
 
            filedata   = qValue("binary");
-           filelength = qiValue("binary.length");     
+           filelength = qiValue("binary.length");
            filename   = qValue("binary.filename");
 
            fp = fopen(filename, "wb");
@@ -347,7 +358,7 @@ IV-1. CGI 관련 함수군
          '변수명.length'는 자료의 바이트수가 저장되며, '변수명.name'은
          사용자가 전송한 파일명이 저장된다.
          저장할 파일명을 별도로 받고싶을경우, 입력을 type=text 로 받아
-         처리하면 되지만, 본 라이브러리에서는 사용자가 로컬 PC에서 
+         처리하면 되지만, 본 라이브러리에서는 사용자가 로컬 PC에서
          브라우징한 파일명 자체를 알려준다. 파일명은 \ 등의 기호가 제거
          되어 들어간다.("C:\Data\a.gif"일경우 "a.gif"만이 저장된다)
          복귀값의 카운터는 type=file 일경우 총 3개의 리스트가 생성되지만
@@ -357,7 +368,7 @@ IV-1. CGI 관련 함수군
   복귀 : 성공시 전달받은 인자의 갯수, 에러시 -1
   사용 : int num;
          num = qDecoder();
-  
+
   char   *qValue(char *format, ...);
   기능 : Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌.
          qDecoder()가 사전에 호출이 안되었으면, 자동으로 수행
@@ -368,7 +379,7 @@ IV-1. CGI 관련 함수군
          수행하여야 한다.
   사용 : char *test;
          test = qValue("변수명");
-         
+
          char *test;
          int i = 1;
          test = qValue("COUNT.%d", i);
@@ -381,7 +392,7 @@ IV-1. CGI 관련 함수군
          변수명이 존재하지 않거나, 해당 값이 정수로 변환 불가능 하면 0
   사용 : int test;
          test = qiValue("변수명");
-         
+
          int test, i = 1;
          test = qValue("COUNT.%d", i);
 
@@ -390,7 +401,7 @@ IV-1. CGI 관련 함수군
   복귀 : 성공시 동일한 변수명을 갖는 인자들에 대한 첫번째 변수값 포인터를 복귀
          변수명이 없을시시 NULL
   사용 : qValueFirst("checklist");
-  
+
   char   *qValueNext(void);
   기능 : qValueFirst()로 찾는 것을 계속한다.
   복귀 : 성공시 변수값의 포인터, 더이상의 동일 변수명이 없을때 NULL
@@ -461,7 +472,7 @@ IV-2. COOKIE 관련 함수군
   복귀 : 성공시 전달받은 인자의 갯수, 에러시 -1
   사용 : int num;
          num = qcDecoder();
-  
+
   char   *qcValue(char *format, ...);
   기능 : Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌
          qcDecoder()가 사전에 호출이 안되었으면, 자동으로 수행
@@ -486,7 +497,7 @@ IV-2. COOKIE 관련 함수군
   기능 : qcDecoder()에 의해 할당된 Memory를 해제한다.
   사용 : qcFree();
 
-IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군  
+IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
 
   ## 아래와 같은 형식의 화일을 읽어 Linked List에 저장한다.
   ---- test.conf ----
@@ -581,7 +592,7 @@ IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
   사용 : int count;
          count = qUpdateCounter("number.dat");
 
-  ## UNIX 시스템의 AWK 함수와 같은 기능을 한다.
+  ## UNIX 시스템의 AWK 명령과 흡사한 기능을 한다.
   ---- ex) /etc/passwd ----
   shpark:x:1008:1000:Sang-hyun Park:/home/shpark:/bin/csh
   teamwork:x:1011:1000:Seung-young Kim:/home/teamwork:/bin/csh
@@ -603,6 +614,63 @@ IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
   void   qAwkClose(void);
   기능 : 파일을 닫는다.
 
+  ## UNIX 시스템의 SED 명령과 흡사한 기능을 한다.
+  ---- ex) streamedit.html.in ----
+  Hi "${NAME}" <${EMAIL}>.
+  <p>You got a really cool hobby.
+  <br>I'm sure that your hobby, ${HOBBY},
+  can make your life more compatible.
+  ---------------------
+
+  int    qSed(char *filename, FILE *fpout, char **arg);
+  기능 : 파일에서 지정된 기호를 정의된 문자열로 교체하여 출력하며,
+         일부 SSI 문법을 지원한다. (본 함수은 Unix 시스템의 Sed와
+         SSI 를 포괄적으로 지원하도록 확장될 예정이다.)
+  복귀 : 성공시 1, 파일을 열 수 없을경우 0
+  사용 : qSed를 활용하면, 프로그램내에 HTML 코드를 전혀 포함하지 않고도
+         CGI 프로그래밍을 할 수 있다. UI와 관련된 디버깅 시간을 대폭 줄일
+         수 있고, 디자인과 개발의 분리작업이 가능하며, 패키지 제품의 경우
+         사용자 측면에서 손쉽게 커스터 마이징이 가능할 수 있는등의 효용성을
+         동반할 수 있다.
+  
+         filename은 입력(대상)파일이고, fpout은 출력 스트림을 의미한다.
+         결과를 파일로 출력을 하고 자 할경우엔 파일을 "wt"로 열어,
+         해당 파일 포인터를 건네어 주면 되고, 화면 출력하고자 한다면,
+         그냥 stdout 을 지정하면 된다.
+
+         인자 목록은 다음과 같은 형식을 취한다.
+
+         "명령+구분자+지정문자열+구분자+교체문자열+구분자"
+
+         ex) char *arg[3 + 1] = { "s/${NAME}/Seung-young Kim/",
+                                  "s%${EMAIL}%nobreak@hongik.com%",
+                                  "s:${HOBBY}:Making love with Ji-su Hwang:",
+                                  NULL };
+
+         명령은 현재 's' 만이 지원되며, 이는 교체(replacement)를 의미한다.
+         구분자는 1바이트의 특정 문자열로 사용자가 임의 지정하면 된다.
+         보통 구분자로는 '/'나 '%'를 많이 사용하지만, 문자열내에 해당
+         캐릭터가 나올 경우엔 '#', 'A'등의 임의 문자열을 사용하기
+         바란다. 지정 문자열도 임의대로 지정이 가능하지만, 가시성과
+         원치않는 교체를 막기위해 특별한 이유가 없다면, ${STING}과 같이
+         쉘스크립트의 변수 명명법을 따르도록 하라.
+
+         앞의 streamedit.html.in 파일을 위의 인자 목록으로 다음과 같이
+         수행하였을 경우의 출력을 보자.
+
+         ex) qSed("streamedit.html.in", stdout, arg);
+
+         Hi "Seung-young Kim" <nobreak@hongik.com>.
+         <p>You got a really cool hobby.
+         <br>I'm sure that your hobby, Making love with Ji-su Hwang,
+         can make your life more compatible.
+
+         SSI 문법을 해석한다. (현재는 <!--#include file="FILEPATH"> 만이 지원됨)
+         문서내 다음과 같은 라인이 있을 경우, 해당 문서를 포함하여 출력되며,
+         포함되는 문서에 대해서도 교체및 SSI 기능은 그대로 유효하다. (Cascading)
+         
+         <!--#include file="streamedit.html.in"-->
+
 IV-4. FILE 관련 함수군
 
   int    qCheckFile(char *filename);
@@ -619,7 +687,7 @@ IV-4. FILE 관련 함수군
 
          qContentType("text/html");
          qFileCat("myhtml.html");
-         
+
 IV-5. 화면 출력 함수군
 
   int    qPrintf(int mode, char *format, ...);
@@ -631,7 +699,7 @@ IV-5. 화면 출력 함수군
          Mode 3 : Mode 2 + link를 클릭했을시 전화면(target=_top) 출력한다.
          Mode 4 : HTML TAG를 무시한다. 출력되지 않음.
          Mode 5 : Mode 4 + 자동으로 Link 시킴.
-         Mode 6 : Mode 5 + link를 클릭했을시 전화면(target=_top) 출력한다.         
+         Mode 6 : Mode 5 + link를 클릭했을시 전화면(target=_top) 출력한다.
          Mode 10  :Mode 0 + Convert
          Mode 11 : Print HTML TAG + Convert
          Mode 12 : Mode 11 + Auto Link
@@ -669,7 +737,7 @@ IV-5. 화면 출력 함수군
   사용 : char buf[100];
          strcpy(buf, "http://www.hongik.com mailto:nobreak@hongik.com");
          qPuts(2, buf);
-         
+
 
   void   qError(char *format, ...);
   기능 : 오류에대한 Message를 출력한다. printf() 함수와 사용법 동일.
@@ -683,13 +751,12 @@ IV-5. 화면 출력 함수군
   void   qErrLog(char *filename);
   기능 : qError() 함수를 부를때 전달되는 오류 메시지들을 별도의 로그파일로
          기록하도록 한다.
-         로그를 기록할때, 본파일을 직접 호출하는것이 아니라, 
+         로그를 기록할때, 본파일을 직접 호출하는것이 아니라,
          qErrLog("logs/error.log") 와같이 프로그램 초기에 호출하면 그 후
          qError()가 호출될때마다, 'logs/error.log' 파일에 로그가 자동 기록
          된다.
   사용 : qErrLog("로그파일명");        // log enable
          qErrLog(NULL);                // log disable (default)
-
 
 IV-6. 문자열 관련 함수군
 
@@ -778,7 +845,7 @@ V-1. 전달된 인자를 모두 출력하는 CGI
     (같은 디렉토리에 qDecoder.c와 qDecoder.h가 존재해야함)
 
     gcc -o test.cgi test.c qDecoder.c
-    
+
     Browser상에서 다음과 같이 실행하여 결과를 확인한다.
 
     URL -> http://서버URL/test.cgi가있는디렉토리/test.cgi?a=b&c=de
@@ -786,7 +853,7 @@ V-1. 전달된 인자를 모두 출력하는 CGI
     출력결과는 다음과 같다.
 
     'a' = 'b'
-    'c' = 'de'  
+    'c' = 'de'
 
 V-2. 원하는 인자('a')를 선택하여 화면 출력
 
@@ -801,7 +868,7 @@ V-2. 원하는 인자('a')를 선택하여 화면 출력
        value = qValue("a");
        printf("test a = %s", value);
      }
-   
+
     예제 1과 같이 Compile 한후 같은 방법으로 실행한다.
 
     출력결과는 다음과 같다.
@@ -822,7 +889,7 @@ V-3. 정확한 함수 호출 절차
     }
 
     qDecoder(), qFree()는 생략가능하다.
-   
+
 
 V-4. Compile
 

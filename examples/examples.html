@@ -11,7 +11,7 @@
 <hr>
 <h3>Example: <a href="fetch.c">fetch.c</a></h3>
 <form method="post" action="fetch.cgi">
-  Input string: <input type="text" name="text" value="">
+  Type anything: <input type="text" name="text" value="">
   <input type="submit">
 </form>
 
@@ -31,8 +31,17 @@
 <hr>
 <h3>Example: <a href="upload.c">upload.c</a></h3>
 <form method="post" action="upload.cgi" enctype="multipart/form-data">
-   Select file <input type="file" name="binary"><br>
+   Select file: <input type="file" name="binary"><br>
   <input type="submit">
+</form>
+
+<!-- ex) streamedit.cgi -->
+<hr>
+<h3>Example: <a href="streamedit.c">streamedit.c</a>, <a href="streamedit.html">Parsed HTML files</a></h3>
+<form method="post" action="streamedit.cgi">
+  Name: <input type="text" name="name" value="">
+  <br>Hobby: <input type="text" name="hobby" value="">
+  <br><input type="submit">
 </form>
          
 </body>

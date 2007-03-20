@@ -20,7 +20,7 @@ CFLAGS  = -Wall
 LIB     = ../libqDecoder.a
 
 ## Main
-all:	fetch.cgi multivalue.cgi upload.cgi
+all:	fetch.cgi multivalue.cgi upload.cgi streamedit.cgi
 
 fetch.cgi:	fetch.o
 	$(CC) $(INCLUDE) $(CFLAGS) -o fetch.cgi fetch.o $(LIB)
@@ -31,6 +31,9 @@ multivalue.cgi:	multivalue.o
 upload.cgi:	upload.o
 	$(CC) $(INCLUDE) $(CFLAGS) -o upload.cgi upload.o $(LIB)
 	chmod 6755 upload.cgi
+
+streamedit.cgi:	streamedit.o
+	$(CC) $(INCLUDE) $(CFLAGS) -o streamedit.cgi streamedit.o $(LIB)
 
 ## Compile Module
 .c.o:

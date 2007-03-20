@@ -76,6 +76,8 @@ int       qAwkOpen(char *filename, char separator);
 int       qAwkNext(char array[][256]);
 void      qAwkClose(void);
 
+int       qSed(char *filename, FILE *fpout, char **arg);
+
 char      *qURLencode(char *str);
 void      qURLdecode(char *str);
 void      qContentType(char *mimetype);
