@@ -97,6 +97,7 @@ time_t    qGetGMTime(char *gmt, time_t plus_sec);
 
 int       qCheckFile(char *filename);
 int       qFileCat(char *filename);
+char      *qfGetLine(FILE *fp);
 
 void      qDownload(char *filename);
 void      qRedirect(char *url);

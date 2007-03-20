@@ -79,23 +79,35 @@ I-6. 저작권, 소유권
 
 II-1. 소프트웨어 정보 (Software Information)
   - 명    칭 : qDecoder
-  - 판 번 호 : 5.0.2
+  - 판 번 호 : 5.0.3
   - 종    류 : C/C++용 CGI Library
   - 사용환경 : All kind Unix (Solaris, HP/UX, FreeBSD, Linux, Etc.)
   - 제작회사 : (주)홍익인터넷 (Hongik Internet, Inc.)
   - 개 발 자 : Seung-young Kim(김승영) <nobreak@hongik.com>
   - 배 포 처 : ftp://ftp.hongik.com/pub/qDecoder/
-  - 배포일자 : 1999년 8월 18일
+  - 배포일자 : 1999년 8월 20일
+
 
 +--------------------------------------------------------------------+
 | III. 버젼별 수정사항                                               |
 +--------------------------------------------------------------------+
+[Version 5.0.3]
+    * Patched functions
+    qPrintf(), qPuts()
+    - 토큰에 '&' 다시 추가
+
+    * New functions
+    qfGetLine()
+    - 파일에서 길이 젝약없이 한 라인을 읽어, 할당된 메모리 포인터를 반환
+
 [Version 5.0.2]
     * Patched functions
     qSed()
     - arg 인자로 NULL 포인터가 삽입될 수 있도록 수정.
       arg의 첫번째 인자가 NULL일경우(변환을 하지 않고, SSI 기능만을 쓰고자
       할때) Segmentation Fault 에러가 나던점 수정.
+    qPrintf(), qPuts()
+    - 토큰에서 '&' 문자 제거
 
 [Version 5.0.1]
     * Patched functions
@@ -612,11 +624,13 @@ IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
 
   int    qAwkNext(char array[][256]);
   기능 : 한행을 읽어 들여, 인자로 주어진 배열에 저장한다.
-  사용 :  char array[7][256];
-          qAwkOpen("/etc/passwd", ':');
-          qAwkNext(array)
-          printf("ID=%s, Name=%s", array[0], array[5]);
-          qAwkClose();
+  복귀 : 성공시 필드 수, 파일의 끝 -1
+  사용 : char array[7][256];
+         qAwkOpen("/etc/passwd", ':');
+         qAwkNext(array)
+         printf("ID=%s, Name=%s", array[0], array[5]);
+         qAwkClose();
+  주의 : 행길이는 제한이 없으나, 각 필드는 256 바이트를 넘어선 안된다.
 
   void   qAwkClose(void);
   기능 : 파일을 닫는다.
@@ -639,7 +653,7 @@ IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
          수 있고, 디자인과 개발의 분리작업이 가능하며, 패키지 제품의 경우
          사용자 측면에서 손쉽게 커스터 마이징이 가능할 수 있는등의 효용성을
          동반할 수 있다.
-  
+
          filename은 입력(대상)파일이고, fpout은 출력 스트림을 의미한다.
          결과를 파일로 출력을 하고 자 할경우엔 파일을 "wt"로 열어,
          해당 파일 포인터를 건네어 주면 되고, 화면 출력하고자 한다면,
@@ -675,15 +689,15 @@ IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
          SSI 문법을 해석한다. (현재는 <!--#include file="FILEPATH"> 만이 지원됨)
          문서내 다음과 같은 라인이 있을 경우, 해당 문서를 포함하여 출력되며,
          포함되는 문서에 대해서도 교체및 SSI 기능은 그대로 유효하다. (Cascading)
-         
+
          <!--#include file="streamedit.html.in"-->
-         
+
          주의) include 되는 파일은 CGI가 실행되는 위치를 기준으로 상대경로 표기
                하거나, 시스템 절대경로 표기한다.
 
          문자열 교체를 하지않고, SSI 기능만을 사용코자 할 경우엔 다음과 같이
          arg 인자로 NULL 값을 전달한다.
-         
+
          ex) qSed("streamedit.html.in", stdout, NULL);
 
 IV-4. FILE 관련 함수군
@@ -702,6 +716,11 @@ IV-4. FILE 관련 함수군
 
          qContentType("text/html");
          qFileCat("myhtml.html");
+
+  char   *qfGetLine(FILE *fp);
+  기능 : 화일에서 길이 제약없이 라인을 읽는다.
+  복귀 : 할당된 메모리 포인터, 파일 끝 NULL
+  사용 : line = qfGetLine(fp);
 
 IV-5. 화면 출력 함수군
 

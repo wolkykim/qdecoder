@@ -1,11 +1,11 @@
 /*************************************************************
-** qDecoder CGI Library v5.0.2                              **
+** qDecoder CGI Library v5.0.3                              **
 **                                                          **
 **  Official distribution site : ftp://ftp.hongik.com       **
 **           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
-**                        Last updated at August 18, 1999   **
+**                        Last updated at August 20, 1999   **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **
@@ -42,7 +42,6 @@ int  _parse_urlencoded(void);
 char *_get_query(char *method);
 int  _parse_multipart_data(void);
 char *_fgetstring(char *buf, int maxlen, FILE *fp);
-char *_fgetline(FILE *fp);
 
 char _x2c(char hex_up, char hex_low);
 char *_makeword(char *str, char stop);
@@ -489,7 +488,7 @@ Entry *qfDecoder(char *filename){
 
   first = entries = back = NULL;
 
-  while((buf = _fgetline(fp)) != NULL){
+  while((buf = qfGetLine(fp)) != NULL){
     qRemoveSpace(buf);
     if((buf[0] == '#') || (buf[0] == '\0')) continue;
 
@@ -756,20 +755,19 @@ int qAwkOpen(char *filename, char separator) {
 
 /**********************************************
 ** Usage : qAwkNext(array);
-** Return: Success number of field, Fail -1
-** Do    : Scan one line
+** Return: Success number of field, End of file -1
+** Do    : Scan one line (Unlimited line length)
 ** ex) char array[10][256];
 **     qAwkNext(array);
 **********************************************/
 int qAwkNext(char array[][256]) {
-  char buf[1024];
+  char *buf;
   char *bp1, *bp2;
   int i, exitflag;
 
   if (_awkfp == NULL) qError("qAwkNext(): There is no opened handle.");
-  if(fgets(buf, sizeof(buf), _awkfp) == NULL) return -1;
+  if((buf = qRemoveSpace(qfGetLine(_awkfp))) == NULL) return -1;
 
-  qRemoveSpace(buf);
   for(i = exitflag = 0, bp1 = bp2 = buf; exitflag == 0; i++) {
     for(; *bp2 != _awksep && *bp2 != '\0'; bp2++);
     if(*bp2 == '\0') exitflag = 1;
@@ -777,6 +775,7 @@ int qAwkNext(char array[][256]) {
     strcpy(array[i], bp1);
     bp1 = ++bp2;
   }
+  free(buf);
   return i;
 }
 
@@ -847,7 +846,7 @@ int qSed(char *filename, FILE *fpout, char **arg) {
   }
 
   /* Parsing */
-  while((str = _fgetline(fpin)) != NULL) {
+  while((str = qfGetLine(fpin)) != NULL) {
     for(tmp = str; *tmp != '\0'; tmp++) {
       /* SSI invocation */
       if(!strncmp(tmp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
@@ -857,7 +856,7 @@ int qSed(char *filename, FILE *fpout, char **arg) {
           strncpy(ssi_inc_file, tmp, endp - tmp);
           ssi_inc_file[endp-tmp] = '\0';
           tmp = (endp + strlen(SSI_INCLUDE_END)) - 1;
-          
+
           if(qCheckFile(ssi_inc_file) == 1) qSed(ssi_inc_file, fpout, arg);
           else printf("[qSed: an error occurred while processing 'include' directive - file(%s) open fail]", ssi_inc_file);
         }
@@ -1078,8 +1077,7 @@ void qPuts(int mode, char *buf){
       default: {qError("_autolink() : Invalid Mode (%d)", mode); break;}
     }
 
-    token = " `(){}[]<>\"',\r\n";
-
+    token = " `(){}[]<>&\"',\r\n";
     lastretstop = '0'; /* any character except space */
     ptr = _strtok2(buf, token, &retstop);
 
@@ -1372,6 +1370,47 @@ int qFileCat(char *filename) {
 
   fclose(fp);
   return counter;
+}
+
+/*********************************************
+** Usage : qfGetLine(fp);
+** Return: Success string pointer, End of file NULL
+** Do    : Read one line from file pointer and alocate
+**         memory to save string. And there is no limit
+**         about length.
+**********************************************/
+char *qfGetLine(FILE *fp) {
+  int memsize;
+  int c, c_count;
+  char *string = NULL;
+
+  for(memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
+    if(c_count == 0) {
+      string = (char *)malloc(sizeof(char) * memsize);
+      if(string == NULL) qError("qfGetLine() : Memory allocation fail.");
+    }
+    else if(c_count == memsize - 1) {
+      char *stringtmp;
+      int  i;
+
+      memsize *= 2;
+
+      /* Here, we do not use realloc(). Because sometimes it is unstable. */
+      stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
+      if(stringtmp == NULL) qError("qfGetLine() : Memory allocation fail.");
+      for(i = 0; i < c_count; i++) stringtmp[i] = string[i];
+      free(string);
+      string = stringtmp;
+    }
+    string[c_count++] = (char)c;
+    if((char)c == '\n') break;
+  }
+
+  if(c_count == 0 && c == EOF) return NULL;
+
+  string[c_count] = '\0';
+
+  return string;
 }
 
 /**********************************************
@@ -1696,44 +1735,6 @@ char *_fgetstring(char *buf, int maxlen, FILE *fp) {
 
   buf[i] = '\0';
   return buf;
-}
-
-/*********************************************
-** Usage : This function is allocate memory for save string.
-**         And there is no limit about length.
-**********************************************/
-char *_fgetline(FILE *fp) {
-  int memsize;
-  int c, c_count;
-  char *string = NULL;
-
-  for(memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
-    if(c_count == 0) {
-      string = (char *)malloc(sizeof(char) * memsize);
-      if(string == NULL) qError("_fgetline() : Memory allocation fail.");
-    }
-    else if(c_count == memsize - 1) {
-      char *stringtmp;
-      int  i;
-
-      memsize *= 2;
-
-      /* Here, we do not use realloc(). Because sometimes it is unstable. */
-      stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
-      if(stringtmp == NULL) qError("_fgetline() : Memory allocation fail.");
-      for(i = 0; i < c_count; i++) stringtmp[i] = string[i];
-      free(string);
-      string = stringtmp;
-    }
-    string[c_count++] = (char)c;
-    if((char)c == '\n') break;
-  }
-
-  if(c_count == 0 && c == EOF) return NULL;
-
-  string[c_count] = '\0';
-
-  return string;
 }
 
 /**********************************************
