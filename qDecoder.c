@@ -1,7 +1,7 @@
 /***********************************************
-** [Query String Decoder Version 3.4]
+** [Query String Decoder Version 3.4.1]
 **
-** Last Modified : 1997/08/22
+** Last Modified : 1997/09/01
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
@@ -506,16 +506,16 @@ void qPuts(int mode, char *buf){
       }
 
       if(printhtml == 1){
-        if(retstop == '<') printf("&lt;");
-        else if(retstop == '>') printf("&gt;");
-        else if(retstop == 34 ) printf("&quot;");  /* " */
-        else if(retstop == '&') printf("&amp;");
-        else printf("%c", retstop);
+        if     (retstop == '<')  printf("&lt;");
+        else if(retstop == '>')  printf("&gt;");
+        else if(retstop == '\"') printf("&quot;");  /* " */
+        else if(retstop == '&')  printf("&amp;");
+        else if(retstop != '\0') printf("%c", retstop);
       }
       else {
-        if(retstop == '<') ignoreflag = 1;
+        if     (retstop == '<') ignoreflag = 1;
         else if(retstop == '>') ignoreflag = 0;
-        else if(ignoreflag  == 0) printf("%c", retstop);
+        else if(ignoreflag == 0 && retstop !='\0') printf("%c", retstop);
       }
 
       ptr = _strtok2(NULL, token, &retstop);

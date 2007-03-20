@@ -36,6 +36,11 @@
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
 
+  [Version 3.4.1]
+    ** Patch functions
+    qPrintf(), qPuts() :
+    - 문자열 마지막에 출력되는 공백 제거
+
   [Version 3.4]
     ** Patch functions
     qCheckEmail() : '-' , '_'가 포함된 Email도 가능토록 수정
