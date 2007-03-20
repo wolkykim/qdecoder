@@ -1,0 +1,214 @@
+qDecoder Changes
+
+``FIX'', ``ADD'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
+``Added'', ``Replaced'' and ``Removed''.
+
+   * Release 6.0.2
+        o ADD) Microsoft Visual C++용 정적 라이브러리 생성 프로젝트 파일
+          추가
+        o FIX) 내부적으로만 사용되는 함수들('_'로 시작되는) static 으로
+          변환
+
+   * Release 6.0.1
+        o ADD) Autoconf 적용
+
+   * Release 6.0
+        o REP) qCgienv() - 대체함수 qCGIenv()
+        o FIX) qDecoder() - Multipart/form-data 해석시의 Overflow Attack에
+          대한 보안 코드 추가
+        o FIX) qSaveStr() - WIN32와의 호환성을 위해 퍼미션 설정 인자 제거
+        o FIX) 구조체 Entry, Q_Entry로 명칭 변경
+        o FIX) 구조체 Cgienv, Q_CGIenv로 명칭 변경
+        o FIX) make install시 설치 경로를 /usr/local/lib,
+          /usr/local/include 로 조정
+        o FIX) qDownload(), qDownloadMime() - 복귀값이 전송된 바이트 수를
+          갖도록 수정
+        o FIX) qPrintf() - 조합된 문자열의 길이가 10K 까지 지원되도록 수정
+        o ADD) 공유 라이브러리(libqDecoder.so) 지원
+        o ADD) qCGIenv() - 구버젼의 qCgienv()의 확장판
+
+   * Release 5.0.8
+        o FIX) qSetCookie() - 표준 규격에 맞도록 인자 순서 교정
+        o FIX) qURLdecode() - 디코딩된 스트링 포인터를 리턴하도록 함수
+          프로토 타입를 void에서 char*로 수정
+        o FIX) qDownload() - 클라이언트에서 다운로딩시 전체 파일용량이
+          파악되도록 수정
+        o ADD) qDownloadMime() - 클라이언트로 마임에 준하여 파일을
+          전송한다.
+        o ADD) qFileSize() - 파일의 용량을 byte 단위로 알려줌
+
+   * Release 5.0.7
+        o REP) qStrBig() - 대체함수 qStrupr()
+        o ADD) qArgMake(), qArgPrint(), qArgMatch(), qArgEmprint(),
+          qArgFree() - 검색 쿼리를 분석하고 스트링내 쿼리 힛트수를 파악하며
+          매칭되는 부분을 볼드 처리하여 출력하여 주는 함수군
+        o ADD) qValueDefault() - qValue()와 같으나 해당 쿼리명이 없을 경우
+          기본 스트링값을 넘겨준다.
+        o ADD) qValueNotEmpty() - qValue()와 같으나 NULL이나,
+          공백문자열("")일 경우 오류 메시지를 출력해 준다.
+        o ADD) qStrincmp() - strncmp()와 stricmp() 함수가 합쳐진 기능을
+          한다. 대소문자를 구분하지 않고 문자열의 처음 n 바이트를 비교한다.
+
+   * Release 5.0.6
+        o FIX) qitocomma() - 음수의 출력이 '-,123,456'과 같이 나오던 문제
+          수정
+        o FIX) qURLencode() - 스페이스 ' '가 '+'가 아닌 '%20'으로 인코딩
+          되도록 수정
+        o FIX) qUpdateCounter() - '기존의값'을 복귀하던 문제를 '기존의값 +
+          업데이트' 수치로 수정
+        o FIX) qDownload() - 파일이 없을시 리턴값을 갖도록, 함수형을
+          void에서 int로 변경
+        o FIX) qError(), qErrorContact() - qErrorContact()으로 설정된
+          메시지가 앞뒤에 [Administrator: ...]가 삽입되던점 수정(삽입되지
+          않고, 원문이 그대로 출력되도록).
+
+   * Release 5.0.5
+        o REP) qStrStr() - 대체함수 qStristr()
+        o REP) qSed() - 대체함수 qSedFile()
+        o ADD) qStricmp() - strcmp() 함수와 기능적으로 동일하나 대소문자를
+          구분하지 않는다.
+        o ADD) qSedStr() - 소스 입력을 스트링으로 한다.
+
+   * Release 5.0.4
+        o REP) qFileCat() - 대체함수 qCatFile()
+        o FIX) qUpdateCounter() - 인터페이스 수정(업데이트 증/감 수치
+          지정이 가능하도록)
+        o FIX) qDecoder() - multipart/form-data 메소드에서도 환경변수
+          QUERY_STRING 으로 넘겨진 인자 처리
+        o ADD) qReadFile() - 파일을 읽어 메모리에 저장한다.
+        o ADD) qSaveStr() - 스트링의 내용을 파일로 저장한다.
+
+   * Release 5.0.3
+        o FIX) qPrintf(), qPuts() - 토큰에 '&' 다시 추가
+        o ADD) qfGetLine() - 파일에서 길이 젝약없이 한 라인을 읽어, 할당된
+          메모리 포인터를 반환
+
+   * Release 5.0.2
+        o FIX) qSed() - arg 인자로 NULL 포인터가 삽입될 수 있도록 수정.
+          arg의 첫번째 인자가 NULL일경우(변환을 하지 않고, SSI 기능만을
+          쓰고자 할때) Segmentation Fault 에러가 나던점 수정.
+        o FIX) qPrintf(), qPuts() - 토큰에서 '&' 문자 제거
+
+   * Release 5.0.1
+        o FIX) qValue(), qiValue(), qfValue(), qfiValue(), qsValue(),
+          qsiValue(), qcValue(), qciValue() - 호환성의 문제로 vsnprintf()
+          함수 대신 vsprintf() 사용.
+        o ADD) qSed() - 파일에서 지정된 기호를 정의된 문자열로 교체하여
+          출력
+
+   * Release 5.0
+        o REP) qSendFile() - 대체함수 qFileCat()
+        o FIX) qValue(), qiValue(), qfValue(), qfiValue(), qsValue(),
+          qsiValue(), qcValue(), qciValue() - 포맷에 의한 인자 전달이
+          가능하도록 패치
+        o FIX) qPuts() - Token list에서 '&' 제거.
+        o ADD) qValueFirst() - 동일한 변수명으로 전달되는 인자중 첫번째
+          인자에 대한 변수값을 얻음
+        o ADD) qValueNext() - 다음번 변수값을 얻음
+        o ADD) qRedirect() - HTTP의 Location: 헤더를 사용한 페이지 점프
+          함수
+        o ADD) qFileCat() - 해당 파일을 모두 stdout 으로 출력
+
+   * Release 4.3.1
+        o FIX) Makefile의 install, deinstall 수정
+
+   * Release 4.3
+        o FIX) qDecoder() - SSI로 넘겨지는 쿼리를 받을 수 있도록 패치
+        o ADD) qAwkOpen()
+        o ADD) qAwkNext()
+        o ADD) qAwkClose()
+        o ADD) *qGetFirstEntry()
+        o ADD) *qitocomma()
+
+   * Release 4.2
+        o FIX) qDecoder() - Macintosh IE 관련 패치
+        o FIX) qGgienv() - Apache 1.3 관련 패치
+        o FIX) qGetGMTime() - 성능 향상
+        o ADD) *qCGIname()
+        o ADD) qDownload()
+        o ADD) *qGetEnv()
+        o ADD) *qStrBig()
+        o ADD) *qStrStr()
+
+   * Release 4.0.1
+        o FIX) qfDecoder() - 파일에서 한행의 길이제약을 없앰
+        o FIX) qDecoder() - multipart/form-data형식 내부 알고리즘 수정
+
+   * Release 4.0
+        o FIX) qDecoder() - File Uploading 지원
+        o FIX) qfDecoder() - 행의 첫글자가 #일경우 주석으로 처리
+        o FIX) qURLencode() - '@', '.'을 인코딩 하지 않도록 수정
+        o FIX) _decode_query() - qURLdecode()로 함수명 변경
+        o FIX) qCheckEmail() - ID중에 . 를 허용함.
+        o FIX) qPrintf(), qPuts() - mode 10 - 16 이 새로 지원됨.
+
+   * Release 3.5
+        o FIX) _get_query() - 환경변수 미설정 확인추가
+        o FIX) qCgienv() - Netscape와 Explore에서 공통 사용되는 환경변수로
+          최적화
+        o FIX) qSetCookie() - expire 날짜 지정 char* 에서 int 타입으로 변경
+        o FIX) qError() - 로그 기능 추가
+        o FIX) qURLencode() - 숫자, 영문를 인코딩 하지 않도록 수정
+        o ADD) qErrLog()
+
+   * Release 3.4.2
+        o FIX) qDecoder(), qfDecoder(), qcDecoder() - Linked List 알고리즘
+          수정
+        o FIX) qPuts() - 몇몇 시스템에서 컴파일시 warning을 일으키던 문제
+          수정
+
+   * Release 3.4.1
+        o FIX) qPrintf(), qPuts() - 문자열 마지막에 출력되는 공백 제거
+
+   * Release 3.4
+        o FIX) qCheckEmail() - '-' , '_'가 포함된 Email도 가능토록 수정
+        o FIX) qPrintf(), qPuts() - 문자열의 내용중 &lt; , &gt를 '<' ,
+          '>'로 보여주는점 수정 (&amp;lt , &amp;gt로 출력함),
+          'mailto:guest@hongik.ac.kr' 같은 문자열만을 자동 링크하였으나,
+          'guest@hongik.ac.kr' 의 형태도 자동 링크 수행함
+        o ADD) qSetCookie()
+        o ADD) *qURLencode()
+        o ADD) qGetGMTime()
+
+   * Release 3.3.1
+        o FIX) qDecoder() - Query value내의 '&' 문자를 분리자로 인식하던점
+          수정
+
+   * Release 3.3
+        o ADD) qcDecoder()
+        o ADD) *qcValue()
+        o ADD) qcPrint()
+        o ADD) qcFree()
+
+   * Release 3.2.2
+        o ADD) qUpdateCounter()
+        o ADD) qPuts()
+        o ADD) qCheckURL()
+
+   * Release 3.2
+        o ADD) qReadCounter()
+        o ADD) qSaveCounter()
+        o ADD) qStr09AZaz()
+
+   * Release 3.1
+        o ADD) qPrintf()
+        o ADD) qCheckEmail()
+        o ADD) qError()
+
+   * Release 3.0
+        o ADD) *qfDecoder()
+        o ADD) *qfValue()
+        o ADD) qfPrint()
+        o ADD) qError()
+        o ADD) *qRemoveSpace()
+
+   * Release 2.2
+        o ADD) qDecoder()
+        o ADD) *qValue()
+        o ADD) qPrint()
+        o ADD) qFree()
+        o ADD) qContentType()
+        o ADD) qCgienv()
+        o ADD) *qGetTime()
+        o ADD) qCheckFile()
+        o ADD) qSendFile()

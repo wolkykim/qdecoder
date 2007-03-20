@@ -7,7 +7,7 @@ qDecoder On-line Reference
         o 설치
         o 제거
         o 테스트
-        o NT에서의 운용
+        o Microsoft Visual C++ 환경에서의 사용
 
    * 화면 출력 함수군
         o qContentType()
@@ -124,16 +124,16 @@ qDecoder-VERSION 에 해당하는 디렉토리가 생성되며 다음과 유사한 형태로
 
      $ cd qDecoder-VERSION
      $ ls -asCF
-     total 148
-     total 208
-       1 ./                   44 README                6 install-sh*
-       1 ../                  60 README.pdf            2 qDecoder.jpg
-       1 AUTHORS              55 configure*            1 rfc/
+     total 289
+       1 ./                    3 Makefile.in           1 examples/
+       1 ../                  48 README                6 install-sh*
+       1 AUTHORS             128 README.pdf            2 qDecoder.jpg
+       8 CHANGES              55 configure*            1 rfc/
       26 COPYING               3 configure.in          1 src/
-       2 DISCLAIMER            1 contrib/
-       3 Makefile.in           1 examples/
+       2 DISCLAIMER            1 contrib/              1 win32/
 
      AUTHORS - 제작자 명단
+     CHANGES - 버젼별 수정 내역
      COPYING - 저작권 관련 문서
      DISCLAIMER - 저작권 관련 서명서
      README - 사용법 문서
@@ -146,6 +146,7 @@ qDecoder-VERSION 에 해당하는 디렉토리가 생성되며 다음과 유사한 형태로
      qDecoder.jpg - 로고 그림
      rfc/... - RFC 관련 문서 모음
      src/... - qDecoder 메인 소스
+     win32/... - Microsoft Visual C++용 정적 라이브러리 생성 프로젝트 파일
 
 컴파일
 
@@ -289,32 +290,58 @@ all QLIB=../src/libqDecoder.so'')
      -rwxr-xr-x  1 root  power  12052   6  2 22:33 streamedit.cgi
      -rwsr-sr-x  1 root  power  12393   6  2 22:33 upload.cgi
 
-NT에서의 운용
+Microsoft Visual C++ 환경에서의 사용
 
 qDecoder는 편의상 유닉스 패키징 도구를 사용해 제공되고 대부분의 예제가
-유닉스 환경 기준하에 작성되어 있지만, NT도 환경에서도 적용 개발이 가능하다.
-다음에 Visual C++ 환경에서의 qDecoder 적용 순서를 살펴보자. 여기서는 Visual
-C++ 만을 예로 들지만, 다른 Windows용 컴파일러 환경에도 무리없이 적용
-가능하다.
+유닉스 환경 기준하에 작성되어 있지만, NT도 환경에서도 사용 가능하도록
+개발된다. 패키지(6.0.2) 부터는 편리를 위해 대부분의 Windows 개발자가
+사용하는 Microsoft Visual C++ 환경에서 정적 라이브러리를 바로 생성할 수
+있도록 미리 설정된 프로젝트 파일을 포함하여 제공한다. 다른 컴파일러
+환경에서도 비슷한 맥락으로 사용이 가능 할 것이다.
 
-  1. WinZip과 같은 압축 해제 프로그램을 통해 패키지를 특정 디렉토리에 풀어
-     놓는다.
-  2. Project 생성시 ``Win32 Console Application''을 선택한다.
-  3. ``FileView'' 탬에서 ``Header Files'' 가지에 ``Add Files to Folder''
-     명령으로 src/qDecoder.h 를 포함한다.
-  4. ``Source Files' 가지에도 src/qDecoder.c 파일을 같은 방법으로 추가한다.
-  5. 소스의 examples 디렉토리에서 가장 간단한 fetch.c(다른 소스도
-     상관없다)를 선택해 ``Source Files'' 가지에 추가한다.
-  6. 빌드후 실행시켜 본다.
-  7. IIS등의 웹서버에 연결후 다음과 같이 수행 해 보고 잘 동작함을 확인한다.
+  1. 패키지 구하기: 패키지 구하기를 참고한다.
+  2. 압축 풀기: 압축 해제 프로그램(예: WinZip)을 통해 패키지를 특정
+     디렉토리에 풀어 놓는다.
+  3. 컴파일:
+       1. ``File -> Open Workspace'' 메뉴를 통해 win32/qDecoder.dsw 를
+          연다.
+       2. ``Build -> Build qDecoder.lib'' 메뉴를 통해 라이브러리 생성한다.
 
-     http://localhost/...PATH.../fetch.exe?query=OK
-  8. fetch.c 를 원하는 형태로 수정한다.
+               ----Configuration: qDecoder - Win32 Release----
+               Compiling...
+               qDecoder.c
+               Creating library...
 
-예제가 모두 C로 구현되어 있으나, OOP 프로그램을 원한다면 CPP로 이름
-변경하여 사용하면 된다. 다만 qDecoder는 프리 프로세스시 C plus plus
-환경으로 프로토 타입이 전이되도록 처리되어 있으니, qDecoder.c는 이름 변경할
-필요 없이 그냥 사용해도 좋다.
+               qDecoder.lib - 0 error(s), 0 warning(s)
+
+  4. 설치: src/qDecoder.h 헤더 파일과 생성된 win32/Release/qDecoder.lib를
+     특정한 디렉토리 혹은 Visual C++의 기본 헤더, 라이브러리 디렉토리에
+     각각 복사한다. (기본 디렉토리에 복사해 두면 헤더와 라이브러리 사용시
+     별도의 경로를 지정할 필요가 없다)
+     예) C:\Program Files\Microsoft Visual Studio\VC98\Lib\qDecoder.lib
+     예) C:\Program Files\Microsoft Visual Studio\VC98\Include\qDecoder.h
+  5. 사용:
+       1. 소스 파일에 #include <qDecoder.h> 혹은 #include
+          "...PATH...\qDecoder.h"를 삽입한다.
+       2. ''Project -> Setting -> Link -> Object/library modules'에
+          qDecoder.lib를 추가한다. (기본 라이브러리 디렉토리에 설치되지
+          않은 경우엔 경로 명시)
+  6. 테스트:
+       1. ``File -> New -> Win32 Console Application'' 생성
+       2. ``FileView -> Source Files -> Add Files to Folder''를 통해
+          examples/fetch.c 삽입
+       3. ``Project -> Setting -> Link -> Object/library modules''에
+          qDecoder.lib 추가
+       4. ``Build -> Build PRJ_NAME.exe'' 컴파일 및 실행파일 생성
+       5. 로컬 웹서버(IIS)의 CGI 실행 가능 디렉토리에 PRJ_NAME.exe를 복사후
+          브라우저를 통해 동작 확인.
+          http://localhost/...PATH.../PRJ_NAME.exe?query=OK
+          [Pic: Win32 Test Step 1] [Pic: Win32 Test Step 2]
+
+          [Pic: Win32 Test Step 3] [Pic: Win32 Test Step 4]
+
+          [Pic: Win32 Test Step 5]
+
   ------------------------------------------------------------------------
 
 화면 출력 함수군
@@ -651,7 +678,7 @@ qValueFirst()
 Syntax: char *qValueFirst(char *format, ...);
 Function: 동일한 변수명을 갖는 인자들을 순차적으로 패치할 때 사용.
 Return: 성공시 동일한 변수명을 갖는 인자들에 대한 첫번째 변수값 포인터를
-복귀 변수명이 없을시시 NULL.
+복귀, 변수명이 없을시 NULL.
 Example:
 
      qValueFirst("checklist");

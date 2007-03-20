@@ -41,19 +41,19 @@ Author:
 ** Internal Functions Definition
 **********************************************/
 
-int  _parse_urlencoded(void);
-char *_get_query(char *method);
-int  _parse_multipart_data(void);
-char *_fgetstring(char *buf, int maxlen, FILE *fp);
+static int  _parse_urlencoded(void);
+static char *_get_query(char *method);
+static int  _parse_multipart_data(void);
+static char *_fgetstring(char *buf, int maxlen, FILE *fp);
 
-char _x2c(char hex_up, char hex_low);
-char *_makeword(char *str, char stop);
-char *_strtok2(char *str, char *token, char *retstop);
+static char _x2c(char hex_up, char hex_low);
+static char *_makeword(char *str, char stop);
+static char *_strtok2(char *str, char *token, char *retstop);
 
-char *_EntryValue(Q_Entry *first, char *name);
-int  _EntryiValue(Q_Entry *first, char *name);
-void _EntryPrint(Q_Entry *first);
-void _EntryFree(Q_Entry *first);
+static char *_EntryValue(Q_Entry *first, char *name);
+static int  _EntryiValue(Q_Entry *first, char *name);
+static void _EntryPrint(Q_Entry *first);
+static void _EntryFree(Q_Entry *first);
 
 /**********************************************
 ** Static Values Definition used only internal
@@ -62,14 +62,14 @@ void _EntryFree(Q_Entry *first);
 static Q_Entry *_first_entry = NULL;
 static Q_Entry *_cookie_first_entry = NULL;
 
-static char  *_error_contact_info = NULL;
-static char  *_error_log_filename = NULL;
+static char *_error_contact_info = NULL;
+static char *_error_log_filename = NULL;
 
-static FILE  *_awkfp = NULL;
-static char  _awksep = ' ';
+static FILE *_awkfp = NULL;
+static char _awksep = ' ';
 
 static Q_Entry *_multi_last_entry = NULL;
-static char  _multi_last_key[1024];
+static char _multi_last_key[1024];
 
 /**********************************************
 ** Main Routines
@@ -109,7 +109,7 @@ int qDecoder(void){
 }
 
 /* For decode application/s-www-form-urlencoded, used by qDecoder() */
-int _parse_urlencoded(void){
+static int _parse_urlencoded(void){
   Q_Entry *entries, *back;
   char *query;
   int  amount;
@@ -141,7 +141,7 @@ int _parse_urlencoded(void){
 }
 
 /* For fetch query used by _parse_urlencoded() */
-char *_get_query(char *method){
+static char *_get_query(char *method){
   char *query;
   int cl, i;
 
@@ -175,7 +175,7 @@ char *_get_query(char *method){
 }
 
 /* For decode multipart/form-data, used by qDecoder() */
-int _parse_multipart_data(void) {
+static int _parse_multipart_data(void) {
   Q_Entry *entries, *back;
   char *query;
   int  amount;
@@ -2033,7 +2033,7 @@ char *qitocomma(int value) {
 ** Return: Hex value which is changed
 ** Do    : Change two hex character to one hex value
 **********************************************/
-char _x2c(char hex_up, char hex_low){
+static char _x2c(char hex_up, char hex_low){
   char digit;
 
   digit = 16 * (hex_up >= 'A' ? ((hex_up & 0xdf) - 'A') + 10 : (hex_up - '0'));
@@ -2049,7 +2049,7 @@ char _x2c(char hex_up, char hex_low){
 ** Do    : It copy source string before stop character
 **         The pointer of source string direct after stop character
 **********************************************/
-char *_makeword(char *str, char stop){
+static char *_makeword(char *str, char stop){
   char *word;
   int  len, i;
 
@@ -2071,7 +2071,7 @@ char *_makeword(char *str, char stop){
 ** Do    : Find token string (usage like strtok())
 ** Return: Pointer of token & character of stop
 **********************************************/
-char *_strtok2(char *str, char *token, char *retstop){
+static char *_strtok2(char *str, char *token, char *retstop){
   static char *tokensp, *tokenep;
   int i, j;
 
@@ -2097,7 +2097,7 @@ char *_strtok2(char *str, char *token, char *retstop){
 /*********************************************
 ** Usage : This function is perfectly same as fgets();
 **********************************************/
-char *_fgetstring(char *buf, int maxlen, FILE *fp) {
+static char *_fgetstring(char *buf, int maxlen, FILE *fp) {
   int i, c;
 
   for(i = 0; i < (maxlen - 1); i++) {
@@ -2125,7 +2125,7 @@ char *_fgetstring(char *buf, int maxlen, FILE *fp) {
 ** Do    : Find value string pointer
 **         It find value in linked list
 **********************************************/
-char *_EntryValue(Q_Entry *first, char *name){
+static char *_EntryValue(Q_Entry *first, char *name){
   Q_Entry *entries;
 
   for(entries = first; entries; entries = entries->next){
@@ -2139,7 +2139,7 @@ char *_EntryValue(Q_Entry *first, char *name){
 ** Return: Success integer of value string, Fail 0
 ** Do    : Find value string pointer and convert to integer
 **********************************************/
-int _EntryiValue(Q_Entry *first, char *name){
+static int _EntryiValue(Q_Entry *first, char *name){
   char *str;
 
   str = _EntryValue(first, name);
@@ -2151,7 +2151,7 @@ int _EntryiValue(Q_Entry *first, char *name){
 ** Usage : _EntryPrint(Pointer of the first entry);
 ** Do    : Print all parsed value & name for debugging
 **********************************************/
-void _EntryPrint(Q_Entry *first){
+static void _EntryPrint(Q_Entry *first){
   Q_Entry *entries;
 
   qContentType("text/html");
@@ -2165,7 +2165,7 @@ void _EntryPrint(Q_Entry *first){
 ** Usage : _EntryFree(Pointer of the first entry);
 ** Do    : Make free of linked list memory
 **********************************************/
-void _EntryFree(Q_Entry *first){
+static void _EntryFree(Q_Entry *first){
   Q_Entry *entries;
 
   for(; first; first = entries){
@@ -2174,5 +2174,4 @@ void _EntryFree(Q_Entry *first){
     free(first->value);
     free(first);
   }
-  first = NULL;
 }
