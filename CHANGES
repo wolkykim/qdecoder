@@ -3,58 +3,64 @@
 
 qDecoder Changes
 
+``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
+``New'', ``Replaced'' and ``Removed''.
 
-``FIX'', ``ADD'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
-``Added'', ``Replaced'' and ``Removed''.
+  Release 8.0
+    NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive
+    uploading.
+    FIX) qDecoder() - Now qDecoder() supports progressive uploading and direct
+    file saving into disk.
+    NEW) qSedArgAddDirect() - For huge size(over 1024 - 1) value.
 
   Release 7.1.1
-    FIX) qSedArgAdd() : Adjust miss typed variable length. (1024*64 => 1024)
+    FIX) qSedArgAdd() - Adjust miss typed variable length. (1024*64 => 1024)
 
   Release 7.1
-    ADD) qGetTimeStr() - Generate date string formatted as 'YYYYMMDDhhmmss'.
-    ADD) qJavaScript() - Print out some JavaScript code.
-    ADD) qAwkStr() - Scanning pattern from string.
-    FIX) qAwkOpen() : Compatibility increment
-    FIX) qAwkNext() : Expand array size to 1024(before 256)
-    FIX) qCountRead() : Compatibility increment
-    FIX) qCountSave() : Compatibility increment
-    FIX) qCountUpdate() : Compatibility increment
-    FIX) qDecoder() : Now qdecoder uses more smaller memory
-    FIX) qCheckFile() : Utility increment
+    NEW) qGetTimeStr() - Generate date string formatted as 'YYYYMMDDhhmmss'.
+    NEW) qJavaScript() - Print out some JavaScript code.
+    NEW) qAwkStr() - Scanning pattern from string.
+    FIX) qAwkOpen() - Compatibility increment
+    FIX) qAwkNext() - Expand array size to 1024(before 256)
+    FIX) qCountRead() - Compatibility increment
+    FIX) qCountSave() - Compatibility increment
+    FIX) qCountUpdate() - Compatibility increment
+    FIX) qDecoder() - Now qdecoder uses more smaller memory
+    FIX) qCheckFile() - Utility increment
     New socket functions(unix only). Please refer the reference for more
     details.
-    ADD) qSocketOpen()
-    ADD) qSocketClose()
-    ADD) qSocketWaitReadable()
-    ADD) qSocketRead()
-    ADD) qSocketGets()
-    ADD) qSocketWrite()
-    ADD) qSocketPuts()
-    ADD) qSocketPrintf()
-    ADD) qSocketSendFile()
-    ADD) qSocketSaveIntoFile()
-    ADD) qSocketSetNonblock()
-    ADD) qSocketConv2file()
+    NEW) qSocketOpen()
+    NEW) qSocketClose()
+    NEW) qSocketWaitReadable()
+    NEW) qSocketRead()
+    NEW) qSocketGets()
+    NEW) qSocketWrite()
+    NEW) qSocketPuts()
+    NEW) qSocketPrintf()
+    NEW) qSocketSendFile()
+    NEW) qSocketSaveIntoFile()
+    NEW) qSocketSetNonblock()
+    NEW) qSocketConv2file()
   Release 7.0.1
-    ADD) qDecoder() - Added another argument, "variable_name.contenttype", when
+    NEW) qDecoder() - Added another argument, "variable_name.contenttype", when
     file is uploaded.
-    ADD) qCookieValue() - Return only cookie data.
-    ADD) qValueType() - Return the type of query.
-    ADD) qfopen(), qfclose() - Open file stream with file lock.
+    NEW) qCookieValue() - Return only cookie data.
+    NEW) qValueType() - Return the type of query.
+    NEW) qfopen(), qfclose() - Open file stream with file lock.
     FIX) qPrintf(), qPuts() - Added new modes.
-    FIX) qSession() : Changed return type.
+    FIX) qSession() - Changed return type.
   Release 7.0
-    ADD) qSession...() - Session related functions
-    ADD) qMD5Str(), qMD5File() - Calculate a message-digest
+    NEW) qSession...() - Session related functions
+    NEW) qMD5Str(), qMD5File() - Calculate a message-digest
     fingerprint(checksum).
-    ADD) qUniqueID() - Always returns unique 32 bytes string.
-    ADD) qCookieRemove() - Remove cookie from client(browser).
-    ADD) qfValueFirst(), qfValueNext() - Used for patching the arguments having
+    NEW) qUniqueID() - Always returns unique 32 bytes string.
+    NEW) qCookieRemove() - Remove cookie from client(browser).
+    NEW) qfValueFirst(), qfValueNext() - Used for patching the arguments having
     an identical variable name inregular sequence.
-    ADD) qsValueFirst(), qsValueNext() - Used for patching the arguments having
+    NEW) qsValueFirst(), qsValueNext() - Used for patching the arguments having
     an identical variable name inregular sequence.
-    ADD) qGetContentFlag() - qCheck execution of qContentType().
-    ADD) qFreeAll() - Deallocates the all allocated memories by qDecoder.
+    NEW) qGetContentFlag() - qCheck execution of qContentType().
+    NEW) qFreeAll() - Deallocates the all allocated memories by qDecoder.
     FIX) qDecoder() - qcDecoder() is merged
     FIX) qSedStr(), qSedFile() - Changed parameters
     FIX) qCatFile() - Support formatted arguments, Support Win32 environment
@@ -74,9 +80,9 @@ qDecoder Changes
     operate when there is no existing cookie (when _cookie_first_entry is NULL).
 
   Release 6.0.4
-    ADD) qAddCookie() - Forcibly adds the cookie value to the cookie linked
+    NEW) qAddCookie() - Forcibly adds the cookie value to the cookie linked
     list.
-    ADD) qResetContentFlag() - Initializes the system for ContentType() to be
+    NEW) qResetContentFlag() - Initializes the system for ContentType() to be
     forcibly displayed in dublicate.
     FIX) qURLencode() - Adjusts the system so that "@./-?&=#\:_" will not be
     encoded.
@@ -89,22 +95,22 @@ qDecoder Changes
     such as KST while time is normally displayed in GMT.
     FIX) qReadFile(), qFileSize() - Supports Win32.
   Release 6.0.3
-    ADD) qValueReplace() - Transposes the tokens or specific character strings
+    NEW) qValueReplace() - Transposes the tokens or specific character strings
     of query strings into given character strings.
-    ADD) qStrReplace() - Transposes the tokens or specific character strings of
+    NEW) qStrReplace() - Transposes the tokens or specific character strings of
     strings into given character strings.
-    ADD) qReset() - Initializes qDecoder. (Deallocates memory and initializes
+    NEW) qReset() - Initializes qDecoder. (Deallocates memory and initializes
     internal variables)
     FIX) qAwkClose() - Modifies the system to have return values.
   Release 6.0.2
-    ADD) Adds the static library creation project files for Microsoft Visual C++
+    NEW) Adds the static library creation project files for Microsoft Visual C++
     use.
     FIX) Converts those internally used functions (starting with '_') into
     "static".
   Release 6.0.1
-    ADD) Applies Autoconf.
+    NEW) Applies Autoconf.
   Release 6.0
-    REP) qCgienv() - Replacement function qCGIenv().
+    REP) qCgienv() - Replacement function of qCGIenv().
     FIX) qDecoder() - Adds the security code for overflow attacks when
     multipart/form-data is interpreted.
     FIX) qSaveStr() - Removes permission setup arguments for the compatibility
@@ -117,8 +123,8 @@ qDecoder Changes
     have the number of transmitted bytes.
     FIX) qPrintf() - Modifies the system so that the length of combined
     character strings can be supported up to 10K.
-    ADD) Supports the shared library (libqDecoder.so).
-    ADD) qCGIenv() - Extended edition of qCgienv() of old versions.
+    NEW) Supports the shared library (libqDecoder.so).
+    NEW) qCGIenv() - Extended edition of qCgienv() of old versions.
   Release 5.0.8
     FIX) qSetCookie() - Corrects the sequence of arguments according to the
     standard specification.
@@ -126,19 +132,19 @@ qDecoder Changes
     that the decoded string pointer can be returned.
     FIX) qDownload() - Modifies the system so that the entire file size can be
     identified when downloading at clients.
-    ADD) qDownloadMime() - Transmits files to clients according to MIME.
-    ADD) qFileSize() - Notifies the file size by the unit of byte.
+    NEW) qDownloadMime() - Transmits files to clients according to MIME.
+    NEW) qFileSize() - Notifies the file size by the unit of byte.
   Release 5.0.7
     REP) qStrBig() - Replacement function qStrupr().
-    ADD) qArgMake(), qArgPrint(), qArgMatch(), qArgEmprint(), qArgFree() - A
+    NEW) qArgMake(), qArgPrint(), qArgMatch(), qArgEmprint(), qArgFree() - A
     group of functions that analyzes search queries, identifies the number of
     query hits inside strings, and displays the results making the matching
     parts in bold characters.
-    ADD) qValueDefault() - Same as qValue(). But hands over the basic string
+    NEW) qValueDefault() - Same as qValue(). But hands over the basic string
     value when there is no corresponding query name.
-    ADD) qValueNotEmpty() - Same as qValue(). But displays error messages in
+    NEW) qValueNotEmpty() - Same as qValue(). But displays error messages in
     case of NULL or blank character strings ("").
-    ADD) qStrincmp() - Plays the role of the strncmp() function plus the
+    NEW) qStrincmp() - Plays the role of the strncmp() function plus the
     stricmp() function. Compares the first n bytes of character strings without
     distinguishing uppercase/lowercase letters.
   Release 5.0.6
@@ -157,20 +163,20 @@ qDecoder Changes
   Release 5.0.5
     REP) qStrStr() - Replacement function qStristr()
     REP) qSed() - Replacement function qSedFile()
-    ADD) qStricmp() - Functionally the same as the strcmp() function. But does
+    NEW) qStricmp() - Functionally the same as the strcmp() function. But does
     not distinguish uppercase/lowercase letters.
-    ADD) qSedStr() - Performs source input by strings.
+    NEW) qSedStr() - Performs source input by strings.
   Release 5.0.4
     REP) qFileCat() - Replacement function qCatFile().
     FIX) qUpdateCounter() - Modifies interfaces (so that the update
     increase/decrease can be numerically controlled).
     FIX) qDecoder() - Processes the arguments handed over to the environment
     variable of QUERY-STRING in the multipart/form-data method.
-    ADD) qReadFile() - Reads files and stores them in memory.
-    ADD) qSaveStr() - Stores the contents of strings in files.
+    NEW) qReadFile() - Reads files and stores them in memory.
+    NEW) qSaveStr() - Stores the contents of strings in files.
   Release 5.0.3
     FIX) qPrintf(), qPuts() - Adds '&' to tokens again.
-    ADD) qfGetLine() - Returns allocated memory pointers by reading a line of
+    NEW) qfGetLine() - Returns allocated memory pointers by reading a line of
     files regardless of the length.
   Release 5.0.2
     FIX) qSed() - Makes a modification so that NULL pointers can be inserted as
@@ -182,7 +188,7 @@ qDecoder Changes
     FIX) qValue(), qiValue(), qfValue(), qfiValue(), qsValue(), qsiValue(),
     qcValue(), qciValue() - Uses vsprintf() instead of the vsnprintf() function
     due to the compatibility problem.
-    ADD) qSed() - Displays specified symbols in files after changing them into
+    NEW) qSed() - Displays specified symbols in files after changing them into
     defined character strings.
   Release 5.0
     REP) qSendFile() - Replacement function qFileCat().
@@ -190,31 +196,31 @@ qDecoder Changes
     qcValue(), qciValue() - Performs patch works so that arguments can be
     transmitted by formats.
     FIX) qPuts() - Removes '&' from the token list.
-    ADD) qValueFirst() - Acquires the variable value for the first argument
+    NEW) qValueFirst() - Acquires the variable value for the first argument
     among the arguments transmitted in an identical variable name.
-    ADD) qValueNext() - Acquires the next variable value.
-    ADD) qRedirect() - The page-jump function using the location: header of
+    NEW) qValueNext() - Acquires the next variable value.
+    NEW) qRedirect() - The page-jump function using the location: header of
     HTTP.
-    ADD) qFileCat() - Displays all the corresponding files in stdout.
+    NEW) qFileCat() - Displays all the corresponding files in stdout.
   Release 4.3.1
     FIX) Modifies install/deinstall method of Makefile.
   Release 4.3
     FIX) qDecoder() - Performs patch works so that the queries handed over to
     SSI can be received.
-    ADD) qAwkOpen()
-    ADD) qAwkNext()
-    ADD) qAwkClose()
-    ADD) *qGetFirstEntry()
-    ADD) *qitocomma()
+    NEW) qAwkOpen()
+    NEW) qAwkNext()
+    NEW) qAwkClose()
+    NEW) *qGetFirstEntry()
+    NEW) *qitocomma()
   Release 4.2
     FIX) qDecoder() - Patches related to Macintosh IE.
     FIX) qGgienv() - Patches related to Apache 1.3.
     FIX) qGetGMTime() - Performance improvement.
-    ADD) *qCGIname()
-    ADD) qDownload()
-    ADD) *qGetEnv()
-    ADD) *qStrBig()
-    ADD) *qStrStr()
+    NEW) *qCGIname()
+    NEW) qDownload()
+    NEW) *qGetEnv()
+    NEW) *qStrBig()
+    NEW) *qStrStr()
   Release 4.0.1
     FIX) qfDecoder() - emoves the length restriction of one line in files.
     FIX) qDecoder() - Modifies the internal algorithm of the multipart/form-data
@@ -237,7 +243,7 @@ qDecoder Changes
     FIX) qError() - Adds logging functions.
     FIX) qURLencode() - Makes a modification for numbers and English alphabets
     not to be encoded.
-    ADD) qErrLog()
+    NEW) qErrLog()
   Release 3.4.2
     FIX) qDecoder(), qfDecoder(), qcDecoder() - Modifies Linked List algorithm.
     FIX) qPuts() - Solves the problems in which warnings are given when
@@ -253,45 +259,45 @@ qDecoder Changes
     and &gt). Only those character strings such as 'mailto:guest@hongik.ac.kr'
     were automatically linked, but the automatic link of such types as
     'guest@hongik.ac.kr' can be performed.
-    ADD) qSetCookie()
-    ADD) *qURLencode()
-    ADD) qGetGMTime()
+    NEW) qSetCookie()
+    NEW) *qURLencode()
+    NEW) qGetGMTime()
   Release 3.3.1
     FIX) qDecoder() - Corrects the problem in which the '&' character of the
     query value is recognized as a separator.
   Release 3.3
-    ADD) qcDecoder()
-    ADD) *qcValue()
-    ADD) qcPrint()
-    ADD) qcFree()
+    NEW) qcDecoder()
+    NEW) *qcValue()
+    NEW) qcPrint()
+    NEW) qcFree()
   Release 3.2.2
-    ADD) qUpdateCounter()
-    ADD) qPuts()
-    ADD) qCheckURL()
+    NEW) qUpdateCounter()
+    NEW) qPuts()
+    NEW) qCheckURL()
   Release 3.2
-    ADD) qReadCounter()
-    ADD) qSaveCounter()
-    ADD) qStr09AZaz()
+    NEW) qReadCounter()
+    NEW) qSaveCounter()
+    NEW) qStr09AZaz()
   Release 3.1
-    ADD) qPrintf()
-    ADD) qCheckEmail()
-    ADD) qError()
+    NEW) qPrintf()
+    NEW) qCheckEmail()
+    NEW) qError()
   Release 3.0
-    ADD) *qfDecoder()
-    ADD) *qfValue()
-    ADD) qfPrint()
-    ADD) qError()
-    ADD) *qRemoveSpace()
+    NEW) *qfDecoder()
+    NEW) *qfValue()
+    NEW) qfPrint()
+    NEW) qError()
+    NEW) *qRemoveSpace()
   Release 2.2
-    ADD) qDecoder()
-    ADD) *qValue()
-    ADD) qPrint()
-    ADD) qFree()
-    ADD) qContentType()
-    ADD) qCgienv()
-    ADD) *qGetTime()
-    ADD) qCheckFile()
-    ADD) qSendFile()
+    NEW) qDecoder()
+    NEW) *qValue()
+    NEW) qPrint()
+    NEW) qFree()
+    NEW) qContentType()
+    NEW) qCgienv()
+    NEW) *qGetTime()
+    NEW) qCheckFile()
+    NEW) qSendFile()
 
   ------------------------------------------------------------------------
                           [The qDecoder Project]

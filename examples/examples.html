@@ -1,4 +1,14 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<!-------------------------------------------------------------->
+<!-- The qDecoder Project             http://www.qDecoder.org -->
+<!--                                   ftp://ftp.qDecoder.org -->
+<!--                                                          -->
+<!--         Copyright (C) 2001 The qDecoder Project.         -->
+<!--         Copyright (C) 1999 Hongik Internet, Inc.         -->
+<!--         Copyright (C) 1998 Nobreak Technologies, Inc.    -->
+<!--         Copyright (C) 1996,1997 Seung-young Kim          -->
+<!-------------------------------------------------------------->
+
 <html>
 <head>
   <title>The qDecoder Project: qDecoder Examples</title>
@@ -17,14 +27,6 @@ with low layers by the simple library interface regardless of COOKIE/GET/POST(in
 Thus, it enables the web based software to be more intuitively designed and implemented.
 qDecoder is developed according to the <a href="http://www.gnu.org/philosophy/free-software-for-freedom.html">free software</a> model and is publicly distributed.
 </blockquote>
-
-<p>It is only communication for qDecoder developers that is a qDecoder
-mailing list. Please join our mailing list, if you interest in CGI
-programming using qDecoder.
-To subscribe qDecoder mailing list send mail to majordomo@qDecoder.org
-with "subscribe qDecoder" in the body(not subject) of the message.
-Mailing-list archive can be founded at
-<a href="http://www.qDecoder.org/apps/bbs.cgi?db=qdecoder">here</a>.
 </i>
 
 <!-- ex) fetch.cgi -->
@@ -76,11 +78,33 @@ POST method: application/x-www-form-urlencoded<br>
 
 <!-- ex) upload.cgi -->
 <hr size="1" noshade>
-<h3>Example: <a href="upload.c">upload.c</a></h3>
+<h3>Example: <a href="upload.c">upload.c</a> (Simple version for uploading small size of file)</h3>
 <form method="post" action="upload.cgi" enctype="multipart/form-data">
-   Select file: <input type="file" name="binary">
-  <input type="submit" value="UPLOAD FILE">
+  Input text: <input type="text" name="text">
+  <br>Select file: <input type="file" name="binary">
+  <br><input type="submit" value="UPLOAD FILE">
 </form>
+qDecoder stores the binary data of uploaded file into memory.
+Then upload.c saves it into disk. All most case this is useful.
+And also this is default mode for multipart/form-data decoding.
+
+<!-- ex) uploadprogress.cgi -->
+<hr size="1" noshade>
+<h3>Example: <a href="uploadprogress.c">uploadprogress.c</a> (Advanced version for uploading huge size of file)</h3>
+<script language="JavaScript" src="qDecoder-upload/qDecoder-upload.js"></script>
+<form method="post" action="uploadprogress.cgi" enctype="multipart/form-data" onSubmit="return Q_UPLOAD(this);">
+  <input type="hidden" name="Q_UPLOAD_ID" value="">
+
+  Input text: <input type="text" name="text">
+  <br>Select file: <input type="file" name="binary1">
+  <br>Select file: <input type="file" name="binary2">
+  <br>Select file: <input type="file" name="binary3">
+  <br><input type="submit" value="UPLOAD FILE">
+</form>
+
+qDecoder stores the binary data of uploaded file into disk directly on the fly.
+So qDecoder uses smaller memory to handle huge size of file. If you want to activate
+this mode, please see this HTML source for hint.
 
 <!-- ex) download.cgi -->
 <hr size="1" noshade>

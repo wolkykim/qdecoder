@@ -89,7 +89,7 @@ static time_t _session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERV
 ** Usage : qSession(Repository Path);
 ** Return: New session 1 else 0.
 ** Do    : Start Session.
-** 
+**
 ** ex) qSession(NULL);   // use default storage
 **     qSession("/tmp"); // use /tmp for session storage
 **********************************************/
@@ -128,7 +128,7 @@ int qSession(char *repository) {
     if(_isValidSession(_session_timeout_path) <= 0) { /* expired or not found */
       unlink(_session_storage_path);
       unlink(_session_timeout_path);
-  
+ 
       /* remake storage path */
       sessionkey = qUniqueID();
       sprintf(_session_storage_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
@@ -151,10 +151,10 @@ int qSession(char *repository) {
     nowtime = qGetGMTime(created_gmt, (time_t)0);
     sprintf(created_sec, "%ld", (long)nowtime);
 
-    _session_first_entry = _EntryAdd(_session_first_entry, INTER_SESSIONID, sessionkey);
-    _EntryAdd(_session_first_entry, INTER_CREATED_GMT, created_gmt);
-    _EntryAdd(_session_first_entry, INTER_CREATED_SEC, created_sec);
-    _EntryAdd(_session_first_entry, INTER_CONNECTIONS, "1");
+    _session_first_entry = _EntryAdd(_session_first_entry, INTER_SESSIONID, sessionkey, 1);
+    _EntryAdd(_session_first_entry, INTER_CREATED_GMT, created_gmt, 1);
+    _EntryAdd(_session_first_entry, INTER_CREATED_SEC, created_sec, 1);
+    _EntryAdd(_session_first_entry, INTER_CONNECTIONS, "1", 1);
 
     /* set timeout interval */
     qSessionSetTimeout(_session_timeout_interval);
@@ -170,7 +170,7 @@ int qSession(char *repository) {
     /* update session informations */
     conns = qSessionValueInteger(INTER_CONNECTIONS);
     sprintf(connstr, "%d", ++conns);
-    _EntryAdd(_session_first_entry, INTER_CONNECTIONS, connstr);
+    _EntryAdd(_session_first_entry, INTER_CONNECTIONS, connstr, 1);
 
     /* set timeout interval */
     qSessionSetTimeout((time_t)atol(qSessionValue(INTER_INTERVAL_SEC)));
@@ -204,7 +204,7 @@ char *qSessionAdd(char *name, char *format, ...) {
   if(strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSessionAdd(): Message is too long or invalid.");
   va_end(arglist);
 
-  new_entry = _EntryAdd(_session_first_entry, name, value);
+  new_entry = _EntryAdd(_session_first_entry, name, value, 1);
   if(!_session_first_entry) _session_first_entry = new_entry;
 
   /* set modified flag */
@@ -408,7 +408,7 @@ time_t qSessionSetTimeout(time_t seconds) {
 
   /* save session informations */
   sprintf(interval_sec, "%ld", (long)_session_timeout_interval);
-  _EntryAdd(_session_first_entry, INTER_INTERVAL_SEC, interval_sec);
+  _EntryAdd(_session_first_entry, INTER_INTERVAL_SEC, interval_sec, 1);
 
   return _session_timeout_interval;
 }

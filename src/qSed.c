@@ -57,9 +57,27 @@ Q_Entry *qSedArgAdd(Q_Entry *first, char *name, char *format, ...) {
   if(strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSedArgAdd(): Message is too long or invalid.");
   va_end(arglist);
 
-  new_entry = _EntryAdd(first, name, value);
+  new_entry = _EntryAdd(first, name, value, 1);
   if(!first) first = new_entry;
-  
+
+  return first;
+}
+
+/**********************************************
+** Usage : qSedArgAddDirect(entry pointer, value);
+** Do    : Add given name and value to linked list.
+**         If same name exists, it'll be replaced.
+**
+** ex) qSedArgAddDirect(entries, "NAME", value);
+**********************************************/
+Q_Entry *qSedArgAddDirect(Q_Entry *first, char *name, char *value) {
+  Q_Entry *new_entry;
+
+  if(!strcmp(name, "")) qError("qSedArgAddDirect(): can not add empty name.");
+
+  new_entry = _EntryAdd(first, name, value, 1);
+  if(!first) first = new_entry;
+
   return first;
 }
 
@@ -82,7 +100,7 @@ void qSedArgFree(Q_Entry *first) {
 
 /**********************************************
 ** Usage : qSedStr(Entry pointer, fpout, arg);
-** Return: Success 1, Fail open fail 0.
+** Return: Success 1
 ** Do    : Stream Editor.
 **********************************************/
 int qSedStr(Q_Entry *first, char *srcstr, FILE *fpout) {

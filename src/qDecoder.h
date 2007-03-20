@@ -108,6 +108,7 @@ extern "C" {
  * qDecoder.c
  */
 int       qDecoder(void);
+void      qDecoderSetUploadBase(char *dir, int olderthan);
 char      *qValue(char *format, ...);
 int       qiValue(char *format, ...);
 char      *qValueDefault(char *defstr, char *format, ...);
@@ -250,6 +251,7 @@ int       qAwkStr(char array[][1024], char *str, char delim);
  * qSed.c
  */
 Q_Entry   *qSedArgAdd(Q_Entry *first, char *name, char *format, ...);
+Q_Entry *qSedArgAddDirect(Q_Entry *first, char *name, char *value);
 int       qSedArgPrint(Q_Entry *first);
 void      qSedArgFree(Q_Entry *first);
 int       qSedStr(Q_Entry *first, char *srcstr, FILE *fpout);

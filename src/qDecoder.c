@@ -34,15 +34,22 @@ Copyright Disclaimer:
 #include "qDecoder.h"
 #include "qInternal.h"
 
-
 /**********************************************
 ** Internal Functions Definition
 **********************************************/
 
 static int  _parse_urlencoded(void);
 static char *_get_query(char *method);
+static int  _parse_query(char *query, char sepchar);
 static int  _parse_multipart_data(void);
+static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, int *finish);
+static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, char *filename, int *filelen, int *finish);
 
+static char *_upload_getsavedir(char *upload_id, char *upload_savedir);
+static void _upload_progressbar(char *upload_id);
+static int _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csize, char *upload_cname);
+static int _upload_clear_savedir(char *dir);
+static int _upload_clear_base();
 
 /**********************************************
 ** Static Values Definition used only internal
@@ -51,6 +58,10 @@ static int  _parse_multipart_data(void);
 static Q_Entry *_first_entry = NULL;
 static Q_Entry *_multi_last_entry = NULL;
 static char _multi_last_key[1024];
+
+static int _upload_base_init = 0;
+static char _upload_base[1024];
+static int _upload_clear_olderthan = 0;
 
 static int _cookie_cnt = 0, _get_cnt = 0, _post_cnt = 0, _new_cnt = 0; /* counts per methods */
 
@@ -66,61 +77,73 @@ int qDecoder(void) {
 
   if(_first_entry != NULL) return -1;
 
-  content_type = "";
   content_type = getenv("CONTENT_TYPE");
 
+  /* for GET method */
   if(content_type == NULL) {
     amount = _parse_urlencoded();
+
+    /* if connection is upload progress dialog */
+    if(_first_entry != NULL) {
+      char *q_upload_id;
+
+      q_upload_id = qValue("Q_UPLOAD_ID");
+
+      if(q_upload_id != NULL) {
+      	if(_upload_base_init == 0) qError("qDecoder(): qDecoderSetUploadBase() must be called before.");
+        _upload_progressbar(q_upload_id);
+        exit(0);
+      }
+    }
   }
-  /* for application/x-www-form-urlencoded */
+  /* for POST method : application/x-www-form-urlencoded */
   else if(!strncmp (content_type, "application/x-www-form-urlencoded", strlen("application/x-www-form-urlencoded"))) {
     amount = _parse_urlencoded();
   }
-  /* for multipart/form-data */
+  /* for POST method : multipart/form-data */
   else if(!strncmp(content_type, "multipart/form-data", strlen("multipart/form-data"))) {
     amount = _parse_multipart_data();
   }
-  else { /* For Oracle Web Server */
+  /* for stupid browser : Oracle Web Server */
+  else {
     amount = _parse_urlencoded();
   }
 
   return amount;
 }
 
+/**********************************************
+** Usage : qDecoderSetUploadBase(path);
+** Do    : Set temporary uploading directory base.
+**********************************************/
+void qDecoderSetUploadBase(char *dir, int olderthan) {
+  strcpy(_upload_base, dir);
+  _upload_clear_olderthan = olderthan;
+  _upload_base_init = 1;
+}
+
 /* For decode application/x-www-form-urlencoded, used by qDecoder() */
 static int _parse_urlencoded(void) {
-  Q_Entry *entries, *back;
   char *query;
-  int  amount, cnt;
-  int  loop;
+  int  amount;
 
-  entries = back = NULL;
+  /* parse COOKIE */
+  query = _get_query("COOKIE");
+  _cookie_cnt = _parse_query(query, ';');
+  amount = _cookie_cnt;
+  if(query)free(query);
 
-  for(amount = 0, loop = 1; loop <= 3; loop++) {
-    char sepchar;
-    if(loop == 1 )      { query = _get_query("COOKIE"); sepchar = ';'; }
-    else if(loop == 2 ) { query = _get_query("GET"); sepchar = '&'; }
-    else if(loop == 3 ) { query = _get_query("POST"); sepchar = '&'; }
-    else break;
-    for(cnt = 0; query && *query; amount++, cnt++) {
-      back = entries;
-      entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-      if(back != NULL) back->next = entries;
-      if(_first_entry == NULL) _first_entry = entries;
+  /* parse GET method */
+  query = _get_query("GET");
+  _get_cnt = _parse_query(query, '&');
+  amount += _get_cnt;
+  if(query)free(query);
 
-      entries->value = _makeword(query, sepchar);
-      entries->name  = qRemoveSpace(_makeword(entries->value, '='));
-      entries->next  = NULL;
-
-      qURLdecode(entries->name);
-      qURLdecode(entries->value);
-    }
-    if(query)free(query);
-    
-    if(loop == 1 )      _cookie_cnt = cnt;
-    else if(loop == 2 ) _get_cnt = cnt;
-    else if(loop == 3 ) _post_cnt = cnt;
-  }
+  /* parse POST method */
+  query = _get_query("POST");
+  _post_cnt = _parse_query(query, '&');
+  amount += _post_cnt;
+  if(query)free(query);
 
   return amount;
 }
@@ -145,7 +168,7 @@ static char *_get_query(char *method) {
 
     return query;
   }
-  if(!strcmp(method, "POST")) {
+  else if(!strcmp(method, "POST")) {
     if(getenv("REQUEST_METHOD") == NULL) return NULL;
     if(strcmp("POST", getenv("REQUEST_METHOD")))return NULL;
     if(getenv("CONTENT_LENGTH") == NULL) qError("_get_query(): Your browser sent a non-HTTP compliant message.");
@@ -156,7 +179,7 @@ static char *_get_query(char *method) {
     query[i] = '\0';
     return query;
   }
-  if(!strcmp(method, "COOKIE")) {
+  else if(!strcmp(method, "COOKIE")) {
     if(getenv("HTTP_COOKIE") == NULL) return NULL;
     query = strdup(getenv("HTTP_COOKIE"));
     return query;
@@ -165,82 +188,77 @@ static char *_get_query(char *method) {
   return NULL;
 }
 
+static int _parse_query(char *query, char sepchar) {
+  int cnt;
+
+  for(cnt = 0; query && *query; cnt++) {
+    Q_Entry *entry;
+    char *name, *value;
+
+    value = _makeword(query, sepchar);
+    name = qRemoveSpace(_makeword(value, '='));
+    qURLdecode(name);
+    qURLdecode(value);
+
+    entry = _EntryAdd(_first_entry, name, value, 2);
+    if(_first_entry == NULL) _first_entry = entry;
+  }
+
+  return cnt;
+}
+
 /* For decode multipart/form-data, used by qDecoder() */
 static int _parse_multipart_data(void) {
-  Q_Entry *entries, *back;
-  char *query;
+  Q_Entry *entry;
+  char *query, buf[1024];
   int  amount;
-  int  loop;
-  int  cnt;
 
-  char *name, *value, *filename, *contenttype;
-  int  valuelen;
-
-  char boundary[256], boundaryEOF[256];
-  char rnboundaryrn[256], rnboundaryEOF[256];
-  int  boundarylen, boundaryEOFlen, maxboundarylen;
-
-  char buf[1024];
-  int  c, c_count;
+  char boundary[256];
+  int  maxboundarylen; /* for check overflow attack */
 
   int  finish;
+
+  /* for progress upload */
+  int  upload_type = 0; /* 0: save into memory, 1: save into file */
+  char upload_savedir[1024];
+  char upload_tmppath[1024];
 
 #ifdef _WIN32
   setmode(fileno(stdin), _O_BINARY);
   setmode(fileno(stdout), _O_BINARY);
 #endif
 
-  entries = back = NULL;
+  /*
+   * For parse COOKIE and GET method
+   */
 
-  /* For parse GET method & Cookie */
-  for(amount = 0, loop = 1; loop <= 2; loop++) {
-    char sepchar;
+  /* parse COOKIE */
+  query = _get_query("COOKIE");
+  _cookie_cnt = _parse_query(query, ';');
+  amount = _cookie_cnt;
+  if(query)free(query);
 
-    if(loop == 1 ) { query = _get_query("COOKIE"); sepchar = ';'; }
-    else if(loop == 2 ) { query = _get_query("GET"); sepchar = '&'; }
-    else break;
+  /* parse GET method */
+  query = _get_query("GET");
+  _get_cnt = _parse_query(query, '&');
+  amount += _get_cnt;
+  if(query)free(query);
 
-    for(cnt = 0; query && *query; amount++, cnt++) {
-      back = entries;
-      entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-      if(back != NULL) back->next = entries;
-      if(_first_entry == NULL) _first_entry = entries;
-
-      entries->value = _makeword(query, sepchar);
-      entries->name  = qRemoveSpace(_makeword(entries->value, '='));
-      entries->next  = NULL;
-
-      qURLdecode(entries->name);
-      qURLdecode(entries->value);
-    }
-    if(query)free(query);
-
-    if(loop == 1 )      _cookie_cnt = cnt;
-    else if(loop == 2 ) _get_cnt = cnt;
-
-  }
-
-  /* For parse multipart/form-data method */
+  /*
+   * For parse multipart/form-data method
+   */
 
   /* Force to check the boundary string length to defense overflow attack */
   maxboundarylen =  strlen("--");
   maxboundarylen += strlen(strstr(getenv("CONTENT_TYPE"), "boundary=") + strlen("boundary="));
   maxboundarylen += strlen("--");
   maxboundarylen += strlen("\r\n");
-  if(maxboundarylen >= sizeof(boundary)) qError("_parse_multipart_data(): The boundary string is too long. Stopping process.");
+  if(maxboundarylen >= sizeof(boundary)) qError("_parse_multipart_data(): The boundary string is too long(Overflow Attack?). Stopping process.");
 
   /* find boundary string */
   sprintf(boundary,    "--%s", strstr(getenv("CONTENT_TYPE"), "boundary=") + strlen("boundary="));
   /* This is not necessary but, I can not trust MS Explore */
   qRemoveSpace(boundary);
-
-  sprintf(boundaryEOF, "%s--", boundary);
-
-  sprintf(rnboundaryrn, "\r\n%s\r\n", boundary);
-  sprintf(rnboundaryEOF, "\r\n%s", boundaryEOF);
-
-  boundarylen    = strlen(boundary);
-  boundaryEOFlen = strlen(boundaryEOF);
 
   /* If you want to observe the string from stdin, enable this section. */
   /* This section is made for debugging.                                */
@@ -267,18 +285,54 @@ static int _parse_multipart_data(void) {
   /* for explore 4.0 of NT, it sent \r\n before starting, fucking Micro$oft */
   if(!strcmp(buf, "\r\n")) _fgets(buf, sizeof(buf), stdin);
 
-  if(strncmp(buf, boundary, boundarylen) != 0) qError("_parse_multipart_data(): String format invalid.");
+  if(strncmp(buf, boundary, strlen(boundary)) != 0) qError("_parse_multipart_data(): String format invalid.");
 
-  for(finish = 0, cnt = 0; finish != 1; amount++, cnt++) {
+  for(finish = 0, _post_cnt = 0; finish != 1; amount++, _post_cnt++) {
+    char *name="", *value=NULL, *filename="", *contenttype="";
+    int  valuelen = 0;
 
-    /* parse header */
-    name = "";
-    filename = "";
-    contenttype = "";
+    /* check file save mode */
+    if(_first_entry != NULL && upload_type == 0) {
+      char *upload_id;
 
+      upload_id = qValue("Q_UPLOAD_ID");
+
+      if(upload_id != NULL) {
+      	if(_upload_base_init == 0) qError("_parse_multipart_data(): qDecoderSetUploadBase() must be called before.");
+
+      	if(strlen(upload_id) == 0) upload_id = qUniqueID();
+        upload_type = 1; /* turn on the flag - save into file directly */
+
+        /* generate temporary uploading directory path */
+        if(_upload_getsavedir(upload_id, upload_savedir) == NULL) qError("_parse_multipart_data(): Invalid Q_UPLOAD_ID");
+
+        /* first, we clear old temporary files */
+        if(_upload_clear_base() < 0) qError("_parse_multipart_data(): Can not remove old temporary files at %s", _upload_base);
+
+        /* if exists, remove whole directory */
+        if(qCheckFile(upload_savedir) == 1) {
+        	if(_upload_clear_savedir(upload_savedir) == 0) qError("_parse_multipart_data(): Can not remove temporary uploading directory %s", upload_savedir);
+        }
+
+        /* make temporary uploading directory */
+        if(mkdir(upload_savedir, 0755) == -1) qError("_parse_multipart_data(): Can not make temporary uploading directory %s", upload_savedir);
+
+        /* save total contents length */
+        sprintf(upload_tmppath, "%s/Q_UPLOAD_TSIZE", upload_savedir);
+        if(qCountSave(upload_tmppath, atoi(getenv("CONTENT_LENGTH"))) == 0) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
+
+        /* save start time */
+        sprintf(upload_tmppath, "%s/Q_UPLOAD_START", upload_savedir);
+        if(qCountSave(upload_tmppath, time(NULL)) == 0) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
+      }
+    }
+
+    /* get information */
     while(_fgets(buf, sizeof(buf), stdin)) {
       if(!strcmp(buf, "\r\n")) break;
       else if(!qStrincmp(buf, "Content-Disposition: ", strlen("Content-Disposition: "))) {
+        int c_count;
+
         /* get name field */
         name = strdup(buf + strlen("Content-Disposition: form-data; name=\""));
         for(c_count = 0; (name[c_count] != '\"') && (name[c_count] != '\0'); c_count++);
@@ -308,119 +362,427 @@ static int _parse_multipart_data(void) {
         qRemoveSpace(contenttype);
       }
     }
-    
+
     /* get value field */
-    for(value = NULL, valuelen = (1024 * 16), c_count = 0; (c = fgetc(stdin)) != EOF; ) {
-      if(c_count == 0) {
-        value = (char *)malloc(sizeof(char) * valuelen);
-        if(value == NULL) qError("_parse_multipart_data(): Memory allocation fail.");
-      }
-      else if(c_count == valuelen - 1) {
-        char *valuetmp;
-
-        valuelen *= 2;
-
-        /* Here, we do not use realloc(). Because sometimes it is unstable. */
-        valuetmp = (char *)malloc(sizeof(char) * valuelen);
-        if(valuetmp == NULL) qError("_parse_multipart_data(): Memory allocation fail.");
-        memcpy(valuetmp, value, c_count);
-        free(value);
-        value = valuetmp;
-      }
-      value[c_count++] = (char)c;
-
-      /* check end */
-      if((c == '\n') || (c == '-')) {
-        value[c_count] = '\0';
-
-        if((c_count - (2 + boundarylen + 2)) >= 0) {
-          if(!strcmp(value + (c_count - (2 + boundarylen + 2)), rnboundaryrn)) {
-            value[c_count - (2 + boundarylen + 2)] = '\0';
-            valuelen = c_count - (2 + boundarylen + 2);
-            break;
-          }
-        }
-        if((c_count - (2 + boundaryEOFlen)) >= 0) {
-          if(!strcmp(value + (c_count - (2 + boundaryEOFlen)), rnboundaryEOF)) {
-            value[c_count - (2 + boundaryEOFlen)] = '\0';
-            valuelen = c_count - (2 + boundaryEOFlen);
-            finish = 1;
-            break;
-          }
-        }
-
-        /* For Micro$oft Explore on MAC, they do not follow rules */
-        if((c_count - (boundarylen + 2)) == 0) {
-          char boundaryrn[256];
-          sprintf(boundaryrn, "%s\r\n", boundary);
-          if(!strcmp(value, boundaryrn)) {
-            value[0] = '\0';
-            valuelen = 0;
-            break;
-          }
-        }
-        if((c_count - boundaryEOFlen) == 0) {
-          if(!strcmp(value, boundaryEOF)) {
-            value[0] = '\0';
-            valuelen = 0;
-            finish = 1;
-            break;
-          }
-        }
-      }
+    if(strcmp(filename, "") && upload_type == 1) {
+      value = _parse_multipart_value_into_disk(boundary, upload_savedir, filename, &valuelen, &finish);
+    }
+    else {
+      value = _parse_multipart_value_into_memory(boundary, &valuelen, &finish);
     }
 
-    if(c == EOF) qError("_parse_multipart_data(): Broken stream at end of '%s'.", name);
+    entry = _EntryAdd(_first_entry, name, value, 2);
+    if(_first_entry == NULL) _first_entry = entry;
 
-    /* store in linked list */
-    /* store data */
-    back = entries;
-    entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-    if(back != NULL) back->next = entries;
-    if(_first_entry == NULL) _first_entry = entries;
-
-    entries->name  = name;
-    entries->value = value;
-    entries->next  = NULL;
-
+    /* store some additional info */
     if(strcmp(filename, "") != 0) {
-      /* store data length, 'NAME.length'*/
-      back = entries;
-      entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-      back->next = entries;
+      char *ename, *evalue;
 
-      entries->name  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".length") + 1));
-      entries->value = (char *)malloc(sizeof(char) * 20 + 1);
-      sprintf(entries->name,  "%s.length", name);
-      sprintf(entries->value, "%d", valuelen);
+      /* store data length, 'NAME.length'*/
+      ename  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".length") + 1));
+      evalue = (char *)malloc(sizeof(char) * 20 + 1);
+      sprintf(ename,  "%s.length", name);
+      sprintf(evalue, "%d", valuelen);
+      _EntryAdd(_first_entry, ename, evalue, 2);
 
       /* store filename, 'NAME.filename'*/
-      back = entries;
-      entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-      back->next = entries;
-
-      entries->name  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".filename") + 1));
-      entries->value = filename;
-      sprintf(entries->name,  "%s.filename", name);
-      entries->next  = NULL;
+      ename  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".filename") + 1));
+      sprintf(ename,  "%s.filename", name);
+      evalue = filename;
+      _EntryAdd(_first_entry, ename, evalue, 2);
 
       /* store contenttype, 'NAME.contenttype'*/
-      back = entries;
-      entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-      back->next = entries;
+      ename  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".contenttype") + 1));
+      sprintf(ename,  "%s.contenttype", name);
+      evalue = contenttype;
+      _EntryAdd(_first_entry, ename, evalue, 2);
 
-      entries->name  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".contenttype") + 1));
-      entries->value = contenttype;
-      sprintf(entries->name,  "%s.contenttype", name);
-      entries->next  = NULL;
-      
-      cnt += 3;
+      _post_cnt += 3;
+
+      if(upload_type == 1) {
+        ename  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".savepath") + 1));
+        sprintf(ename,  "%s.savepath", name);
+        evalue = strdup(value);
+        _EntryAdd(_first_entry, ename, evalue, 2);
+
+        _post_cnt += 1;
+      }
     }
   }
 
-  _post_cnt = cnt;
+  if(upload_type == 1) { /* save end time */
+    sprintf(upload_tmppath, "%s/Q_UPLOAD_END", upload_savedir);
+    if(qCountSave(upload_tmppath, time(NULL)) == 0) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
+  }
 
   return amount;
+}
+
+static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, int *finish) {
+  char boundaryEOF[256], rnboundaryEOF[256];
+  char boundaryrn[256], rnboundaryrn[256];
+  int  boundarylen, boundaryEOFlen;
+
+  char *value;
+  int  length;
+  int  c, c_count, mallocsize;
+
+  /* set boundary strings */
+  sprintf(boundaryEOF, "%s--", boundary);
+  sprintf(rnboundaryEOF, "\r\n%s", boundaryEOF);
+  sprintf(boundaryrn, "%s\r\n", boundary);
+  sprintf(rnboundaryrn, "\r\n%s\r\n", boundary);
+
+  boundarylen    = strlen(boundary);
+  boundaryEOFlen = strlen(boundaryEOF);
+
+  for(value = NULL, length = 0, mallocsize = (1024 * 16), c_count = 0; (c = fgetc(stdin)) != EOF; ) {
+    if(c_count == 0) {
+      value = (char *)malloc(sizeof(char) * mallocsize);
+      if(value == NULL) qError("_parse_multipart_data(): Memory allocation fail.");
+    }
+    else if(c_count == mallocsize - 1) {
+      char *valuetmp;
+
+      mallocsize *= 2;
+
+      /* Here, we do not use realloc(). Because sometimes it is unstable. */
+      valuetmp = (char *)malloc(sizeof(char) * mallocsize);
+      if(valuetmp == NULL) qError("_parse_multipart_data(): Memory allocation fail.");
+      memcpy(valuetmp, value, c_count);
+      free(value);
+      value = valuetmp;
+    }
+    value[c_count++] = (char)c;
+
+    /* check end */
+    if((c == '\n') || (c == '-')) {
+      value[c_count] = '\0';
+
+      if((c_count - (2 + boundarylen + 2)) >= 0) {
+        if(!strcmp(value + (c_count - (2 + boundarylen + 2)), rnboundaryrn)) {
+          value[c_count - (2 + boundarylen + 2)] = '\0';
+          length = c_count - (2 + boundarylen + 2);
+          break;
+        }
+      }
+      if((c_count - (2 + boundaryEOFlen)) >= 0) {
+        if(!strcmp(value + (c_count - (2 + boundaryEOFlen)), rnboundaryEOF)) {
+          value[c_count - (2 + boundaryEOFlen)] = '\0';
+          length = c_count - (2 + boundaryEOFlen);
+          *finish = 1;
+          break;
+        }
+      }
+
+      /* For Micro$oft Explore on MAC, they do not follow rules */
+      if((c_count - (boundarylen + 2)) == 0) {
+        if(!strcmp(value, boundaryrn)) {
+          value[0] = '\0';
+          length = 0;
+          break;
+        }
+      }
+      if((c_count - boundaryEOFlen) == 0) {
+        if(!strcmp(value, boundaryEOF)) {
+          value[0] = '\0';
+          length = 0;
+          *finish = 1;
+          break;
+        }
+      }
+    }
+  }
+
+  if(c == EOF) qError("_parse_multipart_data(): Broken stream.");
+
+  *valuelen = length;
+  return value;
+}
+
+static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, char *filename, int *filelen, int *finish) {
+  char boundaryEOF[256], rnboundaryEOF[256];
+  char boundaryrn[256], rnboundaryrn[256];
+  int  boundarylen, boundaryEOFlen;
+
+  /* input */
+  char buffer[1024*8], *bp;
+  int  bufc;
+  int  c;
+
+  /* output */
+  static int upload_fcnt = 0; /* file save counter */
+  FILE *upload_fp;
+  char upload_path[1024];
+  int  upload_length;
+
+  /* temp */
+  int i;
+
+  /* set boundary strings */
+  sprintf(boundaryEOF, "%s--", boundary);
+  sprintf(rnboundaryEOF, "\r\n%s", boundaryEOF);
+  sprintf(boundaryrn, "%s\r\n", boundary);
+  sprintf(rnboundaryrn, "\r\n%s\r\n", boundary);
+
+  boundarylen    = strlen(boundary);
+  boundaryEOFlen = strlen(boundaryEOF);
+
+  /* initialize */
+  upload_fcnt++;
+  sprintf(upload_path, "%s/%d-%s", savedir, upload_fcnt, filename);
+
+  /* open file */
+  upload_fp = fopen(upload_path, "w");
+  if(upload_fp == NULL) qError("_parse_multipart_value_into_disk(): Can not open file %s", upload_path);
+
+  /* read stream */
+  for(upload_length = 0, bufc = 0, upload_length = 0; (c = fgetc(stdin)) != EOF; ) {
+    if(bufc == sizeof(buffer) - 1) {
+      int leftsize;
+
+      /* save first 16KB */
+      leftsize = boundarylen + 8;
+      for(i = 0, bp = buffer; i < bufc-leftsize; i++) fputc(*bp++, upload_fp);
+      memcpy(buffer, bp, leftsize);
+      bufc = leftsize;
+    }
+    buffer[bufc++] = (char)c;
+    upload_length++;
+
+    /* check end */
+    if((c == '\n') || (c == '-')) {
+      buffer[bufc] = '\0';
+
+      if((bufc - (2 + boundarylen + 2)) >= 0) {
+        if(!strcmp(buffer + (bufc - (2 + boundarylen + 2)), rnboundaryrn)) {
+          bufc          -= (2 + boundarylen + 2);
+          upload_length -= (2 + boundarylen + 2);
+          break;
+        }
+      }
+      if((bufc - (2 + boundaryEOFlen)) >= 0) {
+        if(!strcmp(buffer + (bufc - (2 + boundaryEOFlen)), rnboundaryEOF)) {
+          bufc          -= (2 + boundaryEOFlen);
+          upload_length -= (2 + boundaryEOFlen);
+          *finish = 1;
+          break;
+        }
+      }
+
+      /* For Micro$oft Explore on MAC, they do not follow rules */
+      if(upload_length == bufc) {
+        if((bufc - (boundarylen + 2)) == 0) {
+          if(!strcmp(buffer, boundaryrn)) {
+            bufc = 0;
+            upload_length = 0;
+            break;
+          }
+        }
+        if((bufc - boundaryEOFlen) == 0) {
+          if(!strcmp(buffer, boundaryEOF)) {
+            bufc = 0;
+            upload_length = 0;
+            *finish = 1;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if(c == EOF) qError("_parse_multipart_data(): Broken stream.");
+
+  /* save lest */
+  for(bp = buffer, i = 0; i < bufc; i++) fputc(*bp++, upload_fp);
+  fclose(upload_fp);
+
+  *filelen = upload_length;
+
+  return strdup(upload_path);
+}
+
+static char *_upload_getsavedir(char *upload_id, char *upload_savedir) {
+  char md5seed[1024];
+
+  if(_upload_base_init == 0 || upload_id == NULL) return NULL;
+  if(!strcmp(upload_id, "")) return NULL;
+
+  sprintf(md5seed, "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
+  sprintf(upload_savedir, "%s/Q_%s", _upload_base, qMD5Str(md5seed));
+
+  return upload_savedir;
+}
+
+static void _upload_progressbar(char *upload_id) {
+  int  drawrate = qiValue("Q_UPLOAD_DRAWRATE");
+  char *template = qValue("Q_UPLOAD_TEMPLATE");
+
+  int last_csize = 0, freezetime = 0;
+  int upload_tsize = 0, upload_csize = 0;
+  char upload_cname[256];
+
+  /* adjust drawrate */
+  if(drawrate == 0) drawrate = 1000;
+  else if(drawrate < 100) drawrate = 100;
+  else if(drawrate > 3000) drawrate = 3000;
+
+  /* check arguments */
+  if(!strcmp(upload_id, "")) {
+    printf("_print_progressbar(): Q_UPLOAD_ID is invalid.");
+    return;
+  }
+  if(template == NULL) {
+    printf("_print_progressbar(): Q_UPLOAD_TEMPLATE query not found.");
+    return;
+  }
+
+  /* print out qDecoder logo */
+  qContentType("text/html");
+
+  /* print template */
+  if(qSedFile(NULL, template, stdout) == 0) {
+    printf("_print_progressbar(): Can not open %s", template);
+    return;
+  }
+  if(fflush(stdout) != 0) return;;
+
+  /* draw progress bar */
+  while(1) {
+    upload_tsize = upload_csize = 0;
+
+    _upload_getstatus(upload_id, &upload_tsize, &upload_csize, upload_cname);
+
+    if(upload_tsize == 0 && upload_csize > 0) break; /* tsize file is removed. upload ended */
+
+    if(last_csize < upload_csize) {
+      qStrReplace("tr", upload_cname, "'", "`");
+
+      printf("<script language='JavaScript'>");
+      printf("if(Q_setProgress)Q_setProgress(%d,%d,'%s');", upload_tsize, upload_csize, upload_cname);
+      printf("</script>\n");
+
+      last_csize = upload_csize;
+      freezetime = 0;
+    }
+    else if(last_csize > upload_csize) {
+      break; /* upload ended */
+    }
+    else {
+      if(freezetime > 10000) {
+        break; /* maybe upload connection is closed */
+      }
+
+      if(upload_csize > 0) {
+        printf("<script language='JavaScript'>");
+        printf("if(Q_setProgress)Q_setProgress(%d,%d,'%s');", upload_tsize, upload_csize, upload_cname);
+        printf("</script>\n");
+      }
+
+      freezetime += drawrate;
+    }
+
+    fflush(stdout);
+    usleep(drawrate * 1000);
+  }
+
+  printf("<script language='JavaScript'>");
+  printf("window.close();");
+  printf("</script>\n");
+
+  fflush(stdout);
+}
+
+static int _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csize, char *upload_cname) {
+  DIR     *dp;
+  struct  dirent *dirp;
+
+  char upload_savedir[1024], upload_filepath[1024];
+
+  /* initialize */
+  *upload_tsize = *upload_csize = 0;
+  strcpy(upload_cname, "");
+
+  /* get basepath */
+  if(_upload_getsavedir(upload_id, upload_savedir) == NULL) qError("_upload_getstatus(): Q_UPLOAD_ID does not set.");
+
+  /* open upload folder */
+  if((dp = opendir(upload_savedir)) == NULL) return 0;
+
+  /* read tsize */
+  sprintf(upload_filepath, "%s/Q_UPLOAD_TSIZE", upload_savedir);
+  *upload_tsize = qCountRead(upload_filepath);
+
+  while((dirp = readdir(dp)) != NULL) {
+    if(dirp->d_name[0]-'0' <= 0 || dirp->d_name[0]-'0' > 9) continue; /* first char must be a number */
+
+    /* sort last filename */
+    if(strcmp(upload_cname, dirp->d_name) < 0) strcpy(upload_cname, dirp->d_name);
+
+    sprintf(upload_filepath, "%s/%s", upload_savedir, dirp->d_name);
+    *upload_csize += qFileSize(upload_filepath);
+  }
+  closedir(dp);
+
+  if(strstr(upload_cname, "-") != NULL) {
+    strcpy(upload_cname, strstr(upload_cname, "-")+1);
+  }
+
+  return 1;
+}
+
+static int _upload_clear_savedir(char *dir) {
+  DIR     *dp;
+  struct  dirent *dirp;
+  char    filepath[1024];
+
+  /* open upload folder */
+  if((dp = opendir(dir)) == NULL) return 0;
+
+  while((dirp = readdir(dp)) != NULL) {
+    if(!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..")) continue;
+
+    sprintf(filepath, "%s/%s", dir, dirp->d_name);
+    unlink(filepath);
+  }
+  closedir(dp);
+
+  if(rmdir(dir) != 0) return 0;
+  return 1;
+}
+
+static int _upload_clear_base() {
+  DIR     *dp;
+  struct  dirent *dirp;
+  char    filepath[1024];
+  int     delcnt = 0;
+  time_t  now = time(NULL);
+
+  if(_upload_base_init == 0) return -1;
+  if(_upload_clear_olderthan <= 0) return 0;
+
+  /* open upload folder */
+  if((dp = opendir(_upload_base)) == NULL) return 0;
+
+  while((dirp = readdir(dp)) != NULL) {
+    time_t starttime;
+
+    if(!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..") || strncmp(dirp->d_name, "Q_", 2) != 0) continue;
+
+    sprintf(filepath, "%s/%s/Q_UPLOAD_START", _upload_base, dirp->d_name);
+    starttime = qCountRead(filepath);
+    if(starttime > 0 && now - starttime < _upload_clear_olderthan) continue;
+
+    sprintf(filepath, "%s/%s", _upload_base, dirp->d_name);
+    if(_upload_clear_savedir(filepath) == 0) {
+    	delcnt = -1;
+    	break;
+    }
+    delcnt++;
+  }
+  closedir(dp);
+
+  return delcnt;
 }
 
 /**********************************************
@@ -619,8 +981,8 @@ char *qValueAdd(char *name, char *format, ...) {
 
   if(_first_entry == NULL) qDecoder();
 
-  if(qValue(name) == NULL) _new_cnt++; // if it's new entry, count up.
-  new_entry = _EntryAdd(_first_entry, name, value);
+  if(qValue(name) == NULL) _new_cnt++; /* if it's new entry, count up. */
+  new_entry = _EntryAdd(_first_entry, name, value, 1);
   if(!_first_entry) _first_entry = new_entry;
 
   return qValue(name);
@@ -656,7 +1018,7 @@ void qValueRemove(char *format, ...) {
 
 /**********************************************
 ** Usage : qValueType(name);
-** Return: Cookie 'C', Get method 'G', Post method 'P', New data 'N', Not found '-' 
+** Return: Cookie 'C', Get method 'G', Post method 'P', New data 'N', Not found '-'
 ** Do    : Returns type of query.
 **
 ** ex) qValueRemove("NAME");
@@ -809,11 +1171,10 @@ char *qCookieValue(char *format, ...) {
   va_end(arglist);
 
   if(_first_entry == NULL) qDecoder();
-  
+
   if(qValueType(name) == 'C') {
     return _EntryValue(_first_entry, name);
   }
-  
+
   return NULL;
 }
-

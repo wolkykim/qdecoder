@@ -38,7 +38,7 @@ char    *_fgets(char *str, int size, FILE *stream);
 int     _flockopen(FILE *fp);
 int     _flockclose(FILE *fp);
 
-Q_Entry *_EntryAdd(Q_Entry *first, char *name, char *value);
+Q_Entry *_EntryAdd(Q_Entry *first, char *name, char *value, int flag);
 Q_Entry *_EntryRemove(Q_Entry *first, char *name);
 char    *_EntryValue(Q_Entry *first, char *name);
 int     _EntryiValue(Q_Entry *first, char *name);
@@ -48,3 +48,7 @@ void    _EntryFree(Q_Entry *first);
 int     _EntrySave(Q_Entry *first, char *filename);
 Q_Entry *_EntryLoad(char *filename);
 
+/**********************************************
+** Internal Definition
+**********************************************/
+#define QDECODER_PRIVATEKEY	"qDecoder-by-Seung_young_Kim"

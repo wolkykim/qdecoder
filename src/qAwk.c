@@ -67,8 +67,7 @@ int qAwkOpen(char *filename, char delim) {
 **********************************************/
 int qAwkNext(char array[][1024]) {
   char *buf;
-  char *bp1, *bp2;
-  int i, exitflag;
+  int i;
 
   if(_awkfp == NULL) qError("qAwkNext(): There is no opened handle.");
   if((buf = qRemoveSpace(qfGetLine(_awkfp))) == NULL) return -1;

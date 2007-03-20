@@ -41,28 +41,40 @@ Copyright Disclaimer:
 
 
 /**********************************************
-** Usage : _EntryAdd(first entry, name, value);
+** Usage : _EntryAdd(first entry, name, value, replace);
 ** Return: New entry pointer.
-** Do    : Add entry at last but if same name exists, replace it.
+** Do    : Add entry at last.
+**         flag = 0 : just append.
+**         flag = 1 : if same name exists, replace it.
+**         flag = 2 : same as flag 0 but the name and value are binary pointer.
+**                    so the pointer will be used instead strdup().
 **********************************************/
-Q_Entry *_EntryAdd(Q_Entry *first, char *name, char *value) {
+Q_Entry *_EntryAdd(Q_Entry *first, char *name, char *value, int flag) {
   Q_Entry *entries;
 
   if(!strcmp(name, "")) return NULL;
 
   /* check same name */
-  for(entries = first; entries; entries = entries->next) {
-    if(!strcmp(entries->name, name)) {
-    	free(entries->value);
-    	entries->value = strdup(value);
-    	return entries;
+  if(flag == 1) {
+    for(entries = first; entries; entries = entries->next) {
+      if(!strcmp(entries->name, name)) {
+        free(entries->value);
+        entries->value = strdup(value);
+        return entries;
+      }
     }
   }
 
   /* new entry */
   entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-  entries->name  = strdup(name);
-  entries->value = strdup(value);
+  if(flag == 2) {
+    entries->name  = name;
+    entries->value = value;
+  }
+  else {
+    entries->name  = strdup(name);
+    entries->value = strdup(value);
+  }
   entries->next  = NULL;
 
   /* If first is not NULL, find last entry then make a link*/

@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" >
+<!-------------------------------------------------------------->
+<!-- The qDecoder Project             http://www.qDecoder.org -->
+<!--                                   ftp://ftp.qDecoder.org -->
+<!--                                                          -->
+<!--         Copyright (C) 2001 The qDecoder Project.         -->
+<!--         Copyright (C) 1999 Hongik Internet, Inc.         -->
+<!--         Copyright (C) 1998 Nobreak Technologies, Inc.    -->
+<!--         Copyright (C) 1996,1997 Seung-young Kim          -->
+<!-------------------------------------------------------------->
+
+<html>
+<head>
+  <title>Uploading Files...</title>
+  <style type="text/css">
+    td {font-size: 9pt}
+    .ellips {overflow:hidden; text-overflow:ellipsis; }
+    .
+  </style>
+  <script language="JavaScript">
+    var iMaxBarWidth = 300;
+
+    var iStartTime = new Date().getTime();
+    var iLastCsize = 0;
+    function Q_setProgress(iTsize, iCsize, sCname) {
+      var iPercent, iBarWidth, iKbPerSec, iEstablishedSec, iTimeleftSec;
+
+      // connection closed by user
+      if(iTsize == 0 && iCsize == 0) {
+        window.close();
+        return;
+      }
+
+      // calculate: upload percent
+      iPercent = Math.round((iCsize * 100) / iTsize);
+      if(iPercent == 0) iPercent = 1;
+
+      // calculate: bar width
+      iBarWidth = Math.round((iCsize * iMaxBarWidth) / iTsize);
+      if(iBarWidth == 0) iBarWidth = 1;
+
+      // calculate: established
+      iEstablishedSec = Math.round((new Date().getTime() - iStartTime) / 1000);
+      if(iEstablishedSec == 0) iEstablishedSec = 1;
+
+      // calculate: kb per sec
+      iKbPerSec = Math.round((iCsize / iEstablishedSec) / 1024);
+
+      // calculate: time left
+      iTimeleftSec = Math.round((iTsize - iCsize) / (iCsize / iEstablishedSec));
+      var iHour = parseInt(iTimeleftSec / 3600);
+      var iMin  = parseInt((iTimeleftSec - (iHour * 3600)) / 60);
+      var iSec  = parseInt(iTimeleftSec - (iHour * 3600) - (iMin * 60));
+      var sTimeleft = "";
+      if(iHour < 10) sTimeleft += "0";
+      sTimeleft += iHour+":";
+      if(iMin < 10) sTimeleft += "0";
+      sTimeleft += iMin+":";
+      if(iSec < 10) sTimeleft += "0";
+      sTimeleft += iSec;
+
+      // draw
+
+      if(iCsize > iLastCsize) oTxtTitle.innerHTML = "<b>Uploading...</b> ("+Math.round(iCsize/1024)+"/"+Math.round(iTsize/1024)+" KB)";
+      else oTxtTitle.innerHTML = "<b>Waiting...</b> ("+Math.round(iCsize/1024)+"/"+Math.round(iTsize/1024)+" KB)";
+
+      oTxtTimeleft.innerHTML = sTimeleft;
+
+      oProgBar.width = iBarWidth;
+      oTxtPercent.innerHTML = iPercent;
+
+      oTxtFilename.innerHTML = sCname;
+      oTxtKbpersec.innerHTML = iKbPerSec;
+
+      iLastCsize = iCsize;
+    }
+  </script>
+</head>
+
+<body bgcolor="#d4d0c8" leftmargin="0" topmargin="0">
+<table border="0" width="100%" height="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td align="center" valign="center">
+
+      <table border="0" width="360" cellpadding="0" cellspacing="0"><tr><td align="right">
+      <font size="1" face="Arial"><!-- PLEASE DO NOT REMOVE THIS MESSAGE --><a href="http://www.qdecoder.org" style="text-decoration:none" target="_blank">The qDecoder Project</a><!-- PLEASE DO NOT REMOVE THIS MESSAGE --></font>
+      </td></tr></table>
+
+      <table border="0" width="360" cellpadding="2" cellspacing="0" style="table-layout: fixed">
+        <tr>
+          <td width="220">
+            <font id="oTxtTitle"><b>Connecting...</b></font>
+          </td>
+          <td width="80" align="right">
+            Time Left :
+          </td>
+          <td width="60">
+            <font id="oTxtTimeleft"></font>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <table border="0" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td bgcolor="gray">
+                <table border="0" height="12" cellpadding="0" cellspacing="0">
+                  <tr><td width="1" bgcolor="red" id="oProgBar"></td></tr>
+                </table>
+              </td></tr>
+            </table>
+          </td>
+          <td>
+            <font id="oTxtPercent">0</font> %
+          </td>
+        </tr>
+        <tr>
+          <td class="ellips">
+            <nobr>File:&nbsp;<font id="oTxtFilename"></font></nobr>
+          </td>
+          <td align="right">
+            Avg Speed :
+          </td>
+          <td>
+            <font id="oTxtKbpersec">0</font> KB/s
+          </td>
+        </tr>
+        <tr>
+          <td colspan="3" height="1" bgcolor="gray"></td>
+        </tr>
+        <tr>
+          <td colspan="3" align="center">
+          <font id="oTxtStatus">Click the <b>STOP</b> button on your browser to abort uploading.</font>
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

@@ -29,29 +29,46 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
+
+Author:
+  Seung-young Kim <nobreak@hongik.com>
+  Hongik Internet, Inc. 17th Fl., Marine Center Bldg.,
+  51, Sogong-dong, Jung-gu, Seoul, 100-070, Korea.
+  Tel: +82-2-753-2553, Fax: +82-2-753-1302
 ************************************************************************/
 
 #include "qDecoder.h"
+#define BASEPATH	"upload"
 
 int main(void) {
-  char *value;
+  int i;
 
-  /* Parse (GET/COOKIE/POST) queries. This call is not necessary because
-     it will be called automatically when it is needed. */
+  // qDecoderSetUploadBase() and qDecoder() should be called at the first line of main() for progress bar upload.
+  qDecoderSetUploadBase("tmp", 24 * 60 * 60);
   qDecoder();
 
-  /* Print out context type */
   qContentType("text/html");
 
-  /* If the query is not found, the variable will be set default string.
-     Also, you can use qValueDefault() or qValueNotEmpty() instead. */
-  if(!(value = qValue("query"))) value = "";
+  printf("You entered: <b>%s</b>\n", qValueDefault("", "text"));
 
-  printf("You entered: <b>%s</b>\n", value);
+  for(i = 1; i <= 3; i++) {
+    char *filename, *contenttype, *savepath;
+    int length;
 
-  /* Do not free variables directly using free() function such like free(value)
-     You must use qFree() or qFreeAll() to deallocate memories */
+    char newpath[1024];
+
+    if((length = qiValue("binary%d.length", i)) > 0) {
+      filename = qValue("binary%d.filename", i);
+      contenttype = qValue("binary%d.contenttype", i);
+      savepath = qValue("binary%d.savepath", i);
+
+      sprintf(newpath, "%s/%s", BASEPATH, filename);
+      if(rename(savepath, newpath) == -1) qError("Can not move uploaded file. %s-%s", savepath, newpath);
+
+      printf("<br><a href=\"%s\">%s</a> (%d bytes, %s) saved.", newpath, filename, length, contenttype);
+    }
+  }
+
   qFree();
   return 0;
 }
-

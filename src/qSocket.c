@@ -37,6 +37,7 @@ Copyright Disclaimer:
 #include "qInternal.h"
 #include <sys/socket.h> /* for qSocket.c */
 #include <netinet/in.h> /* for qSocket.c */
+#include <arpa/inet.h>	/* for qSocket.c */
 #include <netdb.h>      /* for qSocket.c */
 
 /**********************************************
@@ -79,10 +80,10 @@ int qSocketOpen(char *hostname, int port) {
 }
 
 /**********************************************
-** Usage : qSocketclose(sockfd)
+** Usage : qSocketClose(sockfd)
 ** Return: returns the value 0 if successful,
-**         otherwise the value -1 is returned.
-** Do    : delete socket descriptor.
+**         otherwise returns the value -1.
+** Do    : close socket.
 **********************************************/
 int qSocketClose(int sockfd) {
   return close(sockfd);
@@ -90,11 +91,10 @@ int qSocketClose(int sockfd) {
 
 /**********************************************
 ** Usage : qSocketWaitReadable(sockfd, 10);
-** Return: returns the value 1 if successful,
+** Return: returns the value 1 when it is readable,
 **         otherwise the given seconds exceeded(timeout)
 **         the value of 0 is returned.
-** Do    : block the program until the socket has readable data
-**         or given seconds.
+** Do    : Block the program until the socket has readable data.
 ** Notice: You don't need to set the socket as non-block mode.
 **********************************************/
 int qSocketWaitReadable(int sockfd, int timeoutsec) {
@@ -115,7 +115,6 @@ int qSocketWaitReadable(int sockfd, int timeoutsec) {
 ** Usage : qSocketRead(save_array_pointer, length, sockfd, 10);
 ** Return: returns the length of data readed.
 **         otherwise(timeout) the value -1 is returned.
-**         you can guess that timeout occured.
 ** Do    : read socket stream.
 ** Notice: You don't need to set the socket as non-block mode.
 **********************************************/
@@ -191,7 +190,6 @@ int qSocketPuts(char *str, int sockfd) {
 int qSocketPrintf(int sockfd, char *format, ...) {
   char buf[1024];
   va_list arglist;
-  int sendcnt;
 
   va_start(arglist, format);
   vsprintf(buf, format, arglist);
@@ -283,7 +281,7 @@ int qSocketSaveIntoFile(int sockfd, int size, int timeoutsec, char *filepath, ch
 ** Return: returns the value 1 if successful,
 **         otherwise the value 0 is returned.
 ** Do    : set the socket to non-blocking mode.
-** Comment: DO NOT USE this function for some compatibility reason.
+** Comment: DO NOT USE this function untile you surely know what it means.
 **          Please use qSocketWaitReadable() instead.
 **********************************************/
 // 0: error, 1: ok

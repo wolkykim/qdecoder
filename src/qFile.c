@@ -34,23 +34,31 @@ Copyright Disclaimer:
 #include "qDecoder.h"
 #include "qInternal.h"
 
-
+/**********************************************
+** Usage : qfopen(path, mode);
+** Return: Same as fclose().
+** Do    : Open file with file lock.
+**********************************************/
 FILE *qfopen(char *path, char *mode) {
   FILE *stream;
-  
+
   if((stream = fopen(path, mode)) == NULL) return NULL;
   _flockopen(stream);
   return stream;
 }
 
+/**********************************************
+** Usage : qfclose(stream);
+** Return: Same as fclose().
+** Do    : Close the file stream which is opened by qfopen().
+**********************************************/
 int qfclose(FILE *stream) {
   _flockclose(stream);
   return fclose(stream);
 }
 
-
 /**********************************************
-** Usage : qCheckFile(filename);
+**Usage : qCheckFile(filename);
 ** Return: If file exist, return 1. Or return 0.
 ** Do    : Check filethat file is existGet environment of CGI.
 **********************************************/
