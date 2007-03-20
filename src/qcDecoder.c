@@ -176,6 +176,9 @@ void qSetCookie(char *name, char *value, int exp_days, char *path, char *domain,
 ** ex) qAddCookie("NAME", "Kim");
 **********************************************/
 void qAddCookie(char *name, char *value) {
+  Q_Entry *new_entry;
+
   if(_cookie_first_entry == NULL) qcDecoder();
-  _EntryAddStr(_cookie_first_entry, name, value);
+  new_entry = _EntryAddStr(_cookie_first_entry, name, value);
+  if(!_cookie_first_entry) _cookie_first_entry = new_entry;
 }

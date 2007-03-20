@@ -6,32 +6,32 @@
 --------------------Configuration: qDecoder - Win32 Release--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSP18D.tmp" with contents
+Creating temporary file "C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSPC.tmp" with contents
 [
 /nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /Fp"Release/qDecoder.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
-"K:\qDecoder-6.0.4\src\qArg.c"
-"K:\qDecoder-6.0.4\src\qAwk.c"
-"K:\qDecoder-6.0.4\src\qcDecoder.c"
-"K:\qDecoder-6.0.4\src\qCounter.c"
-"K:\qDecoder-6.0.4\src\qDecoder.c"
-"K:\qDecoder-6.0.4\src\qDownload.c"
-"K:\qDecoder-6.0.4\src\qEncode.c"
-"K:\qDecoder-6.0.4\src\qEnv.c"
-"K:\qDecoder-6.0.4\src\qError.c"
-"K:\qDecoder-6.0.4\src\qfDecoder.c"
-"K:\qDecoder-6.0.4\src\qFile.c"
-"K:\qDecoder-6.0.4\src\qHeader.c"
-"K:\qDecoder-6.0.4\src\qInternalCommon.c"
-"K:\qDecoder-6.0.4\src\qInternalEntry.c"
-"K:\qDecoder-6.0.4\src\qMisc.c"
-"K:\qDecoder-6.0.4\src\qsDecoder.c"
-"K:\qDecoder-6.0.4\src\qSed.c"
-"K:\qDecoder-6.0.4\src\qString.c"
-"K:\qDecoder-6.0.4\src\qTime.c"
-"K:\qDecoder-6.0.4\src\qValid.c"
+"K:\qDecoder-6.0.5\src\qArg.c"
+"K:\qDecoder-6.0.5\src\qAwk.c"
+"K:\qDecoder-6.0.5\src\qcDecoder.c"
+"K:\qDecoder-6.0.5\src\qCounter.c"
+"K:\qDecoder-6.0.5\src\qDecoder.c"
+"K:\qDecoder-6.0.5\src\qDownload.c"
+"K:\qDecoder-6.0.5\src\qEncode.c"
+"K:\qDecoder-6.0.5\src\qEnv.c"
+"K:\qDecoder-6.0.5\src\qError.c"
+"K:\qDecoder-6.0.5\src\qfDecoder.c"
+"K:\qDecoder-6.0.5\src\qFile.c"
+"K:\qDecoder-6.0.5\src\qHeader.c"
+"K:\qDecoder-6.0.5\src\qInternalCommon.c"
+"K:\qDecoder-6.0.5\src\qInternalEntry.c"
+"K:\qDecoder-6.0.5\src\qMisc.c"
+"K:\qDecoder-6.0.5\src\qsDecoder.c"
+"K:\qDecoder-6.0.5\src\qSed.c"
+"K:\qDecoder-6.0.5\src\qString.c"
+"K:\qDecoder-6.0.5\src\qTime.c"
+"K:\qDecoder-6.0.5\src\qValid.c"
 ]
-Creating command line "cl.exe @C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSP18D.tmp" 
-Creating temporary file "C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSP18E.tmp" with contents
+Creating command line "cl.exe @C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSPC.tmp" 
+Creating temporary file "C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSPD.tmp" with contents
 [
 /nologo /out:"Release\qDecoder.lib" 
 ".\Release\qArg.obj"
@@ -55,7 +55,7 @@ Creating temporary file "C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSP18E.tmp" with cont
 ".\Release\qTime.obj"
 ".\Release\qValid.obj"
 ]
-Creating command line "link.exe -lib @C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSP18E.tmp"
+Creating command line "link.exe -lib @C:\DOCUME~1\nobreak\LOCALS~1\Temp\RSPD.tmp"
 <h3>Output Window</h3>
 Compiling...
 qArg.c

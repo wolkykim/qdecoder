@@ -58,7 +58,7 @@ Q_Entry *_EntryAddStr(Q_Entry *first, char *name, char *value) {
   entries->value = strdup(value);
   entries->next  = NULL;
 
-  /* If first is NULL, find last entry */
+  /* If first is not NULL, find last entry then make a link*/
   if(first) {
     for(; first->next; first = first->next);
     first->next = entries;

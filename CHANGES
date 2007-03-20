@@ -3,6 +3,10 @@ qDecoder Changes
 ``FIX'', ``ADD'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``Added'', ``Replaced'' and ``Removed''.
 
+   * Release 6.0.5
+        o FIX) qAddCookie() - 기존 쿠키가 없을경우(_cookie_first_entry가
+          NULL일때) qAddCookie()가 동작하지 않던 문제 수정
+
    * Release 6.0.4
         o ADD) qAddCookie() - 쿠키값을 쿠키 링크드 리스트에 강제 추가
         o ADD) qResetContentFlag() - ContentType()을 강제적으로 중복 출력할
