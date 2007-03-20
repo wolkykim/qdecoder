@@ -1,10 +1,8 @@
 ##############################################################
 ## Makefile for 'qDecoder'                                  ##
 ##                                                          ##
-##    Official distribution site : http://www.cgiserver.net ##
-##                                 ftp://ftp.cgiserver.net  ##
-##                                                          ##
-##             Technical contact : nobreak@nobreak.com      ##
+##    Official distribution : ftp://ftp.nobreak.com         ##
+##        Technical contact : nobreak@nobreak.com           ##
 ##                                                          ##
 ##                          Developed by 'Seung-young, Kim' ##
 ##                                                          ##
@@ -18,6 +16,9 @@ LIBNAME = libqDecoder.a
 
 # Which compiler
 CC      = gcc
+
+# System library directory
+LIBDIR	= /usr/lib/
 
 # Where are include files kept
 INCLUDE = .
@@ -46,6 +47,10 @@ reall: clean all
 ## Compile Module
 %.o:	%.c
 	$(CC) -I$(INCLUDE) $(CFLAGS) -c -o $@ $<
+
+## Install Module
+install: $(LIBNAME)
+	cp $(LIBNAME) $(LIBDIR)
 
 ## Clear Module
 clean:

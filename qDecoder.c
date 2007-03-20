@@ -1,18 +1,18 @@
-/***********************************************
-** [Query String Decoder Version 4.2]
-**
-** Source  Code Name : qDecoder.c
-** Include Code Name : qDecoder.h
-**
-** Last updated at July 7, 1998
-**
-** Developed by       'Seung-young, Kim'
-** Technical contact : nobreak@nobreak.com
-**
-** (c) Nobreak Technologies, Inc.
-**
-** Designed by Perfectionist for Perfectionist!!!
-**
+/*************************************************************
+** qDecoder CGI Library v4.3                                **
+**                                                          **
+**  Official distribution site : ftp://ftp.nobreak.com      **
+**           Technical contact : nobreak@nobreak.com        **
+**                                                          **
+**                        Developed by 'Seung-young Kim'    **
+**                        Last updated at March 17, 1999    **
+**                                                          **
+**      Designed by Perfectionist for Perfectionist!!!      **
+**                                                          **
+**      Copyright (c) 1996-1999 Nobreak Technologies, Inc.. **
+*************************************************************/
+
+/*************************************************************
 ** Example Usage :
 **
 ** main(){
@@ -23,11 +23,7 @@
 **   // It's not necessary but for the perfectionist.
 **   qFree();
 ** }
-**
-** If you use qPrint() or qValue(),
-** qDecoder() is automatically called once..
-**
-**********************************************/
+*************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +37,7 @@
 /**********************************************
 ** Internal Functions Definition
 **********************************************/
+
 int  _parse_urlencoded(void);
 char *_get_query(char *method);
 int  _parse_multipart_data(void);
@@ -51,6 +48,10 @@ char _x2c(char hex_up, char hex_low);
 char *_makeword(char *str, char stop);
 char *_strtok2(char *str, char *token, char *retstop);
 
+char *_EntryValue(Entry *first, char *name);
+int  _EntryiValue(Entry *first, char *name);
+void _EntryPrint(Entry *first);
+void _EntryFree(Entry *first);
 
 /**********************************************
 ** Static Values Definition used only internal
@@ -61,6 +62,13 @@ static Entry *_cookie_first_entry = NULL;
 
 static char  *_error_contact_info = NULL;
 static char  *_error_log_filename = NULL;
+
+static FILE  *_awkfp = NULL;
+static char  _awksep = ' ';
+
+/**********************************************
+** Main Routines
+**********************************************/
 
 /**********************************************
 ** Usage : qDecoder();
@@ -99,40 +107,30 @@ int qDecoder(void){
 int _parse_urlencoded(void){
   Entry *entries, *back;
   char *query;
-  int  amount;
-
+  int  amount = 0;
+  int  loop;
+ 
   entries = back = NULL;
 
-  query = _get_query("GET");
-  for(amount = 0; query && *query; amount++){
-    back = entries;
-    entries = (Entry *)malloc(sizeof(Entry));
-    if(back != NULL) back->next = entries;
-    if(_first_entry == NULL) _first_entry = entries;
+  for(loop = 1; loop <= 2; loop++) {
+    if (loop == 1 ) query = _get_query("GET");
+    else if(loop == 2 ) query = _get_query("POST");
+    else break;
+    for(; query && *query; amount++){
+      back = entries;
+      entries = (Entry *)malloc(sizeof(Entry));
+      if(back != NULL) back->next = entries;
+      if(_first_entry == NULL) _first_entry = entries;
 
-    entries->value = _makeword(query, '&');
-    entries->name  = _makeword(entries->value, '=');
-    entries->next  = NULL;
-    qURLdecode(entries->name);
-    qURLdecode(entries->value);
+      entries->value = _makeword(query, '&');
+      entries->name  = _makeword(entries->value, '=');
+      entries->next  = NULL;
+
+      qURLdecode(entries->name);
+      qURLdecode(entries->value);
+    }
+    if(query)free(query);
   }
-  if(query)free(query);
-
-  query = _get_query("POST");
-  for(; query && *query; amount++){
-    back = entries;
-    entries = (Entry *)malloc(sizeof(Entry));
-    if(back != NULL) back->next = entries;
-    if(_first_entry == NULL) _first_entry = entries;
-
-    entries->value = _makeword(query, '&');
-    entries->name  = _makeword(entries->value, '=');
-    entries->next  = NULL;
-
-    qURLdecode(entries->name);
-    qURLdecode(entries->value);
-  }
-  if(query)free(query);
 
   return amount;
 }
@@ -145,6 +143,16 @@ char *_get_query(char *method){
   if(!strcmp(method, "GET")){
     if(getenv("QUERY_STRING") == NULL) return NULL;
     query = strdup(getenv("QUERY_STRING"));
+    /* SSI query handling */
+    if(!strcmp(query, "") && getenv("REQUEST_URI") != NULL) {
+      char *cp;
+      for(cp = getenv("REQUEST_URI"); *cp != '\0'; cp++) {
+        if(*cp == '?') { cp++; break; }
+      }
+      free(query);
+      query = strdup(cp);
+    }
+
     return query;
   }
   if(!strcmp(method, "POST")){
@@ -169,11 +177,11 @@ int _parse_multipart_data(void) {
   char *name = NULL, *value = NULL, *filename = NULL;
   int  valuelen;
 
-  char boundary[0xff],     boundaryEOF[0xff];
-  char rnboundaryrn[0xff], rnboundaryEOF[0xff];
+  char boundary[256],     boundaryEOF[256];
+  char rnboundaryrn[256], rnboundaryEOF[256];
   int  boundarylen,        boundaryEOFlen;
 
-  char buf[1000];
+  char buf[1024];
   int  c, c_count;
 
   int  finish;
@@ -201,12 +209,12 @@ int _parse_multipart_data(void) {
     qContentType("text/html");
 
     printf("Content Length = %s<br>\n", getenv("CONTENT_LENGTH"));
-    printf("Boundary len %d : %s<br>\n", strlen(boundary), boundary);
+    printf("Boundary len %d : %s<br>\n", (int)strlen(boundary), boundary);
     for(i=0; boundary[i] !='\0'; i++) printf("%02X ",boundary[i]);
     printf("<p>\n");
 
     for(j = 1; _fgetstring(buf, sizeof(buf), stdin) != NULL; j++) {
-      printf("Line %d, len %d : %s<br>\n", j, strlen(buf), buf);
+      printf("Line %d, len %d : %s<br>\n", j, (int)strlen(buf), buf);
       for(i=0; buf[i] !='\0'; i++) printf("%02X ",buf[i]);
       printf("<p>\n");
     }
@@ -257,9 +265,9 @@ int _parse_multipart_data(void) {
     }
 
     /* get value field */
-    for(valuelen = 10000, c_count = 0; (c = fgetc(stdin)) != EOF; ) {
+    for(valuelen = (1024 * 16), c_count = 0; (c = fgetc(stdin)) != EOF; ) {
       if(c_count == 0) {
-        value = (char *)malloc(sizeof(char) * (valuelen + 1));
+        value = (char *)malloc(sizeof(char) * valuelen);
         if(value == NULL) qError("_parse_multipart_data() : Memory allocation fail.");
       }
       else if(c_count == valuelen - 1) {
@@ -269,7 +277,7 @@ int _parse_multipart_data(void) {
         valuelen *= 2;
 
         /* Here, we do not use realloc(). Because sometimes it is unstable. */
-        valuetmp = (char *)malloc(sizeof(char) * (valuelen + 1));
+        valuetmp = (char *)malloc(sizeof(char) * valuelen);
         if(valuetmp == NULL) qError("_parse_multipart_data() : Memory allocation fail.");
         for(i = 0; i < c_count; i++) valuetmp[i] = value[i];
         free(value);
@@ -299,7 +307,7 @@ int _parse_multipart_data(void) {
 
         /* For Micro$oft Explore on MAC, they do not follow rules */
         if((c_count - (boundarylen + 2)) == 0) {
-          char boundaryrn[0xff];
+          char boundaryrn[256];
           sprintf(boundaryrn, "%s\r\n", boundary);
           if(!strcmp(value, boundaryrn)) {
             value[0] = '\0';
@@ -358,61 +366,50 @@ int _parse_multipart_data(void) {
 }
 
 /**********************************************
-** Usage : qValue(Name);
+** Usage : qValue(Pointer of the first Entry, Name);
 ** Return: Success pointer of value string, Fail NULL
 ** Do    : Find value string pointer
 **         It find value in linked list
 **********************************************/
 char *qValue(char *name){
-  Entry *entries;
-
   if(_first_entry == NULL)qDecoder();
-
-  for(entries = _first_entry; entries; entries = entries->next){
-    if(!strcmp(name, entries->name))return (entries->value);
-  }
-  return NULL;
+  return _EntryValue(_first_entry, name);
 }
-
-int qiValue(char *name){
-  char *str;
-
-  str = qValue(name);
-  if(str == NULL) return 0;
-  return atoi(str);
-}
-
 
 /**********************************************
-** Usage : qPrint();
+** Usage : qiValue(Pointer of the first Entry, Name);
+** Return: Success integer of value string, Fail NULL
+** Do    : Find value string pointer and convert to integer
+**********************************************/
+int qiValue(char *name){
+  if(_first_entry == NULL)qDecoder();
+  return _EntryiValue(_first_entry, name);
+}
+
+/**********************************************
+** Usage : qPrint(Pointer of the first Entry);
 ** Do    : Print all parsed value & name for debugging
 **********************************************/
 void qPrint(void){
-  Entry *entries;
-
   if(_first_entry == NULL)qDecoder();
-
-  qContentType("text/html");
-
-  for(entries = _first_entry; entries; entries = entries->next){
-    printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
-  }
+  _EntryPrint(_first_entry);
 }
 
 /**********************************************
-** Usage : qFree();
+** Usage : qFree(Pointer of the first Entry);
 ** Do    : Make free of linked list memory
 **********************************************/
 void qFree(void){
-  Entry *next;
+ _EntryFree(_first_entry);
+}
 
-  for(; _first_entry; _first_entry = next){
-    next = _first_entry->next;
-    free(_first_entry->name);
-    free(_first_entry->value);
-    free(_first_entry);
-  }
-  _first_entry = NULL;
+/**********************************************
+** Usage : qGetFirstEntry();
+** Do    : Return _first_entry;
+**********************************************/
+Entry *qGetFirstEntry(void){
+  if(_first_entry == NULL)qDecoder();
+  return _first_entry;
 }
 
 /**********************************************
@@ -454,49 +451,20 @@ Entry *qfDecoder(char *filename){
   return first;
 }
 
-/**********************************************
-** Usage : qfValue(Pointer of the first Entry, Name);
-** Return: Success pointer of value string, Fail NULL
-** Do    : Find value string pointer
-**         It find value in linked list
-**********************************************/
 char *qfValue(Entry *first, char *name){
-  Entry *entries;
-
-  for(entries = first; entries; entries = entries->next){
-    if(!strcmp(name, entries->name))return (entries->value);
-  }
-  return NULL;
+  return _EntryValue(first, name);
 }
 
-/**********************************************
-** Usage : qfPrint(Pointer of the first Entry);
-** Do    : Print all parsed value & name for debugging
-**********************************************/
+int qfiValue(Entry *first, char *name){
+  return _EntryiValue(first, name);
+}
+
 void qfPrint(Entry *first){
-  Entry *entries;
-
-  qContentType("text/html");
-
-  for(entries = first; entries; entries = entries->next){
-    printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
-  }
+  _EntryPrint(first);
 }
 
-/**********************************************
-** Usage : qfFree(Pointer of the first Entry);
-** Do    : Make free of linked list memory
-**********************************************/
 void qfFree(Entry *first){
-  Entry *next;
-
-  for(; first; first = next){
-    next = first->next;
-    free(first->name);
-    free(first->value);
-    free(first);
-  }
-  first = NULL;
+  _EntryFree(first);
 }
 
 /**********************************************
@@ -542,6 +510,22 @@ Entry *qsDecoder(char *str){
   return first;
 }
 
+char *qsValue(Entry *first, char *name){
+  return _EntryValue(first, name);
+}
+
+int qsiValue(Entry *first, char *name){
+  return _EntryiValue(first, name);
+}
+
+void qsPrint(Entry *first){
+  _EntryPrint(first);
+}
+
+void qsFree(Entry *first){
+  _EntryFree(first);
+}
+
 /**********************************************
 ** Usage : qcDecoder();
 ** Return: Success number of values, Fail -1
@@ -578,53 +562,23 @@ int qcDecoder(void){
   return amount;
 }
 
-/**********************************************
-** Usage : qcValue(Name);
-** Return: Success pointer of value string, Fail NULL
-** Do    : Find COOKIE value string pointer
-**         It find value in linked list
-**********************************************/
 char *qcValue(char *name){
-  Entry *entries;
-
   if(_cookie_first_entry == NULL)qcDecoder();
-
-  for(entries = _cookie_first_entry; entries; entries = entries->next){
-    if(!strcmp(name, entries->name))return (entries->value);
-  }
-  return NULL;
+  return _EntryValue(_cookie_first_entry, name);
 }
 
-/**********************************************
-** Usage : qcPrint();
-** Do    : Print all parsed value & name for debugging
-**********************************************/
+int qciValue(char *name){
+  if(_cookie_first_entry == NULL)qcDecoder();
+  return _EntryiValue(_cookie_first_entry, name);
+}
+
 void qcPrint(void){
-  Entry *entries;
-
   if(_cookie_first_entry == NULL)qcDecoder();
-
-  qContentType("text/html");
-
-  for(entries = _cookie_first_entry; entries; entries = entries->next){
-    printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
-  }
+  _EntryPrint(_cookie_first_entry);
 }
 
-/**********************************************
-** Usage : qcFree();
-** Do    : Make free of linked list memory
-**********************************************/
 void qcFree(void){
-  Entry *next;
-
-  for(; _cookie_first_entry; _cookie_first_entry = next){
-    next = _cookie_first_entry->next;
-    free(_cookie_first_entry->name);
-    free(_cookie_first_entry->value);
-    free(_cookie_first_entry);
-  }
-  _cookie_first_entry = NULL;
+ _EntryFree(_cookie_first_entry);
 }
 
 /**********************************************
@@ -639,7 +593,7 @@ void qcFree(void){
 **********************************************/
 void qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure){
   char *Name, *Value;
-  char cookie[(4 * 1024) + (0xFF) + 1];
+  char cookie[(4 * 1024) + 256];
 
   /* Name=Value */
   Name = qURLencode(name), Value = qURLencode(value);
@@ -648,7 +602,7 @@ void qSetCookie(char *name, char *value, int exp_days, char *domain, char *path,
 
   if(exp_days != 0) {
     time_t plus_sec;
-    char gmt[0xff];
+    char gmt[256];
     plus_sec = (time_t)(exp_days * 24 * 60 * 60);
     qGetGMTime(gmt, plus_sec);
     strcat(cookie, "; expires=");
@@ -670,6 +624,55 @@ void qSetCookie(char *name, char *value, int exp_days, char *domain, char *path,
   }
 
   printf("Set-Cookie: %s\n", cookie);
+}
+
+/**********************************************
+** Usage : qAwkOpen(filename, field-separator);
+** Return: Success 1, Fail 0
+** Do    : Open file to scan pattern. (similar to unix command awk)
+** ex) qAwkOpen("source.dat", ':');
+**********************************************/
+int qAwkOpen(char *filename, char separator) {
+  if (_awkfp != NULL) qError("qAwk: There is already opened handle.");
+  if((_awkfp = fopen(filename, "rt")) == NULL) return 0;
+  _awksep = separator;
+  return 1;
+}
+
+/**********************************************
+** Usage : qAwkNext(array);
+** Return: Success number of field, Fail -1
+** Do    : Scan one line
+** ex) char array[10][256];
+**     qAwkNext(array);
+**********************************************/
+int qAwkNext(char array[][256]) {
+  char buf[1024];
+  char *bp1, *bp2;
+  int i, exitflag;
+
+  if (_awkfp == NULL) qError("qAwk: There is no opened handle.");
+  if(fgets(buf, sizeof(buf), _awkfp) == NULL) return -1;
+
+  qRemoveSpace(buf);
+  for(i = exitflag = 0, bp1 = bp2 = buf; exitflag == 0; i++) {
+    for(; *bp2 != _awksep && *bp2 != '\0'; bp2++);
+    if(*bp2 == '\0') exitflag = 1;
+    *bp2 = '\0';
+    strcpy(array[i], bp1); 
+    bp1 = ++bp2;
+  }
+  return i;
+}
+
+/**********************************************
+** Usage : qAwkClose();
+** Do    : Close file.
+**********************************************/
+void qAwkClose(void) {
+  if (_awkfp == NULL) qError("qAwk: There is no opened handle.");
+  fclose(_awkfp);
+  _awkfp = NULL;
 }
 
 /**********************************************
@@ -752,14 +755,14 @@ void qContentType(char *mimetype){
 **         Mode : see qPuts()
 **********************************************/
 int qPrintf(int mode, char *format, ...){
-  char buf[1000+1];
+  char buf[256];
   int  status;
   va_list arglist;
 
   va_start(arglist, format);
   status = vsprintf(buf, format, arglist);
   if(status == EOF) return status;
-  if(strlen(buf) > 1000)qError("qprintf() : Message is too long");
+  if(strlen(buf) > 256 - 1)qError("qprintf() : Message is too long");
 
   qPuts(mode, buf);
 
@@ -917,7 +920,7 @@ void qPuts(int mode, char *buf){
 ** Do    : Print error message
 **********************************************/
 void qError(char *format, ...){
-  char buf[1000 + 1];
+  char buf[1024];
   int status;
   int logstatus;
   va_list arglist;
@@ -925,7 +928,7 @@ void qError(char *format, ...){
   va_start(arglist, format);
 
   status = vsprintf(buf, format, arglist);
-  if(strlen(buf) > 1000 || status == EOF){
+  if(strlen(buf) + 1 > 1024 || status == EOF){
     printf("qError() : Message is too long or not valid");
     exit(1);
   }
@@ -1062,7 +1065,7 @@ char *qGetEnv(char *envname, char *nullstr) {
 ** Return: CGI filename.
 **********************************************/
 char *qCGIname(void) {
-  static char cgi_name[0xff];
+  static char cgi_name[256];
   char *c;
 
   if(getenv("SCRIPT_NAME") == NULL) return NULL;
@@ -1109,7 +1112,7 @@ time_t qGetGMTime(char *gmt, time_t plus_sec) {
   nowtime += plus_sec;
   nowgmtime = gmtime(&nowtime);
 
-  strftime(gmt, 0xff, "%a, %d-%b-%Y %H:%M:%S %Z", nowgmtime);
+  strftime(gmt, 256, "%a, %d-%b-%Y %H:%M:%S %Z", nowgmtime);
 
   return nowtime;
 }
@@ -1161,7 +1164,9 @@ void qDownload(char *filename) {
   qRemoveSpace(file);
 
   printf ("Content-type: application/octet-stream\n");
-  printf ("Content-disposition: attachment; filename=\"%s\"\n\n", file);
+  printf ("Content-disposition: attachment; filename=%s\n", file);
+  printf ("Content-Transfer-Encoding: binary\n");
+  printf ("\n");
   free(file);
 
   qSendFile(filename);
@@ -1285,7 +1290,7 @@ char *qRemoveSpace(char *str){
   
   if(!str)return NULL;
 
-  for(j = 0; str[j] == ' ' || str[j] == 9; j++);
+  for(j = 0; str[j] == ' ' || str[j] == 9 || str[j] == '\r' || str[j] == '\n'; j++);
   for(i = 0; str[j] != '\0'; i++, j++) str[i] = str[j];
   for(i--; (i >= 0) && (str[i] == ' ' || str[i] == 9 || str[i] == '\r' || str[i] == '\n'); i--);
   str[i+1] = '\0';
@@ -1323,13 +1328,12 @@ char *qStrBig(char *str) {
 }
 
 /**********************************************
-** Usage : qStrFind(string, token);
-** Return: Finded 1, Fail 0
+** Usage : qStrStr(string, token);
+** Return: Pointer of token string located in original string, Fail NULL
 ** Do    : Find token whih no case-censitive
 **********************************************/
-int qStrFind(char *orgstr, char *tokstr) {
-  char *org, *tok;
-  int  findflag;
+char *qStrStr(char *orgstr, char *tokstr) {
+  char *org, *tok, *retp;
 
   if(orgstr == NULL || tokstr == NULL) return 0;
 
@@ -1338,14 +1342,33 @@ int qStrFind(char *orgstr, char *tokstr) {
 
   qStrBig(org), qStrBig(tok);
 
-  if(strstr(org, tok) == NULL) findflag = 0;
-  else                         findflag = 1;
+  retp = strstr(org, tok);
 
   free(org), free(tok);
 
-  return findflag;
+  return retp;
 }
 
+/**********************************************
+** Usage : qitocomma(value);
+** Return: String pointer
+** Do    : Convert integer to comma string
+**         printf("Output: %s", qitocomma(1234567));
+**         Output: 1,234,567
+**********************************************/
+char *qitocomma(int value) {
+  static char str[10+1];
+  char buf[10+1], *strp, *bufp;
+  
+  sprintf(buf, "%d", value);
+  for (strp = str, bufp = buf; *bufp != '\0'; strp++, bufp++) {
+    *strp = *bufp;
+    if((strlen(bufp)) % 3 == 1 && *(bufp + 1) != '\0') *(++strp) = ',';
+  }
+  *strp = '\0';
+
+  return str;
+}
 
 /**********************************************
 ***********************************************
@@ -1450,9 +1473,9 @@ char *_fgetline(FILE *fp) {
   int c, c_count;
   char *string = NULL;
 
-  for(memsize = 1000, c_count = 0; (c = fgetc(fp)) != EOF;) {
+  for(memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
     if(c_count == 0) {
-      string = (char *)malloc(sizeof(char) * (memsize + 1));
+      string = (char *)malloc(sizeof(char) * memsize);
       if(string == NULL) qError("_fgetline() : Memory allocation fail.");
     }
     else if(c_count == memsize - 1) {
@@ -1477,4 +1500,67 @@ char *_fgetline(FILE *fp) {
   string[c_count] = '\0';
 
   return string;
+}
+
+
+/**********************************************
+** Linked List(Entry) Routines
+**********************************************/
+
+/**********************************************
+** Usage : _EntryValue(Pointer of the first Entry, Name);
+** Return: Success pointer of value string, Fail NULL
+** Do    : Find value string pointer
+**         It find value in linked list
+**********************************************/
+char *_EntryValue(Entry *first, char *name){
+  Entry *entries;
+
+  for(entries = first; entries; entries = entries->next){
+    if(!strcmp(name, entries->name))return (entries->value);
+  }
+  return NULL;
+}
+
+/**********************************************
+** Usage : _EntryiValue(Pointer of the first Entry, Name);
+** Return: Success integer of value string, Fail NULL
+** Do    : Find value string pointer and convert to integer
+**********************************************/
+int _EntryiValue(Entry *first, char *name){
+  char *str;
+
+  str = _EntryValue(first, name);
+  if(str == NULL) return 0;
+  return atoi(str);
+}
+
+/**********************************************
+** Usage : _EntryPrint(Pointer of the first Entry);
+** Do    : Print all parsed value & name for debugging
+**********************************************/
+void _EntryPrint(Entry *first){
+  Entry *entries;
+
+  qContentType("text/html");
+
+  for(entries = first; entries; entries = entries->next){
+    printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
+  }
+}
+
+/**********************************************
+** Usage : _EntryFree(Pointer of the first Entry);
+** Do    : Make free of linked list memory
+**********************************************/
+void _EntryFree(Entry *first){
+  Entry *entries;
+
+  for(; first; first = entries){
+    entries = first->next; /* copy next to tmp */
+    free(first->name);
+    free(first->value);
+    free(first);
+  }
+  first = NULL;
 }

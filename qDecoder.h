@@ -48,23 +48,31 @@ char      *qValue(char *name);
 int       qiValue(char *name);
 void      qPrint(void);
 void      qFree(void);
+Entry     *qGetFirstEntry(void);
 
 Entry     *qfDecoder(char *filename);
 char      *qfValue(Entry *first, char *name);
+int       qfiValue(Entry *first, char *name);
 void      qfPrint(Entry *first);
 void      qfFree(Entry *first);
 
 Entry     *qsDecoder(char *str);
-#define   qsValue(A, B) qfValue(A, B)
-#define   qsPrint(A) qfPrint(A)
-#define   qsFree(A) qfFree(A)
+char      *qsValue(Entry *first, char *name);
+int       qsiValue(Entry *first, char *name);
+void      qsPrint(Entry *first);
+void      qsFree(Entry *first);
 
 int       qcDecoder(void);
 char      *qcValue(char *name);
+int       qciValue(char *name);
 void      qcPrint(void);
 void      qcFree(void);
 
 void      qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure);
+
+int       qAwkOpen(char *filename, char separator);
+int       qAwkNext(char array[][256]);
+void      qAwkClose(void);
 
 char      *qURLencode(char *str);
 void      qURLdecode(char *str);
@@ -98,7 +106,9 @@ char      *qRemoveSpace(char *str);
 int       qStr09AZaz(char *str);
 
 char      *qStrBig(char *str);
-int       qStrFind(char *orgstr, char *tokstr);
+char      *qStrStr(char *orgstr, char *tokstr);
+
+char      *qitocomma(int value);
 
 #ifdef  __cplusplus
 }

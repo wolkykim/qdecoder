@@ -1,57 +1,135 @@
-************************************************************
-** [Query String Decoder 'qDecoder']                      **
-**                                                        **
-**  Source  Code Name : qDecoder.c                        **
-**  Include Code Name : qDecoder.h                        **
-**                                                        **
-**  Official distribution site : http://www.cgiserver.net **
-**           Technical contact : nobreak@nobreak.com      **
-**                                                        **
-**                        Developed by 'Seung-young, Kim' **
-**                                                        **
-**    Designed by Perfectionist for Perfectionist!!!      **
-************************************************************
+==================================================================
 
-주의) CrazyWWWBoard 98 PE에 포함된 본 qDecoder는 제작사의
-동의없이 상용소프트웨어에 사용될 수 없다.
+                      qDecoder CGI Library
 
-** Index
-  0. 서론
-  1. 각 Version별 지원 함수
-  2. 각 function 기능 설명
-  3. 예제
-  4. Compile
-  5. Example Makefile
+              Powered by Nobreak Technologies, Inc.
 
-0. 서론
+==================================================================
 
-  명    칭 : qDecoder
-  개 발 자 : 김 승 영 (nobreak@nobreak.com)
-  소    속 : Nobreak Technologies, Inc.
-  사용환경 : Unix
-  Language : C/C++ Language
-  배포장소 : http://download.cgiserver.net
+C O N T E N T S
 
-1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
-  [Version 4.2]
-    Macintosh 관련 패치
-    Apache 1.3 관련 패치
-    GMTime 개선
-    qGetEnv()
-    qCGIname()
-    qStrBig()
-    qStrFind()
-    qDownload()
+1. 라 이 센 스 (License Agreement)
+2. 소프트웨어 정보 (Software & Contact Information)
+3. 버젼별 수정사항
+4. 함수별 기능 설명
+  1. CGI 관련 함수군
+  2. COOKIE 관련 함수군
+  3. 형식화된 Configuration FILE을 다루는 함수군  
+  4. FILE 관련 함수군
+  5. 화면 출력 함수군
+  6. 문자열 관련 함수군
+  7. 시간 관련 함수군
+  8. 기타 함수군
+5. 예제 (Examples)
 
-  [Version 4.0.1]
-    ** Patch functions
+
++--------------------------------------------------------------------+
+| I. 라 이 센 스 (License Agreement)                                 |
++--------------------------------------------------------------------+
+
+I-1. 총    칙
+
+(1) 본 계약서는 소프트웨어의 사용을 허락하는 것일 뿐, 소유권, 저작권을
+    이전하는 것은 아닙니다.
+
+I-2. 사용 허락
+
+사용자께서는
+(1) 소프트웨어를 네트워크나 인터넷에 접속하고 있는 서버(이하, '서버'
+    라고 함)의 저장 매체에 설치하여 사용하실수 있습니다.
+
+(2) 백업(backup)을 위해 소프트웨어와 파생된 자료를 복제해서 보관하실수
+    있습니다.
+
+(3) 배포당시의 원판이 수정되지 않았다면 소프트웨어 패키지를 반포할 수
+    있습니다. 단, 그 복제물의 소유권은 'Nobreak'에 있으며, 반포자는
+    써플라이어(배포자)가 되는것은 아닙니다.
+
+I-3. 서비스와 무보증
+
+'Nobreak Technologies'는
+(1) 제품은 최적으로 판단되는 상태로 제공되는 것으로서, 그 사용과 성능에
+    관해서는, 일체 보증하지 않습니다. 단지, 지속적인 서비스와 신뢰적인
+    문제해결을 제공합니다.
+
+(2) 제품, 또는 도큐멘테이션(documentation)을 사용함으로써 얻어지는 성능,
+    결과에 대해서 보증할 수 없습니다. 단, 사용자로부터 결함(bug) 지적이
+    있을 경우, 개선하도록 노력합니다.
+
+(3) 제3자의 권리 침해, 상품성, 특정 목적의 적합성에 관하여 명시적, 암시적
+    보증은 하지 않습니다.
+
+I-4. 책임 제한
+
+'Nobreak Technologies'는 소프트웨어로 인한 일실이익(逸失利益)을 포함한
+결과적, 우발적, 또는 특별한 손해에 대해서, 그것이 'Nobreak Technologies'
+의 대리점이 이러한 손해가 발생할 가능성에 대해서 알고 있더라도, 책임을
+지지 않습니다.
+
+I-6. 저작권, 소유권
+
+본 소프트웨어는 'Nobreak Technologies' 또는 서플라이어(supplier)가 소유
+하며, 한국, 일본, 미국등의 저작권에 관한 법률, 국제법, 국제조약, 국제적인
+저작권협정에 의해 보호를 받습니다.
+
+
++--------------------------------------------------------------------+
+| II. 소프트웨어 정보 (SOFTWARE & CONTACT INFORMATION)               |
++--------------------------------------------------------------------+
+
+II-1. 소프트웨어 정보 (Software Information)
+  - 명    칭 : qDecoder
+  - 판 번 호 : 4.3
+  - 종    류 : CGI Library
+  - Language : C/C++
+  - 사용환경 : All kind Unix (Solaris, HP/UX, FreeBSD, Linux, Etc.)
+  - 제작회사 : Nobreak Technologies, Inc.
+  - 배 포 처 : ftp://ftp.nobreak.com/pub/qDecoder/
+  - 배 포 일 : 1999년 3월 17일
+
+
++--------------------------------------------------------------------+
+| III. 버젼별 수정사항                                               |
++--------------------------------------------------------------------+
+
+[Version 4.3]
+    * Patched functions
+    qDecoder()
+    - SSI로 넘겨지는 쿼리를 받을 수 있도록 패치
+
+    * New functions
+    int       qAwkOpen(char *filename, char separator);
+    int       qAwkNext(char array[][256]);
+    void      qAwkClose(void);
+
+    Entry     *qGetFirstEntry(void);
+    char      *qitocomma(int value);
+
+[Version 4.2]
+    * Patched functions
+    qDecoder()
+    - Macintosh IE 관련 패치
+    qGgienv()
+    - Apache 1.3 관련 패치
+    qGetGMTime
+    - 성능 향상
+    
+    * New functions
+    char      *qCGIname(void);
+    void      qDownload(char *filename);
+    char      *qGetEnv(char *envname, char *nullstr);
+    char      *qStrBig(char *str);
+    char      *qStrStr(char *orgstr, char *tokstr);
+
+[Version 4.0.1]
+    * Patched functions
     qfDecoder()
     - 파일에서 한행의 길이제약을 없앰.
     qDecoder()
     - multipart/form-data형식 내부 알고리즘 수정.
 
-  [Version 4.0]
-    ** Patch functions
+[Version 4.0]
+    * Patched functions
     qDecoder()
     - File Uploading 지원
     qfDecoder()
@@ -64,8 +142,8 @@
     qPrintf(), qPuts()
     - mode 10 - 16 이 새로 지원됨.
 
-  [Version 3.5]
-    ** Patch functions
+[Version 3.5]
+    * Patched functions
     _get_query()
     - 환경변수 미설정 확인추가
     qCgienv()
@@ -77,23 +155,23 @@
     qURLencode()
     - 숫자, 영문를 인코딩 하지 않도록 수정
 
-    ** New functions
+    * New functions
     void      qErrLog(char *filename);
 
-  [Version 3.4.2]
-    ** Patch functions
+[Version 3.4.2]
+    * Patched functions
     qDecoder(), qfDecoder(), qcDecoder() :
     - Linked List 알고리즘 수정
-    ** qPuts() :
-    - 몇몇 시스템에서 warning을 일으키던 문제 수정 
+    qPuts() :
+    - 몇몇 시스템에서 컴파일시 warning을 일으키던 문제 수정 
 
-  [Version 3.4.1]
-    ** Patch functions
+[Version 3.4.1]
+    * Patched functions
     qPrintf(), qPuts() :
     - 문자열 마지막에 출력되는 공백 제거
 
-  [Version 3.4]
-    ** Patch functions
+[Version 3.4]
+    * Patched functions
     qCheckEmail() : '-' , '_'가 포함된 Email도 가능토록 수정
     qPrintf(), qPuts() :
     - 문자열의 내용중 &lt , &gt를 '<' , '>'로 보여주는점 수정
@@ -101,37 +179,37 @@
     - 'mailto:guest@hongik.ac.kr' 같은 문자열만을 자동 링크하였으나,
       'guest@hongik.ac.kr' 의 형태도 자동 링크 수행함 
 
-    ** New functions
+    * New functions
     void      qSetCookie(char *name, char *value, char *exp_days, char *domain, char *path, char *secure);
     char      *qURLencode(char *str);
     time_t    qGetGMTime(char *gmt, time_t plus_sec);
 
-  [Version 3.3.1]
-    ** Patch functions
+[Version 3.3.1]
+    * Patched functions
     qDecoder() : Query value내의 '&' 문자를 분리자로 인식하던점 수정
 
-  [Version 3.3]
+[Version 3.3]
      int       qcDecoder(void);
     char      *qcValue(char *name);
     void      qcPrint(void);
     void      qcFree(void);
 
-  [Version 3.2.2]
+[Version 3.2.2]
     int       qUpdateCounter(char *filename);
     void      qPuts(int mode, char *buf);
     int       qCheckURL(char *url);
 
-  [Version 3.2]
+[Version 3.2]
     int       qReadCounter(char *filename);
     int       qSaveCounter(char *filename, int number);
     int       qStr09AZaz(char *str);
 
-  [Version 3.1]
+[Version 3.1]
     int       qPrintf(int mode, char *format, ...);
     int       qCheckEmail(char *email);
     void      qError(char *format, ...);
 
-  [Version 3.0]
+[Version 3.0]
     Entry     *qfDecoder(char *filename);
     char      *qfValue(Entry *first, char *name);
     void      qfPrint(Entry *first);
@@ -139,7 +217,7 @@
 
     char      *qRemoveSpace(char *str);
 
-  [Version 2.2]
+[Version 2.2]
     int       qDecoder(void);
     char      *qValue(char *name);
     void      qPrint(void);
@@ -153,11 +231,12 @@
     int       qCheckFile(char *filename);
     int       qSendFile(char *filename);
 
-2. 각 Function 기능 설명
 
-  ****************************************
-  ** CGI 관련 함수군
-  ****************************************
++--------------------------------------------------------------------+
+| IV. 함수별 기능 설명                                               |
++--------------------------------------------------------------------+
+
+IV-1. CGI 관련 함수군
 
   int    qDecoder(void);
   기능 : 다음 형식의 인코딩된 Query String을 해석하여 Linked List에 저장.
@@ -273,6 +352,11 @@
   기능 : qDecoder()에 의해 할당된 Memory를 해제한다.
   사용 : qFree();
 
+  Entry  *qGetFirstEntry(void);
+  기능 : Linked List의 첫번째 Entry 포인터를 복귀한다.
+  사용 : Entry *first;
+         first = qGetFirstEntry();
+
   char   *qURLencode(char *str);
   기능 : 문자열을 URL Encoding규칙으로 변환한다.
   복귀 : Encoding된 string pointer, 해제(free)는 사용자가 하여야 한다.
@@ -283,9 +367,6 @@
   기능 : %xx로 인코딩된 자료를 해독한다.
   사용 : char *encstr;
          qURLdecode(encstr);
-
-  * 사용 예제 1,(qDecoder(), qValue())
-  - 
 
   void   qContentType(char *mimetype);
   기능 : MimeType을 출력한다.
@@ -299,9 +380,18 @@
   사용 : Cgienv *myenv;
          qCgienv(myenv);
 
-  ****************************************
-  ** COOKIE 관련 함수군
-  ****************************************
+  char   *qGetEnv(char *envname, char *nullstr);
+  기능 : getenv()함수와 동일하게 동작하나, NULL 대신 디폴드 스트링을 복귀한다.
+  사용 : char *name;
+         name = qGetEnv("SCRIPT_NAME", "/cgi-bin/CrazyWWWBoard.cgi");
+         name = qGetEnv("SCRIPT_NAME", NULL);
+
+  char   *qCGIname(void);
+  기능 : 환경변수 SCRIPT_NAME에서 프로그램명만을 해석하여 복귀한다.
+  사용 : char *cginame;
+         cginame = qCGIname();
+
+IV-2. COOKIE 관련 함수군
 
   void   qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure);
   기능 : name=value에 해당하는 COOKIE를 설정함.
@@ -332,9 +422,7 @@
   기능 : qcDecoder()에 의해 할당된 Memory를 해제한다.
   사용 : qcFree();
 
-  ****************************************
-  ** 형식화된 Configuration FILE을 다루는 함수군  
-  ****************************************
+IV-3. 형식화된 Configuration FILE을 다루는 함수군  
 
   ## 아래와 같은 형식의 화일을 읽어 Linked List에 저장한다.
   ---- test.conf ----
@@ -367,7 +455,7 @@
   ## 아래와 같은 형식의 카운터 화일을 다룬다.
   ---- number.dat ----
   74
-  -------------------
+  --------------------
 
   int    qReadCounter(char *filename);
   기능 : 화일명의 카운터 화일을 읽는다.
@@ -385,10 +473,30 @@
   복귀 : 성공시 기존 카운터값 + 1, 에러시 0
   사용 : int count;
          count = qUpdateCounter("number.dat");
-  
-  ****************************************
-  ** FILE 관련 함수군
-  ****************************************
+
+  ## UNIX 시스템의 AWK 함수와 같은 기능을 한다.
+  ---- /etc/passwd ----
+  shpark:x:1008:1000:Sang-hyun Park:/home/shpark:/bin/csh
+  teamwork:x:1011:1000:Seung-young Kim:/home/teamwork:/bin/csh
+  kikuchi:x:1015:2000:KIKUCHI:/home/kikuchi:/bin/csh
+  ---------------------
+
+  int    qAwkOpen(char *filename, char separator);
+  기능 : 파일을 열고, 구분자를 설정한다.
+  복귀 : 성공시 1, 파일을 열 수 없을경우 0
+
+  int    qAwkNext(char array[][256]);
+  기능 : 한행을 읽어 들여, 인자로 주어진 배열에 저장한다.
+  사용 :  char array[7][256];
+          qAwkOpen("/etc/passwd", ':');
+          qAwkNext(array)
+          printf("ID=%s, Name=%s", array[0], array[5]);
+          qAwkClose();
+
+  void   qAwkClose(void);
+  기능 : 파일을 닫는다.
+
+IV-4. FILE 관련 함수군
 
   int    qCheckFile(char *filename);
   기능 : 화일의 존재여부를 파악한다.
@@ -404,10 +512,8 @@
 
          qContentType("text/html");
          qSendFile("myhtml.html");
-
-  ****************************************
-  ** 화면 출력 함수군
-  ****************************************
+         
+IV-5. 화면 출력 함수군
 
   int    qPrintf(int mode, char *format, ...);
   기능 : printf()와 동일한 사용방법으로 HTML TAG의 적용 유뮤와 자동 Link를 행한다.
@@ -477,18 +583,8 @@
   사용 : qErrLog("로그파일명");        // log enable
          qErrLog(NULL);                // log disable (default)
 
-  ****************************************
-  ** 기타 함수군
-  ****************************************
-  int    qCheckEmail(char *email){
-  기능 : E-mail 주소의 오류를 판별한다.
-  복귀 : 오류가 없으면 1, 문제가 발생하면 0
-  사용 : qCheckEmail("nobreak@shinan.hongik.ac.kr");
 
-  int    qCheckURL(char *url);
-  기능 : URL 주소의 오류를 판별한다.
-  복귀 : 오류가 없으면 1, 문제가 발생하면 0
-  사용 : qCheckURL("http://shinan.hongik.ac.kr");
+IV-6. 문자열 관련 함수군
 
   char   *qRemoveSpace(char *str);
   기능 : 문자열의 앞뒤 공백과 CR, LF를 제거한다.
@@ -499,6 +595,20 @@
          strcpy(teststr, " Hello, world    \r\n");
          qRemoveSpace(teststr);
          // 삭제후 teststr에는 "Hello, world"가 들어간다.
+
+  int    qStr09AZaz(char *str);
+  기능 : 문자열이 '0' - '9', 'A' - 'Z', 'a' - 'z'로 이루어졌는지 판별한다.
+  복귀 : 조건에 부합하면 1, 오류시 0
+  사용 : if(qStr09AZaz("abc1234") == 1) printf("True");
+
+  char   *qStrBig(char *str);
+  기능 : 인자로 주어진 문자열을 모두 대문자로 변환한다.
+  복귀 : 해당 문자열을 포인터
+
+  char   *qStrStr(char *orgstr, char *tokstr);
+  기능 : strstr() 함수와 같으나, 대소문자를 구분하지 않고 비교한다.
+
+IV-7. 시간 관련 함수군
 
   struct tm *qGetTime(void);
   기능 : 시간을 구조체 tm에 저장한다.
@@ -515,15 +625,34 @@
          qGetGMTime(gmt, plus_sec);
          printf("%s", gmt);         /* "Fri, 22-Aug-1997 15:11:30 GMT" */
 
-  int    qStr09AZaz(char *str);
-  기능 : 문자열이 '0' - '9', 'A' - 'Z', 'a' - 'z'로 이루어졌는지 판별한다.
-  복귀 : 조건에 부합하면 1, 오류시 0
-  사용 : if(qStr09AZaz("abc1234") == 1) printf("True");
+IV-8. 기타 함수군
 
-3. 예제
+  int    qCheckEmail(char *email){
+  기능 : E-mail 주소의 오류를 판별한다.
+  복귀 : 오류가 없으면 1, 문제가 발생하면 0
+  사용 : qCheckEmail("nobreak@shinan.hongik.ac.kr");
 
-    --------- Ex 1 ----------
-    전달된 인자를 모두 출력하는 CGI
+  int    qCheckURL(char *url);
+  기능 : URL 주소의 오류를 판별한다.
+  복귀 : 오류가 없으면 1, 문제가 발생하면 0
+  사용 : qCheckURL("http://shinan.hongik.ac.kr");
+
+  void   qDownload(char *filename);
+  기능 : 클라이언트로 파일을 전송하는데, 파일의 종류에 상관없이
+         브라우저에 다운로딩 상자가 나타나도록 한다.
+  사용 : qDownload("/home/nobreak/myprg.exe");
+
+  char   *qitocomma(int value);
+  기능 : 숫자를 콤마 문자열로 변환한다.
+  사용 : printf("Price = %s", qitocomma(1234567));
+         Price = 1,234,567
+
+
++--------------------------------------------------------------------+
+| V. 예제 (Examples)                                                 |
++--------------------------------------------------------------------+
+
+V-1. 전달된 인자를 모두 출력하는 CGI
 
     #include "qDecoder.h"
 
@@ -545,8 +674,7 @@
     'a' = 'b'
     'c' = 'de'  
 
-    --------- Ex 2 ----------
-    원하는 인자('a')를 선택하여 화면 출력
+V-2. 원하는 인자('a')를 선택하여 화면 출력
 
     #include "stdio.h"
     #include "qDecoder.h"
@@ -566,8 +694,7 @@
 
     test a = b
 
-    --------- Ex 3 ----------
-    정확한 함수 호출 절차
+V-3. 정확한 함수 호출 절차
 
     #include "qDecoder.h"
 
@@ -583,7 +710,7 @@
     qDecoder(), qFree()는 생략가능하다.
    
 
-4. Compile
+V-4. Compile
 
   GCC 사용자
     gcc -o 실행화일명 작성한소스.c qDecoder.c
@@ -596,16 +723,21 @@
 
   Library 제작 사용
     qDecoder 디렉토리에서 make를 실행한다.
-    - cd qDecoder
-    - make
-    qDecoder.a가 생성된다.
+    $ cd qDecoder
+    $ make
+    gcc -I. -Wall -c -o qDecoder.o qDecoder.c
+    ar -q libqDecoder.a qDecoder.o
+    ranlib libqDecoder.a
 
-    ex) gcc -o test.cgi main.c qDecoder.a
+    $ gcc -o test.cgi main.c libqDecoder.a
 
+  라이브러리 설치
+    $ cd qDecoder
+    $ make install
+    $ gcc -o test.cgi main.c -lqDecoder
 
-5. Example Makefile
+V-5. Example Makefile
 
----- Cut Here ----
 ## Define
 CC      = gcc -Wall        # For GNU C Compiler(gcc)
 #CC      = cc               # For the other C Compiler
@@ -629,7 +761,7 @@ $(PRG_NAME): $(OBJ)
 
 ## Clear Module
 clean:  rm -f $(OBJ) $(PRG_NAME)
----- Cut Here ----
 
---- END ---
-
++-----------------------------------------------------+
++------------------ E     N     D --------------------+
++-----------------------------------------------------+
