@@ -1,5 +1,5 @@
 /***********************************************
-** [Query String Decoder Version 3.2]
+** [Query String Decoder Version 3.2.2]
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
@@ -45,7 +45,6 @@ char *_get_query(char *method);
 void _decode_query(char *str);
 char _x2c(char hex_up, char hex_low);
 char *_makeword(char *str, char stop);
-void _autolink(int mode, char one);
 char *_strtok2(char *str, char *token, char *retstop);
 
 /**********************************************
@@ -250,11 +249,11 @@ void qContentType(char *mimetype){
 }
 
 /**********************************************
-** Usage : qprintf(Mode, Format, Arg);
+** Usage : qPrintf(Mode, Format, Arg);
 ** Return: Sucess number of output bytes, Fail EOF
 ** Do    : Print message like printf
 **         Mode 0 : Same as printf(), it means Accept HTML
-**         Mode 1 : Print HTML TAG, Same as mode 0
+**         Mode 1 : Print HTML TAG
 **         Mode 2 : Mode 1 + Auto Link
 **         Mode 3 : Mode 2 + _top frame link
 **         Mode 4 : Waste HTML TAG
@@ -262,7 +261,7 @@ void qContentType(char *mimetype){
 **         Mode 6 : Mode 5 + _top frame link
 **********************************************/
 int qPrintf(int mode, char *format, ...){
-  char buf[1000 + 1];
+  char buf[1000+1];
   int  status;
   va_list arglist;
 
@@ -271,15 +270,72 @@ int qPrintf(int mode, char *format, ...){
   if(status == EOF) return status;
   if(strlen(buf) > 1000)qError("qprintf : Message is too long");
 
-  if(mode == 0) status = printf("%s", buf);
-  else {
-    int i;
-
-    for(i = 0; buf[i]; i++) _autolink(0, buf[i]);
-    _autolink(mode, ' ');
-  }
+  qPuts(mode, buf);
 
   return status;
+}
+
+/**********************************************
+** Usage : qPuts(Mode, String pointer);
+** Do    : print HTML link as multi mode
+**         Mode 0 : Same as printf()
+**         Mode 1 : Print HTML TAG
+**         Mode 2 : Mode 1 + Auto Link
+**         Mode 3 : Mode 2 + Auto Link to _top frame
+**         Mode 4 : Waste HTML TAG
+**         Mode 5 : Mode 4 + Auto Link
+**         Mode 6 : Mode 5 + Auto Link to _top frame
+** Note) It modify argument string...
+**********************************************/
+void qPuts(int mode, char *buf){
+
+  if(mode == 0) printf("%s", buf);
+  else {
+    char *ptr, retstop, *target, *token;
+    int printhtml, autolink, linkflag, ignoreflag;
+
+    switch(mode){
+      case 1 : {printhtml = 1, autolink = 0, target = ""; break;}
+      case 2 : {printhtml = 1, autolink = 1, target = ""; break;}
+      case 3 : {printhtml = 1, autolink = 1, target = "_top"; break;}
+      case 4 : {printhtml = 0, autolink = 0, target = ""; break;}
+      case 5 : {printhtml = 0, autolink = 1, target = ""; break;}
+      case 6 : {printhtml = 0, autolink = 1, target = "_top"; break;}
+      default: {qError("_autolink() : Invalid Mode (%d)", mode); break;}
+    }
+
+    if(autolink == 1) token = " `(){}[]<>\"',\r\n";
+    else token = "<>\r\n";
+
+    ptr = _strtok2(buf, token, &retstop);
+    for(linkflag = ignoreflag = 0; ptr != NULL;){
+      if(autolink == 1){
+        if(!strncmp(ptr, "http://", 7))linkflag = 1;
+        else if(!strncmp(ptr, "ftp://", 6))linkflag = 1;     
+        else if(!strncmp(ptr, "telnet://", 9))linkflag = 1;
+        else if(!strncmp(ptr, "mailto:", 7))linkflag = 1;
+        else if(!strncmp(ptr, "news:", 5))linkflag = 1;
+        else linkflag = 0;
+      }
+      if(linkflag == 1 && ignoreflag == 0)
+        printf("<a href='%s' target='%s'>%s</a>", ptr, target, ptr);
+      else if(linkflag == 0 && ignoreflag == 0)
+        printf("%s", ptr);
+
+      if(printhtml == 1){
+        if(retstop == '<') printf("&lt");
+        else if(retstop == '>') printf("&gt");
+        else printf("%c", retstop);
+      }
+      else {
+        if(retstop == '<') ignoreflag = 1;
+        else if(retstop == '>') ignoreflag = 0;
+        else if(ignoreflag  == 0) printf("%c", retstop);
+      }
+
+      ptr = _strtok2(NULL, token, &retstop);
+    }
+  }
 }
 
 /**********************************************
@@ -300,17 +356,17 @@ void qError(char *format, ...){
     exit(1);
   }
 
-  printf("<font color=red size=6><B>Error !!!</B></font>\n");
-  printf("<br><br>\n");
-  printf("<font size=3 face=arial>\n");
-  printf("<i><b>%s</b></i>\n", buf);
-  printf("</font>\n");
-  printf("<br><br>\n");
-  printf("<center><font size=2 face=arial>\n");
-  printf("Made in Korea by 'Kim Seung-young', [Hongik Shinan Network Security]<br>\n");
-  printf("홍익대학교 신안캠퍼스 전자전산공학과 94학번 김승영<br>\n");
-  printf("<br><a href=\"javascript:history.back()\">BACK</a>");
-  printf("</font></center>");
+  printf("<html>\n");
+  printf("<body bgcolor=white>\n\n");
+  printf("  <font color=red size=6><B>Error !!!</B></font><br><br>\n\n");
+  printf("  <font size=3><b><i>%s</i></b></font><br><br>\n\n", buf);
+  printf("  <center><font size=2>\n");
+  printf("    Made in Korea by '<a href='mailto:nobreak@shinan.hongik.ac.kr'>Kim Seung-young</a>', [<a href='http://hsns.hongik.ac.kr' target=_top>Hongik Shinan Network Security</a>]<br>\n");
+  printf("    <a href='http://www.hongik.ac.kr' target=_top>홍익대학교</a> <a href='http://shinan.hongik.ac.kr' target=_top>신안캠퍼스</a> <a href='http://elecom.hongik.ac.kr' target=_top>전자전산공학과</a> <a href='mailto:nobreak@shinan.hongik.ac.kr'>김승영</a><br><br>\n");
+  printf("    <a href='javascript:history.back()'>BACK</a>\n");
+  printf("  </font></center>\n\n");
+  printf("</body>\n");
+  printf("</html>\n");
   exit(1);
 }
 
@@ -397,7 +453,7 @@ int qSendFile(char *filename){
 }
 
 /**********************************************
-** Usage : qReadCount(filename);
+** Usage : qReadCounter(filename);
 ** Return: Success counter value, Fail 0
 ** Do    : Read counter value
 **********************************************/
@@ -413,7 +469,7 @@ int qReadCounter(char *filename){
 }
 
 /**********************************************
-** Usage : qSaveCount(filename, number);
+** Usage : qSaveCounter(filename, number);
 ** Return: Success 1, Fail 0
 ** Do    : Save counter value
 **********************************************/
@@ -422,10 +478,32 @@ int qSaveCounter(char *filename, int number){
 
   fp = fopen(filename, "wt");
   if(fp == NULL)return 0;
-  fprintf(fp, "%d", number);
+  fprintf(fp, "%d\n", number);
   fclose(fp);
   return 1;
 }
+
+/**********************************************
+** Usage : qUpdateCount(filename, number);
+** Return: Success Current Value + 1, Fail 0
+** Do    : Update counter value, Save +1
+**********************************************/
+
+int qUpdateCounter(char *filename){
+  FILE *fp;
+  int counter = 0;
+
+  if((fp = fopen(filename, "r+t")) != NULL) {
+    fscanf(fp, "%d", &counter);
+    fseek(fp, 0, SEEK_SET);
+  }
+  else if((fp = fopen(filename, "wt")) == NULL) return 0;
+
+  fprintf(fp, "%d\n", ++counter);
+  fclose(fp);
+  return counter;
+}
+
 
 /**********************************************
 ** Usage : qCheckEmail(E-mail Address);
@@ -435,6 +513,8 @@ int qSaveCounter(char *filename, int number){
 int qCheckEmail(char *email){
   char *ptr, *token, retstop, buf[60+1];
   int i, flag;
+
+  if(email == NULL) return 0;
 
   if(strlen(email) > 60) return 0;
   strcpy(buf, email);
@@ -452,25 +532,36 @@ int qCheckEmail(char *email){
 }
 
 /**********************************************
+** Usage : qCheckURL(internet address);
+** Return: If it is valid return 1. Or return 0;
+** Do    : Check URL
+**********************************************/
+int qCheckURL(char *url){
+  if(!strncmp(url, "http://", 7)) return 1;
+  else if(!strncmp(url, "ftp://", 6)) return 1;     
+  else if(!strncmp(url, "telnet://", 9)) return 1;
+  else if(!strncmp(url, "mailto:", 7)) return 1;
+  else if(!strncmp(url, "news:", 5)) return 1;
+  return 0;
+}
+
+/**********************************************
 ** Usage : qRemoveSpace(Source string);
+** Return: Pointer of str
 ** Do    : Remove Space before string & after string
 **         Remove CR, LF
 **********************************************/
-void qRemoveSpace(char *str){
+char *qRemoveSpace(char *str){
   int i, j;
   
-  if(!str)return;
+  if(!str)return NULL;
 
-  for(i = 0; str[i] != '\0'; i++){
-    if(str[i] == '\r' || str[i] == '\n') str[i] = '\0';
-  }
-
-  for(j = 0; isspace(str[j]); j++);
+  for(j = 0; str[j] == ' ' || str[j] == 9; j++);
   for(i = 0; str[j] != '\0'; i++, j++) str[i] = str[j];
-  str[i] = '\0';
-
-  for(i--; (i >= 0) && isspace(str[i]); i--);
+  for(i--; (i >= 0) && (str[i] == ' ' || str[i] == 9 || str[i] == '\r' || str[i] == '\n'); i--);
   str[i+1] = '\0';
+
+  return str;
 }
 
 /**********************************************
@@ -487,7 +578,6 @@ int qStr09AZaz(char *str){
   }
   return 1;
 }
-
 
 /**********************************************
 ***********************************************
@@ -589,82 +679,6 @@ char *_makeword(char *str, char stop){
   str[i - len] = '\0';
 
   return (word);
-}
-
-/**********************************************
-** Usage : _autolink(Mode, character);
-** Do    : Buffering the character and print HTML link
-**         Mode 0 : Buffering character
-**         Mode 1 : Fresh buffer, Print HTML TAG
-**         Mode 2 : Mode 1 + Auto Link
-**         Mode 3 : Mode 2 + Auto Link to _top frame
-**         Mode 4 : Fresh Buffer, Waste HTML TAG
-**         Mode 5 : Mode 4 + Auto Link
-**         Mode 6 : Mode 5 + Auto Link to _top frame
-**********************************************/
-void _autolink(int mode, char one){
-  char *buf;
-  static int i, flag, bufsize;
-
-  if(mode == 0){
-    if(flag == 0){
-      flag = 1, i = 0, bufsize = 1000; 
-      buf = (char *)malloc(sizeof(char) * (bufsize + 1));
-    }
-    if(i >= bufsize){
-       bufsize *= 2;
-       buf = (char *)realloc(buf, sizeof(char) * (bufsize + 1));
-    }
-    buf[i] = one, buf[++i] = '\0';
-  }
-  else {
-    char *ptr, retstop, *target, *token;
-    int printhtml, autolink, linkflag, ignoreflag;
-
-    if(flag == 0) return;
-
-    switch(mode){
-      case 1 : {printhtml = 1, autolink = 0, target = ""; break;}
-      case 2 : {printhtml = 1, autolink = 1, target = ""; break;}
-      case 3 : {printhtml = 1, autolink = 1, target = "_top"; break;}
-      case 4 : {printhtml = 0, autolink = 0, target = ""; break;}
-      case 5 : {printhtml = 0, autolink = 1, target = ""; break;}
-      case 6 : {printhtml = 0, autolink = 1, target = "_top"; break;}
-      default: {qError("_autolink() : Invalid Mode (%d)", mode); break;}
-    }
-
-    if(autolink == 1) token = " `(){}[]<>\"',\r\n";
-    else token = "<>\r\n";
-
-    ptr = _strtok2(buf, token, &retstop);
-    for(linkflag = ignoreflag = 0; ptr != NULL;){
-      if(autolink == 1){
-        if(!strncmp(ptr, "http://", 7))linkflag = 1;
-        else if(!strncmp(ptr, "ftp://", 6))linkflag = 1;     
-        else if(!strncmp(ptr, "telnet://", 9))linkflag = 1;
-        else if(!strncmp(ptr, "mailto:", 7))linkflag = 1;
-        else if(!strncmp(ptr, "news:", 5))linkflag = 1;
-        else linkflag = 0;
-      }
-      if(linkflag == 1 && ignoreflag == 0)
-        printf("<a href=\"%s\" target=\"%s\">%s</a>", ptr, target, ptr);
-      else if(linkflag == 0 && ignoreflag == 0)
-        printf("%s", ptr);
-
-      if(printhtml == 1) printf("%c", retstop);
-      else {
-        if(retstop == '\r') printf("\r");
-        else if(retstop == '\n') printf("\n");
-        else if(retstop == '<') ignoreflag = 1;
-        else if(retstop == '>') ignoreflag = 0;
-        else if(ignoreflag  == 0) printf("%c", retstop);
-      }
-
-      ptr = _strtok2(NULL, token, &retstop);
-    }
-    flag = 0;
-    free(buf);
-  }
 }
 
 /*********************************************

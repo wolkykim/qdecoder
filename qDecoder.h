@@ -40,6 +40,7 @@ void      qfFree(Entry *first);
 
 void      qContentType(char *mimetype);
 int       qPrintf(int mode, char *format, ...);
+void      qPuts(int mode, char *buf);
 void      qError(char *format, ...);
 
 void      qCgienv(Cgienv *env);
@@ -50,7 +51,10 @@ int       qSendFile(char *filename);
 
 int       qReadCounter(char *filename);
 int       qSaveCounter(char *filename, int number);
+int       qUpdateCounter(char *filename);
 
 int       qCheckEmail(char *email);
-void      qRemoveSpace(char *str);
+int       qCheckURL(char *url);
+char      *qRemoveSpace(char *str);
 int       qStr09AZaz(char *str);
+char      *qfgets(char *str, int length, FILE *fp);

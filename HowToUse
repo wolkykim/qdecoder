@@ -34,6 +34,11 @@
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
 
+  [Version 3.2.2]
+    int       qUpdateCounter(char *filename);
+    void      qPuts(int mode, char *buf);
+    int       qCheckURL(char *url);
+
   [Version 3.2]
     int       qReadCounter(char *filename);
     int       qSaveCounter(char *filename, int number);
@@ -51,7 +56,7 @@
     void      qfPrint(Entry *first);
     void      qError(char *format, ...);
 
-    void      qRemoveSpace(char *str);
+    char      *qRemoveSpace(char *str);
 
   [Version 2.2]
     int       qDecoder(void);
@@ -60,7 +65,6 @@
     void      qFree(void);
 
     void      qContentType(char *mimetype);
-    void      qError(char *str); -> 3.1 버젼에서 수정 갱신
 
     void      qCgienv(Cgienv *env);
     struct tm *qGetTime(void);
@@ -74,123 +78,122 @@
   ** CGI 관련 함수군
   ****************************************
 
-  int       qDecoder(void);
+  int    qDecoder(void);
   기능 : 전달된 Query String을 해석하여 Linked List에 저장
   복귀 : 성공시 전달받은 인자의 갯수, 에러시 -1
-  사용 :
-    int num;
-    num = qDecoder();
+  사용 : int num;
+         num = qDecoder();
   
-  char      *qValue(char *name);
+  char   *qValue(char *name);
   기능 : Linked List에서 변수명에대한 값(문자열)을 찾아 포인터를 넘겨줌
          qDecoder()이 사전에 호출이 안되었으면, 자동으로 수행
   복귀 : 변수명이 존재하면 변수값의 포인터, 변수명이 없으면 NULL
-  사용 :
-    char *test;
-    test = qValue("변수명");
+  사용 : char *test;
+         test = qValue("변수명");
 
-  void      qPrint(void);
+  void   qPrint(void);
   기능 : 프로그램의 Debugging용으로 전달된 인자를 모두 출력한다.
   사용 : qPrint();
 
-  void      qFree(void);
+  void   qFree(void);
   기능 : qDecoder()에 의해 할당된 Memory를 해제한다.
   사용 : qFree();
 
-  void      qContentType(char *mimetype);
+  void   qContentType(char *mimetype);
   기능 : MimeType을 출력한다.
          여러번 호출되어도 단 한번만 수행한다.
   사용 : qContentType("text/html");
          qContentType("image/gif");
 
-  void      qCgienv(Cgienv *env);
+  void   qCgienv(Cgienv *env);
   기능 : CGI의 환경변수와 시간을 구조체에 저장한다.
          구조체의 멤버구성은 qDecoder.h를 참조하기 바란다.
-  사용 :
-    Cgienv *myenv;
-    qCgienv(myenv);
+  사용 : Cgienv *myenv;
+         qCgienv(myenv);
 
   ****************************************
   ** 형식화된 Configuration FILE을 다루는 함수군  
   ****************************************
 
-  아래와 같은 형식의 화일을 읽어 Linked List에 저장한다.
+  ## 아래와 같은 형식의 화일을 읽어 Linked List에 저장한다.
   ---- test.conf ----
   name  = Kim
   phone = 123-4567
   addr  = 한국
   -------------------
 
-  Entry     *qfDecoder(char *filename);
+  Entry  *qfDecoder(char *filename);
   기능 : 화일을 읽어 Linked List에 저장한다. (화일의 한행은 최고 1000Byte)
   복귀 : Linked List의 첫번째 레코드 포인터, 에러시 NULL
-  사용 :
-    Entry *FirstRecord;
-    FirstRecord = qfDecoder("test.conf");
+  사용 : Entry *FirstRecord;
+         FirstRecord = qfDecoder("test.conf");
 
-  char      *qfValue(Entry *first, char *name);
+  char   *qfValue(Entry *first, char *name);
   기능 : 변수명의 변수값을 얻는다.
   복귀 : 성공시 변수값의 포인터, 실패시 NULL
-  사용 :
-    char *name;
-    name = qfValue(FirstRecord, "name");
+  사용 : char *name;
+         name = qfValue(FirstRecord, "name");
 
-  void      qfPrint(Entry *first);
+  void   qfPrint(Entry *first);
   기능 : 프로그램의 Debugging용으로 해석한 인자를 모두 출력한다.
   사용 : qfPrint(FirstRecord);
 
-  void      qfFree(Entry *first);
+  void   qfFree(Entry *first);
   기능 : 할당된 Memory를 반환한다.
   사용 : qfFree(FirstRecord);
 
 
-  아래와 같은 형식의 카운터 화일을 다룬다.
+  ## 아래와 같은 형식의 카운터 화일을 다룬다.
   ---- number.dat ----
   74
   -------------------
-  int       qReadCounter(char *filename);
+
+  int    qReadCounter(char *filename);
   기능 : 화일명의 카운터 화일을 읽는다.
   복귀 : 성공시 카운터값, 에러시 0
-  사용 :
-    int count;
-    count = qReadCount("number.dat");
+  사용 : int count;
+         count = qReadCount("number.dat");
 
-  int       qSaveCounter(char *filename, int number);
+  int    qSaveCounter(char *filename, int number);
   기능 : 지정된 화일명에 카운터 값을 저장(갱신)한다.
   복귀 : 성공시 1, 에러시 0
   사용 : qSaveCounter("number.dat", 75);
 
+  int    qUpdateCounter(char *filename){
+  기능 : 지정된 화일명의 카운터 값을 1 증가시킨다.
+  복귀 : 성공시 기존 카운터값 + 1, 에러시 0
+  사용 : int count;
+         count = qUpdateCounter("number.dat");
   
   ****************************************
   ** FILE 관련 함수군
   ****************************************
 
-  int       qCheckFile(char *filename);
+  int    qCheckFile(char *filename);
   기능 : 화일의 존재여부를 파악한다.
   복귀 : 화일이 존재 하면 1, 화일이 없으면 0
          Permission에 의해 접근 불가능한 화일도 화일이 없다고 판단한다.
   사용 : if(qCheckFile("test.dat") == 0)qError("File not found");
 
-  int       qSendFile(char *filename);
+  int    qSendFile(char *filename);
   기능 : 화일의 내용을 출력한다.
   복귀 : 정상 출력 1, 에러시 0
-  사용 :
-    qContentType("image/gif");
-    qSendFile("mypic.gif");
+  사용 : qContentType("image/gif");
+         qSendFile("mypic.gif");
 
-    qContentType("text/html");
-    qSendFile("myhtml.html");
+         qContentType("text/html");
+         qSendFile("myhtml.html");
 
 
   ****************************************
   ** 화면 출력 함수군
   ****************************************
 
-  int       qPrintf(int mode, char *format, ...);
+  int    qPrintf(int mode, char *format, ...);
   기능 : printf()와 동일한 사용방법으로 HTML TAG의 적용 유뮤와 자동 Link를 행한다.
          (Max string size = 1000byte)
          Mode 0 : printf()와 동일하다, HTML이 적용됨을 뜻한다.
-         Mode 1 : HTML TAG 자체를 출력한다. Link되는 부분 없다.
+         Mode 1 : HTML TAG 자체를 출력한다. Link되는 부분 없음.
          Mode 2 : Mode 1 + 자동으로 link 시킴.
          Mode 3 : Mode 2 + link를 클릭했을시 전화면(target=_top) 출력한다.
          Mode 4 : HTML TAG를 무시한다. 출력되지 않음.
@@ -199,15 +202,25 @@
   복귀 : 성공시 출력한 bytes 갯수, 에러시 EOF
   사용 : qPrintf(4, "%s", buf);
   예제 : qPrintf(i, "%s\n", "<font><b>\"http://shinan.hongik.ac.kr\"</b></font>");
-    Mode 0 : <font><b>"http://shinan.hongik.ac.kr"</b></font>
-    Mode 1 : &ltfont&gt&ltb&gt"http://shinan.hongik.ac.kr"&lt/b&gt&lt/font&gt
-    Mode 2 : &ltfont&gt&ltb&gt"<a href="http://shinan.hongik.ac.kr" target="">http://shinan.hongik.ac.kr</a>"&lt/b&gt&lt/font&gt
-    Mode 3 : &ltfont&gt&ltb&gt"<a href="http://shinan.hongik.ac.kr" target="_top">http://shinan.hongik.ac.kr</a>"&lt/b&gt&lt/font&gt
-    Mode 4 : "http://shinan.hongik.ac.kr"
-    Mode 5 : "<a href="http://shinan.hongik.ac.kr" target="">http://shinan.hongik.ac.kr</a>"
-    Mode 6 : "<a href="http://shinan.hongik.ac.kr" target="_top">http://shinan.hongik.ac.kr</a>"
+         Mode 0 : <font><b>"http://shinan.hongik.ac.kr"</b></font>
+         Mode 1 : &ltfont&gt&ltb&gt"http://shinan.hongik.ac.kr"&lt/b&gt&lt/font&gt
+         Mode 2 : &ltfont&gt&ltb&gt"<a href="http://shinan.hongik.ac.kr" target="">http://shinan.hongik.ac.kr</a>"&lt/b&gt&lt/font&gt
+         Mode 3 : &ltfont&gt&ltb&gt"<a href="http://shinan.hongik.ac.kr" target="_top">http://shinan.hongik.ac.kr</a>"&lt/b&gt&lt/font&gt
+         Mode 4 : "http://shinan.hongik.ac.kr"
+         Mode 5 : "<a href="http://shinan.hongik.ac.kr" target="">http://shinan.hongik.ac.kr</a>"
+         Mode 6 : "<a href="http://shinan.hongik.ac.kr" target="_top">http://shinan.hongik.ac.kr</a>"
 
-  void      qError(char *format, ...);
+  void   qPuts(int mode, char *buf);
+  기능 : 문자열을 HTML형식에 맞도록 출력한다. (qPrintf()와 기능 동일)
+  주의 : 인자로 전해준 문자열이 변형된다.
+         qPuts(mode, "문자열"); 이런식의 사용은 오류를 잃으킬수 있다.
+         이때에는 아래의 사용법처럼 인자를 복사한후 사용한다.
+  사용 : char buf[100];
+         strcpy(buf, "http://shinan.hongik.ac.kr mailto:nobreak@shinan.hongik.ac.kr");
+         qPuts(2, buf);
+         
+
+  void   qError(char *format, ...);
   기능 : 오류에대한 Message를 출력한다. printf() 함수와 사용법 동일.
          qDecoder.c를 수정하여 출력 형태를 고칠수 있다.
          (Max string size = 1000byte)
@@ -218,27 +231,34 @@
   ****************************************
   ** 기타 함수군
   ****************************************
-  int       qCheckEmail(char *email){
+  int    qCheckEmail(char *email){
   기능 : E-mail 주소의 오류를 판별한다.
   복귀 : 오류가 없으면 1, 문제가 발생하면 0
   사용 : qCheckEmail("nobreak@shinan.hongik.ac.kr");
 
-  void      qRemoveSpace(char *str);
+  int    qCheckURL(char *url);
+  기능 : URL 주소의 오류를 판별한다.
+  복귀 : 오류가 없으면 1, 문제가 발생하면 0
+  사용 : qCheckURL("http://shinan.hongik.ac.kr");
+
+  char   *qRemoveSpace(char *str);
   기능 : 문자열의 앞뒤 공백과 CR, LF를 제거한다.
-  사용 :
-    char *teststr;
-    teststr = " Hello, world    \r\n";
-    qRemoveSpace(teststr);
-    // 삭제후 teststr에는 "Hello, world"가 들어간다.
+  복귀 : 성공시 문자열의 포인터, 실패시 NULL
+  주의 : qRemoveSpace("문자열"); 이런식의 사용은 오류를 잃으킬수 있다.
+         이때에는 아래의 사용법처럼 인자를 복사한후 사용한다.
+
+  사용 : char teststr[100];
+         strcpy(teststr, " Hello, world    \r\n");
+         qRemoveSpace(teststr);
+         // 삭제후 teststr에는 "Hello, world"가 들어간다.
 
   struct tm *qGetTime(void);
   기능 : 시간을 구조체 tm에 저장한다.
   복귀 : 구조체 tm의 포인터
-  사용 :
-    struct tm *mytime;
-    mytime = qGetTime();
+  사용 : struct tm *mytime;
+         mytime = qGetTime();
 
-  int       qStr09AZaz(char *str);
+  int    qStr09AZaz(char *str);
   기능 : 문자열이 0-9, A-Z, a-z로 이루어졌는지 판별한다.
   복귀 : 조건에 부합하면 1, 오류시 0
   사용 : if(qStr09AZaz("abc1234") == 1) printf("True");
