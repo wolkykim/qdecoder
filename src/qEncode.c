@@ -20,6 +20,7 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+
 Copyright Disclaimer:
   Hongik Internet, Inc., hereby disclaims all copyright interest.
   President, Christopher Roh, 6 April 2000
@@ -29,6 +30,9 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
+
+Author:
+  Seung-young Kim <wolkykim(at)ziom.co.kr>
 ************************************************************************/
 
 #include "qDecoder.h"
@@ -136,3 +140,21 @@ char *qMD5File(char *filename) {
   return md5hex;
 }
 
+/**********************************************
+** Usage : qFnv32Hash(string, max);
+** Return: unsigned 32 integer of FNV hash algorithm.
+** Do    : FNV hash algorithm
+**         if set max to 0, disable maximum limit
+**********************************************/
+unsigned int qFnv32Hash(char *str, unsigned int max) {
+  unsigned char *s = (unsigned char *)str;
+  unsigned int hval = (unsigned int)0x811c9dc5;
+
+  while (*s) {
+    hval *=  (unsigned int)0x01000193;
+    hval ^= (unsigned int)*s++;
+  }
+  if(max > 0) hval %= max;
+
+  return hval;
+}

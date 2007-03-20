@@ -20,6 +20,7 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+
 Copyright Disclaimer:
   Hongik Internet, Inc., hereby disclaims all copyright interest.
   President, Christopher Roh, 6 April 2000
@@ -29,6 +30,9 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
+
+Author:
+  Seung-young Kim <wolkykim(at)ziom.co.kr>
 ************************************************************************/
 
 #include "qDecoder.h"
@@ -59,7 +63,7 @@ int qfclose(FILE *stream) {
 
 /**********************************************
 **Usage : qCheckFile(filename);
-** Return: If file exist, return 1. Or return 0.
+** Return: If file exist, returns 1. Or returns 0.
 ** Do    : Check filethat file is existGet environment of CGI.
 **********************************************/
 int qCheckFile(char *format, ...) {

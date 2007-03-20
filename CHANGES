@@ -6,6 +6,18 @@ qDecoder Changes
 ``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``New'', ``Replaced'' and ``Removed''.
 
+  Release 8.1
+    ADD) unsigned int qFnv32Hash(char *str, unsigned int max);
+    FIX) qSocketWaitReadable() - 'timeoutsec' argument changed to 'timeoutms'
+    to support waiting microseconds. To wait indefinitely timeoutms can be set
+    to negative value. To do just polling status, timeoutms can be set to 0.
+    And now it returns -1 if an error occurred for detecting closed socket.
+    FIX) qSocketRead() - 'timeoutsec' argument changed to 'timeoutms'
+    FIX) qSocketGets() - 'timeoutsec' argument changed to 'timeoutms'
+    FIX) qSocketSaveIntoFile() - 'timeoutsec' argument changed to 'timeoutms'
+    FIX) qSocketRead() - returns 0 when timeout, returns -1 when an error occured;
+    FIX) qSocketGets() - returns 0 when timeout, returns -1 when an error occured;
+
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive
     uploading.

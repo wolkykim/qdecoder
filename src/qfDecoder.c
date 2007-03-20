@@ -20,6 +20,7 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+
 Copyright Disclaimer:
   Hongik Internet, Inc., hereby disclaims all copyright interest.
   President, Christopher Roh, 6 April 2000
@@ -29,6 +30,9 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
+
+Author:
+  Seung-young Kim <wolkykim(at)ziom.co.kr>
 ************************************************************************/
 
 #include "qDecoder.h"
@@ -50,4 +54,4 @@ Q_Entry *qfDecoder(char *filename) {
 
   return first;
 }
-  
+

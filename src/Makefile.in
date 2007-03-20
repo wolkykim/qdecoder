@@ -29,6 +29,9 @@
 #
 #   Seung-young Kim, hereby disclaims all copyright interest.
 #   Author, Seung-young Kim, 6 April 2000
+#
+# Author:
+#   Seung-young Kim <wolkykim(at)ziom.co.kr>
 ###########################################################################
 
 prefix		= @prefix@
@@ -41,7 +44,7 @@ PRGNAME		= qDecoder
 LIBNAME		= lib${PRGNAME}.a
 
 # Shared Library Name
-SLIBVERSION	= 2
+SLIBVERSION	= 3
 SLIBNAME	= lib${PRGNAME}.so
 SLIBREALNAME	= ${SLIBNAME}.${SLIBVERSION}
 
@@ -49,11 +52,15 @@ SLIBREALNAME	= ${SLIBNAME}.${SLIBVERSION}
 LIBDIR		= @libdir@
 HEADERDIR	= @includedir@
 
+# Database Supports
+WITH_MYSQL      =
+MYSQL_INCLUDE   =
+
 # Which compiler & options for release
 CC		= @CC@
 CFLAGS		= @CFLAGS@
-DEFS		= @DEFS@
-INCLUDE		= -I.
+DEFS		= @DEFS@ ${WITH_MYSQL}
+INCLUDE		= -I./ ${MYSQL_INCLUDE}
 
 # Utilities
 AR		= @AR@
@@ -86,6 +93,7 @@ OBJ		= qDecoder.o \
 		qDownload.o \
 		qTime.o \
 		qSocket.o \
+		qDatabase.o \
 		qMisc.o \
 		qInternalCommon.o \
 		qInternalEntry.o \

@@ -20,6 +20,7 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+
 Copyright Disclaimer:
   Hongik Internet, Inc., hereby disclaims all copyright interest.
   President, Christopher Roh, 6 April 2000
@@ -29,6 +30,9 @@ Copyright Disclaimer:
 
   Seung-young Kim, hereby disclaims all copyright interest.
   Author, Seung-young Kim, 6 April 2000
+
+Author:
+  Seung-young Kim <wolkykim(at)ziom.co.kr>
 ************************************************************************/
 
 #ifndef _WIN32
@@ -39,11 +43,6 @@ Copyright Disclaimer:
 #include <netinet/in.h> /* for qSocket.c */
 #include <arpa/inet.h>	/* for qSocket.c */
 #include <netdb.h>      /* for qSocket.c */
-
-/**********************************************
-** Define Paragraph
-**********************************************/
-
 
 /**********************************************
 ** Internal Functions Definition
@@ -90,62 +89,70 @@ int qSocketClose(int sockfd) {
 }
 
 /**********************************************
-** Usage : qSocketWaitReadable(sockfd, 10);
+** Usage : qSocketWaitReadable(sockfd, 1000);
 ** Return: returns the value 1 when it is readable,
-**         otherwise the given seconds exceeded(timeout)
-**         the value of 0 is returned.
+**         otherwise the given seconds exceeded(timeout) the value of 0 is returned.
+**         -1 if an error occurred.
 ** Do    : Block the program until the socket has readable data.
 ** Notice: You don't need to set the socket as non-block mode.
 **********************************************/
-int qSocketWaitReadable(int sockfd, int timeoutsec) {
+int qSocketWaitReadable(int sockfd, int timeoutms) {
   struct timeval tv;
   fd_set readfds;
 
   // time to wait
-  tv.tv_sec = timeoutsec, tv.tv_usec = 0;
   FD_ZERO(&readfds);
   FD_SET(sockfd, &readfds);
-  select(sockfd+1, &readfds, NULL, NULL, &tv);
+  if(timeoutms > 0) {
+    tv.tv_sec = (timeoutms / 1000), tv.tv_usec = (timeoutms % 1000);
+    if(select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
+  }
+  else if(timeoutms == 0) { // just poll
+    tv.tv_sec = 0, tv.tv_usec = 0;
+    if(select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
+  }
+  else { //  blocks indefinitely
+    if(select(FD_SETSIZE, &readfds, NULL, NULL, NULL) < 0) return -1;
+  }
+
   if (!FD_ISSET(sockfd, &readfds)) return 0; // timeout
 
   return 1;
 }
 
 /**********************************************
-** Usage : qSocketRead(save_array_pointer, length, sockfd, 10);
+** Usage : qSocketRead(save_array_pointer, length, sockfd, 1000);
 ** Return: returns the length of data readed.
-**         otherwise(timeout) the value -1 is returned.
+**         otherwise(timeout) the value 0 is returned.
+**         returns -1 if an error occured.
 ** Do    : read socket stream.
 ** Notice: You don't need to set the socket as non-block mode.
 **********************************************/
-int qSocketRead(char *binary, int size, int sockfd, int timeoutsec) {
-  char *ptr;
+int qSocketRead(char *binary, int size, int sockfd, int timeoutms) {
   int readcnt;
 
-  if(qSocketWaitReadable(sockfd, timeoutsec) == 0) return -1;
-
-  for(ptr = binary, readcnt = 0; size > 0; size--, ptr++, readcnt++) {
-    if(read(sockfd, ptr, 1) != 1) break;
-  }
+  if(qSocketWaitReadable(sockfd, timeoutms) <= 0) return 0;
+  readcnt = read(sockfd, binary, size);
+  if(readcnt <= 0) return -1;
 
   return readcnt;
 }
 
 /**********************************************
-** Usage : qSocketGets(save_array_pointer, array_max_length, sockfd, 10);
-** Return: Success: returns the string pointer.
-**         Half fail: timeout occured but has some data readed: returns the string pointer.
-**         Fail: timeout occured and has no data readed: returns NULL.
+** Usage : qSocketGets(save_array_pointer, array_max_length, sockfd, 1000);
+** Return: returns the length of data readed.
+**         otherwise(timeout) the value 0 is returned.
+**         returns -1 if an error occured.
 ** Do    : read line from the stream. it does not contain the character '\r', '\n'.
 **********************************************/
-char *qSocketGets(char *str, int size, int sockfd, int timeoutsec) {
+int qSocketGets(char *str, int size, int sockfd, int timeoutms) {
   char *ptr;
 
-  if(qSocketWaitReadable(sockfd, timeoutsec) == 0) return NULL;
+  if(qSocketWaitReadable(sockfd, timeoutms) <= 0) return 0;
 
   for(ptr = str; size > 1; size--, ptr++) {
     if(read(sockfd, ptr, 1) != 1) {
-    	if(ptr == str) return NULL;
+    	if(ptr == str) return -1;
     	break;
     }
     if(*ptr == '\n') break;
@@ -153,7 +160,7 @@ char *qSocketGets(char *str, int size, int sockfd, int timeoutsec) {
   }
 
   *ptr = '\0';
-  return str;
+  return strlen(str);
 }
 
 /**********************************************
@@ -174,7 +181,7 @@ int qSocketWrite(char *binary, int size, int sockfd) {
 **********************************************/
 int qSocketPuts(char *str, int sockfd) {
   if(write(sockfd, str, strlen(str)) < 0) return 0;
-  if(write(sockfd, "\r\n", 2) < 0) return 0;
+  if(write(sockfd, "\n", 1) < 0) return 0;
 
   return 1;
 }
@@ -245,14 +252,14 @@ int qSocketSendFile(char *filepath, int offset, int sockfd) {
 ** Do    : save stream data into file directly.
 **********************************************/
 // returns get bytes
-int qSocketSaveIntoFile(int sockfd, int size, int timeoutsec, char *filepath, char *mode) {
+int qSocketSaveIntoFile(int sockfd, int size, int timeoutms, char *filepath, char *mode) {
   FILE *fp;
   char buf[1024*16]; // read buffer size
 
   int readbytes, readed, readsize;
 
   // stream readable?
-  if(qSocketWaitReadable(sockfd, timeoutsec) == 0) return -1;
+  if(qSocketWaitReadable(sockfd, timeoutms) <= 0) return -1;
 
   // file open
   if((fp = fopen(filepath, mode)) == NULL) return 0;
