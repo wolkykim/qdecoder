@@ -1,11 +1,11 @@
 /*************************************************************
-** qDecoder CGI Library v4.3                                **
+** qDecoder CGI Library v4.3.1                              **
 **                                                          **
 **  Official distribution site : ftp://ftp.nobreak.com      **
 **           Technical contact : nobreak@nobreak.com        **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
-**                        Last updated at March 17, 1999    **
+**                        Last updated at March 28, 1999    **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **

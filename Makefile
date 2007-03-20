@@ -19,6 +19,7 @@ CC      = gcc
 
 # System library directory
 LIBDIR	= /usr/lib/
+HEADERDIR	= /usr/include/
 
 # Where are include files kept
 INCLUDE = .
@@ -49,8 +50,13 @@ reall: clean all
 	$(CC) -I$(INCLUDE) $(CFLAGS) -c -o $@ $<
 
 ## Install Module
-install: $(LIBNAME)
-	cp $(LIBNAME) $(LIBDIR)
+install: all
+	cp qDecoder.h $(HEADERDIR)/qDecoder.h
+	cp $(LIBNAME) $(LIBDIR)/$(LIBNAME)
+
+deinstall:
+	rm -f $(HEADERDIR)/qDecoder.h
+	rm -f $(LIBDIR)/$(LIBNAME)
 
 ## Clear Module
 clean:

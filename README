@@ -79,18 +79,21 @@ I-6. 저작권, 소유권
 
 II-1. 소프트웨어 정보 (Software Information)
   - 명    칭 : qDecoder
-  - 판 번 호 : 4.3
+  - 판 번 호 : 4.3.1
   - 종    류 : CGI Library
   - Language : C/C++
   - 사용환경 : All kind Unix (Solaris, HP/UX, FreeBSD, Linux, Etc.)
   - 제작회사 : Nobreak Technologies, Inc.
   - 배 포 처 : ftp://ftp.nobreak.com/pub/qDecoder/
-  - 배 포 일 : 1999년 3월 17일
+  - 배 포 일 : 1999년 3월 28일
 
 
 +--------------------------------------------------------------------+
 | III. 버젼별 수정사항                                               |
 +--------------------------------------------------------------------+
+[Version 4.3.1]
+    * Patched functions
+    Makefile의 install, deinstall 수정
 
 [Version 4.3]
     * Patched functions
@@ -735,6 +738,9 @@ V-4. Compile
     $ cd qDecoder
     $ make install
     $ gcc -o test.cgi main.c -lqDecoder
+
+  라이브러리 제거
+    $ make deinstall
 
 V-5. Example Makefile
 
