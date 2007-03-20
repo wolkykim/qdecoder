@@ -1,11 +1,11 @@
 /*************************************************************
-** qDecoder CGI Library v5.0.7                              **
+** qDecoder CGI Library v5.0.8                              **
 **                                                          **
 **  Official distribution site : ftp://ftp.hongik.com       **
 **           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
-**                        Last updated at Jan 2, 2000       **
+**                        Last updated at Mar 27, 2000      **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **
@@ -770,7 +770,7 @@ void qcFree(void){
 **
 ** ex) qSetCookie("NAME", "Kim", 30, NULL, NULL, NULL);
 **********************************************/
-void qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure){
+void qSetCookie(char *name, char *value, int exp_days, char *path, char *domain, char *secure){
   char *Name, *Value;
   char cookie[(4 * 1024) + 256];
 
@@ -788,14 +788,16 @@ void qSetCookie(char *name, char *value, int exp_days, char *domain, char *path,
     strcat(cookie, gmt);
   }
 
-  if(domain != NULL) {
-    strcat(cookie, "; domain=");
-    strcat(cookie, domain);
-  }
-
   if(path != NULL) {
+    if(path[0] != '/') qError("qSetCookie(): Path string(%s) must start with '/' character.", path);
     strcat(cookie, "; path=");
     strcat(cookie, path);
+  }
+
+  if(domain != NULL) {
+    if(strstr(domain, "/") != NULL || strstr(domain, ".") == NULL) qError("qSetCookie(): Invalid domain name(%s).", domain);
+    strcat(cookie, "; domain=");
+    strcat(cookie, domain);
   }
 
   if(secure != NULL) {
@@ -959,7 +961,7 @@ int qSedStr(char *srcstr, FILE *fpout, char **arg) {
 }
 
 /**********************************************
-** Usage : qSedFile(string pointer, fpout, arg) {
+** Usage : qSedFile(filename, fpout, arg) {
 ** Return: Success 1, Fail open fail 0
 ** Do    : Stream Editor.
 **********************************************/
@@ -1151,10 +1153,10 @@ char *qURLencode(char *str){
 ** Return: Pointer of Query string
 ** Do    : Decode query string
 **********************************************/
-void qURLdecode(char *str){
+char *qURLdecode(char *str){
   int i, j;
 
-  if(!str)return;
+  if(!str) return NULL;
   for(i = j = 0; str[j]; i++, j++){
     switch(str[j]){
       case '+':{
@@ -1173,6 +1175,8 @@ void qURLdecode(char *str){
     }
   }
   str[i]='\0';
+
+  return str;
 }
 
 /**********************************************
@@ -1184,7 +1188,7 @@ void qContentType(char *mimetype){
 
   if(flag)return;
 
-  printf("Content-type: %s%c%c", mimetype, 10, 10);
+  printf("Content-Type: %s%c%c", mimetype, 10, 10);
   flag = 1;
 }
 
@@ -1673,7 +1677,19 @@ char *qfGetLine(FILE *fp) {
 ** Return: Success 1, File not found 0
 **********************************************/
 int qDownload(char *filename) {
-  char *file, *c;
+  return qDownloadMime(filename, "application/octet-stream");
+}
+
+/**********************************************
+** Usage : qDownloadMime(filename, mime);
+** Do    : Pump file to stdout, should not call qContentType().
+**         if mime is 'application/octet-stream', forcing download.
+** Return: Success 1, File not found 0
+**********************************************/
+int qDownloadMime(char *filename, char *mime) {
+  char *file, *c, *disposition;
+
+  if(mime == NULL) mime = "application/octet-stream";
 
   if(filename == NULL) qError("qDownload(): Null pointer can not be used.");
   if(qCheckFile(filename) == 0) return 0;
@@ -1685,14 +1701,31 @@ int qDownload(char *filename) {
   for(; c >= file; c--) *c = ' ';
   qRemoveSpace(file);
 
-  printf ("Content-type: application/octet-stream\n");
-  printf ("Content-disposition: attachment; filename=%s\n", file);
-  printf ("Content-Transfer-Encoding: binary\n");
-  printf ("\n");
+  if(!strcmp(mime, "application/octet-stream")) disposition = "attachment";
+  else disposition = "inline";
+  printf("Content-Disposition: %s;filename=\"%s\"\n", disposition, file);
+  printf("Content-Transfer-Encoding: binary\n");
+  printf("Accept-Ranges: bytes\n");
+  printf("Content-Length: %ld\n", qFileSize(filename));
+  printf("Connection: close\n");
+  printf("Content-Type: %s\n", mime);
+  printf("\n");
   free(file);
 
   qCatFile(filename);
   return 1;
+}
+
+/**********************************************
+** Usage : qFileSize(filename);
+** Return: Size of file in byte, File not found -1
+**********************************************/
+long qFileSize(char *filename) {
+  struct stat finfo;
+
+  if (lstat(filename, &finfo) < 0) return -1;
+
+  return finfo.st_size;
 }
 
 /**********************************************

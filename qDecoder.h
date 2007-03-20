@@ -73,7 +73,7 @@ int       qciValue(char *format, ...);
 void      qcPrint(void);
 void      qcFree(void);
 
-void      qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure);
+void      qSetCookie(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
 
 int       qAwkOpen(char *filename, char separator);
 int       qAwkNext(char array[][256]);
@@ -89,7 +89,7 @@ int       qArgMatch(char *str, char **qlist);
 int       qArgEmprint(int mode, char *str, char **qlist);
 
 char      *qURLencode(char *str);
-void      qURLdecode(char *str);
+char      *qURLdecode(char *str);
 void      qContentType(char *mimetype);
 int       qPrintf(int mode, char *format, ...);
 void      qPuts(int mode, char *buf);
@@ -112,6 +112,8 @@ int       qSaveStr(char *sp, int spsize, char *filename, char *mode, mode_t perm
 char      *qfGetLine(FILE *fp);
 
 int       qDownload(char *filename);
+int       qDownloadMime(char *filename, char *mime);
+long      qFileSize(char *filename);
 void      qRedirect(char *url);
 
 int       qReadCounter(char *filename);

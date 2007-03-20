@@ -81,14 +81,14 @@ I-6. 저작권, 소유권
 II-1. 소프트웨어 정보 (Software Information)
 
   - 명    칭 : qDecoder
-  - 판 번 호 : 5.0.7
+  - 판 번 호 : 5.0.8
   - 종    류 : C/C++용 CGI Library
   - 사용환경 : All kind Unix (Solaris, HP/UX, FreeBSD, Linux, Etc.)
   - 제작회사 : (주)홍익인터넷 (Hongik Internet, Inc.)
   - 개 발 자 : Seung-young Kim(김승영) <nobreak@hongik.com>
   - 배 포 처 : http://www.hongik.com/products/qDecoder/
                ftp://ftp.hongik.com/pub/qDecoder/
-  - 배포일자 : 2000년 1월 2일
+  - 배포일자 : 2000년 3월 27일
 
 II-2. What's qDecoder?
 
@@ -111,6 +111,22 @@ II-2. What's qDecoder?
 +--------------------------------------------------------------------+
 | III. 버젼별 수정사항                                               |
 +--------------------------------------------------------------------+
+[Version 5.0.8]
+    * Patched functions
+    qSetCookie()
+    - 표준 규격에 맞도록 인자 순서 교정
+      qSetCookie(name, value, exp_days, path, domain, secure);
+    qURLdecode()
+    - 디코딩된 스트링 포인터를 리턴하도록 함수 프로토 타입를 void에서
+      char*로 수정
+    qDownload()
+    - 클라이언트에서 다운로딩시 전체 파일용량이 파악되도록 수정
+
+    * New functions
+    qDownloadMime()
+    - 클라이언트로 마임에 준하여 파일을 전송한다.
+    qFileSize()
+    - 파일의 용량을 byte 단위로 알려줌
 
 [Version 5.0.7]
     * Deleted functions
@@ -125,9 +141,7 @@ II-2. What's qDecoder?
     - qValue()와 같으나 해당 쿼리명이 없을 경우 기본 스트링값을 넘겨준다.
     qValueNotEmpty();
     - qValue()와 같으나 NULL이나, 공백문자열("")일 경우 오류 메시지를 출력해 준다.
-    qStrlwr()
-    - 인자로 주어진 문자열을 모두 소문자로 변환한다.
-    qStrincmp();
+    qStrincmp(char *s1, char *s2, size_t len);
     - strncmp()와 stricmp() 함수가 합쳐진 기능을 한다.
       대소문자를 구분하지 않고 문자열의 처음 n 바이트를 비교한다.
 
@@ -544,8 +558,9 @@ IV-1. CGI 관련 함수군
   사용 : char *encstr;
          encstr = qURLencode("안녕하세요?");
 
-  void   qURLdecode(char *str);
+  char   *qURLdecode(char *str);
   기능 : %xx로 인코딩된 자료를 해독한다.
+  복귀 " str의 포인터
   사용 : char *encstr;
          qURLdecode(encstr);
 
@@ -574,7 +589,7 @@ IV-1. CGI 관련 함수군
 
 IV-2. COOKIE 관련 함수군
 
-  void   qSetCookie(char *name, char *value, int exp_days, char *domain, char *path, char *secure);
+  void   qSetCookie(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
   기능 : name=value에 해당하는 COOKIE를 설정함.
   주의 : qContentType()이 호출되기 전에 사용하여야 한다.
   사용 : char *name, *value;
@@ -1030,11 +1045,7 @@ IV-7. 문자열 관련 함수군
 
   char   *qStrupr(char *str);
   기능 : 인자로 주어진 문자열을 모두 대문자로 변환한다.
-  복귀 : 해당 문자열의 포인터
-
-  char   *qStrlwr(char *str);
-  기능 : 인자로 주어진 문자열을 모두 소문자로 변환한다.
-  복귀 : 해당 문자열의 포인터
+  복귀 : 해당 문자열을 포인터
 
   char   *qStristr(char *big, char *small);
   기능 : strstr() 함수와 같으나, 대소문자를 구분하지 않고 비교한다.
@@ -1043,10 +1054,6 @@ IV-7. 문자열 관련 함수군
   int    qStricmp(char *s1, char *s2);
   기능 : strcmp() 함수와 같으나, 대소문자를 구분하지 않는다.
   복귀 : strcmp()와 같음
-  
-  int    qStrincmp(char *s1, char *s2, size_t len);
-  기능 : 대소문자를 구분하지 않고 문자열의 처음 n 바이트를 비교한다.
-  복귀 : strncmp()와 같음
 
   int    qSedStr(char *srcstr, FILE *fpout, char **arg);
   기능 : qSedFile()과 동일한 기능을 하나, 입력을 문자열로 받는다.
@@ -1088,6 +1095,25 @@ IV-9. 기타 함수군
          브라우저에 다운로딩 상자가 나타나도록 한다.
   복귀 : 성공 1, 파일 없음 0
   사용 : qDownload("/home/nobreak/myprg.exe");
+
+  int    qDownloadMime(char *filename, char *mime);
+  기능 : 클라이언트로 마임에 준하여 파일을 전송한다.
+  복귀 : 성공 1, 파일 없음 0
+  사용 : qDownload("/home/nobreak/myprg.gif", "image/gif");
+  기타 : 본 함수는 해당 파일을 웹상에 직접 링크하였을 때와 동일한 결과를
+         갖지만, 사용자 인증이 되어야만 다운로드 할 수 있도록 전처리를 하거나,
+         웹상에 공개될 수 없는 파일을 특정 프로그램을 통해서만 다운받을 수
+         있게 하는데 유용하다. mime이 'application/octet-stream'일 경우에는
+         qDownload()와 동일하다.
+  주의 : 본 함수는 스트림이 종료될때 까지 프로세스가 실행되게 되므로, 웹상에도
+         링크가 걸릴 수 있는 파일인데 다운로딩 카운트등을 위한 전처리로 사용할
+         경우라면 qRedirect()를 활용하는 것이 좋다.
+
+  long   qFileSize(char *filename);
+  기능 : 파일의 용량을 byte 단위로 돌려줌
+  복귀 : 성공 파일의 용량, 파일 없음 -1
+  사용 : long size;
+         size = qFileSize("/home/nobreak/sample.pdf");
 
   void   qRedirect(char *url);
   기능 : HTTP의 Location: 헤더를 사용해 특정 페이지로 점프한다.
