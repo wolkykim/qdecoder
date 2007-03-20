@@ -1,5 +1,5 @@
 /***********************************************
-** [Query String Decoder Version 3.1]
+** [Query String Decoder Version 3.2]
 **
 **  Source  Code Name : qDecoder.c
 **  Include Code Name : qDecoder.h
@@ -56,7 +56,7 @@ static Entry *_first_entry = NULL;
 
 /**********************************************
 ** Usage : qDecoder();
-** Return: Number of Values
+** Return: Success number of values, Fail -1
 ** Do    : Query Decode & Save it in linked list
 **         It doesn't care Method
 **********************************************/
@@ -102,7 +102,7 @@ int qDecoder(void){
 
 /**********************************************
 ** Usage : qValue(Name);
-** Return: Pointer of value string
+** Return: Success pointer of value string, Fail NULL
 ** Do    : Get value string pointer
 **         It find value in linked list
 **********************************************/
@@ -152,7 +152,7 @@ void qFree(void){
 
 /**********************************************
 ** Usage : qfDecoder(filename);
-** Return: Pointer of the first entry
+** Return: Success pointer of the first entry, Fail NULL
 ** Do    : Save file into linked list
 **********************************************/
 Entry *qfDecoder(char *filename){
@@ -192,7 +192,7 @@ Entry *qfDecoder(char *filename){
 
 /**********************************************
 ** Usage : qfValue(Pointer of the first Entry, Name);
-** Return: Pointer of value string
+** Return: Success pointer of value string, Fail NULL
 ** Do    : Get value string pointer
 **         It find value in linked list
 **********************************************/
@@ -251,6 +251,7 @@ void qContentType(char *mimetype){
 
 /**********************************************
 ** Usage : qprintf(Mode, Format, Arg);
+** Return: Sucess number of output bytes, Fail EOF
 ** Do    : Print message like printf
 **         Mode 0 : Same as printf(), it means Accept HTML
 **         Mode 1 : Print HTML TAG, Same as mode 0
@@ -396,6 +397,37 @@ int qSendFile(char *filename){
 }
 
 /**********************************************
+** Usage : qReadCount(filename);
+** Return: Success counter value, Fail 0
+** Do    : Read counter value
+**********************************************/
+int qReadCounter(char *filename){
+  FILE *fp;
+  int  counter;
+
+  fp = fopen(filename, "rt");
+  if(fp == NULL) return 0;
+  fscanf(fp, "%d", &counter);
+  fclose(fp);
+  return counter;
+}
+
+/**********************************************
+** Usage : qSaveCount(filename, number);
+** Return: Success 1, Fail 0
+** Do    : Save counter value
+**********************************************/
+int qSaveCounter(char *filename, int number){
+  FILE *fp;
+
+  fp = fopen(filename, "wt");
+  if(fp == NULL)return 0;
+  fprintf(fp, "%d", number);
+  fclose(fp);
+  return 1;
+}
+
+/**********************************************
 ** Usage : qCheckEmail(E-mail Address);
 ** Return: If it is valid return 1. Or return 0;
 ** Do    : Check E-mail address
@@ -407,9 +439,10 @@ int qCheckEmail(char *email){
   if(strlen(email) > 60) return 0;
   strcpy(buf, email);
 
-  token = " ~`!@#$%^&*()_-+=|\\:;\"',.?/<>{}[]\r\n";
+  token = "@.";
   ptr = _strtok2(buf, token, &retstop);
   for(flag = i = 1; ptr != NULL; i++){
+    if(qStr09AZaz(ptr) == 0) flag = 0;
     if((i == 1) && (retstop != '@'))flag = 0;
     if((i >= 2) && !(retstop == '.' || retstop == '\0'))flag = 0;
     ptr = _strtok2(NULL, token, &retstop);
@@ -439,6 +472,22 @@ void qRemoveSpace(char *str){
   for(i--; (i >= 0) && isspace(str[i]); i--);
   str[i+1] = '\0';
 }
+
+/**********************************************
+** Usage : qStr09AZaz(string);
+** Return: Valid 1, Invalid 0
+** Do    : Check characters of string is in 0-9, A-Z, a-z
+**********************************************/
+int qStr09AZaz(char *str){
+  for(; *str; str++){
+    if((*str >= '0') && (*str <= '9')) continue;
+    else if((*str >= 'A') && (*str <= 'Z')) continue;
+    else if((*str >= 'a') && (*str <= 'z')) continue;
+    else return 0;
+  }
+  return 1;
+}
+
 
 /**********************************************
 ***********************************************

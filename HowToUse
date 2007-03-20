@@ -34,6 +34,11 @@
 
 1. 각 Version별 지원 함수 (상위 Version은 하위의 것을 포함)
 
+  [Version 3.2]
+    int       qReadCounter(char *filename);
+    int       qSaveCounter(char *filename, int number);
+    int       qStr09AZaz(char *str);
+
   [Version 3.1]
     int       qPrintf(int mode, char *format, ...);
     int       qCheckEmail(char *email);
@@ -71,7 +76,7 @@
 
   int       qDecoder(void);
   기능 : 전달된 Query String을 해석하여 Linked List에 저장
-  복귀 : 전달받은 인자의 갯수
+  복귀 : 성공시 전달받은 인자의 갯수, 에러시 -1
   사용 :
     int num;
     num = qDecoder();
@@ -118,14 +123,14 @@
 
   Entry     *qfDecoder(char *filename);
   기능 : 화일을 읽어 Linked List에 저장한다. (화일의 한행은 최고 1000Byte)
-  복귀 : Linked List의 첫번째 레코드 포인터
+  복귀 : Linked List의 첫번째 레코드 포인터, 에러시 NULL
   사용 :
     Entry *FirstRecord;
     FirstRecord = qfDecoder("test.conf");
 
   char      *qfValue(Entry *first, char *name);
   기능 : 변수명의 변수값을 얻는다.
-  복귀 : 변수값의 포인터
+  복귀 : 성공시 변수값의 포인터, 실패시 NULL
   사용 :
     char *name;
     name = qfValue(FirstRecord, "name");
@@ -138,6 +143,24 @@
   기능 : 할당된 Memory를 반환한다.
   사용 : qfFree(FirstRecord);
 
+
+  아래와 같은 형식의 카운터 화일을 다룬다.
+  ---- number.dat ----
+  74
+  -------------------
+  int       qReadCounter(char *filename);
+  기능 : 화일명의 카운터 화일을 읽는다.
+  복귀 : 성공시 카운터값, 에러시 0
+  사용 :
+    int count;
+    count = qReadCount("number.dat");
+
+  int       qSaveCounter(char *filename, int number);
+  기능 : 지정된 화일명에 카운터 값을 저장(갱신)한다.
+  복귀 : 성공시 1, 에러시 0
+  사용 : qSaveCounter("number.dat", 75);
+
+  
   ****************************************
   ** FILE 관련 함수군
   ****************************************
@@ -173,6 +196,7 @@
          Mode 4 : HTML TAG를 무시한다. 출력되지 않음.
          Mode 5 : Mode 4 + 자동으로 Link 시킴.
          Mode 6 : Mode 5 + link를 클릭했을시 전화면(target=_top) 출력한다.         
+  복귀 : 성공시 출력한 bytes 갯수, 에러시 EOF
   사용 : qPrintf(4, "%s", buf);
   예제 : qPrintf(i, "%s\n", "<font><b>\"http://shinan.hongik.ac.kr\"</b></font>");
     Mode 0 : <font><b>"http://shinan.hongik.ac.kr"</b></font>
@@ -200,8 +224,7 @@
   사용 : qCheckEmail("nobreak@shinan.hongik.ac.kr");
 
   void      qRemoveSpace(char *str);
-  기능 : 문자열의 앞뒤 공백을 제거한다.
-         또한 문자열의 CR, LF를 제거한다.
+  기능 : 문자열의 앞뒤 공백과 CR, LF를 제거한다.
   사용 :
     char *teststr;
     teststr = " Hello, world    \r\n";
@@ -214,6 +237,11 @@
   사용 :
     struct tm *mytime;
     mytime = qGetTime();
+
+  int       qStr09AZaz(char *str);
+  기능 : 문자열이 0-9, A-Z, a-z로 이루어졌는지 판별한다.
+  복귀 : 조건에 부합하면 1, 오류시 0
+  사용 : if(qStr09AZaz("abc1234") == 1) printf("True");
 
 
 3. 예제

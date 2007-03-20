@@ -47,5 +47,10 @@ struct tm *qGetTime(void);
 
 int       qCheckFile(char *filename);
 int       qSendFile(char *filename);
+
+int       qReadCounter(char *filename);
+int       qSaveCounter(char *filename, int number);
+
 int       qCheckEmail(char *email);
 void      qRemoveSpace(char *str);
+int       qStr09AZaz(char *str);
