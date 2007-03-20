@@ -1,28 +1,27 @@
 /*************************************************************
-** qDecoder CGI Library v5.0.3                              **
+** qDecoder CGI Library v5.0.4                              **
 **                                                          **
 **  Official distribution site : ftp://ftp.hongik.com       **
 **           Technical contact : nobreak@hongik.com         **
 **                                                          **
 **                        Developed by 'Seung-young Kim'    **
-**                        Last updated at August 20, 1999   **
+**                        Last updated at Sep 9, 1999       **
 **                                                          **
 **      Designed by Perfectionist for Perfectionist!!!      **
 **                                                          **
 **         Copyright (c) 1999 Hongik Internet, Inc.         **
-*************************************************************/
-
-/*************************************************************
-** Example Usage :
-**
-** main(){
-**   // automatically decode query when it is called first time
-**   printf("Value = %s", qValue("Form_Name_String"));
-**   // If you want to view all query data for debugging
-**   qPrint();
-**   // It's not necessary but for the perfectionist.
-**   qFree();
-** }
+**         Copyright (c) 1998 Nobreak Technologies, Inc.    **
+**         Copyright (c) 1996,1997 Seung-young Kim          **
+**                                                          **
+** qDecoder is a CGI library for C/C++ language programming **
+** and a solution product for developers. The Query Fetch   **
+** algorithm of qDecoder which is based on linked-list gives**
+** developers more simple library interface without regard  **
+** to a method of GET or POST.                              **
+** Also because it gives transperance with a subordinate    **
+** layer, web-based softwares - CGI - is designed and       **
+** embodied in reliability further. The source code for     **
+** qDecoder is freely available to everyone.                **
 *************************************************************/
 
 #include <stdio.h>
@@ -30,7 +29,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <time.h>
+#include <sys/stat.h>
 
 #include "qDecoder.h"
 
@@ -109,12 +108,12 @@ int qDecoder(void){
 int _parse_urlencoded(void){
   Entry *entries, *back;
   char *query;
-  int  amount = 0;
+  int  amount;
   int  loop;
 
   entries = back = NULL;
 
-  for(loop = 1; loop <= 2; loop++) {
+  for(amount = 0, loop = 1; loop <= 2; loop++) {
     if (loop == 1 ) query = _get_query("GET");
     else if(loop == 2 ) query = _get_query("POST");
     else break;
@@ -174,6 +173,7 @@ char *_get_query(char *method){
 /* For decode multipart/form-data, used by qDecoder() */
 int _parse_multipart_data(void) {
   Entry *entries, *back;
+  char *query;
   int  amount;
 
   char *name = NULL, *value = NULL, *filename = NULL;
@@ -190,6 +190,24 @@ int _parse_multipart_data(void) {
 
   entries = back = NULL;
 
+  /* For parse GET method */
+  query = _get_query("GET");
+  for(amount = 0; query && *query; amount++){
+    back = entries;
+    entries = (Entry *)malloc(sizeof(Entry));
+    if(back != NULL) back->next = entries;
+    if(_first_entry == NULL) _first_entry = entries;
+
+    entries->value = _makeword(query, '&');
+    entries->name  = _makeword(entries->value, '=');
+    entries->next  = NULL;
+
+    qURLdecode(entries->name);
+    qURLdecode(entries->value);
+  }
+  if(query)free(query);
+
+  /* For parse multipart/form-data method */
   /* find boundary string */
   sprintf(boundary,    "--%s", strstr(getenv("CONTENT_TYPE"), "boundary=") + strlen("boundary="));
   /* This is not necessary but, I can not trust MS Explore */
@@ -202,7 +220,6 @@ int _parse_multipart_data(void) {
 
   boundarylen    = strlen(boundary);
   boundaryEOFlen = strlen(boundaryEOF);
-
 
   /* If you want to observe the string from stdin, enable this section */
   /* This section is made for debugging                                */
@@ -231,7 +248,7 @@ int _parse_multipart_data(void) {
 
   if(strncmp(buf, boundary, boundarylen) != 0) qError("_parse_multipart_data() : String format invalid.");
 
-  for(amount = 0, finish = 0; finish != 1; amount++){
+  for(finish = 0; finish != 1; amount++){
     /* get name field */
     _fgetstring(buf, sizeof(buf), stdin);
     name = (char *)malloc(sizeof(char) * (strlen(buf) - strlen("Content-Disposition: form-data; name=\"") + 1));
@@ -1094,8 +1111,8 @@ void qPuts(int mode, char *buf){
           else if(qCheckEmail(ptr) == 1)         linkflag = 2;
           else linkflag = 0;
         }
-        if(linkflag == 1) printf("<a href='%s' target='%s'>%s</a>", ptr, target, ptr);
-        else if(linkflag == 2) printf("<a href='mailto:%s' target='%s'>%s</a>", ptr, target, ptr);
+        if(linkflag == 1) printf("<a href=\"%s\" target=\"%s\">%s</a>", ptr, target, ptr);
+        else if(linkflag == 2) printf("<a href=\"mailto:%s\">%s</a>", ptr, ptr);
         else printf("%s", ptr);
       }
 
@@ -1311,9 +1328,9 @@ char *qCGIname(void) {
 **********************************************/
 struct tm *qGetTime(void){
   time_t nowtime;
-  struct tm *nowlocaltime;
+  static struct tm *nowlocaltime;
 
-  nowtime = time(NULL);
+  time(&nowtime);
   nowlocaltime = localtime(&nowtime);
   nowlocaltime->tm_year += 1900;
   nowlocaltime->tm_mon++;
@@ -1355,11 +1372,11 @@ int qCheckFile(char *filename){
 }
 
 /**********************************************
-** Usage : qFileCat(filename);
+** Usage : qCatFile(filename);
 ** Return: Success number of characters, Fail -1
 ** Do    : Stream out file.
 **********************************************/
-int qFileCat(char *filename) {
+int qCatFile(char *filename) {
   FILE *fp;
   int c, counter;
 
@@ -1370,6 +1387,48 @@ int qFileCat(char *filename) {
 
   fclose(fp);
   return counter;
+}
+
+/**********************************************
+** Usage : qReadFile(filename, string pointer);
+** Return: Success stream pointer, Fail NULL
+** Do    : Read file to malloced memory.
+**********************************************/
+char *qReadFile(char *filename, int *size) {
+  FILE *fp;
+  struct stat fstat;
+  char *sp, *tmp;
+  int c, i;
+
+  if(size != NULL) *size = 0;
+  if (lstat(filename, &fstat) < 0) return NULL;
+  if((fp = fopen(filename, "rb")) == NULL) return NULL;
+
+  sp = (char *)malloc(fstat.st_size + 1);
+  for(tmp = sp, i = 0; (c = fgetc(fp)) != EOF; tmp++, i++) *tmp = (char)c;
+  *tmp = '\0';
+
+  if(fstat.st_size != i) qError("qReadFile: Size(File:%d, Readed:%s) mismatch.", fstat.st_size, i);
+  fclose(fp);
+  if(size != NULL) *size = i;
+  return sp;
+}
+
+/**********************************************
+** Usage : qSaveStr(string pointer, string size, filename, mode, permission)
+** Return: Success number bytes stored, File open fail -1,
+           Can not adjust permission -2
+** Do    : Store string to file.
+**********************************************/
+int qSaveStr(char *sp, int spsize, char *filename, char *mode, mode_t perm) {
+  FILE *fp;
+  int i;
+  if((fp = fopen(filename, mode)) == NULL) return -1;
+  for(i = 0; i < spsize; i++) fputc(*sp++, fp);
+  fclose(fp);
+  if(chmod(filename, perm) != 0) return -2;
+
+  return i;
 }
 
 /*********************************************
@@ -1436,7 +1495,7 @@ void qDownload(char *filename) {
   printf ("\n");
   free(file);
 
-  qFileCat(filename);
+  qCatFile(filename);
 }
 
 /**********************************************
@@ -1478,11 +1537,11 @@ int qSaveCounter(char *filename, int number){
 
 /**********************************************
 ** Usage : qUpdateCount(filename, number);
-** Return: Success Current Value + 1, Fail 0
-** Do    : Update counter value, Save +1
+** Return: Success current value + number, Fail 0
+** Do    : Update counter value
 **********************************************/
 
-int qUpdateCounter(char *filename){
+int qUpdateCounter(char *filename, int number){
   FILE *fp;
   int counter = 0;
 
@@ -1491,8 +1550,7 @@ int qUpdateCounter(char *filename){
     fseek(fp, 0, SEEK_SET);
   }
   else if((fp = fopen(filename, "wt")) == NULL) return 0;
-
-  fprintf(fp, "%d\n", ++counter);
+  fprintf(fp, "%d\n", counter + number);
   fclose(fp);
   return counter;
 }

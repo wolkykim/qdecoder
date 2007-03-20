@@ -4,7 +4,7 @@
 
 void main(void) {
   char *list;
-  
+
   qContentType("text/html");
   qDecoder();
 

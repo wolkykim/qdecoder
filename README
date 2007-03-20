@@ -78,19 +78,54 @@ I-6. 저작권, 소유권
 +--------------------------------------------------------------------+
 
 II-1. 소프트웨어 정보 (Software Information)
+
   - 명    칭 : qDecoder
-  - 판 번 호 : 5.0.3
+  - 판 번 호 : 5.0.4
   - 종    류 : C/C++용 CGI Library
   - 사용환경 : All kind Unix (Solaris, HP/UX, FreeBSD, Linux, Etc.)
   - 제작회사 : (주)홍익인터넷 (Hongik Internet, Inc.)
   - 개 발 자 : Seung-young Kim(김승영) <nobreak@hongik.com>
   - 배 포 처 : ftp://ftp.hongik.com/pub/qDecoder/
-  - 배포일자 : 1999년 8월 20일
+  - 배포일자 : 1999년 9월 9일
+
+II-2. What's qDecoder?
+
+  qDecoder는 C/C++용 CGI 라이브러리로서, 개발자를 위한 솔루션 제품
+  입니다. Linked-list에 기반한 qDecoder의 Query Fetch 알고리즘은
+  GET/POST에 상관없이 심플한 라이브러리 인터페이스로 하위 레이어와의
+  투명성을 제공하기 때문에 웹기반 소프트웨어(CGI)가 더욱 직관적으로
+  설계되고 구현될 수 있도록 합니다. qDecoder는 Open source 모델에 따라
+  개발되며 공개 배포됩니다.
+
+  qDecoder is a CGI library for C/C++ language programming and a solution
+  product for developers. The Query Fetch algorithm of qDecoder which is
+  based on linked-list gives developers more simple library interface
+  without regard to a method of GET or POST. Also because it gives
+  transperance with a subordinate layer, web-based softwares - CGI - is
+  designed and embodied in reliability further. The source code for
+  qDecoder is freely available to everyone.
 
 
 +--------------------------------------------------------------------+
 | III. 버젼별 수정사항                                               |
 +--------------------------------------------------------------------+
+[Version 5.0.4]
+    * deleted functions
+    qFileCat()
+    - 대체함수 qCatFile()
+
+    * Patched functions
+    qUpdateCounter()
+    - 인터페이스 수정(업데이트 증/감 수치 지정이 가능하도록)
+    qDecoder()
+    - multipart/form-data 메소드에서도 환경변수 QUERY_STRING 으로 넘겨진 인자 처리
+
+    * New functions
+    qReadFile()
+    - 파일을 읽어 메모리에 저장한다.
+    qSaveStr()
+    - 스트링의 내용을 파일로 저장한다.
+
 [Version 5.0.3]
     * Patched functions
     qPrintf(), qPuts()
@@ -120,16 +155,16 @@ II-1. 소프트웨어 정보 (Software Information)
     - 파일에서 지정된 기호를 정의된 문자열로 교체하여 출력
 
 [Version 5.0]
+    * deleted functions
+    qSendFile()
+    - 대체함수 qFileCat()
+
     * Patched functions
     qValue(), qiValue(), qfValue(), qfiValue(), qsValue(), qsiValue(),
     qcValue(), qciValue()
     - 포맷에 의한 인자 전달이 가능하도록 패치
     qPuts()
     - Token list에서 & 제거.
-
-    * deleted functions
-    qSendFile()
-    - 대체함수 qFileCat()
 
     * New functions
     qValueFirst()
@@ -605,11 +640,11 @@ IV-3. 형식화된 설정 파일및 문자열을 다루는 함수군
   복귀 : 성공시 1, 에러시 0
   사용 : qSaveCounter("number.dat", 75);
 
-  int    qUpdateCounter(char *filename){
-  기능 : 지정된 화일명의 카운터 값을 1 증가시킨다.
-  복귀 : 성공시 기존 카운터값 + 1, 에러시 0
+  int    qUpdateCounter(char *filename, int number){
+  기능 : 지정된 화일명의 카운터 값을 number만큼 증가시킨다.
+  복귀 : 성공시 기존 카운터값 + number, 에러시 0
   사용 : int count;
-         count = qUpdateCounter("number.dat");
+         count = qUpdateCounter("number.dat", -3);
 
   ## UNIX 시스템의 AWK 명령과 흡사한 기능을 한다.
   ---- ex) /etc/passwd ----
@@ -708,14 +743,46 @@ IV-4. FILE 관련 함수군
          Permission에 의해 접근 불가능한 화일도 화일이 없다고 판단한다.
   사용 : if(qCheckFile("test.dat") == 0)qError("File not found");
 
-  int    qFileCat(char *filename);
+  int    qCatFile(char *filename);
   기능 : 화일의 내용을 출력한다.
   복귀 : 정상시 출력된 문자수, 에러시 -1
   사용 : qContentType("image/gif");
-         qFileCat("mypic.gif");
+         qCatFile("mypic.gif");
 
          qContentType("text/html");
-         qFileCat("myhtml.html");
+         qCatFile("myhtml.html");
+
+  char   *qReadFile(char *filename, int &size);
+  기능 : 파일을 읽어 메모리에 저장후 포인터 반환
+  복귀 : 정상시 스트링 포인터, 오류시 NULL
+  주의 : qReadFile은 실제 파일의 크기보다 1바이트 크게 메모리 할당
+         하여 스트링 종료문자 '\0'를 삽입한다. 이는 텍스트 파일을 읽어
+         다루기 편리하도록 함이다. spsize에는 파일에서 읽어들인 캐릭터
+         개수가 저장된다. 캐릭터 개수가 필요치 않다면 spsize 항목에
+         NULL 인자를 전달한다.
+  사용 : char *sp, *sp2;
+         int spsize;
+         sp  = qReadFile("filename", &spsize);
+         sp2 = qReadFile("filename2", NULL);
+         ...
+         free(sp), free(sp2);
+
+  int    qSaveStr(char *sp, int spsize, char *filename, char *mode, mode_t perm);
+  기능 : 스트링의 내용을 파일에 저장한다.
+  복귀 : 정상시 저장한 캐릭터 갯수(파일 크기), 오류시 -1, 퍼미션 조정 실패 -2
+  주의 : 퍼미션값은 기존 프로그램의 umask()에 의존선을 갖는다.
+         주어신 퍼미션 비트가 정확히 설정되도록 하려면, qSaveStr() 호출전
+         umaks(0)을 호출하여 퍼미션 마스크값을 0으로 설정해야 한다.
+         퍼미션 마스크가 umask(S_IWGRP | S_IWOTH)와 같이 설정된 상태에서는
+         perm 인자로 0666을 주어도 파일은 퍼미션 마스크와의 비트연산에 의해
+         0644로 생성될 것이다.
+         mode 인자는 fopen 시에 사용되는 mode 값과 같다. qSaveStr은 해당
+         mode로 파일을 오픈할 것이다.
+
+  사용 : char *sp = "To subscribe qDecoder mailing list\nSend mail to majordomo@hongik.com";
+         int len;
+         umask(0);
+         len = qSaveStr(sp, strlen(sp), "Howto-mailing.txt", "wt", 0644);
 
   char   *qfGetLine(FILE *fp);
   기능 : 화일에서 길이 제약없이 라인을 읽는다.

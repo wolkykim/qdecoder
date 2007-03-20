@@ -2,6 +2,7 @@
 #define _QDECODER_H
 
 #include <time.h>
+#include <sys/types.h>
 
 typedef struct Entry Entry;
 struct Entry{
@@ -96,7 +97,9 @@ struct tm *qGetTime(void);
 time_t    qGetGMTime(char *gmt, time_t plus_sec);
 
 int       qCheckFile(char *filename);
-int       qFileCat(char *filename);
+int       qCatFile(char *filename);
+char      *qReadFile(char *filename, int *size);
+int       qSaveStr(char *sp, int spsize, char *filename, char *mode, mode_t perm);
 char      *qfGetLine(FILE *fp);
 
 void      qDownload(char *filename);
@@ -104,7 +107,7 @@ void      qRedirect(char *url);
 
 int       qReadCounter(char *filename);
 int       qSaveCounter(char *filename, int number);
-int       qUpdateCounter(char *filename);
+int       qUpdateCounter(char *filename, int number);
 
 int       qCheckEmail(char *email);
 int       qCheckURL(char *url);
