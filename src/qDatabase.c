@@ -191,11 +191,11 @@ int qDbBeginTran(Q_DB *db) {
 
 int qDbEndTran(Q_DB *db) {
   if(db->info.autocommit == 0) {
-    return dbCommit(db);
+    return qDbCommit(db);
   }
 
   // first commit
-  if(dbCommit(db) == 0) {
+  if(qDbCommit(db) == 0) {
     return 0;
   }
 
