@@ -38,10 +38,6 @@ Author:
 #ifndef _QDECODER_H
 #define _QDECODER_H
 
-#ifdef WITH_MYSQL
-#define SUPPORT_DATABASE
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,6 +58,11 @@ Author:
 #include <unistd.h>	/* to use unlink() */
 #include <sys/time.h>	/* to use struct timeval */
 #include <sys/file.h>	/* to use flock */
+#endif
+
+#ifdef _mysql_h
+#define _Q_SUPPORT_DATABASE	"MYSQL"
+#define _Q_WITH_MYSQL		(1)
 #endif
 
 typedef struct Q_Entry {
@@ -104,6 +105,39 @@ typedef struct {
 	/* Miscellaneous Informations Supported by qDecoder */
 	int	year, mon, day, hour, min, sec;
 } Q_CGIenv;
+
+#ifdef _Q_SUPPORT_DATABASE
+typedef struct {
+	int initialized;	// set 1 after initialized.
+	int connected;		// i1 if opened, 0 if closed;
+
+	struct {
+		char	dbtype[16+1];
+		char	addr[31+1];
+		int	port;
+		char	username[31+1];
+		char	password[31+1];
+		char	database[31+1];
+		int	autocommit;
+	} info;
+
+	// for mysql database
+#ifdef _Q_WITH_MYSQL
+	MYSQL		mysql;
+#endif
+} Q_DB;
+
+typedef struct {
+#ifdef _Q_WITH_MYSQL
+	MYSQL_RES	*rs;
+	MYSQL_FIELD	*fields;
+	MYSQL_ROW	row;
+	int		rows;
+	int		cols;
+	int		cursor;
+#endif
+} Q_DBRESULT;
+#endif
 
 /* qDecoder C++ support */
 #ifdef __cplusplus
@@ -303,42 +337,7 @@ FILE	*qSocketConv2file(int sockfd);
 /*
  * qDatabase.c
  */
-#ifdef SUPPORT_DATABASE
-
-#ifdef WITH_MYSQL
-#include "mysql.h"
-#endif
-
-typedef struct {
-	int initialized;	// set 1 after initialized.
-	int connected;		// i1 if opened, 0 if closed;
-
-	struct {
-		char	dbtype[16+1];
-		char	addr[31+1];
-		int	port;
-		char	username[31+1];
-		char	password[31+1];
-		char	database[31+1];
-		int	autocommit;
-	} info;
-
-	// for mysql database
-#ifdef WITH_MYSQL
-	MYSQL		mysql;
-#endif
-} Q_DB;
-
-typedef struct {
-#ifdef WITH_MYSQL
-	MYSQL_RES	*rs;
-	MYSQL_FIELD	*fields;
-	MYSQL_ROW	row;
-	int		rows;
-	int		cols;
-	int		cursor;
-#endif
-} Q_DBRESULT;
+#ifdef _Q_SUPPORT_DATABASE
 
 int	qDbInit(Q_DB *db, char *dbtype, char *addr, int port, char *username, char *password, char *database, int autocommit);
 int	qDbOpen(Q_DB *db);
@@ -353,6 +352,8 @@ int	qDbRollback(Q_DB *db);
 
 Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery);
 int	qDbExecuteUpdate(Q_DB *db, char *pszQuery);
+int     qDbGetRows(Q_DBRESULT *result);
+int     qDbGetCols(Q_DBRESULT *result);
 int	qDbResultNext(Q_DBRESULT *result);
 char	*qDbGetValue(Q_DBRESULT *result, char *field);
 int	qDbGetInt(Q_DBRESULT *result, char *field);
