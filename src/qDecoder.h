@@ -344,6 +344,7 @@ int	qDbOpen(Q_DB *db);
 int	qDbClose(Q_DB *db);
 char	*qDbGetErrMsg(Q_DB *db);
 int	qDbPing(Q_DB *db);
+int     qDbGetLastConnStatus(Q_DB *db);
 
 int	qDbBeginTran(Q_DB *db);
 int	qDbEndTran(Q_DB *db);
@@ -359,7 +360,7 @@ char	*qDbGetValue(Q_DBRESULT *result, char *field);
 int	qDbGetInt(Q_DBRESULT *result, char *field);
 char	*qDbGetValueAt(Q_DBRESULT *result, int idx);
 int	qDbGetIntAt(Q_DBRESULT *result, int idx);
-int	qDbFree(Q_DBRESULT *result);
+int	qDbResultFree(Q_DBRESULT *result);
 
 #endif
 

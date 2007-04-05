@@ -52,7 +52,6 @@ Author:
 int qDbInit(Q_DB *db, char *dbtype, char *addr, int port, char *username, char *password, char *database, int autocommit) {
   // check db type
   if(strcmp(dbtype, _Q_SUPPORT_DATABASE)) return 0;
-  return 0;
 
   memset((void *)db, 0, sizeof(Q_DB));
   db->initialized = 1;
@@ -82,11 +81,9 @@ int qDbOpen(Q_DB *db) {
   if(db->connected == 1) {
     qDbClose(db);
   }
-
 #ifdef _Q_WITH_MYSQL
   // initialize mysql structure
   if(!mysql_init(&db->mysql)) {
-    logMsg("%s", qDbGetErrMsg(db));
     return 0;
   }
 
@@ -160,6 +157,10 @@ int qDbPing(Q_DB *db) {
 #endif
 }
 
+int qDbGetLastConnStatus(Q_DB *db) {
+  return db->connected;
+}
+
 /////////////////////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS - transaction
 /////////////////////////////////////////////////////////////////////////
@@ -208,7 +209,6 @@ int qDbCommit(Q_DB *db) {
 int qDbRollback(Q_DB *db) {
 #ifdef _Q_WITH_MYSQL
   if(mysql_rollback(&db->mysql) != 0) {
-    logMsg("WARNING: Failed to commit. %s", qDbGetErrMsg(db));
     return 0;
   }
   return 1;
@@ -350,7 +350,7 @@ int qDbGetIntAt(Q_DBRESULT *result, int idx) {
   return atoi(qDbGetValueAt(result, idx));
 }
 
-int qDbFree(Q_DBRESULT *result) {
+int qDbResultFree(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
   if(result->rs != NULL) {
     mysql_free_result(result->rs);
