@@ -162,6 +162,154 @@ int qDbGetLastConnStatus(Q_DB *db) {
 }
 
 /////////////////////////////////////////////////////////////////////////
+// PUBLIC FUNCTIONS - query
+/////////////////////////////////////////////////////////////////////////
+
+/**********************************************
+** Usage :
+** Return: If succeed, returns affected rows, Or, returns -1.
+** Do    :
+**********************************************/
+int qDbExecuteUpdate(Q_DB *db, char *pszQuery) {
+  if(db->connected == 0) return -1;
+
+#ifdef _Q_WITH_MYSQL
+  int affected;
+
+  // query
+  if(mysql_query(&db->mysql, pszQuery)) {
+    qDbPing(db);
+    return -1;
+  }
+
+  /* get affected rows */
+  if((affected = mysql_affected_rows(&db->mysql)) < 0) return -1;
+
+  return affected;
+#else
+  return -1;
+#endif
+}
+
+Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery) {
+  if(db->connected == 0) return NULL;
+
+#ifdef _Q_WITH_MYSQL
+  // query
+  if(mysql_query(&db->mysql, pszQuery)) {
+    qDbPing(db);
+    return NULL;
+  }
+
+  // store
+  Q_DBRESULT *result = (Q_DBRESULT *)malloc(sizeof(Q_DBRESULT));
+  if(result == NULL) return NULL;
+
+  if((result->rs = mysql_store_result(&db->mysql)) == NULL) {
+    free(result);
+    qDbPing(db);
+    return NULL;
+  }
+
+  /* get meta data */
+  result->fields = NULL;
+  result->row = NULL;
+  result->rows = mysql_num_rows(result->rs);
+  result->cols = mysql_num_fields(result->rs);
+  result->cursor = 0;
+
+  return result;
+#else
+  return NULL;
+#endif
+}
+
+int qDbGetRows(Q_DBRESULT *result) {
+#ifdef _Q_WITH_MYSQL
+  if(result->rs == NULL) return 0;
+  return result->rows;
+#else
+  return 0;
+#endif
+}
+
+int qDbGetCols(Q_DBRESULT *result) {
+#ifdef _Q_WITH_MYSQL
+  if(result->rs == NULL) return 0;
+  return result->cols;
+#else
+  return 0;
+#endif
+}
+
+/**********************************************
+** Usage :
+** Return: If succeed, returns cursor position, Or, returns 0.
+** Do    :
+**********************************************/
+int qDbResultNext(Q_DBRESULT *result) {
+#ifdef _Q_WITH_MYSQL
+  if(result->rs == NULL) return 0;
+
+  if((result->row = mysql_fetch_row(result->rs)) == NULL) return 0;
+  result->cursor++;
+
+  return result->cursor;
+#else
+  return 0;
+#endif
+}
+
+int qDbResultFree(Q_DBRESULT *result) {
+#ifdef _Q_WITH_MYSQL
+  if(result->rs != NULL) {
+    mysql_free_result(result->rs);
+    result->rs = NULL;
+    free(result);
+  }
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+char *qDbGetValue(Q_DBRESULT *result, char *field) {
+#ifdef _Q_WITH_MYSQL
+  if(result->rs == NULL || result->cols <= 0) return NULL;
+
+  if(result->fields == NULL) result->fields = mysql_fetch_fields(result->rs);
+
+  int i;
+  for(i = 0; i < result->cols; i++) {
+    if(!strcasecmp(result->fields[i].name, field)) return qDbGetValueAt(result, i+1);
+  }
+
+  return NULL;
+#else
+  return NULL;
+#endif
+}
+
+int qDbGetInt(Q_DBRESULT *result, char *field) {
+  return atoi(qDbGetValue(result, field));
+}
+
+char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
+#ifdef _Q_WITH_MYSQL
+  if(result->rs == NULL || idx <= 0 || idx > result->cols ) return NULL;
+  return result->row[idx-1];
+#else
+  return NULL;
+#endif
+}
+
+int qDbGetIntAt(Q_DBRESULT *result, int idx) {
+  return atoi(qDbGetValueAt(result, idx));
+}
+
+#endif
+
+/////////////////////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS - transaction
 /////////////////////////////////////////////////////////////////////////
 
@@ -216,151 +364,3 @@ int qDbRollback(Q_DB *db) {
   return 0;
 #endif
 }
-
-/////////////////////////////////////////////////////////////////////////
-// PUBLIC FUNCTIONS - query
-/////////////////////////////////////////////////////////////////////////
-
-Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery) {
-  if(db->connected == 0) return NULL;
-
-#ifdef _Q_WITH_MYSQL
-  // query
-  if(mysql_query(&db->mysql, pszQuery)) {
-    qDbPing(db);
-    return NULL;
-  }
-
-  // store
-  Q_DBRESULT *result = (Q_DBRESULT *)malloc(sizeof(Q_DBRESULT));
-  if(result == NULL) return NULL;
-
-  if((result->rs = mysql_store_result(&db->mysql)) == NULL) {
-    free(result);
-    qDbPing(db);
-    return NULL;
-  }
-
-  /* get meta data */
-  result->fields = NULL;
-  result->row = NULL;
-  result->rows = mysql_num_rows(result->rs);
-  result->cols = mysql_num_fields(result->rs);
-  result->cursor = 0;
-
-  return result;
-#else
-  return NULL;
-#endif
-}
-
-/**********************************************
-** Usage :
-** Return: If succeed, returns affected rows, Or, returns -1.
-** Do    :
-**********************************************/
-int qDbExecuteUpdate(Q_DB *db, char *pszQuery) {
-  if(db->connected == 0) return -1;
-
-#ifdef _Q_WITH_MYSQL
-  int affected;
-
-  // query
-  if(mysql_query(&db->mysql, pszQuery)) {
-    qDbPing(db);
-    return -1;
-  }
-
-  /* get affected rows */
-  if((affected = mysql_affected_rows(&db->mysql)) < 0) return -1;
-
-  return affected;
-#else
-  return -1;
-#endif
-}
-
-int qDbGetRows(Q_DBRESULT *result) {
-#ifdef _Q_WITH_MYSQL
-  if(result->rs == NULL) return 0;
-  return result->rows;
-#else
-  return 0;
-#endif
-}
-
-int qDbGetCols(Q_DBRESULT *result) {
-#ifdef _Q_WITH_MYSQL
-  if(result->rs == NULL) return 0;
-  return result->cols;
-#else
-  return 0;
-#endif
-}
-
-/**********************************************
-** Usage :
-** Return: If succeed, returns cursor position, Or, returns 0.
-** Do    :
-**********************************************/
-int qDbResultNext(Q_DBRESULT *result) {
-#ifdef _Q_WITH_MYSQL
-  if(result->rs == NULL) return 0;
-
-  if((result->row = mysql_fetch_row(result->rs)) == NULL) return 0;
-  result->cursor++;
-
-  return result->cursor;
-#else
-  return 0;
-#endif
-}
-
-char *qDbGetValue(Q_DBRESULT *result, char *field) {
-#ifdef _Q_WITH_MYSQL
-  if(result->rs == NULL || result->cols <= 0) return NULL;
-
-  if(result->fields == NULL) result->fields = mysql_fetch_fields(result->rs);
-
-  int i;
-  for(i = 0; i < result->cols; i++) {
-    if(!strcasecmp(result->fields[i].name, field)) return qDbGetValueAt(result, i+1);
-  }
-
-  return NULL;
-#else
-  return NULL;
-#endif
-}
-
-int qDbGetInt(Q_DBRESULT *result, char *field) {
-  return atoi(qDbGetValue(result, field));
-}
-
-char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
-#ifdef _Q_WITH_MYSQL
-  if(result->rs == NULL || idx <= 0 || idx > result->cols ) return NULL;
-  return result->row[idx-1];
-#else
-  return NULL;
-#endif
-}
-
-int qDbGetIntAt(Q_DBRESULT *result, int idx) {
-  return atoi(qDbGetValueAt(result, idx));
-}
-
-int qDbResultFree(Q_DBRESULT *result) {
-#ifdef _Q_WITH_MYSQL
-  if(result->rs != NULL) {
-    mysql_free_result(result->rs);
-    result->rs = NULL;
-    free(result);
-  }
-  return 1;
-#else
-  return 0;
-#endif
-}
-
-#endif

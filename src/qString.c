@@ -498,3 +498,19 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
   return retp;
 }
 
+/**********************************************
+** Usage : qStrcat(char str, char *format, ...);
+** Return: same as strcat on success, NULL if failed.
+** Do    :  append formatted string to the end of the source str
+**********************************************/
+char *qStrcat(char *str, char *format, ...) {
+  char buf[1024];
+  int  status;
+  va_list arglist;
+
+  va_start(arglist, format);
+  if((status = vsprintf(buf, format, arglist)) == EOF) return NULL;
+  if(strlen(buf) + 1 > sizeof(buf))qError("qStrcat(): Message is too long or invalid.");
+
+  return strcat(str, buf);
+}

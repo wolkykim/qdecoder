@@ -252,6 +252,7 @@ int	qStricmp(char *s1, char *s2);
 int	qStrincmp(char *s1, char *s2, size_t len);
 char	*qitocomma(int value);
 char	*qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
+char    *qStrcat(char *str, char *format, ...);
 
 /*
  * qFile.c
@@ -346,21 +347,23 @@ char	*qDbGetErrMsg(Q_DB *db);
 int	qDbPing(Q_DB *db);
 int     qDbGetLastConnStatus(Q_DB *db);
 
-int	qDbBeginTran(Q_DB *db);
-int	qDbEndTran(Q_DB *db);
-int	qDbCommit(Q_DB *db);
-int	qDbRollback(Q_DB *db);
-
-Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery);
 int	qDbExecuteUpdate(Q_DB *db, char *pszQuery);
+Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery);
+
 int     qDbGetRows(Q_DBRESULT *result);
 int     qDbGetCols(Q_DBRESULT *result);
 int	qDbResultNext(Q_DBRESULT *result);
+int	qDbResultFree(Q_DBRESULT *result);
+
 char	*qDbGetValue(Q_DBRESULT *result, char *field);
 int	qDbGetInt(Q_DBRESULT *result, char *field);
 char	*qDbGetValueAt(Q_DBRESULT *result, int idx);
 int	qDbGetIntAt(Q_DBRESULT *result, int idx);
-int	qDbResultFree(Q_DBRESULT *result);
+
+int	qDbBeginTran(Q_DB *db);
+int	qDbEndTran(Q_DB *db);
+int	qDbCommit(Q_DB *db);
+int	qDbRollback(Q_DB *db);
 
 #endif
 
