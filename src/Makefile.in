@@ -94,6 +94,7 @@ OBJ		= qDecoder.o \
 		qTime.o \
 		qSocket.o \
 		qDatabase.o \
+		qLog.o \
 		qMisc.o \
 		qInternalCommon.o \
 		qInternalEntry.o \

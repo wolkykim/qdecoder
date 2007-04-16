@@ -65,6 +65,9 @@ Author:
 #define _Q_WITH_MYSQL		(1)
 #endif
 
+/*
+ * Linked List Structure
+ */
 typedef struct Q_Entry {
 	char *name;
 	char *value;
@@ -106,6 +109,12 @@ typedef struct {
 	int	year, mon, day, hour, min, sec;
 } Q_CGIenv;
 
+/*
+ * Structure for Independent Database Interface
+ * You must include database header file before including qDecoder.h
+ * ex) #include "mysql.h"
+ *     #include "qDecoder.h"
+ */
 #ifdef _Q_SUPPORT_DATABASE
 typedef struct {
 	int initialized;	// set 1 after initialized.
@@ -127,6 +136,9 @@ typedef struct {
 #endif
 } Q_DB;
 
+/*
+ * Structure for Database Result Set
+ */
 typedef struct {
 #ifdef _Q_WITH_MYSQL
 	MYSQL_RES	*rs;
@@ -138,6 +150,19 @@ typedef struct {
 #endif
 } Q_DBRESULT;
 #endif
+
+/*
+ * Structure for Log
+ */
+typedef struct {
+	char	szLogBase[1024];
+	char	szFilenameFormat[256];
+
+	FILE	*fp;
+	int	nConsole;
+	int	nRotateInterval;
+	int	nNextRotate;
+} Q_LOG;
 
 /* qDecoder C++ support */
 #ifdef __cplusplus
@@ -366,6 +391,15 @@ int	qDbCommit(Q_DB *db);
 int	qDbRollback(Q_DB *db);
 
 #endif
+
+/*
+ * qLog.c
+ */
+Q_LOG	*qLogOpen(char *pszLogBase, char *pszFilenameFormat, int nRotateInterval);
+int	qLogClose(Q_LOG *log);
+int	qLogSetConsole(Q_LOG *log, int nFlag);
+int	qLogFlush(Q_LOG *log);
+int	qLog(Q_LOG *log, char *pszFormat, ...);
 
 /*
  * qMisc.c

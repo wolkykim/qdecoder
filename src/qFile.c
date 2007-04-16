@@ -104,12 +104,12 @@ int qCatFile(char *format, ...) {
   setmode(fileno(stdout), _O_BINARY);
 #endif
 
-  if((fp = qfopen(filename, "rb")) == NULL) return -1;
+  if((fp = fopen(filename, "rb")) == NULL) return -1;
   for(counter = 0; (c = fgetc(fp)) != EOF; counter++) {
     putc(c, stdout);
   }
 
-  qfclose(fp);
+  fclose(fp);
   return counter;
 }
 
@@ -126,7 +126,7 @@ char *qReadFile(char *filename, int *size) {
 
   if(size != NULL) *size = 0;
   if(stat(filename, &fstat) < 0) return NULL;
-  if((fp = qfopen(filename, "rb")) == NULL) return NULL;
+  if((fp = fopen(filename, "rb")) == NULL) return NULL;
 
   sp = (char *)malloc(fstat.st_size + 1);
   for(tmp = sp, i = 0; (c = fgetc(fp)) != EOF; tmp++, i++) *tmp = (char)c;
@@ -146,9 +146,9 @@ char *qReadFile(char *filename, int *size) {
 int qSaveStr(char *sp, int spsize, char *filename, char *mode) {
   FILE *fp;
   int i;
-  if((fp = qfopen(filename, mode)) == NULL) return -1;
+  if((fp = fopen(filename, mode)) == NULL) return -1;
   for(i = 0; i < spsize; i++) fputc(*sp++, fp);
-  qfclose(fp);
+  fclose(fp);
 
   return i;
 }

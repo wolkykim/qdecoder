@@ -88,8 +88,8 @@ int qDbOpen(Q_DB *db) {
   }
 
   // set options
-  my_bool reconnect = 1;
-  mysql_options(&db->mysql, MYSQL_OPT_RECONNECT, &reconnect);
+  //my_bool reconnect = 1;
+  //mysql_options(&db->mysql, MYSQL_OPT_RECONNECT, &reconnect);
 
   // try to connect
   if(!mysql_real_connect(&db->mysql, db->info.addr, db->info.username, db->info.password, db->info.database, db->info.port, NULL, 0)) {

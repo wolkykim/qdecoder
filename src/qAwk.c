@@ -56,7 +56,7 @@ static char _awkdelim = ' ';
 **********************************************/
 int qAwkOpen(char *filename, char delim) {
   if(_awkfp != NULL) qError("qAwkOpen(): There is already opened handle.");
-  if((_awkfp = qfopen(filename, "r")) == NULL) return 0;
+  if((_awkfp = fopen(filename, "r")) == NULL) return 0;
   _awkdelim = delim;
   return 1;
 }
@@ -89,7 +89,7 @@ int qAwkNext(char array[][1024]) {
 **********************************************/
 int qAwkClose(void) {
   if(_awkfp == NULL) return 0;
-  qfclose(_awkfp);
+  fclose(_awkfp);
   _awkfp = NULL;
   _awkdelim = ' ';
 
