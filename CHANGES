@@ -19,6 +19,7 @@ qDecoder Changes
     FIX) qSocketGets() - returns 0 when timeout, returns -1 when an error occured;
 
     ADD) qDatabase.c
+    ADD) qLog.c
     ADD) qStrcat()
 
   Release 8.0

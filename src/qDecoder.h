@@ -158,7 +158,10 @@ typedef struct {
 	char	szLogBase[1024];
 	char	szFilenameFormat[256];
 
+	char	szFilename[256];	/* generated filename */
+	char	szLogPath[1024];	/* final full path*/
 	FILE	*fp;
+
 	int	nConsole;
 	int	nRotateInterval;
 	int	nNextRotate;
