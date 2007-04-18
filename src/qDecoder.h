@@ -117,7 +117,6 @@ typedef struct {
  */
 #ifdef _Q_SUPPORT_DATABASE
 typedef struct {
-	int initialized;	// set 1 after initialized.
 	int connected;		// i1 if opened, 0 if closed;
 
 	struct {
@@ -368,7 +367,7 @@ FILE	*qSocketConv2file(int sockfd);
  */
 #ifdef _Q_SUPPORT_DATABASE
 
-int	qDbInit(Q_DB *db, char *dbtype, char *addr, int port, char *username, char *password, char *database, int autocommit);
+Q_DB	*qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, int autocommit);
 int	qDbOpen(Q_DB *db);
 int	qDbClose(Q_DB *db);
 char	*qDbGetErrMsg(Q_DB *db);

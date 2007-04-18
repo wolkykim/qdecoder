@@ -49,12 +49,14 @@ Author:
 ** Return: If succeed, returns 1, Or, returns 0.
 ** Do    :
 **********************************************/
-int qDbInit(Q_DB *db, char *dbtype, char *addr, int port, char *username, char *password, char *database, int autocommit) {
-  // check db type
-  if(strcmp(dbtype, _Q_SUPPORT_DATABASE)) return 0;
+Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, int autocommit) {
+  Q_DB *db;
 
+  // check db type
+  if(strcmp(dbtype, _Q_SUPPORT_DATABASE)) return NULL;
+
+  if((db = (Q_DB *)malloc(sizeof(Q_DB))) == NULL) return NULL;
   memset((void *)db, 0, sizeof(Q_DB));
-  db->initialized = 1;
   db->connected = 0;
 
   // set info
@@ -66,7 +68,7 @@ int qDbInit(Q_DB *db, char *dbtype, char *addr, int port, char *username, char *
   strcpy(db->info.database, database);
   db->info.autocommit = autocommit;
 
-  return 1;
+  return db;
 }
 
 /**********************************************
@@ -75,7 +77,7 @@ int qDbInit(Q_DB *db, char *dbtype, char *addr, int port, char *username, char *
 ** Do    :
 **********************************************/
 int qDbOpen(Q_DB *db) {
-  if(db->initialized != 1) return 0;
+  if(db == NULL) return 0;
 
   // if connected, close first
   if(db->connected == 1) {
@@ -112,7 +114,7 @@ int qDbOpen(Q_DB *db) {
 }
 
 int qDbClose(Q_DB *db) {
-  if(db->connected == 0) return 1;
+  if(db == NULL || db->connected == 0) return 1;
 
 #ifdef _Q_WITH_MYSQL
   mysql_close(&db->mysql);
@@ -125,7 +127,7 @@ int qDbClose(Q_DB *db) {
 
 char *qDbGetErrMsg(Q_DB *db) {
   static char msg[1024];
-  if(db->connected == 0) return "(no opened db)";
+  if(db == NULL || db->connected == 0) return "(no opened db)";
 
 #ifdef _Q_WITH_MYSQL
   strcpy(msg, mysql_error(&db->mysql));
@@ -137,6 +139,8 @@ char *qDbGetErrMsg(Q_DB *db) {
 }
 
 int qDbPing(Q_DB *db) {
+  if(db == NULL) return 0;
+
 #ifdef _Q_WITH_MYSQL
   if(db->connected == 1 && mysql_ping(&db->mysql) == 0) {
     return 1;
@@ -158,6 +162,8 @@ int qDbPing(Q_DB *db) {
 }
 
 int qDbGetLastConnStatus(Q_DB *db) {
+  if(db == NULL) return 0;
+
   return db->connected;
 }
 
@@ -171,7 +177,7 @@ int qDbGetLastConnStatus(Q_DB *db) {
 ** Do    :
 **********************************************/
 int qDbExecuteUpdate(Q_DB *db, char *pszQuery) {
-  if(db->connected == 0) return -1;
+  if(db == NULL || db->connected == 0) return -1;
 
 #ifdef _Q_WITH_MYSQL
   int affected;
@@ -192,7 +198,7 @@ int qDbExecuteUpdate(Q_DB *db, char *pszQuery) {
 }
 
 Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery) {
-  if(db->connected == 0) return NULL;
+  if(db == NULL || db->connected == 0) return NULL;
 
 #ifdef _Q_WITH_MYSQL
   // query
@@ -226,7 +232,7 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery) {
 
 int qDbGetRows(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
-  if(result->rs == NULL) return 0;
+  if(result == NULL || result->rs == NULL) return 0;
   return result->rows;
 #else
   return 0;
@@ -235,7 +241,7 @@ int qDbGetRows(Q_DBRESULT *result) {
 
 int qDbGetCols(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
-  if(result->rs == NULL) return 0;
+  if(result == NULL || result->rs == NULL) return 0;
   return result->cols;
 #else
   return 0;
@@ -249,7 +255,7 @@ int qDbGetCols(Q_DBRESULT *result) {
 **********************************************/
 int qDbResultNext(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
-  if(result->rs == NULL) return 0;
+  if(result == NULL || result->rs == NULL) return 0;
 
   if((result->row = mysql_fetch_row(result->rs)) == NULL) return 0;
   result->cursor++;
@@ -262,11 +268,12 @@ int qDbResultNext(Q_DBRESULT *result) {
 
 int qDbResultFree(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
+  if(result == NULL) return 0;
   if(result->rs != NULL) {
     mysql_free_result(result->rs);
     result->rs = NULL;
-    free(result);
   }
+  free(result);
   return 1;
 #else
   return 0;
@@ -275,7 +282,7 @@ int qDbResultFree(Q_DBRESULT *result) {
 
 char *qDbGetValue(Q_DBRESULT *result, char *field) {
 #ifdef _Q_WITH_MYSQL
-  if(result->rs == NULL || result->cols <= 0) return NULL;
+  if(result == NULL || result->rs == NULL || result->cols <= 0) return NULL;
 
   if(result->fields == NULL) result->fields = mysql_fetch_fields(result->rs);
 
@@ -296,7 +303,7 @@ int qDbGetInt(Q_DBRESULT *result, char *field) {
 
 char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
 #ifdef _Q_WITH_MYSQL
-  if(result->rs == NULL || idx <= 0 || idx > result->cols ) return NULL;
+  if(result == NULL || result->rs == NULL || idx <= 0 || idx > result->cols ) return NULL;
   return result->row[idx-1];
 #else
   return NULL;
@@ -314,6 +321,7 @@ int qDbGetIntAt(Q_DBRESULT *result, int idx) {
 /////////////////////////////////////////////////////////////////////////
 
 int qDbBeginTran(Q_DB *db) {
+  if(db == NULL) return 0;
   if(db->info.autocommit == 0) return 1;
 
   // turn of autocommit
@@ -326,6 +334,8 @@ int qDbBeginTran(Q_DB *db) {
 }
 
 int qDbEndTran(Q_DB *db) {
+  if(db == NULL) return 0;
+
   if(db->info.autocommit == 0) {
     return qDbCommit(db);
   }
@@ -346,6 +356,8 @@ int qDbEndTran(Q_DB *db) {
 }
 
 int qDbCommit(Q_DB *db) {
+  if(db == NULL) return 0;
+
 #ifdef _Q_WITH_MYSQL
   if(mysql_commit(&db->mysql) != 0) return 0;
   return 1;
@@ -355,6 +367,8 @@ int qDbCommit(Q_DB *db) {
 }
 
 int qDbRollback(Q_DB *db) {
+  if(db == NULL) return 0;
+
 #ifdef _Q_WITH_MYSQL
   if(mysql_rollback(&db->mysql) != 0) {
     return 0;
