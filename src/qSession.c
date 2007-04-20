@@ -503,14 +503,10 @@ static int _clearRepository(void) {
 
 /* session not found 0, session expired -1, session valid 1 */
 static int _isValidSession(char *filename) {
-  FILE *fp;
   time_t timeout, timenow;
   double timediff;
 
-  if((fp = fopen(filename, "r")) == NULL) return 0;
-  fscanf(fp, "%d", &timeout);
-  fclose(fp);
-
+  if((timeout = (time_t)qCountRead(filename)) == 0) return 0;;
   timenow = time(NULL);
   timediff = difftime(timeout, timenow); /* return timeout - timenow */
 

@@ -59,7 +59,7 @@ int dumpHttp(char *hostname) {
   // read data
   for(lineno = 1; ; lineno++) {
     // read line from socket
-    if(qSocketGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) == NULL) qError("Timeout occured.");
+    if(qSocketGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) <= 0) qError("Timeout or socket closed.");
 
     // if the http header block ended, stop reading.
     if(strlen(buf) == 0) break;
