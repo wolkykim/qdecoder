@@ -21,6 +21,7 @@ qDecoder Changes
     ADD) qDatabase.c
     ADD) qLog.c
     ADD) qStrcat()
+    FIX) qfDecoder()
 
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive
