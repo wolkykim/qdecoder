@@ -54,35 +54,33 @@ static char _multi_last_key[1024];
            # is used for comments.
 **********************************************/
 Q_Entry *qsDecoder(char *str) {
-  Q_Entry *first, *entries, *back;
+  Q_Entry *first = NULL, *entry;
   char  *org, *buf, *offset;
-  int  eos;
 
   if(str == NULL) return NULL;
 
-  first = entries = back = NULL;
+  for(buf = offset = org = strdup(str); *offset != '\0'; ) {
+    char *name, *value;
 
-  if((org = strdup(str)) == NULL) qError("qsDecoder(): Memory allocation fail.");
-
-  for(buf = offset = org, eos = 0; eos == 0; ) {
+    /* get one line into buf */
     for(buf = offset; *offset != '\n' && *offset != '\0'; offset++);
-    if(*offset == '\0') eos = 1;
-    else *offset = '\0', offset++;
-
+    if(*offset != '\0') {
+      *offset = '\0';
+      offset++;
+    }
     qRemoveSpace(buf);
+
+    /* skip blank or comment line */
     if((buf[0] == '#') || (buf[0] == '\0')) continue;
 
-    back = entries;
-    entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-    if(back != NULL) back->next = entries;
-    if(first == NULL) first = entries;
+    /* parse & store */
+    value = strdup(buf);
+    name  = _makeword(value, '=');
+    qRemoveSpace(value);
+    qRemoveSpace(name);
 
-    entries->value = strdup(buf);
-    entries->name  = _makeword(entries->value, '=');
-    entries->next  = NULL;
-
-    qRemoveSpace(entries->name);
-    qRemoveSpace(entries->value);
+    entry = _EntryAdd(first, name, value, 2);
+    if(first == NULL) first = entry;
   }
 
   free(org);

@@ -45,9 +45,10 @@ Author:
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
+#include <libgen.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h>
 
 #ifdef _WIN32
 /* WIN32 ONLY */
@@ -248,7 +249,7 @@ void	qJavaScript(char *format, ...);
  * qError.c
  */
 void	qError(char *format, ...);
-void	qErrorLog(char *filename);
+void	qErrorLog(char *file);
 void	qErrorContact(char *msg);
 
 /*

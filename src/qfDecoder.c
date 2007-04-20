@@ -38,45 +38,107 @@ Author:
 #include "qDecoder.h"
 #include "qInternal.h"
 
-#define CONF_INCLUDE_START	"@INCLUDE \""
-#define CONF_INCLUDE_END	"\""
+#define _INCLUDE_DIRECTIVE	"@INCLUDE "
+#define _VAR_OPEN		"${"
+#define _VAR_CLOSE		"}"
+#define _VAR_CMD		'!'
+#define _VAR_ENV		'%'
 
 /**********************************************
-** Usage : qfDecoder(filename);
+** Usage : qfDecoder(file);
 ** Return: Success pointer of the first entry, Fail NULL.
 ** Do    : Save file into linked list.
-           # is used for comments.
+**         Starting # is used for comments.
+**
+**         @INCLUDE other.conf          => (include other.conf)
+**         base = /tmp                  => base = /tmp
+**         log  = ${base}/log           => log  = /tmp/logVariable
+**         host = ${!/bin/hostname -s}  => host = arena
+**         path = ${%PATH}              => path = /usr/bin:/usr/sbin
+**         #hmm = this is comments      => (skip comment)
 **********************************************/
-Q_Entry *qfDecoder(char *filename) {
-  Q_Entry *ret;
+Q_Entry *qfDecoder(char *file) {
+  Q_Entry *first, *entries;
   char *str, *p;
 
-  p = str = qReadFile(filename, NULL);
+  p = str = qReadFile(file, NULL);
   if(str == NULL) return NULL;
 
-  while((p = strstr(p, CONF_INCLUDE_START))) {
-    char tmpbuf[1024], *endp, *t1;
+  /* processing include directive */
+  while((p = strstr(p, _INCLUDE_DIRECTIVE)) != NULL) {
+    if(p == str || p[-1] == '\n') {
+      char buf[1024], *e, *t = NULL;
+      int len;
 
-    /* For 'include directive.  Gets a filename and replaces the string with file contents.  */
-    if((p == str || p[-1] == '\n') && (endp = strstr(p + strlen(CONF_INCLUDE_START), CONF_INCLUDE_END)) != NULL) {
-      t1 = p+strlen(CONF_INCLUDE_START);
-      strncpy(tmpbuf, t1, endp - t1);
-      tmpbuf[endp-(t1)] = '\0';
-      endp = (endp + strlen(CONF_INCLUDE_END)) - 1;
+      /* parse filename */
+      for(e = p + strlen(_INCLUDE_DIRECTIVE); *e != '\n' && *e != '\0'; e++);
+      len = e - (p + strlen(_INCLUDE_DIRECTIVE));
+      if(len >= (sizeof(buf) - strlen("\n#"))) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
+      strncpy(buf, p + strlen(_INCLUDE_DIRECTIVE), len);
+      qRemoveSpace(buf);
 
-      t1 = qReadFile(tmpbuf, NULL);
-      if (t1 == NULL) return NULL;
-      memcpy (tmpbuf, p, endp-p+1);
-      tmpbuf[endp-p+1] = '\0';
-      p = qStrReplace("sn", str, tmpbuf, t1);
-      free(t1);
-      free(str);
-      str = p;
+      /* adjust file path */
+      if(!(buf[0] == '/' || buf[0] == '\\')) {
+        char tmp[1024], *dir;
+        dir = dirname(file);
+        if(strlen(dir)+1+strlen(buf) >= sizeof(buf)) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
+        sprintf(tmp, "%s/%s", dir, buf);
+        strcpy(buf, tmp);
+      }
+
+      /* read file */
+      if(strlen(buf) == 0 || (t = qReadFile(buf, NULL)) == NULL) qError("qfDecoder(): Can't process '%s%s' directive.", _INCLUDE_DIRECTIVE, buf);
+
+      /* replace */
+      strncpy(buf, p, strlen(_INCLUDE_DIRECTIVE) + len);
+      strcat(buf, "\n#");
+      p = str = qStrReplace("sr", str, buf, t);
+      free(t);
+    }
+    else {
+      p += strlen(_INCLUDE_DIRECTIVE);
     }
   }
 
-  ret = qsDecoder(str);
+  /* decode */
+  first = qsDecoder(str);
   free(str);
 
-  return ret;
+  /* processing ${} directive */
+  for(entries = first; entries; entries = entries->next) {
+    p = entries->value;
+    while((p = strstr(p, _VAR_OPEN)) != NULL) {
+      char buf[256], *e, *t;
+      int len;
+
+      /* parse variable name */
+      if((e = strstr(p + strlen(_VAR_OPEN), _VAR_CLOSE)) == NULL) break;
+      len = e - (p + strlen(_VAR_OPEN));
+      if(len >= sizeof(buf)) break; /* length between ${ , } */
+      strncpy(buf, p + strlen(_VAR_OPEN), len);
+      qRemoveSpace(buf);
+
+      /* find value */
+      switch(buf[0]) {
+        case _VAR_CMD : {
+          t = "_NOT_SUPPORTED_YET_";
+          break;
+        }
+        case _VAR_ENV : {
+          t = qGetenvDefault("", buf+1);
+          break;
+        }
+        default : {
+          if((t = _EntryValue(first, buf)) == NULL) t = "";
+          break;
+        }
+      }
+
+      /* replace */
+      strncpy(buf, p, strlen(_VAR_OPEN) + len + strlen(_VAR_CLOSE));
+      p = str = qStrReplace("sr", str, buf, t);
+    }
+  }
+
+  return first;
 }

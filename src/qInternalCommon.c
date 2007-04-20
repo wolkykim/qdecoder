@@ -78,7 +78,7 @@ char *_makeword(char *str, char stop) {
 }
 
 /*********************************************
-** Usage : _strtok2(string, token stop string, teturn stop character);
+** Usage : _strtok2(string, token stop string, return stop character);
 ** Do    : Find token string. (usage like strtok())
 ** Return: Pointer of token & character of stop.
 **********************************************/

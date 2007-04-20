@@ -44,7 +44,7 @@ Author:
 **********************************************/
 
 static char *_error_contact_info = NULL;
-static char *_error_log_filename = NULL;
+static char *_error_log_file = NULL;
 
 
 /**********************************************
@@ -70,10 +70,10 @@ void qError(char *format, ...) {
   }
 
   logstatus = 0;
-  if(_error_log_filename != NULL) {
+  if(_error_log_file != NULL) {
     FILE *fp;
 
-    if((fp = fopen(_error_log_filename, "at")) == NULL) logstatus = -1;
+    if((fp = fopen(_error_log_file, "at")) == NULL) logstatus = -1;
     else {
       char *http_user_agent, *remote_host;
       struct tm *time;
@@ -126,8 +126,8 @@ void qError(char *format, ...) {
 ** Usage : qErrorLog(log filename);
 ** Do    : Turn Error log on.
 **********************************************/
-void qErrorLog(char *filename) {
-  _error_log_filename = filename;
+void qErrorLog(char *file) {
+  _error_log_file = file;
 }
 
 /**********************************************

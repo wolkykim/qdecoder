@@ -117,10 +117,15 @@ int qDecoder(void) {
 }
 
 /**********************************************
-** Usage : qDecoderSetUploadBase(path);
+** Usage : qDecoderSetUploadBase(dir, olderthan);
 ** Do    : Set temporary uploading directory base.
+**         When qDecoder() try to save uploading file into disk,
+**         it checks old files which is older than 'olderthan' sec.
+**         Then clean up old files before step next.
 **********************************************/
 void qDecoderSetUploadBase(char *dir, int olderthan) {
+  if(qCheckFile(dir) == 0) qError("qDecoderSetUploadBase(): Uploadind directory does not exists.");
+
   strcpy(_upload_base, dir);
   _upload_clear_olderthan = olderthan;
   _upload_base_init = 1;

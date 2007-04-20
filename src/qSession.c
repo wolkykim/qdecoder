@@ -508,7 +508,7 @@ static int _isValidSession(char *filename) {
   double timediff;
 
   if((fp = fopen(filename, "r")) == NULL) return 0;
-  fscanf(fp, "%ld", &timeout);
+  fscanf(fp, "%d", &timeout);
   fclose(fp);
 
   timenow = time(NULL);
