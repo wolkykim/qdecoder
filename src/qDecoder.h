@@ -164,6 +164,7 @@ typedef struct {
 	int	nConsole;
 	int	nRotateInterval;
 	int	nNextRotate;
+	int	nFlushFlag;
 } Q_LOG;
 
 /* qDecoder C++ support */
@@ -397,7 +398,7 @@ int	qDbRollback(Q_DB *db);
 /*
  * qLog.c
  */
-Q_LOG	*qLogOpen(char *pszLogBase, char *pszFilenameFormat, int nRotateInterval);
+Q_LOG	*qLogOpen(char *pszLogBase, char *pszFilenameFormat, int nRotateInterval, int nFlushFlag);
 int	qLogClose(Q_LOG *log);
 int	qLogSetConsole(Q_LOG *log, int nFlag);
 int	qLogFlush(Q_LOG *log);

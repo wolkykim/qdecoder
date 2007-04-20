@@ -38,6 +38,9 @@ Author:
 #include "qDecoder.h"
 #include "qInternal.h"
 
+#define CONF_INCLUDE_START	"@INCLUDE \""
+#define CONF_INCLUDE_END	"\""
+
 /**********************************************
 ** Usage : qfDecoder(filename);
 ** Return: Success pointer of the first entry, Fail NULL.
@@ -45,13 +48,35 @@ Author:
            # is used for comments.
 **********************************************/
 Q_Entry *qfDecoder(char *filename) {
-  Q_Entry *first;
-  char *sp;
+  Q_Entry *ret;
+  char *str, *p;
 
-  if((sp = qReadFile(filename, NULL)) == NULL) return NULL;
-  first = qsDecoder(sp);
-  free(sp);
+  p = str = qReadFile(filename, NULL);
+  if(str == NULL) return NULL;
 
-  return first;
+  while((p = strstr(p, CONF_INCLUDE_START))) {
+    char tmpbuf[1024], *endp, *t1;
+
+    /* For 'include directive.  Gets a filename and replaces the string with file contents.  */
+    if((p == str || p[-1] == '\n') && (endp = strstr(p + strlen(CONF_INCLUDE_START), CONF_INCLUDE_END)) != NULL) {
+      t1 = p+strlen(CONF_INCLUDE_START);
+      strncpy(tmpbuf, t1, endp - t1);
+      tmpbuf[endp-(t1)] = '\0';
+      endp = (endp + strlen(CONF_INCLUDE_END)) - 1;
+
+      t1 = qReadFile(tmpbuf, NULL);
+      if (t1 == NULL) return NULL;
+      memcpy (tmpbuf, p, endp-p+1);
+      tmpbuf[endp-p+1] = '\0';
+      p = qStrReplace("sn", str, tmpbuf, t1);
+      free(t1);
+      free(str);
+      str = p;
+    }
+  }
+
+  ret = qsDecoder(str);
+  free(str);
+
+  return ret;
 }
-

@@ -314,8 +314,6 @@ int qDbGetIntAt(Q_DBRESULT *result, int idx) {
   return atoi(qDbGetValueAt(result, idx));
 }
 
-#endif
-
 /////////////////////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS - transaction
 /////////////////////////////////////////////////////////////////////////
@@ -378,3 +376,5 @@ int qDbRollback(Q_DB *db) {
   return 0;
 #endif
 }
+
+#endif

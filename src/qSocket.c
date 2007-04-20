@@ -147,6 +147,7 @@ int qSocketRead(char *binary, int size, int sockfd, int timeoutms) {
 **********************************************/
 int qSocketGets(char *str, int size, int sockfd, int timeoutms) {
   char *ptr;
+  int readcnt = 0;
 
   if(qSocketWaitReadable(sockfd, timeoutms) <= 0) return 0;
 
@@ -155,12 +156,14 @@ int qSocketGets(char *str, int size, int sockfd, int timeoutms) {
     	if(ptr == str) return -1;
     	break;
     }
+
+    readcnt++;
     if(*ptr == '\n') break;
     if(*ptr == '\r') ptr--;
   }
 
   *ptr = '\0';
-  return strlen(str);
+  return readcnt;
 }
 
 /**********************************************
