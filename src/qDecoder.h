@@ -34,6 +34,7 @@ Copyright Disclaimer:
 Author:
   Seung-young Kim <wolkykim(at)ziom.co.kr>
 ************************************************************************/
+/* $Revision$ */
 
 #ifndef _QDECODER_H
 #define _QDECODER_H
