@@ -41,23 +41,23 @@ Author:
 
 int main(void) {
   Q_Entry *conf;
-  char *protocol, *host, *port, *user;
+  char *host;
+  int port;
 
   /* Open configuration file */
   if(!(conf = qfDecoder(CONF_FILE))) qError("Configuration file(%s) not found.", CONF_FILE);
 
   /* Get variable */
-  protocol = qfValue(conf, "PROTOCOL");
   host     = qfValue(conf, "HOST");
-  port     = qfValue(conf, "PORT");
-  user     = qfValue(conf, "USER");
+  port     = qfiValue(conf, "PORT");
 
   /* Print out */
   qContentType("text/plain");
-  printf("Protocol : %s\n", protocol);
   printf("Host     : %s\n", host);
-  printf("Port     : %s\n", port);
-  printf("User     : %s\n", user);
+  printf("Port     : %d\n", port);
+
+  printf("\n--[CONFIGURATION DUMP]--\n");
+  qfPrint(conf);
 
   /* Deallocate parsed entries */
   qfFree(conf);

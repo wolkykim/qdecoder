@@ -177,10 +177,10 @@ int _EntryPrint(Q_Entry *first) {
   Q_Entry *entries;
   int amount;
 
-  qContentType("text/html");
+  qContentType("text/plain");
 
   for(amount = 0, entries = first; entries; amount++, entries = entries->next) {
-    printf("'%s' = '%s'<br>\n" , entries->name, entries->value);
+    printf("'%s' = '%s'\n" , entries->name, entries->value);
   }
 
   return amount;

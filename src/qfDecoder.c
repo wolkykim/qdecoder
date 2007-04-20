@@ -66,6 +66,7 @@ Q_Entry *qfDecoder(char *file) {
 
   /* processing include directive */
   while((p = strstr(p, _INCLUDE_DIRECTIVE)) != NULL) {
+
     if(p == str || p[-1] == '\n') {
       char buf[1024], *e, *t = NULL;
       int len;
@@ -73,8 +74,9 @@ Q_Entry *qfDecoder(char *file) {
       /* parse filename */
       for(e = p + strlen(_INCLUDE_DIRECTIVE); *e != '\n' && *e != '\0'; e++);
       len = e - (p + strlen(_INCLUDE_DIRECTIVE));
-      if(len >= (sizeof(buf) - strlen("\n#"))) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
+      if(len >= sizeof(buf)) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
       strncpy(buf, p + strlen(_INCLUDE_DIRECTIVE), len);
+      buf[len] = '\0';
       qRemoveSpace(buf);
 
       /* adjust file path */
@@ -91,9 +93,11 @@ Q_Entry *qfDecoder(char *file) {
 
       /* replace */
       strncpy(buf, p, strlen(_INCLUDE_DIRECTIVE) + len);
-      strcat(buf, "\n#");
-      p = str = qStrReplace("sr", str, buf, t);
+      buf[strlen(_INCLUDE_DIRECTIVE) + len] = '\0';
+      p = qStrReplace("sn", str, buf, t);
       free(t);
+      free(str);
+      str = p;
     }
     else {
       p += strlen(_INCLUDE_DIRECTIVE);
@@ -116,6 +120,7 @@ Q_Entry *qfDecoder(char *file) {
       len = e - (p + strlen(_VAR_OPEN));
       if(len >= sizeof(buf)) break; /* length between ${ , } */
       strncpy(buf, p + strlen(_VAR_OPEN), len);
+      buf[len] = '\0';
       qRemoveSpace(buf);
 
       /* find value */
@@ -136,7 +141,11 @@ Q_Entry *qfDecoder(char *file) {
 
       /* replace */
       strncpy(buf, p, strlen(_VAR_OPEN) + len + strlen(_VAR_CLOSE));
-      p = str = qStrReplace("sr", str, buf, t);
+      buf[strlen(_VAR_OPEN) + len + strlen(_VAR_CLOSE)] = '\0';
+
+      p = qStrReplace("sn", entries->value, buf, t);
+      free(entries->value);
+      entries->value = qRemoveSpace(p);
     }
   }
 
