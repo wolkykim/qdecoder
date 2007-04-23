@@ -187,7 +187,42 @@ char *qfGetLine(FILE *fp) {
   }
 
   if(c_count == 0 && c == EOF) return NULL;
+  string[c_count] = '\0';
 
+  return string;
+}
+
+/*********************************************
+** Usage : qfGets(file pointer);
+** Return: Success string pointer, End of file NULL.
+** Do    : Read text stream.
+**********************************************/
+char *qfGets(FILE *fp) {
+  int memsize;
+  int c, c_count;
+  char *string = NULL;
+
+  for(memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
+    if(c_count == 0) {
+      string = (char *)malloc(sizeof(char) * memsize);
+      if(string == NULL) qError("qfGetLine(): Memory allocation fail.");
+    }
+    else if(c_count == memsize - 1) {
+      char *stringtmp;
+
+      memsize *= 2;
+
+      /* Here, we do not use realloc(). Because sometimes it is unstable. */
+      stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
+      if(stringtmp == NULL) qError("qfGetLine(): Memory allocation fail.");
+      memcpy(stringtmp, string, c_count);
+      free(string);
+      string = stringtmp;
+    }
+    string[c_count++] = (char)c;
+  }
+
+  if(c_count == 0 && c == EOF) return NULL;
   string[c_count] = '\0';
 
   return string;
@@ -205,3 +240,18 @@ long qFileSize(char *filename) {
   return finfo.st_size;
 }
 
+/**********************************************
+** Usage : qCmd(external command);
+** Return: Size of file in byte, File not found -1.
+**********************************************/
+char *qCmd(char *cmd) {
+  FILE *fp;
+  char *str;
+
+  fp = popen(cmd, "r");
+  if(fp == NULL) return NULL;
+  str = qfGets(fp);
+  pclose(fp);
+
+  return str;
+}

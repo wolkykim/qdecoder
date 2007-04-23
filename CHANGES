@@ -23,6 +23,10 @@ qDecoder Changes
     ADD) qStrcat()
     FIX) qfDecoder()
     FIX) qSocketGets()
+    ADD) qRemoveTailSpace();
+    ADD) qStrdupBetween();
+    ADD) qfGets();
+    ADD) qCmd();
 
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive

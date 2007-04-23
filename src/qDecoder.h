@@ -284,7 +284,7 @@ int	qStrincmp(char *s1, char *s2, size_t len);
 char	*qitocomma(int value);
 char	*qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
 char    *qStrcat(char *str, char *format, ...);
-char	*qStrBetween(char *str, char *start, char *end);
+char	*qStrdupBetween(char *str, char *start, char *end);
 
 /*
  * qFile.c
@@ -296,7 +296,9 @@ int	qCatFile(char *format, ...);
 char	*qReadFile(char *filename, int *size);
 int	qSaveStr(char *sp, int spsize, char *filename, char *mode);
 char	*qfGetLine(FILE *fp);
+char	*qfGets(FILE *fp);
 long	qFileSize(char *filename);
+char	*qCmd(char *cmd);
 
 /*
  * qValid.c

@@ -531,14 +531,14 @@ char *qStrcat(char *str, char *format, ...) {
 }
 
 /**********************************************
-** Usage : qStrBetween(str, start, end);
+** Usage : qStrdupBetween(str, start, end);
 ** Return: new char pointer on success, otherwise returns NULL
 ** Do    : Pick a string which is started with *start and ended with *end from *str,
 **         then copy it to new mallocked string buffer to return.
 **         Be sure, the returned string does not contain *str and *end string.
 ** Note  : That's is your job to free the return char pointer.
 **********************************************/
-char *qStrBetween(char *str, char *start, char *end) {
+char *qStrdupBetween(char *str, char *start, char *end) {
   char *buf, *s, *e;
   int len;
 

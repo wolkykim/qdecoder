@@ -113,7 +113,7 @@ Q_Entry *qfDecoder(char *file) {
     p = entries->value;
     while((p = strstr(p, _VAR_OPEN)) != NULL) {
       char buf[256], *e, *t;
-      int len;
+      int len, freet = 0;
 
       /* parse variable name */
       if((e = strstr(p + strlen(_VAR_OPEN), _VAR_CLOSE)) == NULL) break;
@@ -126,7 +126,8 @@ Q_Entry *qfDecoder(char *file) {
       /* find value */
       switch(buf[0]) {
         case _VAR_CMD : {
-          t = "_NOT_SUPPORTED_YET_";
+          if((t = qRemoveSpace(qCmd(buf+1))) == NULL) t = "";
+          else freet = 1;
           break;
         }
         case _VAR_ENV : {
@@ -144,6 +145,7 @@ Q_Entry *qfDecoder(char *file) {
       buf[strlen(_VAR_OPEN) + len + strlen(_VAR_CLOSE)] = '\0';
 
       p = qStrReplace("sn", entries->value, buf, t);
+      if(freet == 1) free(t);
       free(entries->value);
       entries->value = qRemoveSpace(p);
     }
