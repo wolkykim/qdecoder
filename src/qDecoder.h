@@ -275,6 +275,7 @@ int	qPrintf(int mode, char *format, ...);
 void	qPuts(int mode, char *buf);
 char	*qRemoveSpace(char *str);
 char	*qRemoveTailSpace(char *str);
+char	*qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
 int	qStr09AZaz(char *str);
 char	*qStrupr(char *str);
 char	*qStrlwr(char *str);
@@ -282,7 +283,6 @@ char	*qStristr(char *big, char *small);
 int	qStricmp(char *s1, char *s2);
 int	qStrincmp(char *s1, char *s2, size_t len);
 char	*qitocomma(int value);
-char	*qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
 char    *qStrcat(char *str, char *format, ...);
 char	*qStrdupBetween(char *str, char *start, char *end);
 
@@ -295,9 +295,9 @@ int	qCheckFile(char *format, ...);
 int	qCatFile(char *format, ...);
 char	*qReadFile(char *filename, int *size);
 int	qSaveStr(char *sp, int spsize, char *filename, char *mode);
+long	qFileSize(char *filename);
 char	*qfGetLine(FILE *fp);
 char	*qfGets(FILE *fp);
-long	qFileSize(char *filename);
 char	*qCmd(char *cmd);
 
 /*

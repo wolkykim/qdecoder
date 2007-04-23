@@ -153,6 +153,18 @@ int qSaveStr(char *sp, int spsize, char *filename, char *mode) {
   return i;
 }
 
+/**********************************************
+** Usage : qFileSize(filename);
+** Return: Size of file in byte, File not found -1.
+**********************************************/
+long qFileSize(char *filename) {
+  struct stat finfo;
+
+  if(stat(filename, &finfo) < 0) return -1;
+
+  return finfo.st_size;
+}
+
 /*********************************************
 ** Usage : qfGetLine(file pointer);
 ** Return: Success string pointer, End of file NULL.
@@ -226,18 +238,6 @@ char *qfGets(FILE *fp) {
   string[c_count] = '\0';
 
   return string;
-}
-
-/**********************************************
-** Usage : qFileSize(filename);
-** Return: Size of file in byte, File not found -1.
-**********************************************/
-long qFileSize(char *filename) {
-  struct stat finfo;
-
-  if(stat(filename, &finfo) < 0) return -1;
-
-  return finfo.st_size;
 }
 
 /**********************************************

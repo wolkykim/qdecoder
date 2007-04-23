@@ -258,6 +258,132 @@ char *qRemoveTailSpace(char *str) {
 }
 
 /**********************************************
+** Usage : qStrReplace(mode, source string, token string to replace, word);
+** Return: String pointer which is new or replaced.
+** Do    : Replace string or tokens as word from source string
+**         with given mode.
+**
+** The mode argument has two separated character. First character
+** is used to decide replacing method and can be 't' or 's'.
+** The character 't' and 's' stand on [t]oken and [s]tring.
+**
+** When 't' is given each character of the token string(third argument)
+** will be compared with source string individually. If matched one
+** is found. the character will be replaced with given work.
+**
+** If 's' is given instead of 't'. Token string will be analyzed
+** only one chunk word. So the replacement will be occured when
+** the case of whole word matched.
+**
+** Second character is used to decide returning memory type and
+** can be 'n' or 'r' which are stand on [n]ew and [r]eplace.
+**
+** When 'n' is given the result will be placed into new array so
+** you should free the return string after using. Instead of this,
+** you can also use 'r' character to modify source string directly.
+** In this case, given source string should have enough space. Be
+** sure that untouchable value can not be used for source string.
+**
+** So there are four associatable modes such like below.
+**
+** Mode "tn" : [t]oken replacing & putting the result into [n]ew array.
+** Mode "tr" : [t]oken replacing & [r]eplace source string directly.
+** Mode "sn" : [s]tring replacing & putting the result into [n]ew array.
+** Mode "sr" : [s]tring replacing & [r]eplace source string directly.
+**
+** ex) int  i;
+**     char srcstr[256], *retstr;
+**     char mode[4][2+1] = {"tn", "tr", "sn", "sr"};
+**
+**     for(i = 0; i < 4; i++) {
+**       strcpy(srcstr, "Welcome to the qDecoder project.");
+**       printf("before %s : srcstr = %s\n", mode[i], srcstr);
+**
+**       retstr = qStrReplace(mode[i], srcstr, "the", "_");
+**       printf("after  %s : srcstr = %s\n", mode[i], srcstr);
+**       printf("            retstr = %s\n\n", retstr);
+**       if(mode[i][1] == 'n') free(retstr);
+**     }
+**     --[Result]--
+**     before tn : srcstr = Welcome to the qDecoder project.
+**     after  tn : srcstr = Welcome to the qDecoder project.
+**                 retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+**
+**     before tr : srcstr = Welcome to the qDecoder project.
+**     after  tr : srcstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+**                 retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+**
+**     before sn : srcstr = Welcome to the qDecoder project.
+**     after  sn : srcstr = Welcome to the qDecoder project.
+**                 retstr = Welcome to _ qDecoder project.
+**
+**     before sr : srcstr = Welcome to the qDecoder project.
+**     after  sr : srcstr = Welcome to _ qDecoder project.
+**                 retstr = Welcome to _ qDecoder project.
+**********************************************/
+char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
+  char method, memuse;
+  int maxstrlen, tokstrlen;
+  char *newstr, *newp, *srcp, *tokenp, *retp;
+
+  /* initialize pointers to avoid compile warnings */
+  newstr = newp = srcp = tokenp = retp = NULL;
+
+  if(strlen(mode) != 2) qError("qStrReplace(): Unknown mode \"%s\".", mode);
+  method = mode[0], memuse = mode[1];
+
+  /* Put replaced string into malloced 'newstr' */
+  if(method == 't') { /* Token replace */
+    maxstrlen = strlen(srcstr) * strlen(word);
+    newstr = (char *)malloc(maxstrlen + 1);
+
+    for(srcp = srcstr, newp = newstr; *srcp; srcp++) {
+      for(tokenp = tokstr; *tokenp; tokenp++) {
+        if(*srcp == *tokenp) {
+          char *wordp;
+          for(wordp = word; *wordp; wordp++) *newp++ = *wordp;
+          break;
+        }
+      }
+      if(!*tokenp) *newp++ = *srcp;
+    }
+    *newp = '\0';
+  }
+  else if(method == 's') { /* String replace */
+    if(strlen(word) > strlen(tokstr))
+      maxstrlen
+      = ((strlen(srcstr) / strlen(tokstr)) * strlen(word))
+      + (strlen(srcstr)
+      % strlen(tokstr));
+    else maxstrlen = strlen(srcstr);
+    newstr = (char *)malloc(maxstrlen + 1);
+    tokstrlen = strlen(tokstr);
+
+    for(srcp = srcstr, newp = newstr; *srcp; srcp++) {
+      if(!strncmp(srcp, tokstr, tokstrlen)) {
+        char *wordp;
+        for(wordp = word; *wordp; wordp++) *newp++ = *wordp;
+      	  srcp += tokstrlen - 1;
+      }
+      else *newp++ = *srcp;
+    }
+    *newp = '\0';
+  }
+  else qError("qStrReplace(): Unknown mode \"%s\".", mode);
+
+  /* Decide whether newing the memory or replacing into exist one */
+  if(memuse == 'n') retp = newstr;
+  else if(memuse == 'r') {
+    strcpy(srcstr, newstr);
+    free(newstr);
+    retp = srcstr;
+  }
+  else qError("qStrReplace(): Unknown mode \"%s\".", mode);
+
+  return retp;
+}
+
+/**********************************************
 ** Usage : qStr09AZaz(string);
 ** Return: Valid 1, Invalid 0.
 ** Do    : Check characters of string is in 0-9, A-Z, a-z.
@@ -385,132 +511,6 @@ char *qitocomma(int value) {
   *strp = '\0';
 
   return str;
-}
-
-/**********************************************
-** Usage : qStrReplace(mode, source string, token string to replace, word);
-** Return: String pointer which is new or replaced.
-** Do    : Replace string or tokens as word from source string
-**         with given mode.
-**
-** The mode argument has two separated character. First character
-** is used to decide replacing method and can be 't' or 's'.
-** The character 't' and 's' stand on [t]oken and [s]tring.
-**
-** When 't' is given each character of the token string(third argument)
-** will be compared with source string individually. If matched one
-** is found. the character will be replaced with given work.
-**
-** If 's' is given instead of 't'. Token string will be analyzed
-** only one chunk word. So the replacement will be occured when
-** the case of whole word matched.
-**
-** Second character is used to decide returning memory type and
-** can be 'n' or 'r' which are stand on [n]ew and [r]eplace.
-**
-** When 'n' is given the result will be placed into new array so
-** you should free the return string after using. Instead of this,
-** you can also use 'r' character to modify source string directly.
-** In this case, given source string should have enough space. Be
-** sure that untouchable value can not be used for source string.
-**
-** So there are four associatable modes such like below.
-**
-** Mode "tn" : [t]oken replacing & putting the result into [n]ew array.
-** Mode "tr" : [t]oken replacing & [r]eplace source string directly.
-** Mode "sn" : [s]tring replacing & putting the result into [n]ew array.
-** Mode "sr" : [s]tring replacing & [r]eplace source string directly.
-**
-** ex) int  i;
-**     char srcstr[256], *retstr;
-**     char mode[4][2+1] = {"tn", "tr", "sn", "sr"};
-**
-**     for(i = 0; i < 4; i++) {
-**       strcpy(srcstr, "Welcome to the qDecoder project.");
-**       printf("before %s : srcstr = %s\n", mode[i], srcstr);
-**
-**       retstr = qStrReplace(mode[i], srcstr, "the", "_");
-**       printf("after  %s : srcstr = %s\n", mode[i], srcstr);
-**       printf("            retstr = %s\n\n", retstr);
-**       if(mode[i][1] == 'n') free(retstr);
-**     }
-**     --[Result]--
-**     before tn : srcstr = Welcome to the qDecoder project.
-**     after  tn : srcstr = Welcome to the qDecoder project.
-**                 retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
-**
-**     before tr : srcstr = Welcome to the qDecoder project.
-**     after  tr : srcstr = W_lcom_ _o ___ qD_cod_r proj_c_.
-**                 retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
-**
-**     before sn : srcstr = Welcome to the qDecoder project.
-**     after  sn : srcstr = Welcome to the qDecoder project.
-**                 retstr = Welcome to _ qDecoder project.
-**
-**     before sr : srcstr = Welcome to the qDecoder project.
-**     after  sr : srcstr = Welcome to _ qDecoder project.
-**                 retstr = Welcome to _ qDecoder project.
-**********************************************/
-char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
-  char method, memuse;
-  int maxstrlen, tokstrlen;
-  char *newstr, *newp, *srcp, *tokenp, *retp;
-
-  /* initialize pointers to avoid compile warnings */
-  newstr = newp = srcp = tokenp = retp = NULL;
-
-  if(strlen(mode) != 2) qError("qStrReplace(): Unknown mode \"%s\".", mode);
-  method = mode[0], memuse = mode[1];
-
-  /* Put replaced string into malloced 'newstr' */
-  if(method == 't') { /* Token replace */
-    maxstrlen = strlen(srcstr) * strlen(word);
-    newstr = (char *)malloc(maxstrlen + 1);
-
-    for(srcp = srcstr, newp = newstr; *srcp; srcp++) {
-      for(tokenp = tokstr; *tokenp; tokenp++) {
-        if(*srcp == *tokenp) {
-          char *wordp;
-          for(wordp = word; *wordp; wordp++) *newp++ = *wordp;
-          break;
-        }
-      }
-      if(!*tokenp) *newp++ = *srcp;
-    }
-    *newp = '\0';
-  }
-  else if(method == 's') { /* String replace */
-    if(strlen(word) > strlen(tokstr))
-      maxstrlen
-      = ((strlen(srcstr) / strlen(tokstr)) * strlen(word))
-      + (strlen(srcstr)
-      % strlen(tokstr));
-    else maxstrlen = strlen(srcstr);
-    newstr = (char *)malloc(maxstrlen + 1);
-    tokstrlen = strlen(tokstr);
-
-    for(srcp = srcstr, newp = newstr; *srcp; srcp++) {
-      if(!strncmp(srcp, tokstr, tokstrlen)) {
-        char *wordp;
-        for(wordp = word; *wordp; wordp++) *newp++ = *wordp;
-      	  srcp += tokstrlen - 1;
-      }
-      else *newp++ = *srcp;
-    }
-    *newp = '\0';
-  }
-  else qError("qStrReplace(): Unknown mode \"%s\".", mode);
-
-  /* Decide whether newing the memory or replacing into exist one */
-  if(memuse == 'n') retp = newstr;
-  else if(memuse == 'r') {
-    strcpy(srcstr, newstr);
-    free(newstr);
-    retp = srcstr;
-  }
-  else qError("qStrReplace(): Unknown mode \"%s\".", mode);
-
-  return retp;
 }
 
 /**********************************************
