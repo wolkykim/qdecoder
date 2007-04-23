@@ -234,9 +234,24 @@ char *qRemoveSpace(char *str) {
 
   if(!str)return NULL;
 
-  for(j = 0; str[j] == ' ' || str[j] == 9 || str[j] == '\r' || str[j] == '\n'; j++);
+  for(j = 0; str[j] == ' ' || str[j] == '\t' || str[j] == '\r' || str[j] == '\n'; j++);
   for(i = 0; str[j] != '\0'; i++, j++) str[i] = str[j];
-  for(i--; (i >= 0) && (str[i] == ' ' || str[i] == 9 || str[i] == '\r' || str[i] == '\n'); i--);
+  for(i--; (i >= 0) && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'); i--);
+  str[i+1] = '\0';
+
+  return str;
+}
+
+/**********************************************
+** Usage : qRemoveTailSpace(string);
+** Return: Pointer of string.
+** Do    : Remove tailing space(including CR, LF)
+**********************************************/
+char *qRemoveTailSpace(char *str) {
+  int i;
+
+  if(!str)return NULL;
+  for(i = strlen(str) - 1; (i >= 0) && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'); i--);
   str[i+1] = '\0';
 
   return str;
@@ -499,7 +514,7 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
 }
 
 /**********************************************
-** Usage : qStrcat(char str, char *format, ...);
+** Usage : qStrcat(str, *format, ...);
 ** Return: same as strcat on success, NULL if failed.
 ** Do    :  append formatted string to the end of the source str
 **********************************************/
@@ -513,4 +528,28 @@ char *qStrcat(char *str, char *format, ...) {
   if(strlen(buf) + 1 > sizeof(buf))qError("qStrcat(): Message is too long or invalid.");
 
   return strcat(str, buf);
+}
+
+/**********************************************
+** Usage : qStrBetween(str, start, end);
+** Return: new char pointer on success, otherwise returns NULL
+** Do    : Pick a string which is started with *start and ended with *end from *str,
+**         then copy it to new mallocked string buffer to return.
+**         Be sure, the returned string does not contain *str and *end string.
+** Note  : That's is your job to free the return char pointer.
+**********************************************/
+char *qStrBetween(char *str, char *start, char *end) {
+  char *buf, *s, *e;
+  int len;
+
+  if((s = strstr(str, start)) == NULL) return NULL;
+  s += strlen(start);
+  if((e = strstr(s, end)) == NULL) return NULL;
+  len = e - s;
+
+  buf = (char *)malloc(len + 1);
+  strncpy(buf, s, len);
+  buf[len] = '\0';
+
+  return buf;
 }

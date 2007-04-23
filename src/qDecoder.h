@@ -274,6 +274,7 @@ unsigned int qFnv32Hash(char *str, unsigned int max);
 int	qPrintf(int mode, char *format, ...);
 void	qPuts(int mode, char *buf);
 char	*qRemoveSpace(char *str);
+char	*qRemoveTailSpace(char *str);
 int	qStr09AZaz(char *str);
 char	*qStrupr(char *str);
 char	*qStrlwr(char *str);
@@ -283,6 +284,7 @@ int	qStrincmp(char *s1, char *s2, size_t len);
 char	*qitocomma(int value);
 char	*qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
 char    *qStrcat(char *str, char *format, ...);
+char	*qStrBetween(char *str, char *start, char *end);
 
 /*
  * qFile.c
