@@ -42,7 +42,7 @@ int main(void) {
   int i;
 
   // qDecoderSetUploadBase() and qDecoder() should be called at the first line of main() for progress bar upload.
-  qDecoderSetUploadBase("tmp", 24 * 60 * 60);
+  qDecoderSetUploadBase("tmp", (1 * 60 * 60));
   qDecoder();
 
   qContentType("text/html");
