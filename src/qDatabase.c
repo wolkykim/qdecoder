@@ -320,37 +320,23 @@ int qDbGetIntAt(Q_DBRESULT *result, int idx) {
 
 int qDbBeginTran(Q_DB *db) {
   if(db == NULL) return 0;
-  if(db->info.autocommit == 0) return 1;
 
-  // turn of autocommit
 #ifdef _Q_WITH_MYSQL
-  if(mysql_autocommit(&db->mysql, 0) != 0) return 0;
+  qDbExecuteUpdate(db, "START TRANSACTION");
   return 1;
 #else
   return 0;
 #endif
 }
 
-int qDbEndTran(Q_DB *db) {
+int qDbEndTran(Q_DB *db, int nCommit) {
   if(db == NULL) return 0;
 
-  if(db->info.autocommit == 0) {
-    return qDbCommit(db);
+  if(nCommit == 0) {
+    return qDbRollback(db);
   }
 
-  // first commit
-  if(qDbCommit(db) == 0) {
-    return 0;
-  }
-
-  // turn on autocommit if connection type is autocommit 1
-#ifdef _Q_WITH_MYSQL
-  if(mysql_autocommit(&db->mysql, 1) != 0) return 0;
-
-  return 1;
-#else
-  return 0;
-#endif
+  return qDbCommit(db);
 }
 
 int qDbCommit(Q_DB *db) {
