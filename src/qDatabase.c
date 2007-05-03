@@ -332,10 +332,7 @@ int qDbBeginTran(Q_DB *db) {
 int qDbEndTran(Q_DB *db, int nCommit) {
   if(db == NULL) return 0;
 
-  if(nCommit == 0) {
-    return qDbRollback(db);
-  }
-
+  if(nCommit == 0) return qDbRollback(db);
   return qDbCommit(db);
 }
 

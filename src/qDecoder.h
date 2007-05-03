@@ -395,7 +395,7 @@ char	*qDbGetValueAt(Q_DBRESULT *result, int idx);
 int	qDbGetIntAt(Q_DBRESULT *result, int idx);
 
 int	qDbBeginTran(Q_DB *db);
-int	qDbEndTran(Q_DB *db);
+int	qDbEndTran(Q_DB *db, int nCommit);
 int	qDbCommit(Q_DB *db);
 int	qDbRollback(Q_DB *db);
 
