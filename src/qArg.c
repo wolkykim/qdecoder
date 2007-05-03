@@ -50,42 +50,45 @@ Author:
 **     queries = qArgMake(query, qlist);
 **********************************************/
 int qArgMake(char *str, char **qlist) {
-  char *query, *sp, *qp;
-  int argc;
+	char *query, *sp, *qp;
+	int argc;
 
-  query = sp = qRemoveSpace(strdup(str));
+	query = sp = qRemoveSpace(strdup(str));
 
-  for(argc = 0; *sp != '\0';) {
-    switch(*sp) {
-      case ' ': { /* skip space */
-      	sp++;
-        break;
-      }
-      case '"': { /* Double quotation arounded string */
-      	qlist[argc] = qp = (char *)malloc(strlen(query) +  1);
-      	for(sp++; *sp != '\0'; sp++, qp++) {
-          if(*sp == '"') { sp++; break; }
-      	  *qp = *sp;
-      	}
-      	*qp = '\0';
-      	if(strlen(qlist[argc]) > 0) argc++;
-      	break;
-      }
-      default: {
-      	qlist[argc] = qp = (char *)malloc(strlen(query) +  1);
-      	for(; *sp != '\0'; sp++, qp++) {
-          if(*sp == ' ' || *sp == '"') break;
-      	  *qp = *sp;
-      	}
-      	*qp = '\0';
-      	argc++;
-      	break;
-      }
-    }
-  }
-  qlist[argc] = NULL;
-  free(query);
-  return argc;
+	for (argc = 0; *sp != '\0';) {
+		switch (*sp) {
+			case ' ': { /* skip space */
+				sp++;
+				break;
+			}
+			case '"': { /* Double quotation arounded string */
+				qlist[argc] = qp = (char *)malloc(strlen(query) +  1);
+				for (sp++; *sp != '\0'; sp++, qp++) {
+					if (*sp == '"') {
+						sp++;
+						break;
+					}
+					*qp = *sp;
+				}
+				*qp = '\0';
+				if (strlen(qlist[argc]) > 0) argc++;
+				break;
+			}
+			default: {
+				qlist[argc] = qp = (char *)malloc(strlen(query) +  1);
+				for (; *sp != '\0'; sp++, qp++) {
+					if (*sp == ' ' || *sp == '"') break;
+					*qp = *sp;
+				}
+				*qp = '\0';
+				argc++;
+				break;
+			}
+		}
+	}
+	qlist[argc] = NULL;
+	free(query);
+	return argc;
 }
 
 /**********************************************
@@ -94,15 +97,15 @@ int qArgMake(char *str, char **qlist) {
 **         This value is not equal to a value of qArgEmprint()
 **********************************************/
 int qArgMatch(char *str, char **qlist) {
-  char **qp;
-  int i;
+	char **qp;
+	int i;
 
-  /* To keep the value i over zero */
-  if(!*qlist) return 0;
+	/* To keep the value i over zero */
+	if (!*qlist) return 0;
 
-  for(qp = qlist, i = 0; *qp != NULL; qp++) if(qStristr(str, *qp)) i++;
+	for (qp = qlist, i = 0; *qp != NULL; qp++) if (qStristr(str, *qp)) i++;
 
-  return i;
+	return i;
 }
 
 /**********************************************
@@ -111,16 +114,16 @@ int qArgMatch(char *str, char **qlist) {
 ** Do    : Print all parsed tokens for debugging.
 **********************************************/
 int qArgPrint(char **qlist) {
-  char **qp;
-  int amount;
+	char **qp;
+	int amount;
 
-  qContentType("text/html");
+	qContentType("text/html");
 
-  for(amount = 0, qp = qlist; *qp; amount++, qp++) {
-    printf("'%s' (%d bytes)<br>\n" , *qp, strlen(*qp));
-  }
+	for (amount = 0, qp = qlist; *qp; amount++, qp++) {
+		printf("'%s' (%d bytes)<br>\n" , *qp, strlen(*qp));
+	}
 
-  return amount;
+	return amount;
 }
 
 /**********************************************
@@ -130,50 +133,50 @@ int qArgPrint(char **qlist) {
 ** Do    : Make matched token bold in target string.
 **********************************************/
 int qArgEmprint(int mode, char *str, char **qlist) {
-  char *sp, *freestr, *buf, *bp, *op;
-  int  i, j, flag, matches;
+	char *sp, *freestr, *buf, *bp, *op;
+	int  i, j, flag, matches;
 
-  if(!*qlist) {
-    qPuts(mode, str);
-    return 0;
-  }
+	if (!*qlist) {
+		qPuts(mode, str);
+		return 0;
+	}
 
-  /* Set character pointer */
-  op = str;
-  sp = freestr = strdup(str);
-  qStrupr(sp);
+	/* Set character pointer */
+	op = str;
+	sp = freestr = strdup(str);
+	qStrupr(sp);
 
-  if((bp = buf = (char *)malloc(strlen(str) + 1)) == NULL) qError("Memory allocation fail.");
+	if ((bp = buf = (char *)malloc(strlen(str) + 1)) == NULL) qError("Memory allocation fail.");
 
-  for(matches = 0; *sp != '\0';) {
-    for(i = 0, flag = 0; qlist[i] != NULL; i++) {
-      if(!qStrincmp(sp, qlist[i], strlen(qlist[i]))) {
-        *bp = '\0'; /* Mark string end */
-        qPuts(mode, buf); /* flash buffer */
-        bp = buf; /* reset buffer pointer */
-      	printf("<b>");
-        for(j = 1; j <= (int)strlen(qlist[i]); j++) {
-          printf("%c", *op++);
-          sp++;
-        }
-      	printf("</b>");
-      	flag = 1;
-      	matches++;
-      	break;
-      }
-    }
-    if(flag == 0) {
-      *bp++ = *op++;
-      sp++;
-    }
-  }
-  *bp = '\0'; /* Mark string end */
-  qPuts(mode, buf); /* Flash buffer */
+	for (matches = 0; *sp != '\0';) {
+		for (i = 0, flag = 0; qlist[i] != NULL; i++) {
+			if (!qStrincmp(sp, qlist[i], strlen(qlist[i]))) {
+				*bp = '\0'; /* Mark string end */
+				qPuts(mode, buf); /* flash buffer */
+				bp = buf; /* reset buffer pointer */
+				printf("<b>");
+				for (j = 1; j <= (int)strlen(qlist[i]); j++) {
+					printf("%c", *op++);
+					sp++;
+				}
+				printf("</b>");
+				flag = 1;
+				matches++;
+				break;
+			}
+		}
+		if (flag == 0) {
+			*bp++ = *op++;
+			sp++;
+		}
+	}
+	*bp = '\0'; /* Mark string end */
+	qPuts(mode, buf); /* Flash buffer */
 
-  free(buf);
-  free(freestr);
+	free(buf);
+	free(freestr);
 
-  return matches;
+	return matches;
 }
 
 /**********************************************
@@ -181,8 +184,7 @@ int qArgEmprint(int mode, char *str, char **qlist) {
 ** Do    : Free malloced token array.
 **********************************************/
 void qArgFree(char **qlist) {
-  char **qp;
-  for(qp = qlist; *qp; qp++) free(*qp);
-  *qlist = NULL;
+	char **qp;
+	for (qp = qlist; *qp; qp++) free(*qp);
+	*qlist = NULL;
 }
-

@@ -45,7 +45,7 @@ Author:
 ** Return: Success 1, File not found 0.
 **********************************************/
 int qDownload(char *filename) {
-  return qDownloadMime(filename, "application/octet-stream");
+	return qDownloadMime(filename, "application/octet-stream");
 }
 
 /**********************************************
@@ -55,35 +55,35 @@ int qDownload(char *filename) {
 ** Return: Success number of bytes sent, File not found -1.
 **********************************************/
 int qDownloadMime(char *filename, char *mime) {
-  char *file, *c, *disposition;
-  int sent;
+	char *file, *c, *disposition;
+	int sent;
 
-  if(qGetContentFlag() == 1) qError("qDownloadMime(): qDownloadMime() must be called before qContentType() and any stream out.");
+	if (qGetContentFlag() == 1) qError("qDownloadMime(): qDownloadMime() must be called before qContentType() and any stream out.");
 
-  if(mime == NULL) mime = "application/octet-stream";
+	if (mime == NULL) mime = "application/octet-stream";
 
-  if(filename == NULL) qError("qDownload(): Null pointer can not be used.");
-  if(qCheckFile(filename) == 0) return -1;
+	if (filename == NULL) qError("qDownload(): Null pointer can not be used.");
+	if (qCheckFile(filename) == 0) return -1;
 
-  file = strdup(filename);
+	file = strdup(filename);
 
-  /* Fetch filename in string which include directory name */
-  for(c = file + strlen(file) - 1; c >= file && !(*c == '/' || *c == '\\'); c--);
-  for(; c >= file; c--) *c = ' ';
-  qRemoveSpace(file);
+	/* Fetch filename in string which include directory name */
+	for (c = file + strlen(file) - 1; c >= file && !(*c == '/' || *c == '\\'); c--);
+	for (; c >= file; c--) *c = ' ';
+	qRemoveSpace(file);
 
-  if(!strcmp(mime, "application/octet-stream")) disposition = "attachment";
-  else disposition = "inline";
-  printf("Content-Disposition: %s;filename=\"%s\"\n", disposition, file);
-  printf("Content-Transfer-Encoding: binary\n");
-  printf("Accept-Ranges: bytes\n");
-  printf("Content-Length: %ld\n", qFileSize(filename));
-  printf("Connection: close\n");
-  printf("Content-Type: %s\n", mime);
-  printf("\n");
-  free(file);
+	if (!strcmp(mime, "application/octet-stream")) disposition = "attachment";
+	else disposition = "inline";
+	printf("Content-Disposition: %s;filename=\"%s\"\n", disposition, file);
+	printf("Content-Transfer-Encoding: binary\n");
+	printf("Accept-Ranges: bytes\n");
+	printf("Content-Length: %ld\n", qFileSize(filename));
+	printf("Connection: close\n");
+	printf("Content-Type: %s\n", mime);
+	printf("\n");
+	free(file);
 
-  sent = qCatFile(filename);
-  return sent;
+	sent = qCatFile(filename);
+	return sent;
 }
 

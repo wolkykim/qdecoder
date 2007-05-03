@@ -46,17 +46,17 @@ Author:
 **         Mode : see qPuts()
 **********************************************/
 int qPrintf(int mode, char *format, ...) {
-  char buf[1024*10];
-  int  status;
-  va_list arglist;
+	char buf[1024*10];
+	int  status;
+	va_list arglist;
 
-  va_start(arglist, format);
-  if((status = vsprintf(buf, format, arglist)) == EOF) return status;
-  if(strlen(buf) + 1 > sizeof(buf))qError("qPrintf(): Message is too long or invalid.");
+	va_start(arglist, format);
+	if ((status = vsprintf(buf, format, arglist)) == EOF) return status;
+	if (strlen(buf) + 1 > sizeof(buf))qError("qPrintf(): Message is too long or invalid.");
 
-  qPuts(mode, buf);
+	qPuts(mode, buf);
 
-  return status;
+	return status;
 }
 
 /**********************************************
@@ -99,129 +99,192 @@ int qPrintf(int mode, char *format, ...) {
 **********************************************/
 void qPuts(int mode, char *buf) {
 
-  if(buf == NULL) return;
+	if (buf == NULL) return;
 
-  if(mode == 0) printf("%s", buf);
-  else if(mode == 10) {
-    int i;
-    for(i = 0; buf[i] != '\0'; i++) {
-      switch(buf[i]) {
-        case ' '  : {
-          if((i > 0) && (buf[i - 1] == ' ')) printf("&nbsp;");
-          else printf(" ");
-          break;
-        }
-        case '\r' : {
-          break;
-        }
-        case '\n' : {
-          printf("<br>\n");
-          break;
-        }
-        default   : {
-          printf("%c", buf[i]);
-          break;
-        }
-      }
-    }
-  }
-  else {
-    char *ptr, retstop, lastretstop, *target, *deftarget, *token;
-    int printhtml, autolink, convert, linkflag, ignoreflag;
+	if (mode == 0) printf("%s", buf);
+	else if (mode == 10) {
+		int i;
+		for (i = 0; buf[i] != '\0'; i++) {
+			switch (buf[i]) {
+				case ' '  : {
+					if ((i > 0) && (buf[i - 1] == ' ')) printf("&nbsp;");
+					else printf(" ");
+					break;
+				}
+				case '\r' : {
+					break;
+				}
+				case '\n' : {
+					printf("<br>\n");
+					break;
+				}
+				default   : {
+					printf("%c", buf[i]);
+					break;
+				}
+			}
+		}
+	} else {
+		char *ptr, retstop, lastretstop, *target, *deftarget, *token;
+		int printhtml, autolink, convert, linkflag, ignoreflag;
 
-    /* set defaults, mode 2*/
-    printhtml = 1;
-    autolink  = 1;
-    target    = "_top";
-    deftarget = "qnewwin";
-    convert   = 0;
+		/* set defaults, mode 2*/
+		printhtml = 1;
+		autolink  = 1;
+		target    = "_top";
+		deftarget = "qnewwin";
+		convert   = 0;
 
-    switch(mode) {
-      case 01 : {printhtml = 1, autolink = 0, target = "";     convert = 0; break;}
-      case 11 : {printhtml = 1, autolink = 0, target = "";     convert = 1; break;}
+		switch (mode) {
+			case 01 : {
+				printhtml = 1, autolink = 0, target = "";
+				convert = 0;
+				break;
+			}
+			case 11 : {
+				printhtml = 1, autolink = 0, target = "";
+				convert = 1;
+				break;
+			}
 
-      case 02 : {printhtml = 1, autolink = 1, target = "";     convert = 0; break;}
-      case 12 : {printhtml = 1, autolink = 1, target = "";     convert = 1; break;}
+			case 02 : {
+				printhtml = 1, autolink = 1, target = "";
+				convert = 0;
+				break;
+			}
+			case 12 : {
+				printhtml = 1, autolink = 1, target = "";
+				convert = 1;
+				break;
+			}
 
-      case 03 : {printhtml = 1, autolink = 1, target = "_top"; convert = 0; break;}
-      case 13 : {printhtml = 1, autolink = 1, target = "_top"; convert = 1; break;}
-      case 23 : {printhtml = 1, autolink = 1, target = deftarget; convert = 0; break;}
-      case 33 : {printhtml = 1, autolink = 1, target = deftarget; convert = 1; break;}
+			case 03 : {
+				printhtml = 1, autolink = 1, target = "_top";
+				convert = 0;
+				break;
+			}
+			case 13 : {
+				printhtml = 1, autolink = 1, target = "_top";
+				convert = 1;
+				break;
+			}
+			case 23 : {
+				printhtml = 1, autolink = 1, target = deftarget;
+				convert = 0;
+				break;
+			}
+			case 33 : {
+				printhtml = 1, autolink = 1, target = deftarget;
+				convert = 1;
+				break;
+			}
 
-      case 04 : {printhtml = 0, autolink = 0, target = "";     convert = 0; break;}
-      case 14 : {printhtml = 0, autolink = 0, target = "";     convert = 1; break;}
+			case 04 : {
+				printhtml = 0, autolink = 0, target = "";
+				convert = 0;
+				break;
+			}
+			case 14 : {
+				printhtml = 0, autolink = 0, target = "";
+				convert = 1;
+				break;
+			}
 
-      case 05 : {printhtml = 0, autolink = 1, target = "";     convert = 0; break;}
-      case 15 : {printhtml = 0, autolink = 1, target = "";     convert = 1; break;}
+			case 05 : {
+				printhtml = 0, autolink = 1, target = "";
+				convert = 0;
+				break;
+			}
+			case 15 : {
+				printhtml = 0, autolink = 1, target = "";
+				convert = 1;
+				break;
+			}
 
-      case 06 : {printhtml = 0, autolink = 1, target = "_top"; convert = 0; break;}
-      case 16 : {printhtml = 0, autolink = 1, target = "_top"; convert = 1; break;}
-      case 26 : {printhtml = 0, autolink = 1, target = deftarget; convert = 0; break;}
-      case 36 : {printhtml = 0, autolink = 1, target = deftarget; convert = 1; break;}
+			case 06 : {
+				printhtml = 0, autolink = 1, target = "_top";
+				convert = 0;
+				break;
+			}
+			case 16 : {
+				printhtml = 0, autolink = 1, target = "_top";
+				convert = 1;
+				break;
+			}
+			case 26 : {
+				printhtml = 0, autolink = 1, target = deftarget;
+				convert = 0;
+				break;
+			}
+			case 36 : {
+				printhtml = 0, autolink = 1, target = deftarget;
+				convert = 1;
+				break;
+			}
 
-      default: {qError("_autolink(): Invalid Mode (%d).", mode); break;}
-    }
+			default: {
+				qError("_autolink(): Invalid Mode (%d).", mode);
+				break;
+			}
+		}
 
-    token = " `(){}[]<>\"',\r\n";
-    lastretstop = '0'; /* any character except space */
-    ptr = _strtok2(buf, token, &retstop);
+		token = " `(){}[]<>\"',\r\n";
+		lastretstop = '0'; /* any character except space */
+		ptr = _strtok2(buf, token, &retstop);
 
-    for(linkflag = ignoreflag = 0; ptr != NULL;) {
-      /* auto link */
-      if(ignoreflag == 0) {
-        if(autolink == 1) {
-          if(!strncmp(ptr, "http://",        7)) linkflag = 1;
-          else if(!strncmp(ptr, "https://",  8)) linkflag = 1;
-          else if(!strncmp(ptr, "ftp://",    6)) linkflag = 1;
-          else if(!strncmp(ptr, "telnet://", 9)) linkflag = 1;
-          else if(!strncmp(ptr, "news:",     5)) linkflag = 1;
-          else if(!strncmp(ptr, "mailto:",   7)) linkflag = 1;
-          else if(qCheckEmail(ptr) == 1)         linkflag = 2;
-          else linkflag = 0;
-        }
-        if(linkflag == 1) printf("<a href=\"%s\" target=\"%s\">%s</a>", ptr, target, ptr);
-        else if(linkflag == 2) printf("<a href=\"mailto:%s\">%s</a>", ptr, ptr);
-        else printf("%s", ptr);
-      }
+		for (linkflag = ignoreflag = 0; ptr != NULL;) {
+			/* auto link */
+			if (ignoreflag == 0) {
+				if (autolink == 1) {
+					if (!strncmp(ptr, "http://",        7)) linkflag = 1;
+					else if (!strncmp(ptr, "https://",  8)) linkflag = 1;
+					else if (!strncmp(ptr, "ftp://",    6)) linkflag = 1;
+					else if (!strncmp(ptr, "telnet://", 9)) linkflag = 1;
+					else if (!strncmp(ptr, "news:",     5)) linkflag = 1;
+					else if (!strncmp(ptr, "mailto:",   7)) linkflag = 1;
+					else if (qCheckEmail(ptr) == 1)         linkflag = 2;
+					else linkflag = 0;
+				}
+				if (linkflag == 1) printf("<a href=\"%s\" target=\"%s\">%s</a>", ptr, target, ptr);
+				else if (linkflag == 2) printf("<a href=\"mailto:%s\">%s</a>", ptr, ptr);
+				else printf("%s", ptr);
+			}
 
-      /* print */
-      if(printhtml == 1) {
-        if     (retstop == '<')  printf("&lt;");
-        else if(retstop == '>')  printf("&gt;");
-        else if(retstop == '\"') printf("&quot;");
-        else if(retstop == '&')  printf("&amp;");
+			/* print */
+			if (printhtml == 1) {
+				if     (retstop == '<')  printf("&lt;");
+				else if (retstop == '>')  printf("&gt;");
+				else if (retstop == '\"') printf("&quot;");
+				else if (retstop == '&')  printf("&amp;");
 
-        else if(retstop == ' '  && convert == 1) {
-          if(lastretstop == ' ' && strlen(ptr) == 0) printf("&nbsp;");
-          else printf(" ");
-        }
-        else if(retstop == '\r' && convert == 1); /* skip when convert == 1 */
-        else if(retstop == '\n' && convert == 1) printf("<br>\n");
+				else if (retstop == ' '  && convert == 1) {
+					if (lastretstop == ' ' && strlen(ptr) == 0) printf("&nbsp;");
+					else printf(" ");
+				} else if (retstop == '\r' && convert == 1); /* skip when convert == 1 */
+				else if (retstop == '\n' && convert == 1) printf("<br>\n");
 
-        else if(retstop != '\0') printf("%c", retstop);
-      }
-      else {
-        if     (retstop == '<') ignoreflag = 1;
-        else if(retstop == '>') ignoreflag = 0;
+				else if (retstop != '\0') printf("%c", retstop);
+			} else {
+				if     (retstop == '<') ignoreflag = 1;
+				else if (retstop == '>') ignoreflag = 0;
 
-        else if(retstop == '\"' && ignoreflag == 0) printf("&quot;");
-        else if(retstop == '&'  && ignoreflag == 0) printf("&amp;");
+				else if (retstop == '\"' && ignoreflag == 0) printf("&quot;");
+				else if (retstop == '&'  && ignoreflag == 0) printf("&amp;");
 
-        else if(retstop == ' '  && ignoreflag == 0 && convert == 1) {
-          if(lastretstop == ' ' && strlen(ptr) == 0) printf("&nbsp;");
-          else printf(" ");
-        }
-        else if(retstop == '\r' && ignoreflag == 0 && convert == 1); /* skip when convert == 1 */
-        else if(retstop == '\n' && ignoreflag == 0 && convert == 1) printf("<br>\n");
+				else if (retstop == ' '  && ignoreflag == 0 && convert == 1) {
+					if (lastretstop == ' ' && strlen(ptr) == 0) printf("&nbsp;");
+					else printf(" ");
+				} else if (retstop == '\r' && ignoreflag == 0 && convert == 1); /* skip when convert == 1 */
+				else if (retstop == '\n' && ignoreflag == 0 && convert == 1) printf("<br>\n");
 
-        else if(retstop != '\0' && ignoreflag == 0) printf("%c", retstop);
+				else if (retstop != '\0' && ignoreflag == 0) printf("%c", retstop);
 
-      }
+			}
 
-      lastretstop = retstop;
-      ptr = _strtok2(NULL, token, &retstop);
-    }
-  }
+			lastretstop = retstop;
+			ptr = _strtok2(NULL, token, &retstop);
+		}
+	}
 }
 
 /**********************************************
@@ -230,16 +293,16 @@ void qPuts(int mode, char *buf) {
 ** Do    : Remove space(including CR, LF) from head & tail.
 **********************************************/
 char *qRemoveSpace(char *str) {
-  int i, j;
+	int i, j;
 
-  if(!str)return NULL;
+	if (!str)return NULL;
 
-  for(j = 0; str[j] == ' ' || str[j] == '\t' || str[j] == '\r' || str[j] == '\n'; j++);
-  for(i = 0; str[j] != '\0'; i++, j++) str[i] = str[j];
-  for(i--; (i >= 0) && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'); i--);
-  str[i+1] = '\0';
+	for (j = 0; str[j] == ' ' || str[j] == '\t' || str[j] == '\r' || str[j] == '\n'; j++);
+	for (i = 0; str[j] != '\0'; i++, j++) str[i] = str[j];
+	for (i--; (i >= 0) && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'); i--);
+	str[i+1] = '\0';
 
-  return str;
+	return str;
 }
 
 /**********************************************
@@ -248,13 +311,13 @@ char *qRemoveSpace(char *str) {
 ** Do    : Remove tailing space(including CR, LF)
 **********************************************/
 char *qRemoveTailSpace(char *str) {
-  int i;
+	int i;
 
-  if(!str)return NULL;
-  for(i = strlen(str) - 1; (i >= 0) && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'); i--);
-  str[i+1] = '\0';
+	if (!str)return NULL;
+	for (i = strlen(str) - 1; (i >= 0) && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'); i--);
+	str[i+1] = '\0';
 
-  return str;
+	return str;
 }
 
 /**********************************************
@@ -322,65 +385,61 @@ char *qRemoveTailSpace(char *str) {
 **                 retstr = Welcome to _ qDecoder project.
 **********************************************/
 char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
-  char method, memuse;
-  int maxstrlen, tokstrlen;
-  char *newstr, *newp, *srcp, *tokenp, *retp;
+	char method, memuse;
+	int maxstrlen, tokstrlen;
+	char *newstr, *newp, *srcp, *tokenp, *retp;
 
-  /* initialize pointers to avoid compile warnings */
-  newstr = newp = srcp = tokenp = retp = NULL;
+	/* initialize pointers to avoid compile warnings */
+	newstr = newp = srcp = tokenp = retp = NULL;
 
-  if(strlen(mode) != 2) qError("qStrReplace(): Unknown mode \"%s\".", mode);
-  method = mode[0], memuse = mode[1];
+	if (strlen(mode) != 2) qError("qStrReplace(): Unknown mode \"%s\".", mode);
+	method = mode[0], memuse = mode[1];
 
-  /* Put replaced string into malloced 'newstr' */
-  if(method == 't') { /* Token replace */
-    maxstrlen = strlen(srcstr) * strlen(word);
-    newstr = (char *)malloc(maxstrlen + 1);
+	/* Put replaced string into malloced 'newstr' */
+	if (method == 't') { /* Token replace */
+		maxstrlen = strlen(srcstr) * strlen(word);
+		newstr = (char *)malloc(maxstrlen + 1);
 
-    for(srcp = srcstr, newp = newstr; *srcp; srcp++) {
-      for(tokenp = tokstr; *tokenp; tokenp++) {
-        if(*srcp == *tokenp) {
-          char *wordp;
-          for(wordp = word; *wordp; wordp++) *newp++ = *wordp;
-          break;
-        }
-      }
-      if(!*tokenp) *newp++ = *srcp;
-    }
-    *newp = '\0';
-  }
-  else if(method == 's') { /* String replace */
-    if(strlen(word) > strlen(tokstr))
-      maxstrlen
-      = ((strlen(srcstr) / strlen(tokstr)) * strlen(word))
-      + (strlen(srcstr)
-      % strlen(tokstr));
-    else maxstrlen = strlen(srcstr);
-    newstr = (char *)malloc(maxstrlen + 1);
-    tokstrlen = strlen(tokstr);
+		for (srcp = srcstr, newp = newstr; *srcp; srcp++) {
+			for (tokenp = tokstr; *tokenp; tokenp++) {
+				if (*srcp == *tokenp) {
+					char *wordp;
+					for (wordp = word; *wordp; wordp++) *newp++ = *wordp;
+					break;
+				}
+			}
+			if (!*tokenp) *newp++ = *srcp;
+		}
+		*newp = '\0';
+	} else if (method == 's') { /* String replace */
+		if (strlen(word) > strlen(tokstr))
+			maxstrlen
+			= ((strlen(srcstr) / strlen(tokstr)) * strlen(word))
+			  + (strlen(srcstr)
+			     % strlen(tokstr));
+		else maxstrlen = strlen(srcstr);
+		newstr = (char *)malloc(maxstrlen + 1);
+		tokstrlen = strlen(tokstr);
 
-    for(srcp = srcstr, newp = newstr; *srcp; srcp++) {
-      if(!strncmp(srcp, tokstr, tokstrlen)) {
-        char *wordp;
-        for(wordp = word; *wordp; wordp++) *newp++ = *wordp;
-      	  srcp += tokstrlen - 1;
-      }
-      else *newp++ = *srcp;
-    }
-    *newp = '\0';
-  }
-  else qError("qStrReplace(): Unknown mode \"%s\".", mode);
+		for (srcp = srcstr, newp = newstr; *srcp; srcp++) {
+			if (!strncmp(srcp, tokstr, tokstrlen)) {
+				char *wordp;
+				for (wordp = word; *wordp; wordp++) *newp++ = *wordp;
+				srcp += tokstrlen - 1;
+			} else *newp++ = *srcp;
+		}
+		*newp = '\0';
+	} else qError("qStrReplace(): Unknown mode \"%s\".", mode);
 
-  /* Decide whether newing the memory or replacing into exist one */
-  if(memuse == 'n') retp = newstr;
-  else if(memuse == 'r') {
-    strcpy(srcstr, newstr);
-    free(newstr);
-    retp = srcstr;
-  }
-  else qError("qStrReplace(): Unknown mode \"%s\".", mode);
+	/* Decide whether newing the memory or replacing into exist one */
+	if (memuse == 'n') retp = newstr;
+	else if (memuse == 'r') {
+		strcpy(srcstr, newstr);
+		free(newstr);
+		retp = srcstr;
+	} else qError("qStrReplace(): Unknown mode \"%s\".", mode);
 
-  return retp;
+	return retp;
 }
 
 /**********************************************
@@ -389,13 +448,13 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
 ** Do    : Check characters of string is in 0-9, A-Z, a-z.
 **********************************************/
 int qStr09AZaz(char *str) {
-  for(; *str; str++) {
-    if((*str >= '0') && (*str <= '9')) continue;
-    else if((*str >= 'A') && (*str <= 'Z')) continue;
-    else if((*str >= 'a') && (*str <= 'z')) continue;
-    else return 0;
-  }
-  return 1;
+	for (; *str; str++) {
+		if ((*str >= '0') && (*str <= '9')) continue;
+		else if ((*str >= 'A') && (*str <= 'Z')) continue;
+		else if ((*str >= 'a') && (*str <= 'z')) continue;
+		else return 0;
+	}
+	return 1;
 }
 
 /**********************************************
@@ -404,11 +463,11 @@ int qStr09AZaz(char *str) {
 ** Do    : Convert small character to big character.
 **********************************************/
 char *qStrupr(char *str) {
-  char *cp;
+	char *cp;
 
-  if(!str) return NULL;
-  for(cp = str; *cp; cp++) if(*cp >= 'a' && *cp <= 'z') *cp -= 32;
-  return str;
+	if (!str) return NULL;
+	for (cp = str; *cp; cp++) if (*cp >= 'a' && *cp <= 'z') *cp -= 32;
+	return str;
 }
 
 /**********************************************
@@ -417,11 +476,11 @@ char *qStrupr(char *str) {
 ** Do    : Convert big character to small character.
 **********************************************/
 char *qStrlwr(char *str) {
-  char *cp;
+	char *cp;
 
-  if(!str) return NULL;
-  for(cp = str; *cp; cp++) if(*cp >= 'A' && *cp <= 'Z') *cp += 32;
-  return str;
+	if (!str) return NULL;
+	for (cp = str; *cp; cp++) if (*cp >= 'A' && *cp <= 'Z') *cp += 32;
+	return str;
 }
 
 
@@ -431,20 +490,23 @@ char *qStrlwr(char *str) {
 ** Do    : Find token with no case-censitive.
 **********************************************/
 char *qStristr(char *big, char *small) {
-  char *bigp, *smallp, *retp;
+	char *bigp, *smallp, *retp;
 
-  if(big == NULL || small == NULL) return 0;
+	if (big == NULL || small == NULL) return 0;
 
-  if((bigp = strdup(big)) == NULL) return 0;
-  if((smallp = strdup(small)) == NULL) { free(bigp); return 0; }
+	if ((bigp = strdup(big)) == NULL) return 0;
+	if ((smallp = strdup(small)) == NULL) {
+		free(bigp);
+		return 0;
+	}
 
-  qStrupr(bigp), qStrupr(smallp);
+	qStrupr(bigp), qStrupr(smallp);
 
-  retp = strstr(bigp, smallp);
-  if(retp != NULL) retp = big + (retp - bigp);
-  free(bigp), free(smallp);
+	retp = strstr(bigp, smallp);
+	if (retp != NULL) retp = big + (retp - bigp);
+	free(bigp), free(smallp);
 
-  return retp;
+	return retp;
 }
 
 /**********************************************
@@ -454,18 +516,21 @@ char *qStristr(char *big, char *small) {
 **         some systems do not support this function.
 **********************************************/
 int qStricmp(char *s1, char *s2) {
-  char *bs1, *bs2;
-  int result;
+	char *bs1, *bs2;
+	int result;
 
-  if(s1 == NULL || s2 == NULL) return 0;
-  if((bs1 = strdup(s1)) == NULL) return 0;
-  if((bs2 = strdup(s2)) == NULL) { free(bs1); return 0; }
+	if (s1 == NULL || s2 == NULL) return 0;
+	if ((bs1 = strdup(s1)) == NULL) return 0;
+	if ((bs2 = strdup(s2)) == NULL) {
+		free(bs1);
+		return 0;
+	}
 
-  qStrupr(bs1), qStrupr(bs2);
-  result = strcmp(bs1, bs2);
-  free(bs1), free(bs2);
+	qStrupr(bs1), qStrupr(bs2);
+	result = strcmp(bs1, bs2);
+	free(bs1), free(bs2);
 
-  return result;
+	return result;
 }
 
 /**********************************************
@@ -474,20 +539,23 @@ int qStricmp(char *s1, char *s2) {
 ** Do    : Compare n-byte strings with no case-censitive.
 **********************************************/
 int qStrincmp(char *s1, char *s2, size_t len) {
-  char *s1p, *s2p;
-  int result;
+	char *s1p, *s2p;
+	int result;
 
-  if(s1 == NULL || s2 == NULL) return 0;
+	if (s1 == NULL || s2 == NULL) return 0;
 
-  if((s1p = strdup(s1)) == NULL) return 0;
-  if((s2p = strdup(s2)) == NULL) { free(s1p); return 0; }
+	if ((s1p = strdup(s1)) == NULL) return 0;
+	if ((s2p = strdup(s2)) == NULL) {
+		free(s1p);
+		return 0;
+	}
 
-  qStrupr(s1p), qStrupr(s2p);
+	qStrupr(s1p), qStrupr(s2p);
 
-  result = strncmp(s1p, s2p, len);
-  free(s1p), free(s2p);
+	result = strncmp(s1p, s2p, len);
+	free(s1p), free(s2p);
 
-  return result;
+	return result;
 }
 
 /**********************************************
@@ -499,18 +567,18 @@ int qStrincmp(char *s1, char *s2, size_t len) {
 **     Output: -1,234,567,000
 **********************************************/
 char *qitocomma(int value) {
-  static char str[14+1];
-  char buf[10+1], *strp = str, *bufp;
+	static char str[14+1];
+	char buf[10+1], *strp = str, *bufp;
 
-  if(value < 0) *strp++ = '-';
-  sprintf(buf, "%d", abs(value));
-  for(bufp = buf; *bufp != '\0'; strp++, bufp++) {
-    *strp = *bufp;
-    if((strlen(bufp)) % 3 == 1 && *(bufp + 1) != '\0') *(++strp) = ',';
-  }
-  *strp = '\0';
+	if (value < 0) *strp++ = '-';
+	sprintf(buf, "%d", abs(value));
+	for (bufp = buf; *bufp != '\0'; strp++, bufp++) {
+		*strp = *bufp;
+		if ((strlen(bufp)) % 3 == 1 && *(bufp + 1) != '\0') *(++strp) = ',';
+	}
+	*strp = '\0';
 
-  return str;
+	return str;
 }
 
 /**********************************************
@@ -519,15 +587,15 @@ char *qitocomma(int value) {
 ** Do    :  append formatted string to the end of the source str
 **********************************************/
 char *qStrcat(char *str, char *format, ...) {
-  char buf[1024];
-  int  status;
-  va_list arglist;
+	char buf[1024];
+	int  status;
+	va_list arglist;
 
-  va_start(arglist, format);
-  if((status = vsprintf(buf, format, arglist)) == EOF) return NULL;
-  if(strlen(buf) + 1 > sizeof(buf))qError("qStrcat(): Message is too long or invalid.");
+	va_start(arglist, format);
+	if ((status = vsprintf(buf, format, arglist)) == EOF) return NULL;
+	if (strlen(buf) + 1 > sizeof(buf))qError("qStrcat(): Message is too long or invalid.");
 
-  return strcat(str, buf);
+	return strcat(str, buf);
 }
 
 /**********************************************
@@ -539,17 +607,17 @@ char *qStrcat(char *str, char *format, ...) {
 ** Note  : That's is your job to free the return char pointer.
 **********************************************/
 char *qStrdupBetween(char *str, char *start, char *end) {
-  char *buf, *s, *e;
-  int len;
+	char *buf, *s, *e;
+	int len;
 
-  if((s = strstr(str, start)) == NULL) return NULL;
-  s += strlen(start);
-  if((e = strstr(s, end)) == NULL) return NULL;
-  len = e - s;
+	if ((s = strstr(str, start)) == NULL) return NULL;
+	s += strlen(start);
+	if ((e = strstr(s, end)) == NULL) return NULL;
+	len = e - s;
 
-  buf = (char *)malloc(len + 1);
-  strncpy(buf, s, len);
-  buf[len] = '\0';
+	buf = (char *)malloc(len + 1);
+	strncpy(buf, s, len);
+	buf[len] = '\0';
 
-  return buf;
+	return buf;
 }

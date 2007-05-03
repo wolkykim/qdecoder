@@ -54,40 +54,39 @@ Author:
 **                    so the pointer will be used instead strdup().
 **********************************************/
 Q_Entry *_EntryAdd(Q_Entry *first, char *name, char *value, int flag) {
-  Q_Entry *entries;
+	Q_Entry *entries;
 
-  if(!strcmp(name, "")) return NULL;
+	if (!strcmp(name, "")) return NULL;
 
-  /* check same name */
-  if(flag == 1) {
-    for(entries = first; entries; entries = entries->next) {
-      if(!strcmp(entries->name, name)) {
-        free(entries->value);
-        entries->value = strdup(value);
-        return entries;
-      }
-    }
-  }
+	/* check same name */
+	if (flag == 1) {
+		for (entries = first; entries; entries = entries->next) {
+			if (!strcmp(entries->name, name)) {
+				free(entries->value);
+				entries->value = strdup(value);
+				return entries;
+			}
+		}
+	}
 
-  /* new entry */
-  entries = (Q_Entry *)malloc(sizeof(Q_Entry));
-  if(flag == 2) {
-    entries->name  = name;
-    entries->value = value;
-  }
-  else {
-    entries->name  = strdup(name);
-    entries->value = strdup(value);
-  }
-  entries->next  = NULL;
+	/* new entry */
+	entries = (Q_Entry *)malloc(sizeof(Q_Entry));
+	if (flag == 2) {
+		entries->name  = name;
+		entries->value = value;
+	} else {
+		entries->name  = strdup(name);
+		entries->value = strdup(value);
+	}
+	entries->next  = NULL;
 
-  /* If first is not NULL, find last entry then make a link*/
-  if(first) {
-    for(; first->next; first = first->next);
-    first->next = entries;
-  }
+	/* If first is not NULL, find last entry then make a link*/
+	if (first) {
+		for (; first->next; first = first->next);
+		first->next = entries;
+	}
 
-  return entries;
+	return entries;
 }
 
 /**********************************************
@@ -96,33 +95,32 @@ Q_Entry *_EntryAdd(Q_Entry *first, char *name, char *value, int flag) {
 ** Do    : Remove entry if same name exists, remove all.
 **********************************************/
 Q_Entry *_EntryRemove(Q_Entry *first, char *name) {
-  Q_Entry *entries, *prev_entry;
+	Q_Entry *entries, *prev_entry;
 
-  if(!strcmp(name, "")) return first;
+	if (!strcmp(name, "")) return first;
 
-  for(prev_entry = NULL, entries = first; entries;) {
-    if(!strcmp(entries->name, name)) { /* found */
-      Q_Entry *next;
+	for (prev_entry = NULL, entries = first; entries;) {
+		if (!strcmp(entries->name, name)) { /* found */
+			Q_Entry *next;
 
-      next = entries->next;
+			next = entries->next;
 
-      /* remove entry itself*/
-      free(entries->name);
-      free(entries->value);
-      free(entries);
+			/* remove entry itself*/
+			free(entries->name);
+			free(entries->value);
+			free(entries);
 
-      /* remove entry link from linked-list */
-      if(prev_entry == NULL) first = next;
-      else prev_entry->next = next;
-      entries = next;
-    }
-    else { /* next */
-      prev_entry = entries;
-      entries = entries->next;
-    }
-  }
+			/* remove entry link from linked-list */
+			if (prev_entry == NULL) first = next;
+			else prev_entry->next = next;
+			entries = next;
+		} else { /* next */
+			prev_entry = entries;
+			entries = entries->next;
+		}
+	}
 
-  return first;
+	return first;
 }
 
 /**********************************************
@@ -132,12 +130,12 @@ Q_Entry *_EntryRemove(Q_Entry *first, char *name) {
 **         It find value in linked list.
 **********************************************/
 char *_EntryValue(Q_Entry *first, char *name) {
-  Q_Entry *entries;
+	Q_Entry *entries;
 
-  for(entries = first; entries; entries = entries->next) {
-    if(!strcmp(name, entries->name))return (entries->value);
-  }
-  return NULL;
+	for (entries = first; entries; entries = entries->next) {
+		if (!strcmp(name, entries->name))return (entries->value);
+	}
+	return NULL;
 }
 
 /**********************************************
@@ -146,11 +144,11 @@ char *_EntryValue(Q_Entry *first, char *name) {
 ** Do    : Find value string pointer and convert to integer.
 **********************************************/
 int _EntryiValue(Q_Entry *first, char *name) {
-  char *str;
+	char *str;
 
-  str = _EntryValue(first, name);
-  if(str == NULL) return 0;
-  return atoi(str);
+	str = _EntryValue(first, name);
+	if (str == NULL) return 0;
+	return atoi(str);
 }
 
 /**********************************************
@@ -159,13 +157,13 @@ int _EntryiValue(Q_Entry *first, char *name) {
 ** Do    : Find sequence number of value string pointer.
 **********************************************/
 int _EntryNo(Q_Entry *first, char *name) {
-  Q_Entry *entries;
-  int no;
+	Q_Entry *entries;
+	int no;
 
-  for(no = 1, entries = first; entries; no++, entries = entries->next) {
-    if(!strcmp(name, entries->name)) return no;
-  }
-  return 0;
+	for (no = 1, entries = first; entries; no++, entries = entries->next) {
+		if (!strcmp(name, entries->name)) return no;
+	}
+	return 0;
 }
 
 /**********************************************
@@ -174,16 +172,16 @@ int _EntryNo(Q_Entry *first, char *name) {
 ** Do    : Print all parsed value & name for debugging.
 **********************************************/
 int _EntryPrint(Q_Entry *first) {
-  Q_Entry *entries;
-  int amount;
+	Q_Entry *entries;
+	int amount;
 
-  qContentType("text/plain");
+	qContentType("text/plain");
 
-  for(amount = 0, entries = first; entries; amount++, entries = entries->next) {
-    printf("'%s' = '%s'\n" , entries->name, entries->value);
-  }
+	for (amount = 0, entries = first; entries; amount++, entries = entries->next) {
+		printf("'%s' = '%s'\n" , entries->name, entries->value);
+	}
 
-  return amount;
+	return amount;
 }
 
 /**********************************************
@@ -191,14 +189,14 @@ int _EntryPrint(Q_Entry *first) {
 ** Do    : Make free of linked list memory.
 **********************************************/
 void _EntryFree(Q_Entry *first) {
-  Q_Entry *entries;
+	Q_Entry *entries;
 
-  for(; first; first = entries) {
-    entries = first->next; /* copy next to tmp */
-    free(first->name);
-    free(first->value);
-    free(first);
-  }
+	for (; first; first = entries) {
+		entries = first->next; /* copy next to tmp */
+		free(first->name);
+		free(first->value);
+		free(first);
+	}
 }
 
 /**********************************************
@@ -207,24 +205,24 @@ void _EntryFree(Q_Entry *first) {
 ** Do    : Save entries into file.
 **********************************************/
 int _EntrySave(Q_Entry *first, char *filename) {
-  FILE *fp;
-  char gmt[32];
+	FILE *fp;
+	char gmt[32];
 
-  qGetGMTime(gmt, (time_t)0);
-  if((fp = qfopen(filename, "w")) == NULL) return 0;
+	qGetGMTime(gmt, (time_t)0);
+	if ((fp = qfopen(filename, "w")) == NULL) return 0;
 
-  fprintf(fp, "# automatically generated by qDecoder at %s.\n", gmt);
-  fprintf(fp, "# %s\n", filename);
-  for(; first; first = first->next) {
-    char *encvalue;
+	fprintf(fp, "# automatically generated by qDecoder at %s.\n", gmt);
+	fprintf(fp, "# %s\n", filename);
+	for (; first; first = first->next) {
+		char *encvalue;
 
-    encvalue = qURLencode(first->value);
-    fprintf(fp, "%s=%s\n", first->name, encvalue);
-    free(encvalue);
-  }
+		encvalue = qURLencode(first->value);
+		fprintf(fp, "%s=%s\n", first->name, encvalue);
+		free(encvalue);
+	}
 
-  qfclose(fp);
-  return 1;
+	qfclose(fp);
+	return 1;
 }
 
 /**********************************************
@@ -233,14 +231,14 @@ int _EntrySave(Q_Entry *first, char *filename) {
 ** Do    : Load entries from given filename.
 **********************************************/
 Q_Entry *_EntryLoad(char *filename) {
-  Q_Entry *first, *entries;
+	Q_Entry *first, *entries;
 
-  if((first = qfDecoder(filename)) == NULL) return NULL;
+	if ((first = qfDecoder(filename)) == NULL) return NULL;
 
-  for(entries = first; entries; entries = entries->next) {
-    qURLdecode(entries->value);
-  }
+	for (entries = first; entries; entries = entries->next) {
+		qURLdecode(entries->value);
+	}
 
-  return first;
+	return first;
 }
 

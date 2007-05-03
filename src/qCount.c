@@ -45,13 +45,13 @@ Author:
 ** Do    : Read counter value.
 **********************************************/
 int qCountRead(char *filename) {
-  FILE *fp;
-  int  counter;
+	FILE *fp;
+	int  counter;
 
-  if((fp = qfopen(filename, "r")) == NULL) return 0;
-  fscanf(fp, "%d", &counter);
-  qfclose(fp);
-  return counter;
+	if ((fp = qfopen(filename, "r")) == NULL) return 0;
+	fscanf(fp, "%d", &counter);
+	qfclose(fp);
+	return counter;
 }
 
 /**********************************************
@@ -60,13 +60,13 @@ int qCountRead(char *filename) {
 ** Do    : Save counter value.
 **********************************************/
 int qCountSave(char *filename, int number) {
-  FILE *fp;
+	FILE *fp;
 
-  if((fp = qfopen(filename, "w")) == NULL) return 0;
-  fprintf(fp, "%d\n", number);
-  qfclose(fp);
+	if ((fp = qfopen(filename, "w")) == NULL) return 0;
+	fprintf(fp, "%d\n", number);
+	qfclose(fp);
 
-  return 1;
+	return 1;
 }
 
 /**********************************************
@@ -75,17 +75,16 @@ int qCountSave(char *filename, int number) {
 ** Do    : Update counter value.
 **********************************************/
 int qCountUpdate(char *filename, int number) {
-  FILE *fp;
-  int counter = 0;
+	FILE *fp;
+	int counter = 0;
 
-  if((fp = qfopen(filename, "r+")) != NULL) {
-    fscanf(fp, "%d", &counter);
-    fseek(fp, 0, SEEK_SET);
-  }
-  else if((fp = fopen(filename, "w")) == NULL) return 0;
-  counter += number;
-  fprintf(fp, "%d\n", counter);
-  qfclose(fp);
-  return counter;
+	if ((fp = qfopen(filename, "r+")) != NULL) {
+		fscanf(fp, "%d", &counter);
+		fseek(fp, 0, SEEK_SET);
+	} else if ((fp = fopen(filename, "w")) == NULL) return 0;
+	counter += number;
+	fprintf(fp, "%d\n", counter);
+	qfclose(fp);
+	return counter;
 }
 

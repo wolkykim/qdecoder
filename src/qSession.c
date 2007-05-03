@@ -99,90 +99,89 @@ static time_t _session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERV
 **********************************************/
 /* Initialize session data */
 int qSession(char *repository) {
-  int new_session;
-  char *sessionkey;
+	int new_session;
+	char *sessionkey;
 
-  /* check if session already started */
-  if(_session_started) return _session_new;
-  _session_first_entry = NULL;
-  _session_started = 1;
-  _session_modified = 0;
+	/* check if session already started */
+	if (_session_started) return _session_new;
+	_session_first_entry = NULL;
+	_session_started = 1;
+	_session_modified = 0;
 
-  /* check content flag */
-  if(qGetContentFlag() == 1) qError("qSession(): must be called before qContentType() and any stream out.");
+	/* check content flag */
+	if (qGetContentFlag() == 1) qError("qSession(): must be called before qContentType() and any stream out.");
 
-  /* check session status & get session id */
-  sessionkey = qValue(SESSION_ID);
-  if(sessionkey == NULL) {  /* new session */
-    sessionkey = qUniqueID();
-    new_session = 1;
-  }
-  else {
-    new_session = 0;
-  }
+	/* check session status & get session id */
+	sessionkey = qValue(SESSION_ID);
+	if (sessionkey == NULL) {  /* new session */
+		sessionkey = qUniqueID();
+		new_session = 1;
+	} else {
+		new_session = 0;
+	}
 
-  /* make storage path for session */
-  if (repository != NULL) strcpy(_session_repository_path, repository);
-  else strcpy(_session_repository_path, SESSION_DEFAULT_REPOSITORY);
-  sprintf(_session_storage_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
-  sprintf(_session_timeout_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
+	/* make storage path for session */
+	if (repository != NULL) strcpy(_session_repository_path, repository);
+	else strcpy(_session_repository_path, SESSION_DEFAULT_REPOSITORY);
+	sprintf(_session_storage_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
+	sprintf(_session_timeout_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
-  /* validate exist session */
-  if(new_session == 0) {
-    if(_isValidSession(_session_timeout_path) <= 0) { /* expired or not found */
-      unlink(_session_storage_path);
-      unlink(_session_timeout_path);
+	/* validate exist session */
+	if (new_session == 0) {
+		if (_isValidSession(_session_timeout_path) <= 0) { /* expired or not found */
+			unlink(_session_storage_path);
+			unlink(_session_timeout_path);
 
-      /* remake storage path */
-      sessionkey = qUniqueID();
-      sprintf(_session_storage_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
-      sprintf(_session_timeout_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
+			/* remake storage path */
+			sessionkey = qUniqueID();
+			sprintf(_session_storage_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
+			sprintf(_session_timeout_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
-      /* set flag */
-      new_session = 1;
-    }
-  }
+			/* set flag */
+			new_session = 1;
+		}
+	}
 
-  /* if new session, set session id */
-  if(new_session == 1) {
-    char created_gmt[32], created_sec[32];
-    time_t nowtime;
+	/* if new session, set session id */
+	if (new_session == 1) {
+		char created_gmt[32], created_sec[32];
+		time_t nowtime;
 
-    qCookieSet(SESSION_ID, sessionkey, 0, "/", NULL, NULL);
-    qValueAdd(SESSION_ID, sessionkey); /* force to add session_in to query list */
+		qCookieSet(SESSION_ID, sessionkey, 0, "/", NULL, NULL);
+		qValueAdd(SESSION_ID, sessionkey); /* force to add session_in to query list */
 
-    /* save session informations */
-    nowtime = qGetGMTime(created_gmt, (time_t)0);
-    sprintf(created_sec, "%ld", (long)nowtime);
+		/* save session informations */
+		nowtime = qGetGMTime(created_gmt, (time_t)0);
+		sprintf(created_sec, "%ld", (long)nowtime);
 
-    _session_first_entry = _EntryAdd(_session_first_entry, INTER_SESSIONID, sessionkey, 1);
-    _EntryAdd(_session_first_entry, INTER_CREATED_GMT, created_gmt, 1);
-    _EntryAdd(_session_first_entry, INTER_CREATED_SEC, created_sec, 1);
-    _EntryAdd(_session_first_entry, INTER_CONNECTIONS, "1", 1);
+		_session_first_entry = _EntryAdd(_session_first_entry, INTER_SESSIONID, sessionkey, 1);
+		_EntryAdd(_session_first_entry, INTER_CREATED_GMT, created_gmt, 1);
+		_EntryAdd(_session_first_entry, INTER_CREATED_SEC, created_sec, 1);
+		_EntryAdd(_session_first_entry, INTER_CONNECTIONS, "1", 1);
 
-    /* set timeout interval */
-    qSessionSetTimeout(_session_timeout_interval);
-  }
-  /* else read session properties */
-  else {
-    int conns;
-    char connstr[16];
+		/* set timeout interval */
+		qSessionSetTimeout(_session_timeout_interval);
+	}
+	/* else read session properties */
+	else {
+		int conns;
+		char connstr[16];
 
-    /* read exist session informations */
-    _session_first_entry = _EntryLoad(_session_storage_path);
+		/* read exist session informations */
+		_session_first_entry = _EntryLoad(_session_storage_path);
 
-    /* update session informations */
-    conns = qSessionValueInteger(INTER_CONNECTIONS);
-    sprintf(connstr, "%d", ++conns);
-    _EntryAdd(_session_first_entry, INTER_CONNECTIONS, connstr, 1);
+		/* update session informations */
+		conns = qSessionValueInteger(INTER_CONNECTIONS);
+		sprintf(connstr, "%d", ++conns);
+		_EntryAdd(_session_first_entry, INTER_CONNECTIONS, connstr, 1);
 
-    /* set timeout interval */
-    qSessionSetTimeout((time_t)atol(qSessionValue(INTER_INTERVAL_SEC)));
-  }
+		/* set timeout interval */
+		qSessionSetTimeout((time_t)atol(qSessionValue(INTER_INTERVAL_SEC)));
+	}
 
-  /* set globals */
-  _session_new = new_session;
-  return _session_new;
+	/* set globals */
+	_session_new = new_session;
+	return _session_new;
 }
 
 /**********************************************
@@ -194,27 +193,27 @@ int qSession(char *repository) {
 **     qSessionAdd("cginame", "%s", qCGIname());
 **********************************************/
 char *qSessionAdd(char *name, char *format, ...) {
-  Q_Entry *new_entry;
-  char value[1024];
-  int status;
-  va_list arglist;
+	Q_Entry *new_entry;
+	char value[1024];
+	int status;
+	va_list arglist;
 
-  if(_session_started == 0) qError("qSessionAdd(): qSession() must be called before.");
-  if(!strcmp(name, "")) qError("qSessionAdd(): can not add empty name.");
-  if(!strncmp(name, INTER_PREFIX, strlen(INTER_PREFIX))) qError("qSessionAdd(): Name can not start with %s. It's reserved for internal uses.", INTER_PREFIX);
+	if (_session_started == 0) qError("qSessionAdd(): qSession() must be called before.");
+	if (!strcmp(name, "")) qError("qSessionAdd(): can not add empty name.");
+	if (!strncmp(name, INTER_PREFIX, strlen(INTER_PREFIX))) qError("qSessionAdd(): Name can not start with %s. It's reserved for internal uses.", INTER_PREFIX);
 
-  va_start(arglist, format);
-  status = vsprintf(value, format, arglist);
-  if(strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSessionAdd(): Message is too long or invalid.");
-  va_end(arglist);
+	va_start(arglist, format);
+	status = vsprintf(value, format, arglist);
+	if (strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSessionAdd(): Message is too long or invalid.");
+	va_end(arglist);
 
-  new_entry = _EntryAdd(_session_first_entry, name, value, 1);
-  if(!_session_first_entry) _session_first_entry = new_entry;
+	new_entry = _EntryAdd(_session_first_entry, name, value, 1);
+	if (!_session_first_entry) _session_first_entry = new_entry;
 
-  /* set modified flag */
-  _session_modified = 1;
+	/* set modified flag */
+	_session_modified = 1;
 
-  return qSessionValue(name);
+	return qSessionValue(name);
 }
 
 /**********************************************
@@ -225,12 +224,12 @@ char *qSessionAdd(char *name, char *format, ...) {
 ** ex) qSessionAddInteger("count", 32);
 **********************************************/
 int qSessionAddInteger(char *name, int valueint) {
-  char value[32];
+	char value[32];
 
-  sprintf(value, "%d", valueint);
-  qSessionAdd(name, value);
+	sprintf(value, "%d", valueint);
+	qSessionAdd(name, value);
 
-  return qSessionValueInteger(name);
+	return qSessionValueInteger(name);
 }
 
 /**********************************************
@@ -241,9 +240,9 @@ int qSessionAddInteger(char *name, int valueint) {
 ** ex) qSessionUpdateInteger("count", -4);
 **********************************************/
 int qSessionUpdateInteger(char *name, int plusint) {
-  qSessionAddInteger(name, qSessionValueInteger(name) + plusint);
+	qSessionAddInteger(name, qSessionValueInteger(name) + plusint);
 
-  return qSessionValueInteger(name);
+	return qSessionValueInteger(name);
 }
 
 /**********************************************
@@ -254,23 +253,23 @@ int qSessionUpdateInteger(char *name, int plusint) {
 **     qSessionRemove("%d.name", i);
 **********************************************/
 void qSessionRemove(char *format, ...) {
-  char name[1024];
-  int status;
-  va_list arglist;
+	char name[1024];
+	int status;
+	va_list arglist;
 
-  va_start(arglist, format);
-  status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionRemove(): Message is too long or invalid.");
-  va_end(arglist);
+	va_start(arglist, format);
+	status = vsprintf(name, format, arglist);
+	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionRemove(): Message is too long or invalid.");
+	va_end(arglist);
 
-  if(!strcmp(name, "")) qError("qAddRemove(): can not remove empty name.");
-  if(_session_started == 0) qError("qSessionRemove(): qSession() must be called before.");
-  if(!strncmp(name, INTER_PREFIX, strlen(INTER_PREFIX))) qError("qSessionRemove(): can not remove reserved words.");
+	if (!strcmp(name, "")) qError("qAddRemove(): can not remove empty name.");
+	if (_session_started == 0) qError("qSessionRemove(): qSession() must be called before.");
+	if (!strncmp(name, INTER_PREFIX, strlen(INTER_PREFIX))) qError("qSessionRemove(): can not remove reserved words.");
 
-  _session_first_entry = _EntryRemove(_session_first_entry, name);
+	_session_first_entry = _EntryRemove(_session_first_entry, name);
 
-  /* set modified flag */
-  _session_modified = 1;
+	/* set modified flag */
+	_session_modified = 1;
 }
 
 /**********************************************
@@ -283,20 +282,20 @@ void qSessionRemove(char *format, ...) {
 **     value = qSessionValue("%d.name", i);
 **********************************************/
 char *qSessionValue(char *format, ...) {
-  char name[1024], *value;
-  int status;
-  va_list arglist;
+	char name[1024], *value;
+	int status;
+	va_list arglist;
 
-  if(_session_started == 0) qError("qSessionValue(): qSession() must be called before.");
+	if (_session_started == 0) qError("qSessionValue(): qSession() must be called before.");
 
-  va_start(arglist, format);
-  status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionValue(): Message is too long or invalid.");
-  va_end(arglist);
+	va_start(arglist, format);
+	status = vsprintf(name, format, arglist);
+	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionValue(): Message is too long or invalid.");
+	va_end(arglist);
 
-  value = _EntryValue(_session_first_entry, name);
+	value = _EntryValue(_session_first_entry, name);
 
-  return value;
+	return value;
 }
 
 /**********************************************
@@ -308,21 +307,21 @@ char *qSessionValue(char *format, ...) {
 **     value = qSessionValueInteger("count");
 **********************************************/
 int qSessionValueInteger(char *format, ...) {
-  char name[1024];
-  int value;
-  int status;
-  va_list arglist;
+	char name[1024];
+	int value;
+	int status;
+	va_list arglist;
 
-  if(_session_started == 0) qError("qSessionValue(): qSession() must be called before.");
+	if (_session_started == 0) qError("qSessionValue(): qSession() must be called before.");
 
-  va_start(arglist, format);
-  status = vsprintf(name, format, arglist);
-  if(strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionValue(): Message is too long or invalid.");
-  va_end(arglist);
+	va_start(arglist, format);
+	status = vsprintf(name, format, arglist);
+	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionValue(): Message is too long or invalid.");
+	va_end(arglist);
 
-  value = _EntryiValue(_session_first_entry, name);
+	value = _EntryiValue(_session_first_entry, name);
 
-  return value;
+	return value;
 }
 
 /**********************************************
@@ -330,8 +329,8 @@ int qSessionValueInteger(char *format, ...) {
 ** Do    : Print all session variables for debugging
 **********************************************/
 int qSessionPrint(void) {
-  if(_session_started == 0) qError("qSessionPrint(): qSession() must be called before.");
-  return _EntryPrint(_session_first_entry);
+	if (_session_started == 0) qError("qSessionPrint(): qSession() must be called before.");
+	return _EntryPrint(_session_first_entry);
 }
 
 /**********************************************
@@ -339,18 +338,18 @@ int qSessionPrint(void) {
 ** Do    : Save session data immediately.
 **********************************************/
 void qSessionSave(void) {
-  if(_session_started == 0 || _session_first_entry == NULL) return;
-  if(_session_new == 1 && _session_modified == 0) return;
+	if (_session_started == 0 || _session_first_entry == NULL) return;
+	if (_session_new == 1 && _session_modified == 0) return;
 
-  if(_EntrySave(_session_first_entry, _session_storage_path) == 0) {
-    qError("qSessionSave(): Can not access session repository(%s).", _session_storage_path);
-  }
-  if(_updateTimeout(_session_timeout_path, _session_timeout_interval) == 0) {
-    qError("qSessionSave(): Can not access session repository(%s).", _session_timeout_path);
-  }
+	if (_EntrySave(_session_first_entry, _session_storage_path) == 0) {
+		qError("qSessionSave(): Can not access session repository(%s).", _session_storage_path);
+	}
+	if (_updateTimeout(_session_timeout_path, _session_timeout_interval) == 0) {
+		qError("qSessionSave(): Can not access session repository(%s).", _session_timeout_path);
+	}
 
-  /* clear modified flag */
-  _session_modified = 0;
+	/* clear modified flag */
+	_session_modified = 0;
 }
 
 /**********************************************
@@ -359,20 +358,20 @@ void qSessionSave(void) {
 **********************************************/
 /* Free & Save */
 void qSessionFree(void) {
-  if(_session_started == 0) return;
+	if (_session_started == 0) return;
 
-  qSessionSave();
-  _clearRepository();
+	qSessionSave();
+	_clearRepository();
 
-  if(_session_first_entry) _EntryFree(_session_first_entry);
-  _session_first_entry = NULL;
-  _session_started = 0;
-  _session_new = 0;
-  _session_modified = 0;
-  _session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERVAL;
-  strcpy(_session_repository_path, "");
-  strcpy(_session_storage_path, "");
-  strcpy(_session_timeout_path, "");
+	if (_session_first_entry) _EntryFree(_session_first_entry);
+	_session_first_entry = NULL;
+	_session_started = 0;
+	_session_new = 0;
+	_session_modified = 0;
+	_session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERVAL;
+	strcpy(_session_repository_path, "");
+	strcpy(_session_storage_path, "");
+	strcpy(_session_timeout_path, "");
 }
 
 /**********************************************
@@ -381,18 +380,18 @@ void qSessionFree(void) {
 **         will be removed.
 **********************************************/
 void qSessionDestroy(void) {
-  if(_session_started == 0) qError("qSessionDestroy(): qSession() must be called before.");
+	if (_session_started == 0) qError("qSessionDestroy(): qSession() must be called before.");
 
-  unlink(_session_storage_path);
-  unlink(_session_timeout_path);
-  if(_session_first_entry) _EntryFree(_session_first_entry);
-  _session_first_entry = NULL;
+	unlink(_session_storage_path);
+	unlink(_session_timeout_path);
+	if (_session_first_entry) _EntryFree(_session_first_entry);
+	_session_first_entry = NULL;
 
-  qSessionFree();
+	qSessionFree();
 
-  if(qGetContentFlag() == 0) {
-    qCookieRemove(SESSION_ID, "/", NULL, NULL);
-  }
+	if (qGetContentFlag() == 0) {
+		qCookieRemove(SESSION_ID, "/", NULL, NULL);
+	}
 }
 
 /**********************************************
@@ -403,18 +402,18 @@ void qSessionDestroy(void) {
 ** ex) qSessionSetTimeout((time_t)3600);
 **********************************************/
 time_t qSessionSetTimeout(time_t seconds) {
-  char interval_sec[32];
+	char interval_sec[32];
 
-  if(_session_started == 0) qError("qSessionSetTimeout(): qSession() must be called before.");
-  if(seconds <= (time_t)0) qError("qSessionSetTimeout(): can not set negative interval. Use qSessionDestory() instead.");
+	if (_session_started == 0) qError("qSessionSetTimeout(): qSession() must be called before.");
+	if (seconds <= (time_t)0) qError("qSessionSetTimeout(): can not set negative interval. Use qSessionDestory() instead.");
 
-  _session_timeout_interval = seconds;
+	_session_timeout_interval = seconds;
 
-  /* save session informations */
-  sprintf(interval_sec, "%ld", (long)_session_timeout_interval);
-  _EntryAdd(_session_first_entry, INTER_INTERVAL_SEC, interval_sec, 1);
+	/* save session informations */
+	sprintf(interval_sec, "%ld", (long)_session_timeout_interval);
+	_EntryAdd(_session_first_entry, INTER_INTERVAL_SEC, interval_sec, 1);
 
-  return _session_timeout_interval;
+	return _session_timeout_interval;
 }
 
 /**********************************************
@@ -426,8 +425,8 @@ time_t qSessionSetTimeout(time_t seconds) {
 **     sessionid = qSessionGetID();
 **********************************************/
 char *qSessionGetID(void) {
-  if(_session_started == 0) qError("qSessionGetID(): qSession() must be called before.");
-  return qSessionValue(INTER_SESSIONID);
+	if (_session_started == 0) qError("qSessionGetID(): qSession() must be called before.");
+	return qSessionValue(INTER_SESSIONID);
 }
 
 /**********************************************
@@ -442,14 +441,14 @@ char *qSessionGetID(void) {
 **     gmtime = gmtime(&created);
 **********************************************/
 time_t qSessionGetCreated(void) {
-  time_t created;
-  char *tmp;
+	time_t created;
+	char *tmp;
 
-  if(_session_started == 0) qError("qSessionGetCreated(): qSession() must be called before.");
-  tmp = qSessionValue(INTER_CREATED_SEC);
-  created = (time_t)atol(tmp);
+	if (_session_started == 0) qError("qSessionGetCreated(): qSession() must be called before.");
+	tmp = qSessionValue(INTER_CREATED_SEC);
+	created = (time_t)atol(tmp);
 
-  return created;
+	return created;
 }
 
 /**********************************************
@@ -458,74 +457,75 @@ time_t qSessionGetCreated(void) {
 
 static int _clearRepository(void) {
 #ifdef _WIN32
-  return 0;
+	return 0;
 #else
-  DIR *dp;
-  struct dirent *dirp;
-  char timeoutpath[1024];
-  int clearcnt;
+	DIR *dp;
+	struct dirent *dirp;
+	char timeoutpath[1024];
+	int clearcnt;
 
-  if(_session_started == 0) qError("_clearRepository(): qSession() must be called before.");
-  sprintf(timeoutpath, "%s/%s", _session_repository_path, SESSION_TIMETOCLEAR_FILENAME);
+	if (_session_started == 0) qError("_clearRepository(): qSession() must be called before.");
+	sprintf(timeoutpath, "%s/%s", _session_repository_path, SESSION_TIMETOCLEAR_FILENAME);
 
-  if(_isValidSession(timeoutpath) > 0) return 0; /* Valid */
+	if (_isValidSession(timeoutpath) > 0) return 0; /* Valid */
 
-  /* expired or not found, main routine start here */
-  /* to prevent race condition, update time stamp first */
-  if(_updateTimeout(timeoutpath, _session_timeout_interval) == 0) {
-    qError("_clearRepository(): Can not access session repository(%s).", timeoutpath);
-  }
+	/* expired or not found, main routine start here */
+	/* to prevent race condition, update time stamp first */
+	if (_updateTimeout(timeoutpath, _session_timeout_interval) == 0) {
+		qError("_clearRepository(): Can not access session repository(%s).", timeoutpath);
+	}
 
-  /* clear old session data */
-  if((dp = opendir(_session_repository_path)) == NULL) qError("_clearRepository(): Can not access session repository(%s).", _session_repository_path);
+	/* clear old session data */
+	if ((dp = opendir(_session_repository_path)) == NULL) qError("_clearRepository(): Can not access session repository(%s).", _session_repository_path);
 
-  for (clearcnt = 0; (dirp = readdir(dp)) != NULL; ) {
-    if(strstr(dirp->d_name, SESSION_PREFIX) && strstr(dirp->d_name, SESSION_TIMEOUT_EXTENSION)) {
-      sprintf(timeoutpath, "%s/%s", _session_repository_path, dirp->d_name);
-      if(_isValidSession(timeoutpath) <= 0) { /* expired */
-        /* remove timeout */
-        unlink(timeoutpath);
+	for (clearcnt = 0; (dirp = readdir(dp)) != NULL; ) {
+		if (strstr(dirp->d_name, SESSION_PREFIX) && strstr(dirp->d_name, SESSION_TIMEOUT_EXTENSION)) {
+			sprintf(timeoutpath, "%s/%s", _session_repository_path, dirp->d_name);
+			if (_isValidSession(timeoutpath) <= 0) { /* expired */
+				/* remove timeout */
+				unlink(timeoutpath);
 
-        /* remove properties */
-        timeoutpath[strlen(timeoutpath) - strlen(SESSION_TIMEOUT_EXTENSION)] = '\0';
-        strcat(timeoutpath, SESSION_STORAGE_EXTENSION);
-        unlink(timeoutpath);
+				/* remove properties */
+				timeoutpath[strlen(timeoutpath) - strlen(SESSION_TIMEOUT_EXTENSION)] = '\0';
+				strcat(timeoutpath, SESSION_STORAGE_EXTENSION);
+				unlink(timeoutpath);
 
-        clearcnt++;
-      }
-    }
-  }
-  closedir(dp);
+				clearcnt++;
+			}
+		}
+	}
+	closedir(dp);
 
-  return clearcnt;
+	return clearcnt;
 #endif
 }
 
 /* session not found 0, session expired -1, session valid 1 */
 static int _isValidSession(char *filename) {
-  time_t timeout, timenow;
-  double timediff;
+	time_t timeout, timenow;
+	double timediff;
 
-  if((timeout = (time_t)qCountRead(filename)) == 0) return 0;;
-  timenow = time(NULL);
-  timediff = difftime(timeout, timenow); /* return timeout - timenow */
+	if ((timeout = (time_t)qCountRead(filename)) == 0) return 0;
+	;
+	timenow = time(NULL);
+	timediff = difftime(timeout, timenow); /* return timeout - timenow */
 
-  if(timediff >= (double)0) return 1; /* valid */
-  return -1; /* expired */
+	if (timediff >= (double)0) return 1; /* valid */
+	return -1; /* expired */
 }
 
 /* success > 0, write fail 0 */
 static time_t _updateTimeout(char *filename, time_t timeout_interval) {
-  FILE *fp;
-  time_t timeout;
+	FILE *fp;
+	time_t timeout;
 
-  timeout = time(NULL);
-  timeout += timeout_interval;
+	timeout = time(NULL);
+	timeout += timeout_interval;
 
-  if((fp = fopen(filename, "w")) == NULL) return 0;
-  fprintf(fp, "%ld\n", (long)timeout);
-  fclose(fp);
+	if ((fp = fopen(filename, "w")) == NULL) return 0;
+	fprintf(fp, "%ld\n", (long)timeout);
+	fclose(fp);
 
-  return timeout;
+	return timeout;
 }
 

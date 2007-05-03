@@ -52,74 +52,73 @@ static char *_error_log_file = NULL;
 ** Do    : Print error message.
 **********************************************/
 void qError(char *format, ...) {
-  static int cnt = 0;
-  char buf[1024];
-  int status;
-  int logstatus;
-  va_list arglist;
+	static int cnt = 0;
+	char buf[1024];
+	int status;
+	int logstatus;
+	va_list arglist;
 
-  if (cnt != 0) exit(1);
-  cnt++;
+	if (cnt != 0) exit(1);
+	cnt++;
 
-  va_start(arglist, format);
+	va_start(arglist, format);
 
-  status = vsprintf(buf, format, arglist);
-  if(strlen(buf) + 1 > sizeof(buf) || status == EOF) {
-    printf("qError(): Message is too long or invalid.");
-    exit(1);
-  }
+	status = vsprintf(buf, format, arglist);
+	if (strlen(buf) + 1 > sizeof(buf) || status == EOF) {
+		printf("qError(): Message is too long or invalid.");
+		exit(1);
+	}
 
-  logstatus = 0;
-  if(_error_log_file != NULL) {
-    FILE *fp;
+	logstatus = 0;
+	if (_error_log_file != NULL) {
+		FILE *fp;
 
-    if((fp = fopen(_error_log_file, "at")) == NULL) logstatus = -1;
-    else {
-      char *http_user_agent, *remote_host;
-      struct tm *time;
+		if ((fp = fopen(_error_log_file, "at")) == NULL) logstatus = -1;
+		else {
+			char *http_user_agent, *remote_host;
+			struct tm *time;
 
-      time = qGetTime();
+			time = qGetTime();
 
-      if((http_user_agent = getenv("HTTP_USER_AGENT")) == NULL) http_user_agent = "null";
-      if((remote_host     = getenv("REMOTE_HOST"))     == NULL) {
-        /* Fetch for Apache 1.3 */
-        if((remote_host     = getenv("REMOTE_ADDR"))   == NULL) remote_host = "null";
-      }
+			if ((http_user_agent = getenv("HTTP_USER_AGENT")) == NULL) http_user_agent = "null";
+			if ((remote_host     = getenv("REMOTE_HOST"))     == NULL) {
+				/* Fetch for Apache 1.3 */
+				if ((remote_host     = getenv("REMOTE_ADDR"))   == NULL) remote_host = "null";
+			}
 
-      fprintf(fp, "%04d/%02d/%02d(%02d:%02d) : '%s' from %s (%s)\n",
-              time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min,
-              buf, remote_host, http_user_agent);
+			fprintf(fp, "%04d/%02d/%02d(%02d:%02d) : '%s' from %s (%s)\n",
+			        time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min,
+			        buf, remote_host, http_user_agent);
 
-      fclose(fp);
-      logstatus = 1;
-    }
-  }
+			fclose(fp);
+			logstatus = 1;
+		}
+	}
 
-  if(getenv("REMOTE_ADDR") == NULL)  {
-    printf("Error: %s\n", buf);
-  }
-  else {
-    qContentType("text/html");
+	if (getenv("REMOTE_ADDR") == NULL)  {
+		printf("Error: %s\n", buf);
+	} else {
+		qContentType("text/html");
 
-    if(_error_contact_info != NULL) {
-      strcat(buf, _error_contact_info);
-    }
-    if(logstatus == -1) strcat(buf, " [ERROR LOGGING FAIL]");
+		if (_error_contact_info != NULL) {
+			strcat(buf, _error_contact_info);
+		}
+		if (logstatus == -1) strcat(buf, " [ERROR LOGGING FAIL]");
 
-    printf("<html>\n");
-    printf("<head>\n");
-    printf("<title>Error: %s</title>\n", buf);
-    printf("<script language='JavaScript'>\n");
-    printf("  alert(\"%s\");\n", buf);
-    printf("  history.back();\n");
-    printf("</script>\n");
-    printf("</head>\n");
-    printf("</html>\n");
-  }
+		printf("<html>\n");
+		printf("<head>\n");
+		printf("<title>Error: %s</title>\n", buf);
+		printf("<script language='JavaScript'>\n");
+		printf("  alert(\"%s\");\n", buf);
+		printf("  history.back();\n");
+		printf("</script>\n");
+		printf("</head>\n");
+		printf("</html>\n");
+	}
 
-  qFreeAll();
+	qFreeAll();
 
-  exit(1);
+	exit(1);
 }
 
 /**********************************************
@@ -127,7 +126,7 @@ void qError(char *format, ...) {
 ** Do    : Turn Error log on.
 **********************************************/
 void qErrorLog(char *file) {
-  _error_log_file = file;
+	_error_log_file = file;
 }
 
 /**********************************************
@@ -135,6 +134,6 @@ void qErrorLog(char *file) {
 ** Do    : Error contact information.
 **********************************************/
 void qErrorContact(char *msg) {
-  _error_contact_info = msg;
+	_error_contact_info = msg;
 }
 

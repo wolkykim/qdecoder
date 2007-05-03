@@ -59,23 +59,23 @@ int _StrToAddr(struct sockaddr_in *addr, unsigned char family, char *hostname, i
 ** Do    : Create a TCP socket for communication.
 **********************************************/
 int qSocketOpen(char *hostname, int port) {
-  int sockfd;
-  struct sockaddr_in addr;
+	int sockfd;
+	struct sockaddr_in addr;
 
-  /* host conversion */
-  bzero((char*)&addr, sizeof(addr));
-  if(_StrToAddr(&addr, AF_INET, hostname, port) != 1) return -1; /* invalid hostname */
+	/* host conversion */
+	bzero((char*)&addr, sizeof(addr));
+	if (_StrToAddr(&addr, AF_INET, hostname, port) != 1) return -1; /* invalid hostname */
 
-  /* make sockfd */
-  if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) return -2; /* sockfd creation fail */
+	/* make sockfd */
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) return -2; /* sockfd creation fail */
 
-  /* connect */
-  if(connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-    close(sockfd);
-    return -3; /* connection fail */
-  }
+	/* connect */
+	if (connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		close(sockfd);
+		return -3; /* connection fail */
+	}
 
-  return sockfd;
+	return sockfd;
 }
 
 /**********************************************
@@ -85,7 +85,7 @@ int qSocketOpen(char *hostname, int port) {
 ** Do    : close socket.
 **********************************************/
 int qSocketClose(int sockfd) {
-  return close(sockfd);
+	return close(sockfd);
 }
 
 /**********************************************
@@ -97,27 +97,25 @@ int qSocketClose(int sockfd) {
 ** Notice: You don't need to set the socket as non-block mode.
 **********************************************/
 int qSocketWaitReadable(int sockfd, int timeoutms) {
-  struct timeval tv;
-  fd_set readfds;
+	struct timeval tv;
+	fd_set readfds;
 
-  // time to wait
-  FD_ZERO(&readfds);
-  FD_SET(sockfd, &readfds);
-  if(timeoutms > 0) {
-    tv.tv_sec = (timeoutms / 1000), tv.tv_usec = (timeoutms % 1000);
-    if(select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
-  }
-  else if(timeoutms == 0) { // just poll
-    tv.tv_sec = 0, tv.tv_usec = 0;
-    if(select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
-  }
-  else { //  blocks indefinitely
-    if(select(FD_SETSIZE, &readfds, NULL, NULL, NULL) < 0) return -1;
-  }
+	// time to wait
+	FD_ZERO(&readfds);
+	FD_SET(sockfd, &readfds);
+	if (timeoutms > 0) {
+		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = (timeoutms % 1000);
+		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
+	} else if (timeoutms == 0) { // just poll
+		tv.tv_sec = 0, tv.tv_usec = 0;
+		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
+	} else { //  blocks indefinitely
+		if (select(FD_SETSIZE, &readfds, NULL, NULL, NULL) < 0) return -1;
+	}
 
-  if (!FD_ISSET(sockfd, &readfds)) return 0; // timeout
+	if (!FD_ISSET(sockfd, &readfds)) return 0; // timeout
 
-  return 1;
+	return 1;
 }
 
 /**********************************************
@@ -129,13 +127,13 @@ int qSocketWaitReadable(int sockfd, int timeoutms) {
 ** Notice: You don't need to set the socket as non-block mode.
 **********************************************/
 int qSocketRead(char *binary, int size, int sockfd, int timeoutms) {
-  int readcnt;
+	int readcnt;
 
-  if(qSocketWaitReadable(sockfd, timeoutms) <= 0) return 0;
-  readcnt = read(sockfd, binary, size);
-  if(readcnt <= 0) return -1;
+	if (qSocketWaitReadable(sockfd, timeoutms) <= 0) return 0;
+	readcnt = read(sockfd, binary, size);
+	if (readcnt <= 0) return -1;
 
-  return readcnt;
+	return readcnt;
 }
 
 /**********************************************
@@ -146,24 +144,24 @@ int qSocketRead(char *binary, int size, int sockfd, int timeoutms) {
 ** Do    : read line from the stream. it does not contain the character '\r', '\n'.
 **********************************************/
 int qSocketGets(char *str, int size, int sockfd, int timeoutms) {
-  char *ptr;
-  int readcnt = 0;
+	char *ptr;
+	int readcnt = 0;
 
-  if(qSocketWaitReadable(sockfd, timeoutms) <= 0) return 0;
+	if (qSocketWaitReadable(sockfd, timeoutms) <= 0) return 0;
 
-  for(ptr = str; size > 1; size--, ptr++) {
-    if(read(sockfd, ptr, 1) != 1) {
-    	if(ptr == str) return -1;
-    	break;
-    }
+	for (ptr = str; size > 1; size--, ptr++) {
+		if (read(sockfd, ptr, 1) != 1) {
+			if (ptr == str) return -1;
+			break;
+		}
 
-    readcnt++;
-    if(*ptr == '\n') break;
-    if(*ptr == '\r') ptr--;
-  }
+		readcnt++;
+		if (*ptr == '\n') break;
+		if (*ptr == '\r') ptr--;
+	}
 
-  *ptr = '\0';
-  return readcnt;
+	*ptr = '\0';
+	return readcnt;
 }
 
 /**********************************************
@@ -173,7 +171,7 @@ int qSocketGets(char *str, int size, int sockfd, int timeoutms) {
 ** Do    : send some data(text/binary) to socket stream .
 **********************************************/
 int qSocketWrite(char *binary, int size, int sockfd) {
-  return write(sockfd, binary, size);
+	return write(sockfd, binary, size);
 }
 
 /**********************************************
@@ -183,10 +181,10 @@ int qSocketWrite(char *binary, int size, int sockfd) {
 ** Do    : send one line with terminating newline character to socket stream.
 **********************************************/
 int qSocketPuts(char *str, int sockfd) {
-  if(write(sockfd, str, strlen(str)) < 0) return 0;
-  if(write(sockfd, "\n", 1) < 0) return 0;
+	if (write(sockfd, str, strlen(str)) < 0) return 0;
+	if (write(sockfd, "\n", 1) < 0) return 0;
 
-  return 1;
+	return 1;
 }
 
 /**********************************************
@@ -198,16 +196,16 @@ int qSocketPuts(char *str, int sockfd) {
 **         If you need to send more data, use qSocketPuts instead.
 **********************************************/
 int qSocketPrintf(int sockfd, char *format, ...) {
-  char buf[1024];
-  va_list arglist;
+	char buf[1024];
+	va_list arglist;
 
-  va_start(arglist, format);
-  vsprintf(buf, format, arglist);
-  va_end(arglist);
+	va_start(arglist, format);
+	vsprintf(buf, format, arglist);
+	va_end(arglist);
 
-  if(write(sockfd, buf, strlen(buf)) < 0) return 0;
+	if (write(sockfd, buf, strlen(buf)) < 0) return 0;
 
-  return 1;
+	return 1;
 }
 
 /**********************************************
@@ -216,37 +214,37 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 ** Do    : send file data to socket stream.
 **********************************************/
 int qSocketSendFile(char *filepath, int offset, int sockfd) {
-  FILE *fp;
-  char buf[1024*16];
+	FILE *fp;
+	char buf[1024*16];
 
-  int readed, sended, sendbytes;
+	int readed, sended, sendbytes;
 
-  // file open
-  if((fp = fopen(filepath, "r")) == NULL) return 0;
+	// file open
+	if ((fp = fopen(filepath, "r")) == NULL) return 0;
 
-  // set offset
-  if(offset > 0) {
-    fseek(fp, offset, SEEK_SET);
-  }
+	// set offset
+	if (offset > 0) {
+		fseek(fp, offset, SEEK_SET);
+	}
 
-  for(sendbytes = 0; ; sendbytes += sended) {
-    // read
-    readed = fread(buf, 1, sizeof(buf), fp);
-    if(readed == 0) break;
+	for (sendbytes = 0; ; sendbytes += sended) {
+		// read
+		readed = fread(buf, 1, sizeof(buf), fp);
+		if (readed == 0) break;
 
-    // send
-    sended = write(sockfd, buf, readed);
+		// send
+		sended = write(sockfd, buf, readed);
 
-    // connection check
-    if(readed != sended) {
-      fclose(fp);
-      return -1; // connection closed
-    }
-  }
+		// connection check
+		if (readed != sended) {
+			fclose(fp);
+			return -1; // connection closed
+		}
+	}
 
-  fclose(fp);
+	fclose(fp);
 
-  return sendbytes;
+	return sendbytes;
 }
 
 /**********************************************
@@ -256,34 +254,34 @@ int qSocketSendFile(char *filepath, int offset, int sockfd) {
 **********************************************/
 // returns get bytes
 int qSocketSaveIntoFile(int sockfd, int size, int timeoutms, char *filepath, char *mode) {
-  FILE *fp;
-  char buf[1024*16]; // read buffer size
+	FILE *fp;
+	char buf[1024*16]; // read buffer size
 
-  int readbytes, readed, readsize;
+	int readbytes, readed, readsize;
 
-  // stream readable?
-  if(qSocketWaitReadable(sockfd, timeoutms) <= 0) return -1;
+	// stream readable?
+	if (qSocketWaitReadable(sockfd, timeoutms) <= 0) return -1;
 
-  // file open
-  if((fp = fopen(filepath, mode)) == NULL) return 0;
+	// file open
+	if ((fp = fopen(filepath, mode)) == NULL) return 0;
 
-  for(readbytes = 0; readbytes < size; readbytes += readed) {
+	for (readbytes = 0; readbytes < size; readbytes += readed) {
 
-    // calculate reading size
-    if(size - readbytes < sizeof(buf)) readsize = size - readbytes;
-    else readsize = sizeof(buf);
+		// calculate reading size
+		if (size - readbytes < sizeof(buf)) readsize = size - readbytes;
+		else readsize = sizeof(buf);
 
-    // read data
-    readed = read(sockfd, buf, readsize);
+		// read data
+		readed = read(sockfd, buf, readsize);
 
-    if(readed == 0) break; // EOF
+		if (readed == 0) break; // EOF
 
-    fwrite(buf, readed, 1, fp);
-  }
+		fwrite(buf, readed, 1, fp);
+	}
 
-  fclose(fp);
+	fclose(fp);
 
-  return readbytes;
+	return readbytes;
 }
 
 /**********************************************
@@ -296,13 +294,13 @@ int qSocketSaveIntoFile(int sockfd, int size, int timeoutms, char *filepath, cha
 **********************************************/
 // 0: error, 1: ok
 int qSocketSetNonblock(int sockfd) {
-  int opts;
+	int opts;
 
-  opts = fcntl(sockfd, F_GETFL);
-  if (opts < 0) return -1;
-  if (fcntl(sockfd, F_SETFL, opts | O_NONBLOCK) < 0) return 0;
+	opts = fcntl(sockfd, F_GETFL);
+	if (opts < 0) return -1;
+	if (fcntl(sockfd, F_SETFL, opts | O_NONBLOCK) < 0) return 0;
 
-  return 1;
+	return 1;
 }
 
 /**********************************************
@@ -313,15 +311,15 @@ int qSocketSetNonblock(int sockfd) {
 **         stream easily by using fprintf(), fscanf()...
 **********************************************/
 FILE *qSocketConv2file(int sockfd) {
-  FILE *fp;
+	FILE *fp;
 
 #ifdef _WIN32
-  fp=fsdopen(sockfd);
+	fp = fsdopen(sockfd);
 #else
-  fp=fdopen(sockfd, "r+");
+	fp = fdopen(sockfd, "r+");
 #endif
 
-  return fp;
+	return fp;
 }
 
 /**********************************************
@@ -330,16 +328,16 @@ FILE *qSocketConv2file(int sockfd) {
 
 int _StrToAddr(struct sockaddr_in *addr, unsigned char family, char *hostname, int port) {
 
-  /* here we assume that the hostname argument contains ip address */
-  if (!inet_aton(hostname, &addr->sin_addr)) { /* fail then try another way */
-    struct hostent *hp;
-    if((hp = gethostbyname (hostname)) == 0) return 0; /* fail return 0 */
-    memcpy (&addr->sin_addr, hp->h_addr, sizeof(struct in_addr));
-  }
-  addr->sin_family = family;
-  addr->sin_port = htons(port);
+	/* here we assume that the hostname argument contains ip address */
+	if (!inet_aton(hostname, &addr->sin_addr)) { /* fail then try another way */
+		struct hostent *hp;
+		if ((hp = gethostbyname (hostname)) == 0) return 0; /* fail return 0 */
+		memcpy (&addr->sin_addr, hp->h_addr, sizeof(struct in_addr));
+	}
+	addr->sin_family = family;
+	addr->sin_port = htons(port);
 
-  return 1;
+	return 1;
 }
 
 #endif

@@ -55,10 +55,10 @@ static char _awkdelim = ' ';
 ** ex) qAwkOpen("source.dat", ':');
 **********************************************/
 int qAwkOpen(char *filename, char delim) {
-  if(_awkfp != NULL) qError("qAwkOpen(): There is already opened handle.");
-  if((_awkfp = fopen(filename, "r")) == NULL) return 0;
-  _awkdelim = delim;
-  return 1;
+	if (_awkfp != NULL) qError("qAwkOpen(): There is already opened handle.");
+	if ((_awkfp = fopen(filename, "r")) == NULL) return 0;
+	_awkdelim = delim;
+	return 1;
 }
 
 /**********************************************
@@ -70,16 +70,16 @@ int qAwkOpen(char *filename, char delim) {
 **     qAwkNext(array);
 **********************************************/
 int qAwkNext(char array[][1024]) {
-  char *buf;
-  int i;
+	char *buf;
+	int i;
 
-  if(_awkfp == NULL) qError("qAwkNext(): There is no opened handle.");
-  if((buf = qRemoveSpace(qfGetLine(_awkfp))) == NULL) return -1;
+	if (_awkfp == NULL) qError("qAwkNext(): There is no opened handle.");
+	if ((buf = qRemoveSpace(qfGetLine(_awkfp))) == NULL) return -1;
 
-  i = qAwkStr(array, buf, _awkdelim);
-  free(buf);
+	i = qAwkStr(array, buf, _awkdelim);
+	free(buf);
 
-  return i;
+	return i;
 }
 
 /**********************************************
@@ -88,12 +88,12 @@ int qAwkNext(char array[][1024]) {
 ** Do    : Close file.
 **********************************************/
 int qAwkClose(void) {
-  if(_awkfp == NULL) return 0;
-  fclose(_awkfp);
-  _awkfp = NULL;
-  _awkdelim = ' ';
+	if (_awkfp == NULL) return 0;
+	fclose(_awkfp);
+	_awkfp = NULL;
+	_awkdelim = ' ';
 
-  return 1;
+	return 1;
 }
 
 /**********************************************
@@ -102,16 +102,16 @@ int qAwkClose(void) {
 ** Do    : scan pattern from the string.
 **********************************************/
 int qAwkStr(char array[][1024], char *str, char delim) {
- char *bp1, *bp2;
- int i, exitflag;
+	char *bp1, *bp2;
+	int i, exitflag;
 
-  for(i = exitflag = 0, bp1 = bp2 = str; exitflag == 0; i++) {
-    for(; *bp2 != delim && *bp2 != '\0'; bp2++);
-    if(*bp2 == '\0') exitflag = 1;
-    *bp2 = '\0';
-    strcpy(array[i], bp1);
-    bp1 = ++bp2;
-  }
+	for (i = exitflag = 0, bp1 = bp2 = str; exitflag == 0; i++) {
+		for (; *bp2 != delim && *bp2 != '\0'; bp2++);
+		if (*bp2 == '\0') exitflag = 1;
+		*bp2 = '\0';
+		strcpy(array[i], bp1);
+		bp1 = ++bp2;
+	}
 
-  return i;
+	return i;
 }

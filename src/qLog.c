@@ -48,26 +48,26 @@ static int _realOpen(Q_LOG *log);
 ** Return:
 **********************************************/
 Q_LOG *qLogOpen(char *pszLogBase, char *pszFilenameFormat, int nRotateInterval, int nFlushFlag) {
-  Q_LOG *log;
+	Q_LOG *log;
 
-  /* malloc Q_LOG structure */
-  if((log = (Q_LOG *)malloc(sizeof(Q_LOG))) == NULL) return NULL;
+	/* malloc Q_LOG structure */
+	if ((log = (Q_LOG *)malloc(sizeof(Q_LOG))) == NULL) return NULL;
 
-  /* fill structure */
-  strcpy(log->szLogBase, pszLogBase);
-  strcpy(log->szFilenameFormat, pszFilenameFormat);
-  log->fp = NULL;
-  log->nConsole = 0;
-  log->nRotateInterval = ((nRotateInterval > 0) ? nRotateInterval : 0);
-  log->nNextRotate = 0;
-  log->nFlushFlag = ((nFlushFlag > 0) ? 1 : 0);
+	/* fill structure */
+	strcpy(log->szLogBase, pszLogBase);
+	strcpy(log->szFilenameFormat, pszFilenameFormat);
+	log->fp = NULL;
+	log->nConsole = 0;
+	log->nRotateInterval = ((nRotateInterval > 0) ? nRotateInterval : 0);
+	log->nNextRotate = 0;
+	log->nFlushFlag = ((nFlushFlag > 0) ? 1 : 0);
 
-  if(_realOpen(log) == 0) {
-    qLogClose(log);
-    return NULL;
-  }
+	if (_realOpen(log) == 0) {
+		qLogClose(log);
+		return NULL;
+	}
 
-  return log;
+	return log;
 }
 
 /**********************************************
@@ -75,25 +75,24 @@ Q_LOG *qLogOpen(char *pszLogBase, char *pszFilenameFormat, int nRotateInterval, 
 ** Return:
 **********************************************/
 static int _realOpen(Q_LOG *log) {
-  time_t nowtime = time(NULL);
+	time_t nowtime = time(NULL);
 
-  /* generate filename */
-  strftime(log->szFilename, sizeof(log->szFilename), log->szFilenameFormat, localtime(&nowtime));
-  sprintf(log->szLogPath, "%s/%s", log->szLogBase, log->szFilename);
-  if(log->fp != NULL) fclose(log->fp);
-  if((log->fp = fopen(log->szLogPath, "a")) == NULL) return 0;
+	/* generate filename */
+	strftime(log->szFilename, sizeof(log->szFilename), log->szFilenameFormat, localtime(&nowtime));
+	sprintf(log->szLogPath, "%s/%s", log->szLogBase, log->szFilename);
+	if (log->fp != NULL) fclose(log->fp);
+	if ((log->fp = fopen(log->szLogPath, "a")) == NULL) return 0;
 
-  /* set next rotate time */
-  if(log->nRotateInterval > 0) {
-    time_t ct = time(NULL);
-    time_t dt = ct - mktime(gmtime(&ct));
-    log->nNextRotate = (((ct + dt) / log->nRotateInterval) + 1) * log->nRotateInterval;
-  }
-  else {
-    log->nNextRotate = 0;
-  }
+	/* set next rotate time */
+	if (log->nRotateInterval > 0) {
+		time_t ct = time(NULL);
+		time_t dt = ct - mktime(gmtime(&ct));
+		log->nNextRotate = (((ct + dt) / log->nRotateInterval) + 1) * log->nRotateInterval;
+	} else {
+		log->nNextRotate = 0;
+	}
 
-  return 1;
+	return 1;
 }
 
 /**********************************************
@@ -101,13 +100,13 @@ static int _realOpen(Q_LOG *log) {
 ** Return:
 **********************************************/
 int qLogClose(Q_LOG *log) {
-  if(log == NULL) return 0;
-  if(log->fp != NULL) {
-    fclose(log->fp);
-    log->fp = NULL;
-  }
-  free(log);
-  return 1;
+	if (log == NULL) return 0;
+	if (log->fp != NULL) {
+		fclose(log->fp);
+		log->fp = NULL;
+	}
+	free(log);
+	return 1;
 }
 
 /**********************************************
@@ -115,9 +114,9 @@ int qLogClose(Q_LOG *log) {
 ** Return:
 **********************************************/
 int qLogSetConsole(Q_LOG *log, int nFlag) {
-  if(log == NULL) return 0;
-  log->nConsole = ((nFlag == 0) ? 0 : 1);
-  return 1;
+	if (log == NULL) return 0;
+	log->nConsole = ((nFlag == 0) ? 0 : 1);
+	return 1;
 }
 
 /**********************************************
@@ -125,9 +124,9 @@ int qLogSetConsole(Q_LOG *log, int nFlag) {
 ** Return: Success 0, otherwise EOF
 **********************************************/
 int qLogFlush(Q_LOG *log) {
-  if(log == NULL || log->fp == NULL) return EOF;
+	if (log == NULL || log->fp == NULL) return EOF;
 
-  return fflush(log->fp);
+	return fflush(log->fp);
 }
 
 /**********************************************
@@ -135,29 +134,29 @@ int qLogFlush(Q_LOG *log) {
 ** Return: Success 1, otherwise 0
 **********************************************/
 int qLog(Q_LOG *log, char *pszFormat, ...) {
-  char szStr[1024];
-  va_list arglist;
-  time_t nowTime = time(NULL);
+	char szStr[1024];
+	va_list arglist;
+	time_t nowTime = time(NULL);
 
-  if(log == NULL || log->fp == NULL) return 0;
+	if (log == NULL || log->fp == NULL) return 0;
 
-  va_start(arglist, pszFormat);
-  vsprintf(szStr, pszFormat, arglist);
-  va_end(arglist);
+	va_start(arglist, pszFormat);
+	vsprintf(szStr, pszFormat, arglist);
+	va_end(arglist);
 
-  /* console out */
-  if(log->nConsole) printf("%s(%d): %s\n", qGetTimeStr(), getpid(), szStr);
+	/* console out */
+	if (log->nConsole) printf("%s(%d): %s\n", qGetTimeStr(), getpid(), szStr);
 
-  /* check log rotate is needed*/
-  if(log->nNextRotate > 0 && nowTime >= log->nNextRotate) {
-    _realOpen(log);
-  }
+	/* check log rotate is needed*/
+	if (log->nNextRotate > 0 && nowTime >= log->nNextRotate) {
+		_realOpen(log);
+	}
 
-  /* log to file */
-  if(fprintf(log->fp, "%s(%d): %s\n", qGetTimeStr(), getpid(), szStr) < 0) return 0;
+	/* log to file */
+	if (fprintf(log->fp, "%s(%d): %s\n", qGetTimeStr(), getpid(), szStr) < 0) return 0;
 
-  /* check flash flag */
-  if(log->nFlushFlag != 0) fflush(log->fp);
+	/* check flash flag */
+	if (log->nFlushFlag != 0) fflush(log->fp);
 
-  return 1;
+	return 1;
 }

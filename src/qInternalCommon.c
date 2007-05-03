@@ -45,12 +45,12 @@ Author:
 ** Do    : Change two hex character to one hex value.
 **********************************************/
 char _x2c(char hex_up, char hex_low) {
-  char digit;
+	char digit;
 
-  digit = 16 * (hex_up >= 'A' ? ((hex_up & 0xdf) - 'A') + 10 : (hex_up - '0'));
-  digit += (hex_low >= 'A' ? ((hex_low & 0xdf) - 'A') + 10 : (hex_low - '0'));
+	digit = 16 * (hex_up >= 'A' ? ((hex_up & 0xdf) - 'A') + 10 : (hex_up - '0'));
+	digit += (hex_low >= 'A' ? ((hex_low & 0xdf) - 'A') + 10 : (hex_low - '0'));
 
-  return (digit);
+	return (digit);
 }
 
 
@@ -61,20 +61,20 @@ char _x2c(char hex_up, char hex_low) {
 **         The pointer of source string direct after stop character.
 **********************************************/
 char *_makeword(char *str, char stop) {
-  char *word;
-  int  len, i;
+	char *word;
+	int  len, i;
 
-  for(len = 0; ((str[len] != stop) && (str[len])); len++);
-  word = (char *)malloc(sizeof(char) * (len + 1));
+	for (len = 0; ((str[len] != stop) && (str[len])); len++);
+	word = (char *)malloc(sizeof(char) * (len + 1));
 
-  for(i = 0; i < len; i++)word[i] = str[i];
-  word[i] = '\0';
+	for (i = 0; i < len; i++)word[i] = str[i];
+	word[i] = '\0';
 
-  if(str[len])len++;
-  for(i = len; str[i]; i++)str[i - len] = str[i];
-  str[i - len] = '\0';
+	if (str[len])len++;
+	for (i = len; str[i]; i++)str[i - len] = str[i];
+	str[i - len] = '\0';
 
-  return (word);
+	return (word);
 }
 
 /*********************************************
@@ -83,46 +83,46 @@ char *_makeword(char *str, char stop) {
 ** Return: Pointer of token & character of stop.
 **********************************************/
 char *_strtok2(char *str, char *token, char *retstop) {
-  static char *tokensp, *tokenep;
-  int i, j;
+	static char *tokensp, *tokenep;
+	int i, j;
 
-  if(str != NULL) tokensp = tokenep = str;
-  else tokensp = tokenep;
+	if (str != NULL) tokensp = tokenep = str;
+	else tokensp = tokenep;
 
-  for(i = strlen(token);*tokenep;tokenep++) {
-    for(j = 0; j < i; j++) {
-      if(*tokenep == token[j]) {
-        *retstop = token[j];
-        *tokenep = '\0';
-        tokenep++;
-        return tokensp;
-      }
-    }
-  }
+	for (i = strlen(token);*tokenep;tokenep++) {
+		for (j = 0; j < i; j++) {
+			if (*tokenep == token[j]) {
+				*retstop = token[j];
+				*tokenep = '\0';
+				tokenep++;
+				return tokensp;
+			}
+		}
+	}
 
-  *retstop = '\0';
-  if(tokensp != tokenep) return tokensp;
-  return NULL;
+	*retstop = '\0';
+	if (tokensp != tokenep) return tokensp;
+	return NULL;
 }
 
 /*********************************************
 ** Usage : This function is perfectly same as fgets();
 **********************************************/
 char *_fgets(char *str, int size, FILE *stream) {
-  int c;
-  char *ptr;
+	int c;
+	char *ptr;
 
-  for(ptr = str; size > 1; size--) {
-    c = fgetc(stream);
-    if(c == EOF) break;
-    *ptr++ = (char)c;
-    if(c == '\n') break;
-  }
+	for (ptr = str; size > 1; size--) {
+		c = fgetc(stream);
+		if (c == EOF) break;
+		*ptr++ = (char)c;
+		if (c == '\n') break;
+	}
 
-  *ptr = '\0';
-  if(strlen(str) == 0) return NULL;
+	*ptr = '\0';
+	if (strlen(str) == 0) return NULL;
 
-  return str;
+	return str;
 }
 
 /*********************************************
@@ -130,12 +130,12 @@ char *_fgets(char *str, int size, FILE *stream) {
 **********************************************/
 int _flockopen(FILE *fp) {
 #ifdef _WIN32
-  return 0;
+	return 0;
 #else
 #ifdef HAVE_FLOCK
-  return flock(fileno(fp), LOCK_EX);
+	return flock(fileno(fp), LOCK_EX);
 #else
-  return 0;
+	return 0;
 #endif
 #endif
 }
@@ -145,12 +145,12 @@ int _flockopen(FILE *fp) {
 **********************************************/
 int _flockclose(FILE *fp) {
 #ifdef _WIN32
-  return 0;
+	return 0;
 #else
 #ifdef HAVE_FLOCK
-  return flock(fileno(fp), LOCK_UN);
+	return flock(fileno(fp), LOCK_UN);
 #else
-  return 0;
+	return 0;
 #endif
 #endif
 }

@@ -45,15 +45,15 @@ Author:
 ** Do    : Get time.
 **********************************************/
 struct tm *qGetTime(void) {
-  time_t nowtime;
-  static struct tm *nowlocaltime;
+	time_t nowtime;
+	static struct tm *nowlocaltime;
 
-  nowtime = time(NULL);
-  nowlocaltime = localtime(&nowtime);
-  nowlocaltime->tm_year += 1900;
-  nowlocaltime->tm_mon++;
+	nowtime = time(NULL);
+	nowlocaltime = localtime(&nowtime);
+	nowlocaltime->tm_year += 1900;
+	nowlocaltime->tm_mon++;
 
-  return nowlocaltime;
+	return nowlocaltime;
 }
 
 /**********************************************
@@ -63,16 +63,16 @@ struct tm *qGetTime(void) {
 ** Note  : plus_sec will be added to current time.
 **********************************************/
 time_t qGetGMTime(char *gmt, time_t plus_sec) {
-  time_t nowtime;
-  struct tm *nowgmtime;
+	time_t nowtime;
+	struct tm *nowgmtime;
 
-  nowtime = time(NULL);
-  nowtime += plus_sec;
-  nowgmtime = gmtime(&nowtime);
+	nowtime = time(NULL);
+	nowtime += plus_sec;
+	nowgmtime = gmtime(&nowtime);
 
-  strftime(gmt, 256, "%a, %d-%b-%Y %H:%M:%S GMT", nowgmtime);
+	strftime(gmt, 256, "%a, %d-%b-%Y %H:%M:%S GMT", nowgmtime);
 
-  return nowtime;
+	return nowtime;
 }
 
 /**********************************************
@@ -81,11 +81,11 @@ time_t qGetGMTime(char *gmt, time_t plus_sec) {
 ** Do    : get time string.
 **********************************************/
 char *qGetTimeStr(void) {
-  static char datestr[14+1];
-  struct tm *time;
+	static char datestr[14+1];
+	struct tm *time;
 
-  time = qGetTime();
-  sprintf(datestr, "%04d%02d%02d%02d%02d%02d", time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
+	time = qGetTime();
+	sprintf(datestr, "%04d%02d%02d%02d%02d%02d", time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
 
-  return datestr;
+	return datestr;
 }

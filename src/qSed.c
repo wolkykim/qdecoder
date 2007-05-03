@@ -49,22 +49,22 @@ Author:
 ** ex) qValueAdd("NAME", "Seung-young Kim");
 **********************************************/
 Q_Entry *qSedArgAdd(Q_Entry *first, char *name, char *format, ...) {
-  Q_Entry *new_entry;
-  char value[1024];
-  int status;
-  va_list arglist;
+	Q_Entry *new_entry;
+	char value[1024];
+	int status;
+	va_list arglist;
 
-  if(!strcmp(name, "")) qError("qSedArgAdd(): can not add empty name.");
+	if (!strcmp(name, "")) qError("qSedArgAdd(): can not add empty name.");
 
-  va_start(arglist, format);
-  status = vsprintf(value, format, arglist);
-  if(strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSedArgAdd(): Message is too long or invalid.");
-  va_end(arglist);
+	va_start(arglist, format);
+	status = vsprintf(value, format, arglist);
+	if (strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSedArgAdd(): Message is too long or invalid.");
+	va_end(arglist);
 
-  new_entry = _EntryAdd(first, name, value, 1);
-  if(!first) first = new_entry;
+	new_entry = _EntryAdd(first, name, value, 1);
+	if (!first) first = new_entry;
 
-  return first;
+	return first;
 }
 
 /**********************************************
@@ -75,14 +75,14 @@ Q_Entry *qSedArgAdd(Q_Entry *first, char *name, char *format, ...) {
 ** ex) qSedArgAddDirect(entries, "NAME", value);
 **********************************************/
 Q_Entry *qSedArgAddDirect(Q_Entry *first, char *name, char *value) {
-  Q_Entry *new_entry;
+	Q_Entry *new_entry;
 
-  if(!strcmp(name, "")) qError("qSedArgAddDirect(): can not add empty name.");
+	if (!strcmp(name, "")) qError("qSedArgAddDirect(): can not add empty name.");
 
-  new_entry = _EntryAdd(first, name, value, 1);
-  if(!first) first = new_entry;
+	new_entry = _EntryAdd(first, name, value, 1);
+	if (!first) first = new_entry;
 
-  return first;
+	return first;
 }
 
 /**********************************************
@@ -91,7 +91,7 @@ Q_Entry *qSedArgAddDirect(Q_Entry *first, char *name, char *value) {
 ** Do    : Print all parsed values & names for debugging.
 **********************************************/
 int qSedArgPrint(Q_Entry *first) {
-  return _EntryPrint(first);
+	return _EntryPrint(first);
 }
 
 /**********************************************
@@ -99,7 +99,7 @@ int qSedArgPrint(Q_Entry *first) {
 ** Do    : Make free of linked list memory.
 **********************************************/
 void qSedArgFree(Q_Entry *first) {
-  _EntryFree(first);
+	_EntryFree(first);
 }
 
 /**********************************************
@@ -108,43 +108,42 @@ void qSedArgFree(Q_Entry *first) {
 ** Do    : Stream Editor.
 **********************************************/
 int qSedStr(Q_Entry *first, char *srcstr, FILE *fpout) {
-  Q_Entry *entries;
-  char *sp;
+	Q_Entry *entries;
+	char *sp;
 
-  if(srcstr == NULL) return 0;
+	if (srcstr == NULL) return 0;
 
-  /* Parsing */
-  for(sp = srcstr; *sp != '\0'; sp++) {
-    int flag;
+	/* Parsing */
+	for (sp = srcstr; *sp != '\0'; sp++) {
+		int flag;
 
-    /* SSI invocation */
-    if(!strncmp(sp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
-      char ssi_inc_file[1024], *endp;
-      if((endp = strstr(sp, SSI_INCLUDE_END)) != NULL) {
-        sp += strlen(SSI_INCLUDE_START);
-        strncpy(ssi_inc_file, sp, endp - sp);
-        ssi_inc_file[endp-sp] = '\0';
-        sp = (endp + strlen(SSI_INCLUDE_END)) - 1;
+		/* SSI invocation */
+		if (!strncmp(sp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
+			char ssi_inc_file[1024], *endp;
+			if ((endp = strstr(sp, SSI_INCLUDE_END)) != NULL) {
+				sp += strlen(SSI_INCLUDE_START);
+				strncpy(ssi_inc_file, sp, endp - sp);
+				ssi_inc_file[endp-sp] = '\0';
+				sp = (endp + strlen(SSI_INCLUDE_END)) - 1;
 
-        if(qCheckFile(ssi_inc_file) == 1) qSedFile(first, ssi_inc_file, fpout);
-        else printf("[qSedStr: an error occurred while processing 'include' directive - file(%s) open fail]", ssi_inc_file);
-      }
-      else printf("[qSedStr: an error occurred while processing 'include' directive - ending tag not found]");
-      continue;
-    }
+				if (qCheckFile(ssi_inc_file) == 1) qSedFile(first, ssi_inc_file, fpout);
+				else printf("[qSedStr: an error occurred while processing 'include' directive - file(%s) open fail]", ssi_inc_file);
+			} else printf("[qSedStr: an error occurred while processing 'include' directive - ending tag not found]");
+			continue;
+		}
 
-    /* Pattern Matching */
-    for(entries = first, flag = 0; entries && flag == 0; entries = entries->next) {
-      if(!strncmp(sp, entries->name, strlen(entries->name))) {
-        fprintf(fpout, "%s", entries->value);
-        sp += strlen(entries->name) - 1;
-        flag = 1;
-      }
-    }
-    if(flag == 0) fprintf(fpout, "%c", *sp);
-  }
+		/* Pattern Matching */
+		for (entries = first, flag = 0; entries && flag == 0; entries = entries->next) {
+			if (!strncmp(sp, entries->name, strlen(entries->name))) {
+				fprintf(fpout, "%s", entries->value);
+				sp += strlen(entries->name) - 1;
+				flag = 1;
+			}
+		}
+		if (flag == 0) fprintf(fpout, "%c", *sp);
+	}
 
-  return 1;
+	return 1;
 }
 
 /**********************************************
@@ -153,13 +152,13 @@ int qSedStr(Q_Entry *first, char *srcstr, FILE *fpout) {
 ** Do    : Stream Editor.
 **********************************************/
 int qSedFile(Q_Entry *first, char *filename, FILE *fpout) {
-  char *sp;
-  int flag;
+	char *sp;
+	int flag;
 
-  if((sp = qReadFile(filename, NULL)) == NULL) return 0;
-  flag = qSedStr(first, sp, fpout);
-  free(sp);
+	if ((sp = qReadFile(filename, NULL)) == NULL) return 0;
+	flag = qSedStr(first, sp, fpout);
+	free(sp);
 
-  return flag;
+	return flag;
 }
 

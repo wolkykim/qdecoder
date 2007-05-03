@@ -74,7 +74,8 @@ typedef struct Q_Entry {
 	char *name;
 	char *value;
 	struct Q_Entry *next;
-} Q_Entry;
+}
+Q_Entry;
 
 typedef struct {
 	char *auth_type;
@@ -109,7 +110,8 @@ typedef struct {
 
 	/* Miscellaneous Informations Supported by qDecoder */
 	int	year, mon, day, hour, min, sec;
-} Q_CGIenv;
+}
+Q_CGIenv;
 
 /*
  * Structure for Independent Database Interface
@@ -129,13 +131,15 @@ typedef struct {
 		char	password[31+1];
 		char	database[31+1];
 		int	autocommit;
-	} info;
+	}
+	info;
 
 	// for mysql database
 #ifdef _Q_WITH_MYSQL
 	MYSQL		mysql;
 #endif
-} Q_DB;
+}
+Q_DB;
 
 /*
  * Structure for Database Result Set
@@ -149,7 +153,8 @@ typedef struct {
 	int		cols;
 	int		cursor;
 #endif
-} Q_DBRESULT;
+}
+Q_DBRESULT;
 #endif
 
 /*
@@ -167,7 +172,8 @@ typedef struct {
 	int	nRotateInterval;
 	int	nNextRotate;
 	int	nFlushFlag;
-} Q_LOG;
+}
+Q_LOG;
 
 /* qDecoder C++ support */
 #ifdef __cplusplus

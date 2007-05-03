@@ -58,98 +58,97 @@ Author:
 **         #hmm = this is comments      => (skip comment)
 **********************************************/
 Q_Entry *qfDecoder(char *file) {
-  Q_Entry *first, *entries;
-  char *str, *p;
+	Q_Entry *first, *entries;
+	char *str, *p;
 
-  p = str = qReadFile(file, NULL);
-  if(str == NULL) return NULL;
+	p = str = qReadFile(file, NULL);
+	if (str == NULL) return NULL;
 
-  /* processing include directive */
-  while((p = strstr(p, _INCLUDE_DIRECTIVE)) != NULL) {
+	/* processing include directive */
+	while ((p = strstr(p, _INCLUDE_DIRECTIVE)) != NULL) {
 
-    if(p == str || p[-1] == '\n') {
-      char buf[1024], *e, *t = NULL;
-      int len;
+		if (p == str || p[-1] == '\n') {
+			char buf[1024], *e, *t = NULL;
+			int len;
 
-      /* parse filename */
-      for(e = p + strlen(_INCLUDE_DIRECTIVE); *e != '\n' && *e != '\0'; e++);
-      len = e - (p + strlen(_INCLUDE_DIRECTIVE));
-      if(len >= sizeof(buf)) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
-      strncpy(buf, p + strlen(_INCLUDE_DIRECTIVE), len);
-      buf[len] = '\0';
-      qRemoveSpace(buf);
+			/* parse filename */
+			for (e = p + strlen(_INCLUDE_DIRECTIVE); *e != '\n' && *e != '\0'; e++);
+			len = e - (p + strlen(_INCLUDE_DIRECTIVE));
+			if (len >= sizeof(buf)) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
+			strncpy(buf, p + strlen(_INCLUDE_DIRECTIVE), len);
+			buf[len] = '\0';
+			qRemoveSpace(buf);
 
-      /* adjust file path */
-      if(!(buf[0] == '/' || buf[0] == '\\')) {
-        char tmp[1024], *dir;
-        dir = dirname(file);
-        if(strlen(dir)+1+strlen(buf) >= sizeof(buf)) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
-        sprintf(tmp, "%s/%s", dir, buf);
-        strcpy(buf, tmp);
-      }
+			/* adjust file path */
+			if (!(buf[0] == '/' || buf[0] == '\\')) {
+				char tmp[1024], *dir;
+				dir = dirname(file);
+				if (strlen(dir) + 1 + strlen(buf) >= sizeof(buf)) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
+				sprintf(tmp, "%s/%s", dir, buf);
+				strcpy(buf, tmp);
+			}
 
-      /* read file */
-      if(strlen(buf) == 0 || (t = qReadFile(buf, NULL)) == NULL) qError("qfDecoder(): Can't process '%s%s' directive.", _INCLUDE_DIRECTIVE, buf);
+			/* read file */
+			if (strlen(buf) == 0 || (t = qReadFile(buf, NULL)) == NULL) qError("qfDecoder(): Can't process '%s%s' directive.", _INCLUDE_DIRECTIVE, buf);
 
-      /* replace */
-      strncpy(buf, p, strlen(_INCLUDE_DIRECTIVE) + len);
-      buf[strlen(_INCLUDE_DIRECTIVE) + len] = '\0';
-      p = qStrReplace("sn", str, buf, t);
-      free(t);
-      free(str);
-      str = p;
-    }
-    else {
-      p += strlen(_INCLUDE_DIRECTIVE);
-    }
-  }
+			/* replace */
+			strncpy(buf, p, strlen(_INCLUDE_DIRECTIVE) + len);
+			buf[strlen(_INCLUDE_DIRECTIVE) + len] = '\0';
+			p = qStrReplace("sn", str, buf, t);
+			free(t);
+			free(str);
+			str = p;
+		} else {
+			p += strlen(_INCLUDE_DIRECTIVE);
+		}
+	}
 
-  /* decode */
-  first = qsDecoder(str);
-  free(str);
+	/* decode */
+	first = qsDecoder(str);
+	free(str);
 
-  /* processing ${} directive */
-  for(entries = first; entries; entries = entries->next) {
-    p = entries->value;
-    while((p = strstr(p, _VAR_OPEN)) != NULL) {
-      char buf[256], *e, *t;
-      int len, freet = 0;
+	/* processing ${} directive */
+	for (entries = first; entries; entries = entries->next) {
+		p = entries->value;
+		while ((p = strstr(p, _VAR_OPEN)) != NULL) {
+			char buf[256], *e, *t;
+			int len, freet = 0;
 
-      /* parse variable name */
-      if((e = strstr(p + strlen(_VAR_OPEN), _VAR_CLOSE)) == NULL) break;
-      len = e - (p + strlen(_VAR_OPEN));
-      if(len >= sizeof(buf)) break; /* length between ${ , } */
-      strncpy(buf, p + strlen(_VAR_OPEN), len);
-      buf[len] = '\0';
-      qRemoveSpace(buf);
+			/* parse variable name */
+			if ((e = strstr(p + strlen(_VAR_OPEN), _VAR_CLOSE)) == NULL) break;
+			len = e - (p + strlen(_VAR_OPEN));
+			if (len >= sizeof(buf)) break; /* length between ${ , } */
+			strncpy(buf, p + strlen(_VAR_OPEN), len);
+			buf[len] = '\0';
+			qRemoveSpace(buf);
 
-      /* find value */
-      switch(buf[0]) {
-        case _VAR_CMD : {
-          if((t = qRemoveSpace(qCmd(buf+1))) == NULL) t = "";
-          else freet = 1;
-          break;
-        }
-        case _VAR_ENV : {
-          t = qGetenvDefault("", buf+1);
-          break;
-        }
-        default : {
-          if((t = _EntryValue(first, buf)) == NULL) t = "";
-          break;
-        }
-      }
+			/* find value */
+			switch (buf[0]) {
+				case _VAR_CMD : {
+					if ((t = qRemoveSpace(qCmd(buf + 1))) == NULL) t = "";
+					else freet = 1;
+					break;
+				}
+				case _VAR_ENV : {
+					t = qGetenvDefault("", buf + 1);
+					break;
+				}
+				default : {
+					if ((t = _EntryValue(first, buf)) == NULL) t = "";
+					break;
+				}
+			}
 
-      /* replace */
-      strncpy(buf, p, strlen(_VAR_OPEN) + len + strlen(_VAR_CLOSE));
-      buf[strlen(_VAR_OPEN) + len + strlen(_VAR_CLOSE)] = '\0';
+			/* replace */
+			strncpy(buf, p, strlen(_VAR_OPEN) + len + strlen(_VAR_CLOSE));
+			buf[strlen(_VAR_OPEN) + len + strlen(_VAR_CLOSE)] = '\0';
 
-      p = qStrReplace("sn", entries->value, buf, t);
-      if(freet == 1) free(t);
-      free(entries->value);
-      entries->value = qRemoveSpace(p);
-    }
-  }
+			p = qStrReplace("sn", entries->value, buf, t);
+			if (freet == 1) free(t);
+			free(entries->value);
+			entries->value = qRemoveSpace(p);
+		}
+	}
 
-  return first;
+	return first;
 }

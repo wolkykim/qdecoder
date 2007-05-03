@@ -44,9 +44,9 @@ Author:
 ** Do    : De-allocate all reserved memories.
 **********************************************/
 void qFreeAll(void) {
-  qFree();
-  qSessionFree();
-  qAwkClose();
+	qFree();
+	qSessionFree();
+	qAwkClose();
 }
 
 /**********************************************
@@ -55,12 +55,12 @@ void qFreeAll(void) {
 **         all reserved memories.
 **********************************************/
 void qReset(void) {
-  qFreeAll();
+	qFreeAll();
 
-  /* reset static variables */
-  qErrorLog(NULL);
-  qErrorContact(NULL);
-  qResetContentFlag();
+	/* reset static variables */
+	qErrorLog(NULL);
+	qErrorContact(NULL);
+	qResetContentFlag();
 }
 
 /**********************************************
@@ -69,20 +69,20 @@ void qReset(void) {
 ** Do    : Generate unique id for each connection.
 **********************************************/
 char *qUniqueID(void) {
-  char parm[256];
-  static char uniqid[16 * 2 + 1];
+	char parm[256];
+	static char uniqid[16 * 2 + 1];
 
 #ifdef _WIN32
-  struct tm *envtime;
-  envtime = qGetTime();
-  sprintf(parm, "%04d%02d%02d%02d%02d%02d-%s:%s", envtime->tm_year, envtime->tm_mon, envtime->tm_mday, envtime->tm_hour, envtime->tm_min, envtime->tm_sec , qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
+	struct tm *envtime;
+	envtime = qGetTime();
+	sprintf(parm, "%04d%02d%02d%02d%02d%02d-%s:%s", envtime->tm_year, envtime->tm_mon, envtime->tm_mday, envtime->tm_hour, envtime->tm_min, envtime->tm_sec , qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
 #else
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  sprintf(parm, "%ld.%ld-%s:%s", tv.tv_sec, tv.tv_usec, qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	sprintf(parm, "%ld.%ld-%s:%s", tv.tv_sec, tv.tv_usec, qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
 #endif
 
-  strcpy(uniqid, qMD5Str(parm));
+	strcpy(uniqid, qMD5Str(parm));
 
-  return uniqid;
+	return uniqid;
 }
