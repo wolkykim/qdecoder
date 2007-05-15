@@ -37,7 +37,6 @@ Author:
 
 char    _x2c(char hex_up, char hex_low);
 char    *_makeword(char *str, char stop);
-char    *_strtok2(char *str, char *token, char *retstop);
 char    *_fgets(char *str, int size, FILE *stream);
 int     _flockopen(FILE *fp);
 int     _flockclose(FILE *fp);

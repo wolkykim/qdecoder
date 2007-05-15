@@ -230,7 +230,7 @@ void qPuts(int mode, char *buf) {
 
 		token = " `(){}[]<>\"',\r\n";
 		lastretstop = '0'; /* any character except space */
-		ptr = _strtok2(buf, token, &retstop);
+		ptr = qStrtok(buf, token, &retstop);
 
 		for (linkflag = ignoreflag = 0; ptr != NULL;) {
 			/* auto link */
@@ -282,7 +282,7 @@ void qPuts(int mode, char *buf) {
 			}
 
 			lastretstop = retstop;
-			ptr = _strtok2(NULL, token, &retstop);
+			ptr = qStrtok(NULL, token, &retstop);
 		}
 	}
 }
@@ -556,6 +556,34 @@ int qStrincmp(char *s1, char *s2, size_t len) {
 	free(s1p), free(s2p);
 
 	return result;
+}
+
+/*********************************************
+** Usage : qStrtok(string, token stop string, return stop character);
+** Do    : Find token string. (usage like strtok())
+** Return: Pointer of token & character of stop.
+**********************************************/
+char *qStrtok(char *str, char *token, char *retstop) {
+	static char *tokensp, *tokenep;
+	int i, j;
+
+	if (str != NULL) tokensp = tokenep = str;
+	else tokensp = tokenep;
+
+	for (i = strlen(token);*tokenep;tokenep++) {
+		for (j = 0; j < i; j++) {
+			if (*tokenep == token[j]) {
+				if (retstop != NULL) *retstop = token[j];
+				*tokenep = '\0';
+				tokenep++;
+				return tokensp;
+			}
+		}
+	}
+
+	if (retstop != NULL) *retstop = '\0';
+	if (tokensp != tokenep) return tokensp;
+	return NULL;
 }
 
 /**********************************************

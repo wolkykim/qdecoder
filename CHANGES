@@ -27,6 +27,7 @@ qDecoder Changes
     ADD) qStrdupBetween();
     ADD) qfGets();
     ADD) qCmd();
+    ADD) qStrtok();
 
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive

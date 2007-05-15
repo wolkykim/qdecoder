@@ -78,34 +78,6 @@ char *_makeword(char *str, char stop) {
 }
 
 /*********************************************
-** Usage : _strtok2(string, token stop string, return stop character);
-** Do    : Find token string. (usage like strtok())
-** Return: Pointer of token & character of stop.
-**********************************************/
-char *_strtok2(char *str, char *token, char *retstop) {
-	static char *tokensp, *tokenep;
-	int i, j;
-
-	if (str != NULL) tokensp = tokenep = str;
-	else tokensp = tokenep;
-
-	for (i = strlen(token);*tokenep;tokenep++) {
-		for (j = 0; j < i; j++) {
-			if (*tokenep == token[j]) {
-				*retstop = token[j];
-				*tokenep = '\0';
-				tokenep++;
-				return tokensp;
-			}
-		}
-	}
-
-	*retstop = '\0';
-	if (tokensp != tokenep) return tokensp;
-	return NULL;
-}
-
-/*********************************************
 ** Usage : This function is perfectly same as fgets();
 **********************************************/
 char *_fgets(char *str, int size, FILE *stream) {

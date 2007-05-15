@@ -288,6 +288,7 @@ char	*qStrlwr(char *str);
 char	*qStristr(char *big, char *small);
 int	qStricmp(char *s1, char *s2);
 int	qStrincmp(char *s1, char *s2, size_t len);
+char	*qStrtok(char *str, char *token, char *retstop);
 char	*qitocomma(int value);
 char    *qStrcat(char *str, char *format, ...);
 char	*qStrdupBetween(char *str, char *start, char *end);
