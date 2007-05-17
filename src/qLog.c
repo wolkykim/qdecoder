@@ -87,7 +87,7 @@ static int _realOpen(Q_LOG *log) {
 	if (log->nRotateInterval > 0) {
 		time_t ct = time(NULL);
 		time_t dt = ct - mktime(gmtime(&ct));
-		log->nNextRotate = (((ct + dt) / log->nRotateInterval) + 1) * log->nRotateInterval;
+		log->nNextRotate = (((ct + dt) / log->nRotateInterval) + 1) * log->nRotateInterval - dt;
 	} else {
 		log->nNextRotate = 0;
 	}
