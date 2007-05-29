@@ -81,11 +81,13 @@ Q_Entry *qfDecoder(char *file) {
 
 			/* adjust file path */
 			if (!(buf[0] == '/' || buf[0] == '\\')) {
-				char tmp[1024], *dir;
-				dir = dirname(file);
+				char tmp[1024], *dir, *newfile;
+				newfile = strdup(file);
+				dir = dirname(newfile);
 				if (strlen(dir) + 1 + strlen(buf) >= sizeof(buf)) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
 				sprintf(tmp, "%s/%s", dir, buf);
 				strcpy(buf, tmp);
+				free(newfile);
 			}
 
 			/* read file */
