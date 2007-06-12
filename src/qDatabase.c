@@ -76,6 +76,18 @@ Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password
 ** Return: If succeed, returns 1, Or, returns 0.
 ** Do    :
 **********************************************/
+int qDbFree(Q_DB *db)  {
+	if (db == NULL) return 0;
+	qDbClose(db);
+	free(db);
+	return 1;
+}
+
+/**********************************************
+** Usage :
+** Return: If succeed, returns 1, Or, returns 0.
+** Do    :
+**********************************************/
 int qDbOpen(Q_DB *db) {
 	if (db == NULL) return 0;
 

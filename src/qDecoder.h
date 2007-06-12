@@ -382,6 +382,7 @@ FILE	*qSocketConv2file(int sockfd);
 #ifdef _Q_SUPPORT_DATABASE
 
 Q_DB	*qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, int autocommit);
+int	qDbFree(Q_DB *db);
 int	qDbOpen(Q_DB *db);
 int	qDbClose(Q_DB *db);
 char	*qDbGetErrMsg(Q_DB *db);
