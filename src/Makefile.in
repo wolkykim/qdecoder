@@ -53,8 +53,10 @@ LIBDIR		= @libdir@
 HEADERDIR	= @includedir@
 
 # Database Supports
-WITH_MYSQL      =
-MYSQL_INCLUDE   =
+#WITH_MYSQL	= -DWITH_MYSQL
+WITH_MYSQL	=
+#MYSQL_INCLUDE	= -I/usr/local/include/mysql
+MYSQL_INCLUDE	=
 
 # Which compiler & options for release
 CC		= @CC@
