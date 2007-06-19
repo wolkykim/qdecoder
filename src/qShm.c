@@ -69,12 +69,16 @@ int qShmInit(char *pszKeyPath, size_t nSize, int nIfExistsDestroy) {
 /**********************************************
 ** Usage :
 ** Return: In case of success returns shared memory
-**         pointer. Otherwise returns -1;
+**         pointer. Otherwise returns NULL.
 ** Do    :
 **********************************************/
 void *qShmGet(int nShmId) {
-	if (nShmId < 0) return -1;
-	return shmat(nShmId, 0, 0);
+	void *pShm;
+
+	if (nShmId < 0) return NULL;
+	pShm = shmat(nShmId, 0, 0);
+	if(pShm == (void *)-1) return NULL;
+	return pShm;
 }
 
 /**********************************************
