@@ -426,9 +426,10 @@ int	qDbRollback(Q_DB *db);
 /*
  * qShm.c
  */
-int	qShmInit(char *pszKeyPath, size_t nSize);
+int	qShmInit(char *pszKeyPath, size_t nSize, int nIfExistsDestroy);
 void	*qShmGet(int nShmId);
 int	qShmFree(int nShmId);
+int     qShmDestroy(char *pszKeyPath);
 
 #ifdef __cplusplus
 }

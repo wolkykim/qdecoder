@@ -32,6 +32,7 @@ qDecoder Changes
     REM) qMisc.c
     REM) qUniqueID();
     ADD) qUniqId(); - 유니크성을 강화
+    FIX) qSocketClose() = 리턴 1/0으로 바꿈
 
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive

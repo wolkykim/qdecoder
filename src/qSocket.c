@@ -80,12 +80,13 @@ int qSocketOpen(char *hostname, int port) {
 
 /**********************************************
 ** Usage : qSocketClose(sockfd)
-** Return: returns the value 0 if successful,
-**         otherwise returns the value -1.
+** Return: returns the value 1 if successful,
+**         otherwise returns the value 0.
 ** Do    : close socket.
 **********************************************/
 int qSocketClose(int sockfd) {
-	return close(sockfd);
+	if(close(sockfd) == 0) return 1;
+	return 0;
 }
 
 /**********************************************

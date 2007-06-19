@@ -659,7 +659,7 @@ char *qUniqId(void) {
 	static int nInit = 0;
 	static char szUniqId[16 * 2 + 1];
 	char szSeed[256];
-	long nUsec;
+	long int nUsec;
 
 	if(nInit == 0) {
         	srandom((unsigned)time(NULL) + (unsigned)getpid());
