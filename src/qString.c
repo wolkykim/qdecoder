@@ -649,3 +649,33 @@ char *qStrdupBetween(char *str, char *start, char *end) {
 
 	return buf;
 }
+
+/**********************************************
+** Usage : qUniqueID();
+** Return: Unique string depend on client.
+** Do    : Generate unique id for each connection.
+**********************************************/
+char *qUniqId(void) {
+	static int nInit = 0;
+	static char szUniqId[16 * 2 + 1];
+	char szSeed[256];
+	long nUsec;
+
+	if(nInit == 0) {
+        	srandom((unsigned)time(NULL) + (unsigned)getpid());
+        	nInit = 1;
+        }
+
+#ifdef _WIN32
+	nUsec = 0;
+#else
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	nUsec = tv.tv_usec;
+#endif
+
+	sprintf(szSeed, "%ld-%ld.%ld-%s:%s", random(), time(NULL), nUsec, qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
+	strcpy(szUniqId, qMD5Str(szSeed));
+
+	return szUniqId;
+}

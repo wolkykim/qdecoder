@@ -310,7 +310,7 @@ static int _parse_multipart_data(void) {
 			if (upload_id != NULL) {
 				if (_upload_base_init == 0) qError("_parse_multipart_data(): qDecoderSetUploadBase() must be called before.");
 
-				if (strlen(upload_id) == 0) upload_id = qUniqueID();
+				if (strlen(upload_id) == 0) upload_id = qUniqId();
 				upload_type = 1; /* turn on the flag - save into file directly */
 
 				/* generate temporary uploading directory path */
@@ -1192,4 +1192,27 @@ char *qCookieValue(char *format, ...) {
 	}
 
 	return NULL;
+}
+
+/**********************************************
+** Usage : qFreeAll();
+** Do    : De-allocate all reserved memories.
+**********************************************/
+void qFreeAll(void) {
+	qFree();
+	qSessionFree();
+}
+
+/**********************************************
+** Usage : qReset();
+** Do    : Reset all static flags and de-allocate
+**         all reserved memories.
+**********************************************/
+void qReset(void) {
+	qFreeAll();
+
+	/* reset static variables */
+	qErrorLog(NULL);
+	qErrorContact(NULL);
+	qResetContentFlag();
 }

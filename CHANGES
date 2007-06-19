@@ -28,6 +28,10 @@ qDecoder Changes
     ADD) qfGets();
     ADD) qCmd();
     ADD) qStrtok();
+    FIX) qAwk.c
+    REM) qMisc.c
+    REM) qUniqueID();
+    ADD) qUniqId(); - 유니크성을 강화
 
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive

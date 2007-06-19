@@ -52,16 +52,20 @@ SLIBREALNAME	= ${SLIBNAME}.${SLIBVERSION}
 LIBDIR		= @libdir@
 HEADERDIR	= @includedir@
 
-# Database Supports
+# To Support Database
 #WITH_MYSQL	= -DWITH_MYSQL
 WITH_MYSQL	=
 #MYSQL_INCLUDE	= -I/usr/local/include/mysql
 MYSQL_INCLUDE	=
 
+# To Support IPC
+#WITH_IPC	= -DWITH_IPC
+WITH_IPC	=
+
 # Which compiler & options for release
 CC		= @CC@
 CFLAGS		= @CFLAGS@
-DEFS		= @DEFS@ ${WITH_MYSQL}
+DEFS		= @DEFS@ ${WITH_MYSQL} ${WITH_IPC}
 INCLUDE		= -I./ ${MYSQL_INCLUDE}
 
 # Utilities
@@ -79,11 +83,11 @@ RM		= @RM@
 # Objects List
 OBJ		= qDecoder.o \
 		qSession.o \
+		qHttpHeader.o \
+		qEnv.o \
+		qError.o \
 		qfDecoder.o \
 		qsDecoder.o \
-		qHttpHeader.o \
-		qError.o \
-		qEnv.o \
 		qEncode.o \
 		qString.o \
 		qFile.o \
@@ -94,10 +98,10 @@ OBJ		= qDecoder.o \
 		qCount.o \
 		qDownload.o \
 		qTime.o \
+		qLog.o \
 		qSocket.o \
 		qDatabase.o \
-		qLog.o \
-		qMisc.o \
+		qShm.o \
 		qInternalCommon.o \
 		qInternalEntry.o \
 		md5/md5c.o

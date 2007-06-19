@@ -40,46 +40,38 @@ Author:
 
 
 /**********************************************
-** Static Values Definition used only internal
-**********************************************/
-
-static FILE *_awkfp = NULL;
-static char _awkdelim = ' ';
-
-
-/**********************************************
-** Usage : qAwkOpen(filename, field-delimeter);
-** Return: Success 1, Fail 0.
+** Usage : qAwkOpen(filename);
+** Return: Success returns file pointer, Fail returns NULL.
 ** Do    : Open file to scan pattern. (similar to unix command awk)
 **
 ** ex) qAwkOpen("source.dat", ':');
 **********************************************/
-int qAwkOpen(char *filename, char delim) {
-	if (_awkfp != NULL) qError("qAwkOpen(): There is already opened handle.");
-	if ((_awkfp = fopen(filename, "r")) == NULL) return 0;
-	_awkdelim = delim;
-	return 1;
+FILE *qAwkOpen(char *filename) {
+	FILE *fp;
+
+	if (fp != NULL) qError("qAwkOpen(): There is already opened handle.");
+	if ((fp = fopen(filename, "r")) == NULL) return NULL;
+	return fp;
 }
 
 /**********************************************
-** Usage : qAwkNext(array);
+** Usage : qAwkNext(array, field-delimeter);
 ** Return: Success number of field, End of file -1.
 ** Do    : Scan one line. (Unlimited line length)
 **
 ** ex) char array[10][1024];
 **     qAwkNext(array);
 **********************************************/
-int qAwkNext(char array[][1024]) {
+int qAwkNext(FILE *fp, char array[][1024], char delim) {
 	char *buf;
-	int i;
+	int num;
 
-	if (_awkfp == NULL) qError("qAwkNext(): There is no opened handle.");
-	if ((buf = qRemoveSpace(qfGetLine(_awkfp))) == NULL) return -1;
-
-	i = qAwkStr(array, buf, _awkdelim);
+	if (fp == NULL) qError("qAwkNext(): There is no opened handle.");
+	if ((buf = qRemoveSpace(qfGetLine(fp))) == NULL) return -1;
+	num = qAwkStr(array, buf, delim);
 	free(buf);
 
-	return i;
+	return num;
 }
 
 /**********************************************
@@ -87,13 +79,10 @@ int qAwkNext(char array[][1024]) {
 ** Return: Success 1, Fail 0.
 ** Do    : Close file.
 **********************************************/
-int qAwkClose(void) {
-	if (_awkfp == NULL) return 0;
-	fclose(_awkfp);
-	_awkfp = NULL;
-	_awkdelim = ' ';
-
-	return 1;
+int qAwkClose(FILE *fp) {
+	if (fp == NULL) return 0;
+	if(fclose(fp) == 0) return 1;
+	return 0;
 }
 
 /**********************************************

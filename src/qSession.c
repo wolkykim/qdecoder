@@ -114,7 +114,7 @@ int qSession(char *repository) {
 	/* check session status & get session id */
 	sessionkey = qValue(SESSION_ID);
 	if (sessionkey == NULL) {  /* new session */
-		sessionkey = qUniqueID();
+		sessionkey = qUniqId();
 		new_session = 1;
 	} else {
 		new_session = 0;
@@ -133,7 +133,7 @@ int qSession(char *repository) {
 			unlink(_session_timeout_path);
 
 			/* remake storage path */
-			sessionkey = qUniqueID();
+			sessionkey = qUniqId();
 			sprintf(_session_storage_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 			sprintf(_session_timeout_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 

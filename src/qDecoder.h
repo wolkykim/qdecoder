@@ -198,9 +198,13 @@ void	qValueRemove(char *format, ...);
 char	qValueType(char *format, ...);
 int	qPrint(void);
 void	qFree(void);
+
 void	qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
 void	qCookieRemove(char *name, char *path, char *domain, char *secure);
 char	*qCookieValue(char *format, ...);
+
+void	qFreeAll(void);
+void	qReset(void);
 
 /*
  * qSession.c
@@ -292,6 +296,7 @@ char	*qStrtok(char *str, char *token, char *retstop);
 char	*qitocomma(int value);
 char    *qStrcat(char *str, char *format, ...);
 char	*qStrdupBetween(char *str, char *start, char *end);
+char	*qUniqId(void);
 
 /*
  * qFile.c
@@ -325,9 +330,9 @@ void	qArgFree(char **qlist);
 /*
  * qAwk.c
  */
-int	qAwkOpen(char *filename, char separator);
-int	qAwkNext(char array[][1024]);
-int	qAwkClose(void);
+FILE	*qAwkOpen(char *filename);
+int	qAwkNext(FILE *fp, char array[][1024], char delim);
+int	qAwkClose(FILE *fp);
 int	qAwkStr(char array[][1024], char *str, char delim);
 
 /*
@@ -359,6 +364,15 @@ int	qDownloadMime(char *filename, char *mime);
 struct tm *qGetTime(void);
 time_t	qGetGMTime(char *gmt, time_t plus_sec);
 char	*qGetTimeStr(void);
+
+/*
+ * qLog.c
+ */
+Q_LOG	*qLogOpen(char *pszLogBase, char *pszFilenameFormat, int nRotateInterval, int nFlushFlag);
+int	qLogClose(Q_LOG *log);
+int	qLogSetConsole(Q_LOG *log, int nFlag);
+int	qLogFlush(Q_LOG *log);
+int	qLog(Q_LOG *log, char *pszFormat, ...);
 
 /*
  * qSocket.c
@@ -410,20 +424,11 @@ int	qDbRollback(Q_DB *db);
 #endif
 
 /*
- * qLog.c
+ * qShm.c
  */
-Q_LOG	*qLogOpen(char *pszLogBase, char *pszFilenameFormat, int nRotateInterval, int nFlushFlag);
-int	qLogClose(Q_LOG *log);
-int	qLogSetConsole(Q_LOG *log, int nFlag);
-int	qLogFlush(Q_LOG *log);
-int	qLog(Q_LOG *log, char *pszFormat, ...);
-
-/*
- * qMisc.c
- */
-void	qFreeAll(void);
-void	qReset(void);
-char	*qUniqueID(void);
+int	qShmInit(char *pszKeyPath, size_t nSize);
+void	*qShmGet(int nShmId);
+int	qShmFree(int nShmId);
 
 #ifdef __cplusplus
 }
