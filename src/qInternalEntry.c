@@ -126,27 +126,54 @@ Q_Entry *_EntryRemove(Q_Entry *first, char *name) {
 /**********************************************
 ** Usage : _EntryValue(pointer of the first entry, name);
 ** Return: Success pointer of value string, Fail NULL.
-** Do    : Find value string pointer.
-**         It find value in linked list.
+** Do    : Find the value string pointer in linked list.
 **********************************************/
 char *_EntryValue(Q_Entry *first, char *name) {
 	Q_Entry *entries;
 
 	for (entries = first; entries; entries = entries->next) {
-		if (!strcmp(name, entries->name))return (entries->value);
+		if (!strcmp(name, entries->name)) return entries->value;
 	}
 	return NULL;
 }
 
 /**********************************************
+** Usage : _EntryValue(pointer of the first entry, name);
+** Return: Success pointer of value string, Fail NULL.
+** Do    : Find the last value string pointer in linked list.
+**********************************************/
+char *_EntryValueLast(Q_Entry *first, char *name) {
+	Q_Entry *entries;
+	char *value = NULL;
+
+	for (entries = first; entries; entries = entries->next) {
+		if (!strcmp(name, entries->name)) value = entries->value;
+	}
+	return value;
+}
+
+/**********************************************
 ** Usage : _EntryiValue(pointer of the first entry, name);
 ** Return: Success integer of value string, Fail 0.
-** Do    : Find value string pointer and convert to integer.
+** Do    : Find the value string pointer and convert to integer.
 **********************************************/
 int _EntryiValue(Q_Entry *first, char *name) {
 	char *str;
 
 	str = _EntryValue(first, name);
+	if (str == NULL) return 0;
+	return atoi(str);
+}
+
+/**********************************************
+** Usage : _EntryiValue(pointer of the first entry, name);
+** Return: Success integer of value string, Fail 0.
+** Do    : Find the last value string pointer and convert to integer.
+**********************************************/
+int _EntryiValueLast(Q_Entry *first, char *name) {
+	char *str;
+
+	str = _EntryValueLast(first, name);
 	if (str == NULL) return 0;
 	return atoi(str);
 }
@@ -164,6 +191,24 @@ int _EntryNo(Q_Entry *first, char *name) {
 		if (!strcmp(name, entries->name)) return no;
 	}
 	return 0;
+}
+
+/**********************************************
+** Usage : _EntryReverse(pointer of the first entry);
+** Return: first entry pointer
+** Do    : Reverse the entries
+**********************************************/
+Q_Entry *_EntryReverse(Q_Entry *first) {
+	Q_Entry *entries, *last, *next;
+
+	last = NULL;
+	for (entries = first; entries;) {
+		next = entries->next;
+		entries->next = last;
+		last = entries;
+		entries = next;
+	}
+	return last;
 }
 
 /**********************************************
@@ -241,4 +286,3 @@ Q_Entry *_EntryLoad(char *filename) {
 
 	return first;
 }
-

@@ -228,8 +228,8 @@ time_t	qSessionGetCreated(void);
  * qfDecoder.c
  */
 Q_Entry	*qfDecoder(char *filename);
-#define	qfValue		qsValue
-#define	qfiValue	qsiValue
+char	*qfValue(Q_Entry *first, char *format, ...);
+int	qfiValue(Q_Entry *first, char *format, ...);
 #define	qfValueFirst	qsValueFirst
 #define	qfValueNext	qsValueNext
 #define	qfPrint		qsPrint
