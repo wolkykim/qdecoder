@@ -34,6 +34,9 @@ qDecoder Changes
     ADD) qUniqId(); - 유니크성을 강화
     FIX) qSocketClose() = 리턴 1/0으로 바꿈
     FIX) qfValue(), qfiValue() - 마지막 찾은 값을 리턴하도록
+    REM) qCGIenv()
+    REM) qCGIname();
+    FIX) Q_Entry -> Q_ENTRY
 
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive

@@ -43,7 +43,7 @@ Author:
 ** Static Values Definition used only internal
 **********************************************/
 
-static Q_Entry *_multi_last_entry = NULL;
+static Q_ENTRY *_multi_last_entry = NULL;
 static char _multi_last_key[1024];
 
 
@@ -53,8 +53,8 @@ static char _multi_last_key[1024];
 ** Do    : Save string into linked list.
            # is used for comments.
 **********************************************/
-Q_Entry *qsDecoder(char *str) {
-	Q_Entry *first = NULL, *entry;
+Q_ENTRY *qsDecoder(char *str) {
+	Q_ENTRY *first = NULL, *entry;
 	char  *org, *buf, *offset;
 
 	if (str == NULL) return NULL;
@@ -88,7 +88,7 @@ Q_Entry *qsDecoder(char *str) {
 	return first;
 }
 
-char *qsValue(Q_Entry *first, char *format, ...) {
+char *qsValue(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
 	int status;
 	va_list arglist;
@@ -101,7 +101,7 @@ char *qsValue(Q_Entry *first, char *format, ...) {
 	return _EntryValue(first, name);
 }
 
-int qsiValue(Q_Entry *first, char *format, ...) {
+int qsiValue(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
 	int status;
 	va_list arglist;
@@ -114,7 +114,7 @@ int qsiValue(Q_Entry *first, char *format, ...) {
 	return _EntryiValue(first, name);
 }
 
-char *qsValueFirst(Q_Entry *first, char *format, ...) {
+char *qsValueFirst(Q_ENTRY *first, char *format, ...) {
 	int status;
 	va_list arglist;
 
@@ -130,7 +130,7 @@ char *qsValueFirst(Q_Entry *first, char *format, ...) {
 }
 
 char *qsValueNext(void) {
-	Q_Entry *entries;
+	Q_ENTRY *entries;
 
 	for (entries = _multi_last_entry; entries; entries = entries->next) {
 		if (!strcmp(_multi_last_key, entries->name)) {
@@ -144,11 +144,11 @@ char *qsValueNext(void) {
 	return NULL;
 }
 
-int qsPrint(Q_Entry *first) {
+int qsPrint(Q_ENTRY *first) {
 	return _EntryPrint(first);
 }
 
-void qsFree(Q_Entry *first) {
+void qsFree(Q_ENTRY *first) {
 	_EntryFree(first);
 }
 

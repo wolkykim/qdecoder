@@ -81,7 +81,7 @@ static time_t _updateTimeout(char *filename, time_t timeout_interval);
 static int _session_started = 0;
 static int _session_new = 0;
 static int _session_modified = 0;
-static Q_Entry *_session_first_entry = NULL;
+static Q_ENTRY *_session_first_entry = NULL;
 
 static char _session_repository_path[1024];
 static char _session_storage_path[1024];
@@ -190,10 +190,9 @@ int qSession(char *repository) {
 ** Do    : Add session value.
 **
 ** ex) qSessionAdd("name", "qDecoder");
-**     qSessionAdd("cginame", "%s", qCGIname());
 **********************************************/
 char *qSessionAdd(char *name, char *format, ...) {
-	Q_Entry *new_entry;
+	Q_ENTRY *new_entry;
 	char value[1024];
 	int status;
 	va_list arglist;

@@ -45,6 +45,8 @@ Author:
 #define _VAR_CMD		'!'
 #define _VAR_ENV		'%'
 
+static char *parseValue(Q_ENTRY *first, char *value);
+
 /**********************************************
 ** Usage : qfDecoder(file);
 ** Return: Success pointer of the first entry, Fail NULL.
@@ -58,8 +60,8 @@ Author:
 **         path = ${%PATH}              => path = /usr/bin:/usr/sbin
 **         #hmm = this is comments      => (skip comment)
 **********************************************/
-Q_Entry *qfDecoder(char *file) {
-	Q_Entry *first, *entries;
+Q_ENTRY *qfDecoder(char *file) {
+	Q_ENTRY *first, *entries;
 	char *str, *p;
 
 	p = str = qReadFile(file, NULL);
@@ -112,66 +114,16 @@ Q_Entry *qfDecoder(char *file) {
 
 	/* processing ${} directive */
 	for (entries = first; entries; entries = entries->next) {
-		for(p = entries->value; *p != '\0'; p++) {
-			char buf[256], *e, *t;
-			int len, bcnt, freet = 0;
-
-			if(*p != _VAR) continue;
-			if(*(++p) != _VAR_OPEN) continue;
-			p++;
-
-			/* parse variable string */
-			bcnt = 1; /* braket open counter */
-			for(e = p; *e != '\0'; e++) {
-				if(*e == _VAR_OPEN) bcnt++;
-				else if(*e == _VAR_CLOSE) bcnt--;
-				else continue;
-
-				if(bcnt == 0) break;
-			}
-			if(bcnt > 0) break; /* braket mismatch. exit */
-
-			len = e - p; /* length between ${ , } */
-			if (len >= (sizeof(buf) - 1)) continue;
-			strncpy(buf, p, len);
-			buf[len] = '\0';
-			qRemoveSpace(buf);
-
-			/* find value */
-			switch (buf[0]) {
-				case _VAR_CMD : {
-					if ((t = qRemoveSpace(qCmd(buf + 1))) == NULL) t = "";
-					else freet = 1;
-					break;
-				}
-				case _VAR_ENV : {
-					t = qGetenvDefault("", buf + 1);
-					break;
-				}
-				default : {
-					if ((t = _EntryValueLast(first, buf)) == NULL) {
-						p = e;
-						continue;
-					}
-					break;
-				}
-			}
-
-			/* replace */
-			strncpy(buf, p - 2, len + 3);
-			buf[len + 3] = '\0';
-
-			p = qStrReplace("sn", entries->value, buf, t);
-			if (freet == 1) free(t);
-			free(entries->value);
-			entries->value = qRemoveSpace(p);
+		str = parseValue(first, entries->value);
+		if(str != NULL) {
+			entries->value = str; /* do not need to free entries->value */
 		}
 	}
 
 	return first;
 }
 
-char *qfValue(Q_Entry *first, char *format, ...) {
+char *qfValue(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
 	int status;
 	va_list arglist;
@@ -184,7 +136,7 @@ char *qfValue(Q_Entry *first, char *format, ...) {
 	return _EntryValueLast(first, name);
 }
 
-int qfiValue(Q_Entry *first, char *format, ...) {
+int qfiValue(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
 	int status;
 	va_list arglist;
@@ -195,4 +147,83 @@ int qfiValue(Q_Entry *first, char *format, ...) {
 	va_end(arglist);
 
 	return _EntryiValueLast(first, name);
+}
+
+static char *parseValue(Q_ENTRY *first, char *value) {
+	int loop;
+
+	do {
+		char *s, *e;
+		int bcnt;
+
+		loop = 0;
+
+		/* find ${ */
+		for(s = value; *s != '\0'; s++) {
+			if(!(*s == _VAR && *(s+1) == _VAR_OPEN)) continue;
+
+			/* found ${, try to find }. s points $ */
+			bcnt = 1; /* braket open counter */
+			for(e = s + 2; *e != '\0'; e++) {
+				if(*e == _VAR && *(e+1) == _VAR_OPEN) { /* found internal ${ */
+					s = e - 1; /* e is always bigger than s, so negative overflow never occured */
+					break;
+				}
+				else if(*e == _VAR_OPEN) bcnt++;
+				else if(*e == _VAR_CLOSE) bcnt--;
+				else continue;
+
+				if(bcnt == 0) break;
+			}
+			if(*e == '\0') break; /* braket mismatch */
+			if(bcnt > 0) continue; /* found internal ${ */
+
+			/* found atomic ${ }. pick internal string */
+			char buf[1024];
+			int len;
+
+			len = e - s - 2; /* length between ${ , } */
+			if (len >= (sizeof(buf) - 1)) continue; /* too long */
+			strncpy(buf, s + 2, len);
+			buf[len] = '\0';
+			qRemoveSpace(buf);
+
+			/* get the string to replace*/
+			char *t;
+			int freet = 0;
+			switch (buf[0]) {
+				case _VAR_CMD : {
+					if ((t = qRemoveSpace(qCmd(buf + 1))) == NULL) t = "";
+					else freet = 1;
+					break;
+				}
+				case _VAR_ENV : {
+					t = qGetenvDefault("", buf + 1);
+					break;
+				}
+				default : {
+					if ((t = _EntryValueLast(first, buf)) == NULL) {
+						s = e; /* not found */
+						continue;
+					}
+					break;
+				}
+			}
+
+			/* replace */
+			strncpy(buf, s, len + 3); /* ${value} */
+			buf[len + 3] = '\0';
+
+			s = qStrReplace("sn", value, buf, t);
+			if (freet == 1) free(t);
+			free(value);
+			value = qRemoveSpace(s);
+			/* printf("%s\n", value); */
+
+			loop = 1;
+			break;
+		}
+	} while(loop == 1);
+
+	return value;
 }

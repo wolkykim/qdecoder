@@ -41,18 +41,18 @@ char    *_fgets(char *str, int size, FILE *stream);
 int     _flockopen(FILE *fp);
 int     _flockclose(FILE *fp);
 
-Q_Entry *_EntryAdd(Q_Entry *first, char *name, char *value, int flag);
-Q_Entry *_EntryRemove(Q_Entry *first, char *name);
-char    *_EntryValue(Q_Entry *first, char *name);
-char    *_EntryValueLast(Q_Entry *first, char *name);
-int     _EntryiValue(Q_Entry *first, char *name);
-int	_EntryiValueLast(Q_Entry *first, char *name);
-int     _EntryNo(Q_Entry *first, char *name);
-Q_Entry	*_EntryReverse(Q_Entry *first);
-int     _EntryPrint(Q_Entry *first);
-void    _EntryFree(Q_Entry *first);
-int     _EntrySave(Q_Entry *first, char *filename);
-Q_Entry *_EntryLoad(char *filename);
+Q_ENTRY *_EntryAdd(Q_ENTRY *first, char *name, char *value, int flag);
+Q_ENTRY *_EntryRemove(Q_ENTRY *first, char *name);
+char    *_EntryValue(Q_ENTRY *first, char *name);
+char    *_EntryValueLast(Q_ENTRY *first, char *name);
+int     _EntryiValue(Q_ENTRY *first, char *name);
+int	_EntryiValueLast(Q_ENTRY *first, char *name);
+int     _EntryNo(Q_ENTRY *first, char *name);
+Q_ENTRY	*_EntryReverse(Q_ENTRY *first);
+int     _EntryPrint(Q_ENTRY *first);
+void    _EntryFree(Q_ENTRY *first);
+int     _EntrySave(Q_ENTRY *first, char *filename);
+Q_ENTRY *_EntryLoad(char *filename);
 
 /**********************************************
 ** Internal Definition

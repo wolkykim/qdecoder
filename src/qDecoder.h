@@ -70,48 +70,11 @@ Author:
 /*
  * Linked List Structure
  */
-typedef struct Q_Entry {
+typedef struct Q_ENTRY {
 	char *name;
 	char *value;
-	struct Q_Entry *next;
-}
-Q_Entry;
-
-typedef struct {
-	char *auth_type;
-	char *content_length;
-	char *content_type;
-	char *document_root;
-	char *gateway_interface;
-	char *http_accept;
-	char *http_accept_encoding;
-	char *http_accept_language;
-	char *http_connection;
-	char *http_cookie;
-	char *http_host;
-	char *http_referer;
-	char *http_user_agent;
-	char *query_string;
-	char *remote_addr;
-	char *remote_host;
-	char *remote_port;
-	char *remote_user;
-	char *request_method;
-	char *request_uri;
-	char *script_filename;
-	char *script_name;
-	char *server_admin;
-	char *server_name;
-	char *server_port;
-	char *server_protocol;
-	char *server_software;
-	char *server_signature;
-	char *unique_id;
-
-	/* Miscellaneous Informations Supported by qDecoder */
-	int	year, mon, day, hour, min, sec;
-}
-Q_CGIenv;
+	struct Q_ENTRY *next;
+} Q_ENTRY;
 
 /*
  * Structure for Independent Database Interface
@@ -138,8 +101,7 @@ typedef struct {
 #ifdef _Q_WITH_MYSQL
 	MYSQL		mysql;
 #endif
-}
-Q_DB;
+} Q_DB;
 
 /*
  * Structure for Database Result Set
@@ -153,8 +115,7 @@ typedef struct {
 	int		cols;
 	int		cursor;
 #endif
-}
-Q_DBRESULT;
+} Q_DBRESULT;
 #endif
 
 /*
@@ -172,8 +133,7 @@ typedef struct {
 	int	nRotateInterval;
 	int	nNextRotate;
 	int	nFlushFlag;
-}
-Q_LOG;
+} Q_LOG;
 
 /* qDecoder C++ support */
 #ifdef __cplusplus
@@ -190,7 +150,7 @@ int	qiValue(char *format, ...);
 char	*qValueDefault(char *defstr, char *format, ...);
 char	*qValueNotEmpty(char *errmsg, char *format, ...);
 char	*qValueReplace(char *mode, char *name, char *tokstr, char *word);
-Q_Entry	*qGetFirstEntry(void);
+Q_ENTRY	*qGetFirstEntry(void);
 char	*qValueFirst(char *format, ...);
 char	*qValueNext(void);
 char	*qValueAdd(char *name, char *format, ...);
@@ -227,9 +187,9 @@ time_t	qSessionGetCreated(void);
 /*
  * qfDecoder.c
  */
-Q_Entry	*qfDecoder(char *filename);
-char	*qfValue(Q_Entry *first, char *format, ...);
-int	qfiValue(Q_Entry *first, char *format, ...);
+Q_ENTRY	*qfDecoder(char *filename);
+char	*qfValue(Q_ENTRY *first, char *format, ...);
+int	qfiValue(Q_ENTRY *first, char *format, ...);
 #define	qfValueFirst	qsValueFirst
 #define	qfValueNext	qsValueNext
 #define	qfPrint		qsPrint
@@ -238,13 +198,13 @@ int	qfiValue(Q_Entry *first, char *format, ...);
 /*
  * qsDecoder.c
  */
-Q_Entry	*qsDecoder(char *str);
-char	*qsValue(Q_Entry *first, char *format, ...);
-int	qsiValue(Q_Entry *first, char *format, ...);
-char	*qsValueFirst(Q_Entry *first, char *format, ...);
+Q_ENTRY	*qsDecoder(char *str);
+char	*qsValue(Q_ENTRY *first, char *format, ...);
+int	qsiValue(Q_ENTRY *first, char *format, ...);
+char	*qsValueFirst(Q_ENTRY *first, char *format, ...);
 char	*qsValueNext(void);
-int	qsPrint(Q_Entry *first);
-void	qsFree(Q_Entry *first);
+int	qsPrint(Q_ENTRY *first);
+void	qsFree(Q_ENTRY *first);
 
 /*
  * qHttpHeader.c
@@ -266,8 +226,6 @@ void	qErrorContact(char *msg);
  * qEnv.c
  */
 char	*qGetenvDefault(char *nullstr, char *envname);
-void	qCGIenv(Q_CGIenv *env);
-char	*qCGIname(void);
 
 /*
  * qEncode.c
@@ -338,12 +296,12 @@ int	qAwkStr(char array[][1024], char *str, char delim);
 /*
  * qSed.c
  */
-Q_Entry	*qSedArgAdd(Q_Entry *first, char *name, char *format, ...);
-Q_Entry *qSedArgAddDirect(Q_Entry *first, char *name, char *value);
-int	qSedArgPrint(Q_Entry *first);
-void	qSedArgFree(Q_Entry *first);
-int	qSedStr(Q_Entry *first, char *srcstr, FILE *fpout);
-int	qSedFile(Q_Entry *first, char *filename, FILE *fpout);
+Q_ENTRY	*qSedArgAdd(Q_ENTRY *first, char *name, char *format, ...);
+Q_ENTRY *qSedArgAddDirect(Q_ENTRY *first, char *name, char *value);
+int	qSedArgPrint(Q_ENTRY *first);
+void	qSedArgFree(Q_ENTRY *first);
+int	qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout);
+int	qSedFile(Q_ENTRY *first, char *filename, FILE *fpout);
 
 /*
  * qCount.c

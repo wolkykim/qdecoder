@@ -59,8 +59,8 @@ static int _upload_clear_base();
 ** Static Values Definition used only internal
 **********************************************/
 
-static Q_Entry *_first_entry = NULL;
-static Q_Entry *_multi_last_entry = NULL;
+static Q_ENTRY *_first_entry = NULL;
+static Q_ENTRY *_multi_last_entry = NULL;
 static char _multi_last_key[1024];
 
 static int _upload_base_init = 0;
@@ -202,7 +202,7 @@ static int _parse_query(char *query, char sepchar) {
 	int cnt;
 
 	for (cnt = 0; query && *query; cnt++) {
-		Q_Entry *entry;
+		Q_ENTRY *entry;
 		char *name, *value;
 
 		value = _makeword(query, sepchar);
@@ -219,7 +219,7 @@ static int _parse_query(char *query, char sepchar) {
 
 /* For decode multipart/form-data, used by qDecoder() */
 static int _parse_multipart_data(void) {
-	Q_Entry *entry;
+	Q_ENTRY *entry;
 	char *query, buf[1024];
 	int  amount;
 
@@ -886,7 +886,7 @@ char *qValueNotEmpty(char *errmsg, char *format, ...) {
 ** Refer the description of qStrReplace() for more detail.
 **********************************************/
 char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
-	Q_Entry *entries;
+	Q_ENTRY *entries;
 	char *retstr, *repstr, method, memuse, newmode[2+1];
 
 	/* initialize pointers to avoid compile warnings */
@@ -948,7 +948,7 @@ char *qValueFirst(char *format, ...) {
 ** Do    : Find next value string pointer.
 **********************************************/
 char *qValueNext(void) {
-	Q_Entry *entries;
+	Q_ENTRY *entries;
 
 	for (entries = _multi_last_entry; entries; entries = entries->next) {
 		if (!strcmp(_multi_last_key, entries->name)) {
@@ -970,7 +970,7 @@ char *qValueNext(void) {
 ** ex) qValueAdd("NAME", "Seung-young Kim");
 **********************************************/
 char *qValueAdd(char *name, char *format, ...) {
-	Q_Entry *new_entry;
+	Q_ENTRY *new_entry;
 	char value[1024];
 	int status;
 	va_list arglist;
@@ -1064,7 +1064,7 @@ char qValueType(char *format, ...) {
 ** Usage : qGetFirstEntry();
 ** Do    : Return _first_entry.
 **********************************************/
-Q_Entry *qGetFirstEntry(void) {
+Q_ENTRY *qGetFirstEntry(void) {
 	if (_first_entry == NULL) qDecoder();
 	return _first_entry;
 }

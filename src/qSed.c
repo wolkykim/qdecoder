@@ -48,8 +48,8 @@ Author:
 **
 ** ex) qValueAdd("NAME", "Seung-young Kim");
 **********************************************/
-Q_Entry *qSedArgAdd(Q_Entry *first, char *name, char *format, ...) {
-	Q_Entry *new_entry;
+Q_ENTRY *qSedArgAdd(Q_ENTRY *first, char *name, char *format, ...) {
+	Q_ENTRY *new_entry;
 	char value[1024];
 	int status;
 	va_list arglist;
@@ -74,8 +74,8 @@ Q_Entry *qSedArgAdd(Q_Entry *first, char *name, char *format, ...) {
 **
 ** ex) qSedArgAddDirect(entries, "NAME", value);
 **********************************************/
-Q_Entry *qSedArgAddDirect(Q_Entry *first, char *name, char *value) {
-	Q_Entry *new_entry;
+Q_ENTRY *qSedArgAddDirect(Q_ENTRY *first, char *name, char *value) {
+	Q_ENTRY *new_entry;
 
 	if (!strcmp(name, "")) qError("qSedArgAddDirect(): can not add empty name.");
 
@@ -90,7 +90,7 @@ Q_Entry *qSedArgAddDirect(Q_Entry *first, char *name, char *value) {
 ** Return: Amount of entries.
 ** Do    : Print all parsed values & names for debugging.
 **********************************************/
-int qSedArgPrint(Q_Entry *first) {
+int qSedArgPrint(Q_ENTRY *first) {
 	return _EntryPrint(first);
 }
 
@@ -98,7 +98,7 @@ int qSedArgPrint(Q_Entry *first) {
 ** Usage : qFree(pointer of the first Entry);
 ** Do    : Make free of linked list memory.
 **********************************************/
-void qSedArgFree(Q_Entry *first) {
+void qSedArgFree(Q_ENTRY *first) {
 	_EntryFree(first);
 }
 
@@ -107,8 +107,8 @@ void qSedArgFree(Q_Entry *first) {
 ** Return: Success 1
 ** Do    : Stream Editor.
 **********************************************/
-int qSedStr(Q_Entry *first, char *srcstr, FILE *fpout) {
-	Q_Entry *entries;
+int qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout) {
+	Q_ENTRY *entries;
 	char *sp;
 
 	if (srcstr == NULL) return 0;
@@ -151,7 +151,7 @@ int qSedStr(Q_Entry *first, char *srcstr, FILE *fpout) {
 ** Return: Success 1, Fail open fail 0.
 ** Do    : Stream Editor.
 **********************************************/
-int qSedFile(Q_Entry *first, char *filename, FILE *fpout) {
+int qSedFile(Q_ENTRY *first, char *filename, FILE *fpout) {
 	char *sp;
 	int flag;
 

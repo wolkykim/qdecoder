@@ -41,18 +41,20 @@ Author:
 
 int main(void) {
   Q_ENTRY *conf;
-  char *host;
+  char *protocol, *host;
   int port;
 
   /* Open configuration file */
   if(!(conf = qfDecoder(CONF_FILE))) qError("Configuration file(%s) not found.", CONF_FILE);
 
   /* Get variable */
+  protocol = qfValue(conf, "PROTOCOL");
   host     = qfValue(conf, "HOST");
   port     = qfiValue(conf, "PORT");
 
   /* Print out */
   qContentType("text/plain");
+  printf("Protocol : %s\n", protocol);
   printf("Host     : %s\n", host);
   printf("Port     : %d\n", port);
 
