@@ -40,7 +40,7 @@ Author:
 #define SOURCE		"streamedit.html.in"
 
 int main(void) {
-  Q_Entry *args;
+  Q_ENTRY *args;
   char *name, *hobby;
 
   qContentType("text/html");

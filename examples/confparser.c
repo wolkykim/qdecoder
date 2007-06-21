@@ -40,7 +40,7 @@ Author:
 #define CONF_FILE		"confparser.conf"
 
 int main(void) {
-  Q_Entry *conf;
+  Q_ENTRY *conf;
   char *host;
   int port;
 

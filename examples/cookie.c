@@ -56,7 +56,7 @@ int main(void) {
 
     qCookieSet(name, value, 0, NULL, NULL, NULL);
     qContentType("text/html");
-    printf("Cookie('%s'='%s') entry is stored.<br>Click <a href='%s'>here</a> to view your cookies\n", name, value, qCGIname());
+    printf("Cookie('%s'='%s') entry is stored.<br>Click <a href='cookie.cgi'>here</a> to view your cookies\n", name, value);
   }
   else if(!strcmp(mode, "remove")) { /* Remove Cookie */
     if(name == NULL) qError("Query not found");
@@ -64,7 +64,7 @@ int main(void) {
 
     qCookieRemove(name, NULL, NULL, NULL);
     qContentType("text/html");
-    printf("Cookie('%s') entry is removed.<br>Click <a href='%s'>here</a> to view your cookies\n", name, qCGIname());
+    printf("Cookie('%s') entry is removed.<br>Click <a href='cookie.cgi'>here</a> to view your cookies\n", name);
   }
   else qError("Unknown mode.");
 
