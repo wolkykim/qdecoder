@@ -58,14 +58,10 @@ WITH_MYSQL	=
 #MYSQL_INCLUDE	= -I/usr/local/include/mysql
 MYSQL_INCLUDE	=
 
-# To Support IPC
-#WITH_IPC	= -DWITH_IPC
-WITH_IPC	=
-
 # Which compiler & options for release
 CC		= @CC@
 CFLAGS		= @CFLAGS@
-DEFS		= @DEFS@ ${WITH_MYSQL} ${WITH_IPC}
+DEFS		= @DEFS@ ${WITH_MYSQL}
 INCLUDE		= -I./ ${MYSQL_INCLUDE}
 
 # Utilities
@@ -133,6 +129,13 @@ deinstall:
 	${RM} -f ${LIBDIR}/${LIBNAME}
 	${RM} -f ${LIBDIR}/${SLIBREALNAME}
 	${RM} -f ${LIBDIR}/${SLIBNAME}
+
+## Documentation Module
+doc:
+	doxygen doxygen.conf
+
+cleandoc:
+	${RM} -rf ../doc/html ../doc/man
 
 ## Clear Module
 clean:

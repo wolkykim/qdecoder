@@ -76,13 +76,13 @@ int qAwkNext(FILE *fp, char array[][1024], char delim) {
 
 /**********************************************
 ** Usage : qAwkClose();
-** Return: Success 1, Fail 0.
+** Return: Success Q_TRUE, Otherwise Q_FALSE.
 ** Do    : Close file.
 **********************************************/
-int qAwkClose(FILE *fp) {
-	if (fp == NULL) return 0;
-	if(fclose(fp) == 0) return 1;
-	return 0;
+Q_BOOL qAwkClose(FILE *fp) {
+	if (fp == NULL) return Q_FALSE;
+	if(fclose(fp) == 0) return Q_TRUE;
+	return Q_FALSE;
 }
 
 /**********************************************

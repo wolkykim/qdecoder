@@ -126,7 +126,7 @@ int qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout) {
 				ssi_inc_file[endp-sp] = '\0';
 				sp = (endp + strlen(SSI_INCLUDE_END)) - 1;
 
-				if (qCheckFile(ssi_inc_file) == 1) qSedFile(first, ssi_inc_file, fpout);
+				if (qCheckFile(ssi_inc_file) == Q_TRUE) qSedFile(first, ssi_inc_file, fpout);
 				else printf("[qSedStr: an error occurred while processing 'include' directive - file(%s) open fail]", ssi_inc_file);
 			} else printf("[qSedStr: an error occurred while processing 'include' directive - ending tag not found]");
 			continue;

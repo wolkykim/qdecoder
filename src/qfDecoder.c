@@ -47,6 +47,9 @@ Author:
 
 static char *parseValue(Q_ENTRY *first, char *value);
 
+static Q_ENTRY *_multi_last_entry = NULL;
+static char _multi_last_key[1024];
+
 /**********************************************
 ** Usage : qfDecoder(file);
 ** Return: Success pointer of the first entry, Fail NULL.
@@ -130,7 +133,7 @@ char *qfValue(Q_ENTRY *first, char *format, ...) {
 
 	va_start(arglist, format);
 	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsValue(): Message is too long or invalid.");
+	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qfValue(): Message is too long or invalid.");
 	va_end(arglist);
 
 	return _EntryValueLast(first, name);
@@ -143,10 +146,49 @@ int qfiValue(Q_ENTRY *first, char *format, ...) {
 
 	va_start(arglist, format);
 	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsiValue(): Message is too long or invalid.");
+	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qfiValue(): Message is too long or invalid.");
 	va_end(arglist);
 
 	return _EntryiValueLast(first, name);
+}
+
+
+char *qfValueFirst(Q_ENTRY *first, char *format, ...) {
+	int status;
+	va_list arglist;
+
+	va_start(arglist, format);
+	status = vsprintf(_multi_last_key, format, arglist);
+	if (strlen(_multi_last_key) + 1 > sizeof(_multi_last_key) || status == EOF) qError("qfValueFirst(): Message is too long or invalid.");
+	va_end(arglist);
+
+	if (first == NULL) return NULL;
+	_multi_last_entry = first;
+
+	return qfValueNext();
+}
+
+char *qfValueNext(void) {
+	Q_ENTRY *entries;
+
+	for (entries = _multi_last_entry; entries; entries = entries->next) {
+		if (!strcmp(_multi_last_key, entries->name)) {
+			_multi_last_entry = entries->next;
+			return (entries->value);
+		}
+	}
+	_multi_last_entry = NULL;
+	strcpy(_multi_last_key, "");
+
+	return NULL;
+}
+
+int qfPrint(Q_ENTRY *first) {
+	return _EntryPrint(first);
+}
+
+void qfFree(Q_ENTRY *first) {
+	_EntryFree(first);
 }
 
 static char *parseValue(Q_ENTRY *first, char *value) {

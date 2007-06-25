@@ -46,7 +46,6 @@ Author:
 static Q_ENTRY *_multi_last_entry = NULL;
 static char _multi_last_key[1024];
 
-
 /**********************************************
 ** Usage : qsDecoder(string);
 ** Return: Success pointer of the first entry, Fail NULL.
@@ -120,7 +119,7 @@ char *qsValueFirst(Q_ENTRY *first, char *format, ...) {
 
 	va_start(arglist, format);
 	status = vsprintf(_multi_last_key, format, arglist);
-	if (strlen(_multi_last_key) + 1 > sizeof(_multi_last_key) || status == EOF) qError("qfValueFirst(): Message is too long or invalid.");
+	if (strlen(_multi_last_key) + 1 > sizeof(_multi_last_key) || status == EOF) qError("qsValueFirst(): Message is too long or invalid.");
 	va_end(arglist);
 
 	if (first == NULL) return NULL;

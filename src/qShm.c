@@ -35,8 +35,6 @@ Author:
   Seung-young Kim <wolkykim(at)ziom.co.kr>
 ************************************************************************/
 
-#ifdef WITH_IPC
-
 #include <sys/shm.h>
 #include "qDecoder.h"
 #include "qInternal.h"
@@ -112,5 +110,3 @@ int qShmDestroy(char *pszKeyPath) {
 	// destory current shared memory
 	return qShmFree(nShmId);
 }
-
-#endif

@@ -34,6 +34,22 @@ Copyright Disclaimer:
 Author:
   Seung-young Kim <wolkykim(at)ziom.co.kr>
 ************************************************************************/
+/**
+ * hi
+ */
+
+/** \mainpage qDecoder Project
+ *
+ * \section intro_sec Introduction
+ *
+ * This is the introduction.
+ *
+ * \section install_sec Installation
+ *
+ * \subsection step1 Step 1: Opening the box
+ *
+ * etc...
+ */
 
 #include "qDecoder.h"
 #include "qInternal.h"
@@ -63,11 +79,32 @@ static Q_ENTRY *_first_entry = NULL;
 static Q_ENTRY *_multi_last_entry = NULL;
 static char _multi_last_key[1024];
 
-static int _upload_base_init = 0;
+static Q_BOOL _upload_base_init = Q_FALSE;
 static char _upload_base[1024];
 static int _upload_clear_olderthan = 0;
 
 static int _cookie_cnt = 0, _get_cnt = 0, _post_cnt = 0, _new_cnt = 0; /* counts per methods */
+
+/**
+ * Set temporary uploading directory base.
+ * When qDecoder() try to save uploading file into disk,
+ * it checks old files which is older than 'olderthan' sec.
+ * Then clean up old files before step next.
+ *
+ * @return	Success Q_TRUE. Otherwise Q_FALSE.
+ */
+Q_BOOL qDecoderInit(Q_BOOL filemode, char *upload_base, int clear_olderthan) {
+	if(filemode == Q_FALSE) {
+		_upload_base_init = Q_FALSE;
+	} else {
+		if (qCheckFile(upload_base) == Q_FALSE) return Q_FALSE;
+		strcpy(_upload_base, upload_base);
+		_upload_clear_olderthan = clear_olderthan;
+		_upload_base_init = Q_TRUE;
+	}
+
+	return Q_TRUE;
+}
 
 /**********************************************
 ** Usage : qDecoder();
@@ -94,7 +131,7 @@ int qDecoder(void) {
 			q_upload_id = qValue("Q_UPLOAD_ID");
 
 			if (q_upload_id != NULL) {
-				if (_upload_base_init == 0) qError("qDecoder(): qDecoderSetUploadBase() must be called before.");
+				if (_upload_base_init == Q_FALSE) qError("qDecoder(): qDecoderInit(Q_TRUE, ...) must be called before.");
 				_upload_progressbar(q_upload_id);
 				exit(0);
 			}
@@ -114,21 +151,6 @@ int qDecoder(void) {
 	}
 
 	return amount;
-}
-
-/**********************************************
-** Usage : qDecoderSetUploadBase(dir, olderthan);
-** Do    : Set temporary uploading directory base.
-**         When qDecoder() try to save uploading file into disk,
-**         it checks old files which is older than 'olderthan' sec.
-**         Then clean up old files before step next.
-**********************************************/
-void qDecoderSetUploadBase(char *dir, int olderthan) {
-	if (qCheckFile(dir) == 0) qError("qDecoderSetUploadBase(): Uploadind directory does not exists.");
-
-	strcpy(_upload_base, dir);
-	_upload_clear_olderthan = olderthan;
-	_upload_base_init = 1;
 }
 
 /* For decode application/x-www-form-urlencoded, used by qDecoder() */
@@ -308,7 +330,7 @@ static int _parse_multipart_data(void) {
 			upload_id = qValue("Q_UPLOAD_ID");
 
 			if (upload_id != NULL) {
-				if (_upload_base_init == 0) qError("_parse_multipart_data(): qDecoderSetUploadBase() must be called before.");
+				if (_upload_base_init == Q_FALSE) qError("_parse_multipart_data(): qDecoderInit(Q_TRUE, ...) must be called before.");
 
 				if (strlen(upload_id) == 0) upload_id = qUniqId();
 				upload_type = 1; /* turn on the flag - save into file directly */
@@ -329,11 +351,11 @@ static int _parse_multipart_data(void) {
 
 				/* save total contents length */
 				sprintf(upload_tmppath, "%s/Q_UPLOAD_TSIZE", upload_savedir);
-				if (qCountSave(upload_tmppath, atoi(getenv("CONTENT_LENGTH"))) == 0) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
+				if (qCountSave(upload_tmppath, atoi(getenv("CONTENT_LENGTH"))) == Q_FALSE) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
 
 				/* save start time */
 				sprintf(upload_tmppath, "%s/Q_UPLOAD_START", upload_savedir);
-				if (qCountSave(upload_tmppath, time(NULL)) == 0) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
+				if (qCountSave(upload_tmppath, time(NULL)) == Q_FALSE) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
 			}
 		}
 
@@ -420,7 +442,7 @@ static int _parse_multipart_data(void) {
 
 	if (upload_type == 1) { /* save end time */
 		sprintf(upload_tmppath, "%s/Q_UPLOAD_END", upload_savedir);
-		if (qCountSave(upload_tmppath, time(NULL)) == 0) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
+		if (qCountSave(upload_tmppath, time(NULL)) == Q_FALSE) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
 	}
 
 	return amount;
@@ -612,7 +634,7 @@ static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, cha
 static char *_upload_getsavedir(char *upload_id, char *upload_savedir) {
 	char md5seed[1024];
 
-	if (_upload_base_init == 0 || upload_id == NULL) return NULL;
+	if (_upload_base_init == Q_FALSE || upload_id == NULL) return NULL;
 	if (!strcmp(upload_id, "")) return NULL;
 
 	sprintf(md5seed, "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
@@ -764,7 +786,7 @@ static int _upload_clear_base() {
 	int     delcnt = 0;
 	time_t  now = time(NULL);
 
-	if (_upload_base_init == 0) return -1;
+	if (_upload_base_init == Q_FALSE) return -1;
 	if (_upload_clear_olderthan <= 0) return 0;
 
 	/* open upload folder */
@@ -813,7 +835,7 @@ char *qValue(char *format, ...) {
 
 /**********************************************
 ** Usage : qiValue(query name);
-** Return: Success integer of value string, Fail 0.
+** Return: Se string, Fail 0.
 ** Do    : Find value string pointer and convert to integer.
 **********************************************/
 int qiValue(char *format, ...) {

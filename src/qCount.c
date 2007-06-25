@@ -56,17 +56,17 @@ int qCountRead(char *filename) {
 
 /**********************************************
 ** Usage : qCountSave(filename, number);
-** Return: Success 1, Fail 0.
+** Return: Success Q_TRUE. Otherwise Q_FALSE.
 ** Do    : Save counter value.
 **********************************************/
-int qCountSave(char *filename, int number) {
+Q_BOOL qCountSave(char *filename, int number) {
 	FILE *fp;
 
-	if ((fp = qfopen(filename, "w")) == NULL) return 0;
+	if ((fp = qfopen(filename, "w")) == NULL) return Q_FALSE;
 	fprintf(fp, "%d\n", number);
 	qfclose(fp);
 
-	return 1;
+	return Q_TRUE;
 }
 
 /**********************************************
@@ -87,4 +87,3 @@ int qCountUpdate(char *filename, int number) {
 	qfclose(fp);
 	return counter;
 }
-
