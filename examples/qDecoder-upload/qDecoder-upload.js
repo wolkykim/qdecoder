@@ -1,11 +1,7 @@
 //--------------------------------------------------------------
 //-- The qDecoder Project             http://www.qDecoder.org --
-//--                                   ftp://ftp.qDecoder.org --
 //--                                                          --
-//--         Copyright (C) 2001 The qDecoder Project.         --
-//--         Copyright (C) 1999 Hongik Internet, Inc.         --
-//--         Copyright (C) 1998 Nobreak Technologies, Inc.    --
-//--         Copyright (C) 1996,1997 Seung-young Kim          --
+//--           Copyright (C) 2007 Seung-young Kim             --
 //--------------------------------------------------------------
 
 //
