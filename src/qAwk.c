@@ -18,33 +18,64 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  **************************************************************************/
 
+/**
+ * @file qAwk.c File & String Tokenizing API
+ *
+ * Plays a similar function to the AWK command of UNIX systems.
+ *
+ * @code
+ *   char array[7][1024];
+ *   qAwkOpen("/etc/passwd", ':');
+ *   for( ; qAwkNext(array) > 0; ) printf("ID=%s, NAME=%s\n", array[0], array[4]);
+ *   qAwkClose();
+ * @endcode
+ * @code
+ *   [Sample /etc/passwd]
+ *   qdecoder:x:1001:1000:The qDecoder Project:/home/qdecoder:/bin/csh
+ *   wolkykim:x:1002:1000:Seung-young Kim:/home/wolkykim:/bin/csh
+ *   ziom:x:1003:1000:Ziom Corporation:/home/kikuchi:/bin/csh
+ *
+ *   [Output]
+ *   ID=qdecoder, NAME=The qDecoder Project
+ *   ID=wolkykim, NAME=Seung-young Kim
+ *   ID=ziom, NAME=Ziom Corporation
+ * @endcode
+ *
+ * @note
+ * Maximum token length(not a line or file length) is fixed to 1023(1024-1).
+ * @code
+ *   token1|token2...(length over 1023)...|tokenN
+ * @endcode
+ * token1 and tokenN is ok. But token2 will be stored only first 1023 bytes.
+ */
+
 #include "qDecoder.h"
 #include "qInternal.h"
 
-
-/**********************************************
-** Usage : qAwkOpen(filename);
-** Return: Success returns file pointer, Fail returns NULL.
-** Do    : Open file to scan pattern. (similar to unix command awk)
-**
-** ex) qAwkOpen("source.dat", ':');
-**********************************************/
+/**
+ * Open file for tokenizing
+ *
+ * @param filename file path to open
+ *
+ * @return	file pointer. in case of failure, returns NULL.
+ */
 FILE *qAwkOpen(char *filename) {
 	FILE *fp;
 
-	if (fp != NULL) qError("qAwkOpen(): There is already opened handle.");
 	if ((fp = fopen(filename, "r")) == NULL) return NULL;
 	return fp;
 }
 
-/**********************************************
-** Usage : qAwkNext(array, field-delimeter);
-** Return: Success number of field, End of file -1.
-** Do    : Scan one line. (Unlimited line length)
-**
-** ex) char array[10][1024];
-**     qAwkNext(array);
-**********************************************/
+/**
+ * Read one line from opened file pointer to tokenize.
+ *
+ * @param fp	file pointer which is retruned by qAwkOpen()
+ * @param array splitted tokens will be stored here
+ * @param delim	delimeter
+ *
+ * @return	the number of parsed(stored in array) tokens.
+ * 		otherwise(end of file or something), returns -1.
+ */
 int qAwkNext(FILE *fp, char array[][1024], char delim) {
 	char *buf;
 	int num;
@@ -57,22 +88,28 @@ int qAwkNext(FILE *fp, char array[][1024], char delim) {
 	return num;
 }
 
-/**********************************************
-** Usage : qAwkClose();
-** Return: Success Q_TRUE, Otherwise Q_FALSE.
-** Do    : Close file.
-**********************************************/
+/**
+ * Close opened FILE pointer.
+ *
+ * @param fp	file pointer which is retruned by qAwkOpen()
+ *
+ * @return	in case of success, returns Q_TRUE. otherwise Q_FALSE.
+ */
 Q_BOOL qAwkClose(FILE *fp) {
 	if (fp == NULL) return Q_FALSE;
 	if(fclose(fp) == 0) return Q_TRUE;
 	return Q_FALSE;
 }
 
-/**********************************************
-** Usage : qAwkStr(**array, srouce_string_pointer, );
-** Return: returns the number of parsed fields.
-** Do    : scan pattern from the string.
-**********************************************/
+/**
+ * String Tokenizer
+ *
+ * @param array splitted tokens will be stored here
+ * @param str	string to tokenize
+ * @param delim	delimeter
+ *
+ * @return	returns the number of parsed(stored in array) tokens.
+ */
 int qAwkStr(char array[][1024], char *str, char delim) {
 	char *bp1, *bp2;
 	int i, exitflag;
@@ -81,7 +118,8 @@ int qAwkStr(char array[][1024], char *str, char delim) {
 		for (; *bp2 != delim && *bp2 != '\0'; bp2++);
 		if (*bp2 == '\0') exitflag = 1;
 		*bp2 = '\0';
-		strcpy(array[i], bp1);
+		strncpy(array[i], bp1, 1023);
+		array[i][1023] = '\0';
 		bp1 = ++bp2;
 	}
 

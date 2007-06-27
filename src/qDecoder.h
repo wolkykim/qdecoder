@@ -273,8 +273,8 @@ int	qCheckURL(char *url);
  */
 int	qArgMake(char *str, char **qlist);
 int	qArgMatch(char *str, char **qlist);
-int	qArgPrint(char **qlist);
 int	qArgEmprint(int mode, char *str, char **qlist);
+int	qArgPrint(char **qlist);
 void	qArgFree(char **qlist);
 
 /*
