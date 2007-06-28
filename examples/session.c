@@ -21,52 +21,52 @@
 #include "qDecoder.h"
 
 int main(void) {
-  char *sessionid;
-  char *mode, *name, *value;
-  time_t expire;
+	char *sessionid;
+	char *mode, *name, *value;
+	time_t expire;
 
-  /* fetch queries */
-  expire = (time_t)qiValue("expire");
-  mode   = qValueNotEmpty("Mode not found", "mode");
-  name   = qValue("name");
-  value  = qValue("value");
+	/* fetch queries */
+	expire = (time_t)qiValue("expire");
+	mode   = qValueNotEmpty("Mode not found", "mode");
+	name   = qValue("name");
+	value  = qValue("value");
 
-  /* Set valid interval of this session */
-  /* start session. this function should be called before qContentType(). */
-  qSession(NULL);
-  sessionid = qSessionGetID();
+	/* Set valid interval of this session */
+	/* start session. this function should be called before qContentType(). */
+	qSession(NULL);
+	sessionid = qSessionGetID();
 
-  /* Mose case, you don't need to set timeout but we use it here to give you a show case */
-  if(expire > 0) qSessionSetTimeout(expire);
+	/* Mose case, you don't need to set timeout but we use it here to give you a show case */
+	if (expire > 0) qSessionSetTimeout(expire);
 
-  switch(mode[0]) {
-    case 's': {
-      qSessionAdd(name, value);
-      break;
-    }
-    case 'i': {
-      qSessionAddInteger(name, atoi(value));
-      break;
-    }
-    case 'r': {
-      qSessionRemove(name);
-      break;
-    }
-    case 'd': {
-      qSessionDestroy();
-      qContentType("text/html");
-      printf("Session destroied.");
-      return 0;
-      break;
-    }
-  }
+	switch (mode[0]) {
+		case 's': {
+			qSessionAdd(name, value);
+			break;
+		}
+		case 'i': {
+			qSessionAddInteger(name, atoi(value));
+			break;
+		}
+		case 'r': {
+			qSessionRemove(name);
+			break;
+		}
+		case 'd': {
+			qSessionDestroy();
+			qContentType("text/html");
+			printf("Session destroied.");
+			return 0;
+			break;
+		}
+	}
 
-  /* screen out */
-  qContentType("text/html");
-  qSessionPrint();
+	/* screen out */
+	qContentType("text/html");
+	qSessionPrint();
 
-  /* save session & free allocated memories */
-  qSessionFree();
-  return 0;
+	/* save session & free allocated memories */
+	qSessionFree();
+	return 0;
 }
 

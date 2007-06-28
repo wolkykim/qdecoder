@@ -23,57 +23,57 @@
 #define SOCKET_TIMEOUT		(10)
 
 int dumpHttp(char *hostname) {
-  int sockfd;
-  char buf[1024];
-  int lineno;
+	int sockfd;
+	char buf[1024];
+	int lineno;
 
-  // open socket
-  sockfd = qSocketOpen(hostname, 80);
-  if(sockfd < 0) return sockfd;
+	// open socket
+	sockfd = qSocketOpen(hostname, 80);
+	if (sockfd < 0) return sockfd;
 
-  // send data
-  qSocketPrintf(sockfd, "GET / HTTP/1.1\n");
-  qSocketPrintf(sockfd, "Host: %s\n", hostname);
-  qSocketPrintf(sockfd, "Accept: */*\n");
-  qSocketPrintf(sockfd, "User-Agent: qDecoder Bot\n");
-  qSocketPrintf(sockfd, "Connection: close\n");
-  qSocketPrintf(sockfd, "\n");
+	// send data
+	qSocketPrintf(sockfd, "GET / HTTP/1.1\n");
+	qSocketPrintf(sockfd, "Host: %s\n", hostname);
+	qSocketPrintf(sockfd, "Accept: */*\n");
+	qSocketPrintf(sockfd, "User-Agent: qDecoder Bot\n");
+	qSocketPrintf(sockfd, "Connection: close\n");
+	qSocketPrintf(sockfd, "\n");
 
-  // read data
-  for(lineno = 1; ; lineno++) {
-    // read line from socket
-    if(qSocketGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) <= 0) qError("Timeout or socket closed.");
+	// read data
+	for (lineno = 1; ; lineno++) {
+		// read line from socket
+		if (qSocketGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) <= 0) qError("Timeout or socket closed.");
 
-    // if the http header block ended, stop reading.
-    if(strlen(buf) == 0) break;
+		// if the http header block ended, stop reading.
+		if (strlen(buf) == 0) break;
 
-    // print header
-    printf("%d: %s\n", lineno, buf);
-  }
+		// print header
+		printf("%d: %s\n", lineno, buf);
+	}
 
-  // close socket
-  qSocketClose(sockfd);
+	// close socket
+	qSocketClose(sockfd);
 
-  return 0;
+	return 0;
 }
 
 int main(void) {
-  char *hostname;
-  int retflag;
+	char *hostname;
+	int retflag;
 
-  qContentType("text/plain");
+	qContentType("text/plain");
 
-  hostname = qValueDefault("", "hostname");
-  if(strlen(hostname) == 0) qError("Invalid usages.");
+	hostname = qValueDefault("", "hostname");
+	if (strlen(hostname) == 0) qError("Invalid usages.");
 
-  retflag = dumpHttp(hostname);
-  if(retflag < 0) {
-    if(retflag == -1) qError("Invalid hostname.");
-    else if(retflag == -2) qError("Can't create socket.");
-    else if(retflag == -3) qError("Connection failed.");
-    else qError("Unknown error.");
-  }
+	retflag = dumpHttp(hostname);
+	if (retflag < 0) {
+		if (retflag == -1) qError("Invalid hostname.");
+		else if (retflag == -2) qError("Can't create socket.");
+		else if (retflag == -3) qError("Connection failed.");
+		else qError("Unknown error.");
+	}
 
-  return 0;
+	return 0;
 }
 

@@ -23,30 +23,30 @@
 #define CONF_FILE		"confparser.conf"
 
 int main(void) {
-  Q_ENTRY *conf;
-  char *protocol, *host;
-  int port;
+	Q_ENTRY *conf;
+	char *protocol, *host;
+	int port;
 
-  /* Open configuration file */
-  if(!(conf = qfDecoder(CONF_FILE))) qError("Configuration file(%s) not found.", CONF_FILE);
+	/* Open configuration file */
+	if (!(conf = qfDecoder(CONF_FILE))) qError("Configuration file(%s) not found.", CONF_FILE);
 
-  /* Get variable */
-  protocol = qfValue(conf, "PROTOCOL");
-  host     = qfValue(conf, "HOST");
-  port     = qfiValue(conf, "PORT");
+	/* Get variable */
+	protocol = qfValue(conf, "PROTOCOL");
+	host     = qfValue(conf, "HOST");
+	port     = qfiValue(conf, "PORT");
 
-  /* Print out */
-  qContentType("text/plain");
-  printf("Protocol : %s\n", protocol);
-  printf("Host     : %s\n", host);
-  printf("Port     : %d\n", port);
+	/* Print out */
+	qContentType("text/plain");
+	printf("Protocol : %s\n", protocol);
+	printf("Host     : %s\n", host);
+	printf("Port     : %d\n", port);
 
-  printf("\n--[CONFIGURATION DUMP]--\n");
-  qfPrint(conf);
+	printf("\n--[CONFIGURATION DUMP]--\n");
+	qfPrint(conf);
 
-  /* Deallocate parsed entries */
-  qfFree(conf);
+	/* Deallocate parsed entries */
+	qfFree(conf);
 
-  return 0;
+	return 0;
 }
 

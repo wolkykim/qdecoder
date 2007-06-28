@@ -23,36 +23,36 @@
 #define TMPPATH		"tmp"
 
 int main(void) {
-  int i;
+	int i;
 
-  qDecoderInit(Q_TRUE, TMPPATH, (1 * 60 * 60));	// MUST BE called at the first line of main()
-  qDecoder();					// CAN NOT BE OMITTED in case of progress uploading.
+	qDecoderInit(Q_TRUE, TMPPATH, (1 * 60 * 60));	// MUST BE called at the first line of main()
+	qDecoder();					// CAN NOT BE OMITTED in case of progress uploading.
 
-  qContentType("text/html");
+	qContentType("text/html");
 
-  printf("You entered: <b>%s</b>\n", qValueDefault("", "text"));
+	printf("You entered: <b>%s</b>\n", qValueDefault("", "text"));
 
-  for(i = 1; i <= 3; i++) {
-    char *filename, *contenttype, *savepath;
-    int length;
+	for (i = 1; i <= 3; i++) {
+		char *filename, *contenttype, *savepath;
+		int length;
 
-    char newpath[1024];
+		char newpath[1024];
 
-    if((length = qiValue("binary%d.length", i)) > 0) {
-      filename = qValue("binary%d.filename", i);
-      contenttype = qValue("binary%d.contenttype", i);
-      savepath = qValue("binary%d.savepath", i);
+		if ((length = qiValue("binary%d.length", i)) > 0) {
+			filename = qValue("binary%d.filename", i);
+			contenttype = qValue("binary%d.contenttype", i);
+			savepath = qValue("binary%d.savepath", i);
 
-      sprintf(newpath, "%s/%s", BASEPATH, filename);
-      if(rename(savepath, newpath) == -1) qError("Can not move uploaded file. %s-%s", savepath, newpath);
+			sprintf(newpath, "%s/%s", BASEPATH, filename);
+			if (rename(savepath, newpath) == -1) qError("Can not move uploaded file. %s-%s", savepath, newpath);
 
-      printf("<br><a href=\"%s\">%s</a> (%d bytes, %s) saved.", newpath, filename, length, contenttype);
-    }
-  }
+			printf("<br><a href=\"%s\">%s</a> (%d bytes, %s) saved.", newpath, filename, length, contenttype);
+		}
+	}
 
-  printf("\n<p><hr>--[ DUMP INTERNAL DATA STRUCTURE ]--\n<pre>");
-  qPrint();
-  printf("\n</pre>\n");
-  qFree();
-  return 0;
+	printf("\n<p><hr>--[ DUMP INTERNAL DATA STRUCTURE ]--\n<pre>");
+	qPrint();
+	printf("\n</pre>\n");
+	qFree();
+	return 0;
 }

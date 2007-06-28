@@ -21,37 +21,34 @@
 #include "qDecoder.h"
 
 int main(void) {
-  char *mode, *name, *value;
+	char *mode, *name, *value;
 
-  mode = qValue("mode");
-  name = qValue("cname");
-  value = qValue("cvalue");
+	mode = qValue("mode");
+	name = qValue("cname");
+	value = qValue("cvalue");
 
-  if(mode == NULL) { /* View Cookie */
-    int amount;
-    qContentType("text/html");
-    amount = qPrint();
-    printf("<p>Total %d entries\n", amount);
-  }
-  else if(!strcmp(mode, "set")) { /* Set Cookie */
-    if(name == NULL || value == NULL) qError("Query not found");
-    if(!strcmp(name, "")) qError("Empty cookie name can not be stored.");
+	if (mode == NULL) { /* View Cookie */
+		int amount;
+		qContentType("text/html");
+		amount = qPrint();
+		printf("<p>Total %d entries\n", amount);
+	} else if (!strcmp(mode, "set")) { /* Set Cookie */
+		if (name == NULL || value == NULL) qError("Query not found");
+		if (!strcmp(name, "")) qError("Empty cookie name can not be stored.");
 
-    qCookieSet(name, value, 0, NULL, NULL, NULL);
-    qContentType("text/html");
-    printf("Cookie('%s'='%s') entry is stored.<br>Click <a href='cookie.cgi'>here</a> to view your cookies\n", name, value);
-  }
-  else if(!strcmp(mode, "remove")) { /* Remove Cookie */
-    if(name == NULL) qError("Query not found");
-    if(!strcmp(name, "")) qError("Empty cookie name can not be removed.");
+		qCookieSet(name, value, 0, NULL, NULL, NULL);
+		qContentType("text/html");
+		printf("Cookie('%s'='%s') entry is stored.<br>Click <a href='cookie.cgi'>here</a> to view your cookies\n", name, value);
+	} else if (!strcmp(mode, "remove")) { /* Remove Cookie */
+		if (name == NULL) qError("Query not found");
+		if (!strcmp(name, "")) qError("Empty cookie name can not be removed.");
 
-    qCookieRemove(name, NULL, NULL, NULL);
-    qContentType("text/html");
-    printf("Cookie('%s') entry is removed.<br>Click <a href='cookie.cgi'>here</a> to view your cookies\n", name);
-  }
-  else qError("Unknown mode.");
+		qCookieRemove(name, NULL, NULL, NULL);
+		qContentType("text/html");
+		printf("Cookie('%s') entry is removed.<br>Click <a href='cookie.cgi'>here</a> to view your cookies\n", name);
+	} else qError("Unknown mode.");
 
-  qFree();
-  return 0;
+	qFree();
+	return 0;
 }
 

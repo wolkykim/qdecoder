@@ -21,7 +21,7 @@
 #include "qDecoder.h"
 
 int main(void) {
-  qDownload("download.c");
-  return 0;
+	qDownload("download.c");
+	return 0;
 }
 

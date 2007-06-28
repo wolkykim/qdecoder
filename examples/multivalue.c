@@ -21,18 +21,18 @@
 #include "qDecoder.h"
 
 int main(void) {
-  char *list;
+	char *list;
 
-  qDecoder();
+	qDecoder();
 
-  qContentType("text/html");
-  if((list = qValueFirst("checklist")) == NULL) qError("Check what you want to order please.");
-  printf("You ordered ");
-  for(; list; list = qValueNext()) {
-    printf("<b>%s</b> \n", list);
-  }
+	qContentType("text/html");
+	if ((list = qValueFirst("checklist")) == NULL) qError("Check what you want to order please.");
+	printf("You ordered ");
+	for (; list; list = qValueNext()) {
+		printf("<b>%s</b> \n", list);
+	}
 
-  qFree();
-  return 0;
+	qFree();
+	return 0;
 }
 

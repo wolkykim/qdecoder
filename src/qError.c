@@ -65,7 +65,7 @@ void qError(char *format, ...) {
 
 			if ((http_user_agent = getenv("HTTP_USER_AGENT")) == NULL) http_user_agent = "null";
 			if ((remote_host     = getenv("REMOTE_HOST"))     == NULL) {
-				/* Fetch for Apache 1.3 */
+				/* Patch for Apache 1.3 */
 				if ((remote_host     = getenv("REMOTE_ADDR"))   == NULL) remote_host = "null";
 			}
 
@@ -99,8 +99,7 @@ void qError(char *format, ...) {
 		printf("</html>\n");
 	}
 
-	qFreeAll();
-
+	qReset();
 	exit(1);
 }
 

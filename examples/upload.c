@@ -22,28 +22,28 @@
 #define BASEPATH	"upload"
 
 int main(void) {
-  char *text;
-  char *filedata, *filename, *contenttype, filepath[1024];
-  int filelength;
+	char *text;
+	char *filedata, *filename, *contenttype, filepath[1024];
+	int filelength;
 
-  qContentType("text/html");
-  qDecoder();
+	qContentType("text/html");
+	qDecoder();
 
-  text = qValueDefault("", "text");
+	text = qValueDefault("", "text");
 
-  filedata   = qValue("binary");
-  if((filelength = qiValue("binary.length")) == 0) qError("Select file, please.");
-  filename   = qValue("binary.filename");
-  contenttype = qValue("binary.contenttype");
-  sprintf(filepath, "%s/%s", BASEPATH, filename);
+	filedata   = qValue("binary");
+	if ((filelength = qiValue("binary.length")) == 0) qError("Select file, please.");
+	filename   = qValue("binary.filename");
+	contenttype = qValue("binary.contenttype");
+	sprintf(filepath, "%s/%s", BASEPATH, filename);
 
-  if(qSaveStr(filedata, filelength, filepath, "w") < 0) {
-    qError("File(%s) open fail. Please make sure CGI or directory has right permission.", filepath);
-  }
+	if (qSaveStr(filedata, filelength, filepath, "w") < 0) {
+		qError("File(%s) open fail. Please make sure CGI or directory has right permission.", filepath);
+	}
 
-  printf("You entered: <b>%s</b>\n", text);
-  printf("<br><a href=\"%s\">%s</a> (%d bytes, %s) saved.", filepath, filename, filelength, contenttype);
+	printf("You entered: <b>%s</b>\n", text);
+	printf("<br><a href=\"%s\">%s</a> (%d bytes, %s) saved.", filepath, filename, filelength, contenttype);
 
-  qFree();
-  return 0;
+	qFree();
+	return 0;
 }
