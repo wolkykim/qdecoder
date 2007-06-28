@@ -19,20 +19,92 @@
  **************************************************************************/
 
 /**
- * hi
- */
-
-/** \mainpage qDecoder Project
+ * @file qDecoder.c Web Query & Cookie Handling API
  *
- * \section intro_sec Introduction
+ * qDecoder supports parsing
+ *   @li COOKIE
+ *   @li GET method
+ *   @li POST method (application/x-www-form-urlencoded: default <FORM> encoding)
+ *   @li POST method (multipart/form-data: especially used for file uploading)
  *
- * This is the introduction.
+ * Anyway you don't care about this. You don't need to know which method(COOKIE/GET/POST)
+ * is used for sending data. All you need to know is you can get the value
+ * by calling qValue("value name"). (See examples/fetch.c)
  *
- * \section install_sec Installation
+ * @code
+ *   [HTML sample]
+ *   <form action="your_program.cgi">
+ *     <input type="text" name="query">
+ *     <input type="submit">
+ *   </form>
  *
- * \subsection step1 Step 1: Opening the box
+ *   [Your Source]
+ *   char *query;
+ *   query = qValue("query");
+ *   qPrint(); // if you want to see debugging information
+ * @endcode
  *
- * etc...
+ * The parsing sequence is (1)COOKIE (2)GET (3)POST. Thus if same query names
+ * (which are sent by different method) exist, qValue() will return the value of COOKIE.
+ *
+ * In case of multipart/form-data encoding(used for file uploading), qDecoder supports
+ * 2 modes for handling file uploading. I just made a name for that.
+ *
+ *   @li <b>default mode</b>	: Uploading file will be processed only in memory. (see examples/upload.c)
+ *   @li <b>file mode</b>	: Uploading file will be stored into unique temporary file on the fly. (see examples/uploadfile.c)
+ *                        There is sub mode named <b>progress mode</b>. This is same as file mode.
+ *			  But user can see the progress bar while uploading.
+ *			  When file mode is turned on and if you add some specific HTML codes
+ *			  in your uploading page, progressive window will be shown. (see examples/uploadprogress.c)
+ *
+ * Basically, when file is uploaded qDecoder store it's meta information like below.
+ * @li (VARIABLE_NAME)		- In the <b>default mode</b>, this is binary data. In the <b>file mode</b> this value is same as "(VARIABLE_NAME).savepath".
+ * @li (VARIABLE_NAME).filename	- File name itself, path information will be removed.
+ * @li (VARIABLE_NAME).length	- File size, the number of bytes.
+ * @li (VARIABLE_NAME).contenttype - Mime type like 'text/plain', 'application/vnd.ms-excel'.
+ * @li (VARIABLE_NAME).savepath	- Only appended only in <b>file mode</b>. The file path where uploaded file is saved.
+ *
+ * @code
+ *   [default mode example]
+ *   binary = (...binary data...)
+ *   binary.filename = hello.xls
+ *   binary.length = 3292
+ *   binary.contenttype = application/vnd.ms-excel
+ *
+ *   [file mode example]
+ *   binary = tmp/Q_7b91698bc6d6ac7eaac93e71ce729b7c/1-hello.xls
+ *   binary.filename = hello.xls
+ *   binary.length = 3292
+ *   binary.contenttype = application/vnd.ms-excel
+ *   binary.savepath = tmp/Q_7b91698bc6d6ac7eaac93e71ce729b7c/1-hello.xls
+ * @endcode
+ *
+ * The return value of qDecoder() only counts variables. So this will be regarded as 1.
+ *
+ * If you want to activate progress mode. Please follow below steps
+ *   @li 1) copy "examples/qDecoder-upload/" folder under your Web Document Root.
+ *   @li 2) see this sample codes.
+ *   @code
+ *   [HTML sample]
+ *   <script language="JavaScript" src="/_(SOME_PATH)_/qDecoder-upload/qDecoder-upload.js"></script>
+ *   <form method="post" action="your_program.cgi" enctype="multipart/form-data" onSubmit="return Q_UPLOAD(this);">
+ *     <input type="hidden" name="Q_UPLOAD_ID" value="">
+ *
+ *     Input text: <input type="text" name="text">
+ *     <br>Select file: <input type="file" name="binary1">
+ *     <br>Another file: <input type="file" name="binary2">
+ *     <br><input type="submit">
+ *   </form>
+ *
+ *   [Code sample]
+ *   int main(...) {
+ *     // change mode to "file mode".
+ *     qDecoderInit(Q_TRUE, "/tmp", 86400);	// must be called at the first file of main();
+ *     qDecoder();				// must be called right next of qDecoderInit().
+ *
+ *     (...your codes here...)
+ *   }
+ *   @endcode
  */
 
 #include "qDecoder.h"
@@ -65,17 +137,32 @@ static char _multi_last_key[1024];
 
 static Q_BOOL _upload_base_init = Q_FALSE;
 static char _upload_base[1024];
-static int _upload_clear_olderthan = 0;
+static int _upload_clear_olderthan = 0;	/* seconds */
 
 static int _cookie_cnt = 0, _get_cnt = 0, _post_cnt = 0, _new_cnt = 0; /* counts per methods */
 
 /**
- * Set temporary uploading directory base.
- * When qDecoder() try to save uploading file into disk,
- * it checks old files which is older than 'olderthan' sec.
- * Then clean up old files before step next.
+ * Initialize how qDecoder() handle file uploading(multipart/form-data).
  *
- * @return	Success Q_TRUE. Otherwise Q_FALSE.
+ * @param filemode	to turn on file mode set to Q_TRUE. Q_FALSE means default mode.
+ * @param upload_base	the base path where the temporary created files are located. if filemode is Q_FALSE, just set to NULL.
+ * @param clear_olderthan automatically remove temporary uploading file older than this secconds. to disable, set to 0.
+ *
+ * @return	in case of success, returns Q_TRUE. otherwise(upload_base not found) Q_FALSE.
+ *
+ * @note
+ * You do not need to call for setting up memory mode, because it's default operation.
+ * But if you want to turn file mode on, you must call this at the first line of main().
+ *
+ * @code
+ *   int main(...) {
+ *     // change mode to "file mode".
+ *     qDecoderInit(Q_TRUE, "/tmp", 86400);	// must be called at the first file of main();
+ *     qDecoder();				// must be called right next of qDecoderInit().
+ *
+ *     (...your code here...)
+ *   }
+ * @endcode
  */
 Q_BOOL qDecoderInit(Q_BOOL filemode, char *upload_base, int clear_olderthan) {
 	if(filemode == Q_FALSE) {
@@ -87,15 +174,20 @@ Q_BOOL qDecoderInit(Q_BOOL filemode, char *upload_base, int clear_olderthan) {
 		_upload_base_init = Q_TRUE;
 	}
 
-	return Q_TRUE;
+return Q_TRUE;
 }
 
-/**********************************************
-** Usage : qDecoder();
-** Return: Success number of values, Fail -1.
-** Do    : Decode Query & Cookie then save it in linked list.
-**         It doesn't care Method.
-**********************************************/
+/**
+ * Interprets encoded web query & cookie strings and stores them in the internal linked-list.
+ *
+ * The parsing sequence is (1)COOKIE (2)GET (3)POST. Thus if same query names
+ * (which are sent by different method) exist, qValue() will return the value of COOKIE.
+ *
+ * This function, qDecoder(), is called automatically when you use qValue() or related functions,
+ * so you do not need to call directly.
+ *
+ * @return	 the number of received arguments(not stored). otherwise returns -1.
+ */
 int qDecoder(void) {
 	int  amount = -1;
 	char *content_type;
@@ -309,15 +401,15 @@ static int _parse_multipart_data(void) {
 
 		/* check file save mode */
 		if (_first_entry != NULL && upload_type == 0) {
-			char *upload_id;
 
-			upload_id = qValue("Q_UPLOAD_ID");
+			if (_upload_base_init == Q_TRUE) {
+				char *upload_id;
 
-			if (upload_id != NULL) {
-				if (_upload_base_init == Q_FALSE) qError("_parse_multipart_data(): qDecoderInit(Q_TRUE, ...) must be called before.");
+				upload_id = qValue("Q_UPLOAD_ID");
+				if (upload_id == NULL || strlen(upload_id) == 0)  upload_id = qUniqId(); /* not progress, just file mode */
 
-				if (strlen(upload_id) == 0) upload_id = qUniqId();
-				upload_type = 1; /* turn on the flag - save into file directly */
+				/* turn on the flag - save into file directly */
+				upload_type = 1;
 
 				/* generate temporary uploading directory path */
 				if (_upload_getsavedir(upload_id, upload_savedir) == NULL) qError("_parse_multipart_data(): Invalid Q_UPLOAD_ID");
@@ -360,7 +452,7 @@ static int _parse_multipart_data(void) {
 					filename = strdup(strstr(buf, "; filename=\"") + strlen("; filename=\""));
 					for (c_count = 0; (filename[c_count] != '\"') && (filename[c_count] != '\0'); c_count++);
 					filename[c_count] = '\0';
-					/* erase '\' */
+					/* remove directory from path, erase '\' */
 					for (erase = 0, c_count = strlen(filename) - 1; c_count >= 0; c_count--) {
 						if (erase == 1) filename[c_count] = ' ';
 						else {
@@ -380,7 +472,9 @@ static int _parse_multipart_data(void) {
 
 		/* get value field */
 		if (strcmp(filename, "") && upload_type == 1) {
-			value = _parse_multipart_value_into_disk(boundary, upload_savedir, filename, &valuelen, &finish);
+			char *savename = qStrReplace("tn", filename, " ", "_");
+			value = _parse_multipart_value_into_disk(boundary, upload_savedir, savename, &valuelen, &finish);
+			free(savename);
 		} else {
 			value = _parse_multipart_value_into_memory(boundary, &valuelen, &finish);
 		}
@@ -659,7 +753,6 @@ static void _upload_progressbar(char *upload_id) {
 		return;
 	}
 	if(fflush(stdout) != 0) return;
-	;
 
 	/* draw progress bar */
 	while(1) {
@@ -797,12 +890,23 @@ static int _upload_clear_base() {
 	return delcnt;
 }
 
-/**********************************************
-** Usage : qValue(query name);
-** Return: Success pointer of value string, Fail NULL.
-** Do    : Find value string pointer.
-**         It find value in linked list.
-**********************************************/
+/**
+ * Finds out the value.
+ *
+ * @param format	variable name
+ *
+ * @return	the pointer of the variable value. NULL if there is no such variable name.
+ *
+ * @note
+ * @code
+ *   char *test;
+ *   test = qValue("name");
+ *
+ *   char *test;
+ *   int i = 1;
+ *   test = qValue("arg%d", i);
+ * @endcode
+ */
 char *qValue(char *format, ...) {
 	char name[1024];
 	int status;
@@ -817,11 +921,19 @@ char *qValue(char *format, ...) {
 	return _EntryValue(_first_entry, name);
 }
 
-/**********************************************
-** Usage : qiValue(query name);
-** Return: Se string, Fail 0.
-** Do    : Find value string pointer and convert to integer.
-**********************************************/
+/**
+ * Finds out the value then converts to integer.
+ *
+ * @param format	variable name
+ *
+ * @return	converted value. otherwise(convertion error, not found) returns 0.
+ *
+ * @note
+ * @code
+ *   int num;
+ *   num = qiValue("num");
+ * @endcode
+ */
 int qiValue(char *format, ...) {
 	char name[1024];
 	int status;
@@ -836,11 +948,20 @@ int qiValue(char *format, ...) {
 	return _EntryiValue(_first_entry, name);
 }
 
-/**********************************************
-** Usage : qValueDefault(default string, query name);
-** Return: Success pointer of value string, Fail using default string.
-** Do    : If the query is not found, default string is used instead.
-**********************************************/
+/**
+ * Finds out the value, if there is no such variable returns default value.
+ *
+ * @param defstr	default value
+ * @param format	variable name
+ *
+ * @return	the pointer of the variable value.
+ *
+ * @note
+ * @code
+ *   char *test;
+ *   test = qValueDefault("this is default value", "name");
+ * @endcode
+ */
 char *qValueDefault(char *defstr, char *format, ...) {
 	char name[1024];
 	int status;
@@ -858,13 +979,21 @@ char *qValueDefault(char *defstr, char *format, ...) {
 	return value;
 }
 
-/**********************************************
-** Usage : qValueNotEmpty(error message, query name);
-** Return: Success pointer of value string, Fail error message.
-** Do    : Find value string pointer which is not empty and NULL.
-**         When the query is not found or the value string is
-**         empty, error message will be shown using qError().
-**********************************************/
+/**
+ * Exit program using the qError() function if there is no such variable.
+ *
+ * @param errmsg	error message
+ * @param format	variable name
+ *
+ * @return	the pointer of the variable value.
+ *		if there is no such variable, display errmsg then quit program.
+ *
+ * @note
+ * @code
+ *   char *test;
+ *   test = qValueNotEmpty("DO NOT USE MANUALLY", "name");
+ * @endcode
+ */
 char *qValueNotEmpty(char *errmsg, char *format, ...) {
 	char name[1024];
 	int status;
@@ -883,14 +1012,36 @@ char *qValueNotEmpty(char *errmsg, char *format, ...) {
 	return value;
 }
 
-/**********************************************
-** Usage : qValueReplace(mode, query name, token string, word);
-** Return: String pointer which is new or replaced.
-** Do    : Replace string or tokens as word from linked list
-**         with given mode.
-**
-** Refer the description of qStrReplace() for more detail.
-**********************************************/
+/**
+ * Find out the value with replacing tokens.
+ *
+ * Basically, qValueReplace() is the wrapping function of qStrReplace().
+ * The difference is that the source string is the query value (the value of the linked-list for names),
+ * and the conversion can be directly done to the linked-list itself.
+ *
+ * Accordingly, the usage of arguments of qValueReplace() is basically the same as that of qStrReplace().
+ * The 'mode' argument is a character string made up of two separate characters like "sr".
+ *
+ * @param mode	same as qStrReplace().
+ *		@li "tn" : [t]oken transposition & stores results in a [n]ew space and returns
+ *		@li "tr" : [t]oken transposition & [r]eplaces the linked-list itself
+ *		@li "sn" : [s]tring transposition & stores results in a [n]ew space and returns
+ *		@li "sr" : [s]tring transposition & [r]eplaces the linked-list itself
+ * @param name	variable name of the linked-list
+ * @param tokstr token or string which you wishes to be replaced.
+ * @param word	the string to replace
+ *
+ * @return	the pointer of the replaced variable value. if you set the mode to "tn" or "sn", you must free yourself.
+ *
+ * @note
+ * @code
+ *   char *test;
+ *   test = qValueReplace("tr", "name", " '\"", "_"); // replace space, quotation, double quotation to '_'
+ *   test = qValueReplace("sr", "name", "bad", "good"); // replace "bad" to "good"
+ * @endcode
+ *
+ * @see qStrReplace()
+ */
 char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
 	Q_ENTRY *entries;
 	char *retstr, *repstr, method, memuse, newmode[2+1];
@@ -928,11 +1079,23 @@ char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
 	return retstr;
 }
 
-/**********************************************
-** Usage : qValueFirst(query name);
-** Return: Success pointer of first value string, Fail NULL.
-** Do    : Find first value string pointer.
-**********************************************/
+/**
+ * Find out the first value.
+ *
+ * If the query has multi-same-variables(same variable names), you can use this.
+ *
+ * @param format	variable name
+ *
+ * @return	the pointer of the first variable value. otherwise(not found) returns NULL.
+ *
+ * @note
+ * @code
+ *   char *list;
+ *   for(list = qValueFirst("checklist"); list; list = qValueNext()) {
+ *     printf("checklist = %s<br>\n", list);
+ *   }
+ * @endcode
+ */
 char *qValueFirst(char *format, ...) {
 	int status;
 	va_list arglist;
@@ -948,11 +1111,11 @@ char *qValueFirst(char *format, ...) {
 	return qValueNext();
 }
 
-/**********************************************
-** Usage : qValueNext();
-** Return: Success pointer of next value string, Fail NULL.
-** Do    : Find next value string pointer.
-**********************************************/
+/**
+ * Find out the next value.
+ *
+ * @return	the pointer of the next variable value. otherwise(no more value) returns NULL.
+ */
 char *qValueNext(void) {
 	Q_ENTRY *entries;
 
@@ -968,20 +1131,28 @@ char *qValueNext(void) {
 	return NULL;
 }
 
-/**********************************************
-** Usage : qValueAdd(name, value);
-** Do    : Force to add given name and value to linked list.
-**         If same name exists, it'll be replaced.
-**
-** ex) qValueAdd("NAME", "Seung-young Kim");
-**********************************************/
+/**
+ * Add given variable to internal linked list.
+ *
+ * If same variable name exists, it'll be replaced.
+ *
+ * @param name		variable name to add
+ * @param format	value string
+ *
+ * @return	the pointer of the value string. otherwise(can't add) returns NULL.
+ *
+ * @note
+ * @code
+ *   qValueAdd("NAME", "Seung-young Kim");
+ * @endcode
+ */
 char *qValueAdd(char *name, char *format, ...) {
 	Q_ENTRY *new_entry;
 	char value[1024];
 	int status;
 	va_list arglist;
 
-	if (!strcmp(name, "")) qError("qValueAdd(): can not add empty name.");
+	if (!strcmp(name, "")) return NULL;
 
 	va_start(arglist, format);
 	status = vsprintf(value, format, arglist);
@@ -997,12 +1168,18 @@ char *qValueAdd(char *name, char *format, ...) {
 	return qValue(name);
 }
 
-/**********************************************
-** Usage : qValueRemove(name);
-** Do    : Remove entry from linked list.
-**
-** ex) qValueRemove("NAME");
-**********************************************/
+/**
+ * Remove variable from internal linked list.
+ *
+ * Multi-same-variables will be removed too.
+ *
+ * @param name		variable name to remove
+ *
+ * @note
+ * @code
+ *   qValueRemove("NAME");
+ * @endcode
+ */
 void qValueRemove(char *format, ...) {
 	char name[1024];
 	int status;
@@ -1037,13 +1214,23 @@ void qValueRemove(char *format, ...) {
 	_first_entry = _EntryRemove(_first_entry, name);
 }
 
-/**********************************************
-** Usage : qValueType(name);
-** Return: Cookie 'C', Get method 'G', Post method 'P', New data 'N', Not found '-'
-** Do    : Returns type of query.
-**
-** ex) qValueRemove("NAME");
-**********************************************/
+/**
+ * Get the type of variable.
+ *
+ * @param name		variable name to remove
+ *
+ * @return	type character
+ *		@li COOKIE			: 'C'
+ *		@li GET method			: 'G'
+ *		@li POST method			: 'P'
+ *		@li New(added by qValueAdd())	: 'N'
+ *		@li Not found			: '-'
+ *
+ * @note
+ * @code
+ *   char t = qValueType("NAME");
+ * @endcode
+ */
 char qValueType(char *format, ...) {
 	char name[1024];
 	int status;
@@ -1066,58 +1253,76 @@ char qValueType(char *format, ...) {
 	return '-';
 }
 
-/**********************************************
-** Usage : qGetFirstEntry();
-** Do    : Return _first_entry.
-**********************************************/
+/**
+ * Get the first entry pointer of internal linked list.
+ *
+ * @return	first entry pointer. if no data stored, returns NULL.
+ *
+ * @note
+ * @code
+ *   Q_ENTRY *entry = qGetFirstEntry();
+ * @endcode
+ */
 Q_ENTRY *qGetFirstEntry(void) {
 	if (_first_entry == NULL) qDecoder();
 	return _first_entry;
 }
 
-/**********************************************
-** Usage : qPrint(pointer of the first Entry);
-** Return: Amount of entries.
-** Do    : Print all parsed values & names for debugging.
-**********************************************/
+/**
+ * Print out internal data for debugging.
+ *
+ * @return	the number of variables
+ *
+ * @note
+ * @code
+ *   qPrint();
+ * @endcode
+ */
 int qPrint(void) {
 	int amount;
 	if (_first_entry == NULL) qDecoder();
 	amount = _EntryPrint(_first_entry);
-	printf("<hr>\n");
+	printf("\n");
 	printf("COOKIE = %d , GET = %d , POST = %d, NEW = %d\n", _cookie_cnt, _get_cnt, _post_cnt, _new_cnt);
 	return amount;
 }
 
-/**********************************************
-** Usage : qFree(pointer of the first Entry);
-** Do    : Make free of linked list memory.
-**********************************************/
-void qFree(void) {
-	_EntryFree(_first_entry);
-	_first_entry = NULL;
-	_multi_last_entry = NULL;
-	strcpy(_multi_last_key, "");
-	_cookie_cnt = 0, _get_cnt = 0, _post_cnt = 0, _new_cnt = 0;
-}
-
-
-/**********************************************
-** Usage : qCookieSet(name, value, expire days, path, domain, secure);
-** Do    : Set cookie.
-**
-** The 'exp_days' is number of days which expire the cookie.
-** The current time + exp_days will be set.
-** This function should be called before qContentType().
-**
-** ex) qCookieSet("NAME", "Kim", 30, NULL, NULL, NULL);
-**********************************************/
-void qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure) {
+/**
+ * Set cookie
+ *
+ * This should be used before qContentType() is called.
+ *
+ * When cookie is set up through qCookieSet(), the point of time when values are handed over through qValue()
+ * is when the next program is called. In some implementations, however, cookies need to be set up for the
+ * simplicity of logic while, at the same time, this needs to be applied to other routines.
+ * In this case, qValueAdd() can prevent the alteration of logic and the waste of additional codes
+ * by adding values to the cookie linked-list. But with regard to qCookieSet(), setting up cookies
+ * at clients (browsers) does not succeed always. Thus, users should be careful when using qValueAdd().
+ *
+ * @return	in case of success, returns Q_TRUE. otherwise(qContentType() is called before) Q_FALSE
+ *
+ * @note
+ * @code
+ *   char *name = "NAME", *value = "Kim";
+ *
+ *   // Apply the NAME=Kim information in the current domain and directory for 30 days.
+ *   qCookieSet(name, value, 30, NULL, NULL, NULL);
+ *
+ *   // Apply the NAME=Kim information to the "/" directory of "ANYTHING.qdecoder.org"
+ *   // until the browser is shut down.
+ *   qCookieSet(name, value, 0, "/", ".qdecoder.org", NULL);
+ *
+ *   // As for the followings, cookies will be set up only when security
+ *   // requirements are satisfied.
+ *   qCookieSet(name, value, 0, NULL, NULL, "SECURE");
+ * @endcode
+ */
+Q_BOOL qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure) {
 	char *Name, *Value;
 	char cookie[(4 * 1024) + 256];
 
 	/* check content flag */
-	if (qGetContentFlag() == 1) qError("qCookieSet(): must be called before qContentType() and any stream out.");
+	if (qGetContentFlag() == 1) return Q_FALSE;
 
 	/* Name=Value */
 	Name = qURLencode(name), Value = qURLencode(value);
@@ -1151,36 +1356,62 @@ void qCookieSet(char *name, char *value, int exp_days, char *path, char *domain,
 
 	printf("Set-Cookie: %s\n", cookie);
 
-	/* if you want to use cookie variable immediately, uncommnet below */
-	/*
-	qValueAdd(name, value);
-	*/
+	return Q_TRUE;
 }
 
-/**********************************************
-** Usage : qCookieRemove(name);
-** Do    : Remove cookie.
-**
-** ex) qCookieRemove("NAME");
-**********************************************/
-void qCookieRemove(char *name, char *path, char *domain, char *secure) {
+/**
+ * Remove cookie
+ *
+ * This should be used before qContentType() is called
+ * and the arguments(path, domain, secure) must be exactly same as the arguments of qCookieSet().
+ *
+ * When cookies are removed through qCookieRemove(),
+ * the point of time when values in linked-list removed is when the next program is called.
+ * In some implementations, however, cookies need to be removed for the simplicity of logic while,
+ * at the same time, this needs to be applied to other routines.
+ *
+ * In this case, qValueRemove() can prevent the alteration of logic and the waste of additional
+ * codes by removing values to the linked-list. But with regard to qCookieRemove(),
+ * removing cookies at clients (browsers) does not succeed always.
+ * Thus, users should be careful when using qValueRemove().
+ *
+ * @return	in case of success, returns Q_TRUE. otherwise(qContentType() is called before) Q_FALSE
+ *
+ * @note
+ * @code
+ *   qCookieSet("NAME", "VALUE", 0, NULL, NULL, NULL);
+ *   qCookieRemove("NAME", NULL, NULL, NULL);
+ *
+ *   qCookieSet("NAME", "VALUE", 0, "/", "www.qdecoder.org", NULL);
+ *   qCookieRemove("NAME", "/", "www.qdecoder.org", NULL);
+ * @endcode
+ */
+Q_BOOL qCookieRemove(char *name, char *path, char *domain, char *secure) {
 
 	/* check content flag */
-	if (qGetContentFlag() == 1) qError("qCookieRemove(): must be called before qContentType() and any stream out.");
+	if (qGetContentFlag() == 1) return Q_FALSE;
 
 	qCookieSet(name, "", -1, path, domain, secure);
 
-	/* if you want to remove cookie variable immediately, uncomment below */
-	/*
-	qValueRemove(name);
-	*/
+	return Q_TRUE;
 }
 
-/**********************************************
-** Usage : qCookieValue(cookie name);
-** Return: Success pointer of value string, Fail NULL.
-** Do    : It only finds cookie value in the linked-list.
-**********************************************/
+/**
+ * Find out the cookie value.
+ *
+ * This only find the cookie value. Of course, you can use qValue() instead but qValue() finds
+ * out variable from query(GET/POST) too. So it's different. For some security reason, sometimes
+ * you need to get only cookie value, in case of that, use this.
+ *
+ * @return	the pointer of the cookie value. otherwise(not found) returns NULL.
+ *
+ * @note
+ * @code
+ *   char *cookie;
+ *   cookie = qCookieValue("NAME");
+ *   if(cookie == NULL) printf("cookie not found.\n");
+ * @endcode
+ */
 char *qCookieValue(char *format, ...) {
 	char name[1024];
 	int status;
@@ -1200,22 +1431,42 @@ char *qCookieValue(char *format, ...) {
 	return NULL;
 }
 
-/**********************************************
-** Usage : qFreeAll();
-** Do    : De-allocate all reserved memories.
-**********************************************/
-void qFreeAll(void) {
-	qFree();
-	qSessionFree();
+/**
+ * Deallocates the allocated memory by qDecoder().
+ *
+ * @note
+ * @code
+ *   qFree();
+ * @endcode
+ */
+void qFree(void) {
+	_EntryFree(_first_entry);
+	_first_entry = NULL;
+	_multi_last_entry = NULL;
+	strcpy(_multi_last_key, "");
+	_cookie_cnt = 0, _get_cnt = 0, _post_cnt = 0, _new_cnt = 0;
 }
 
+/**
+ * Deallocates every allocated memory(including session data) and re-initialize.
+ *
+ * When you wish to make a daemon-type repetitive program or to initialize qDecoder new,
+ * you can use this function. qReset() deallocates all the allocated memory including
+ * the linked-list and restores internal static variables to the initial condition.
+ *
+ * @note
+ * @code
+ *   qReset();
+ * @endcode
+ */
 /**********************************************
 ** Usage : qReset();
 ** Do    : Reset all static flags and de-allocate
 **         all reserved memories.
 **********************************************/
 void qReset(void) {
-	qFreeAll();
+	qFree();
+	qSessionFree();
 
 	/* reset static variables */
 	qErrorLog(NULL);

@@ -19,17 +19,53 @@
  **************************************************************************/
 
 /**
- * Database Independent Wrapper Functions
+ * @file qDatabase.c Database Independent Wrapper Functions
  *
- * @file qDatabase.c
  * @note
- * To activate this feature, you must include database header file before including qDecoder.h like below.
- * And please remember that qDecoder must be compiled with WITH_MYSQL or WITH_SOME_DATABASE.
+ * To use this API, you must include database header file before including qDecoder.h in your
+ * source code like below. And please remember that qDecoder must be compiled with WITH_MYSQL
+ * or WITH_SOME_DATABASE option.
  *
  * @code
- * Example)
- * #include "mysql.h"
- * #include "qDecoder.h"
+ *   In your source)
+ *   #include "mysql.h"
+ *   #include "qDecoder.h"
+ * @endcode
+ *
+ * Not documented yet, please refer below sample codes.
+ * @code
+ *   Q_DB *db = NULL;
+ *   Q_DBRESULT *result = NULL;
+ *
+ *   db = qDbInit("MYSQL", "dbhost.qdecoder.org", 3306, "test", "secret", "sampledb", TRUE);
+ *   if (db == NULL) {
+ *     printf("ERROR: Not supported database type.\n");
+ *     return -1;
+ *   }
+ *
+ *   // try to connect
+ *   if (qDbOpen(db) == FALSE) {
+ *     printf("WARNING: Can't connect to database.\n");
+ *     return -1;
+ *   }
+ *
+ *   // get results
+ *   result = qDbExecuteQuery(db, "SELECT name, population FROM City");
+ *   if (result != NULL) {
+ *     printf("COLS : %d , ROWS : %d\n", qDbGetCols(result), qDbGetRows(result));
+ *     while (qDbResultNext(result) > 0) {
+ *       char *pszName = qDbGetValue(result, "name");
+ *       int   nPopulation = qDbGetInt(result, "population");
+ *       printf("Country : %s , Population : %d\n", pszName, nPopulation);
+ *     }
+ *     qDbResultFree(result);
+ *   }
+ *
+ *   // close connection
+ *   qDbClose(db);
+ *
+ *   // free db object
+ *   qDbFree(db);
  * @endcode
  */
 
@@ -40,12 +76,21 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-/**********************************************
-** Usage :
-** Return: Success returns Q_DB structure pointer.
-**         Otherwise returns NULL.
-** Do    :
-**********************************************/
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ *
+ * @note
+ * @code
+ *   Q_DB *db = NULL;
+ *   db = qDbInit("MYSQL", "dbhost.qdecoder.org", 3306, "test", "secret", "sampledb", TRUE);
+ *   if (db == NULL) {
+ *     printf("ERROR: Not supported database type.\n");
+ *     return -1;
+ *   }
+ * @endcode
+ */
 Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, Q_BOOL autocommit) {
 	Q_DB *db;
 	char *support_db;
@@ -75,23 +120,11 @@ Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password
 	return db;
 }
 
-/**********************************************
-** Usage :
-** Return: Success Q_TRUE. Otherwise Q_FALSE.
-** Do    :
-**********************************************/
-Q_BOOL qDbFree(Q_DB *db)  {
-	if (db == NULL) return Q_FALSE;
-	qDbClose(db);
-	free(db);
-	return Q_TRUE;
-}
-
-/**********************************************
-** Usage :
-** Return: Success Q_TRUE. Otherwise Q_FALSE.
-** Do    :
-**********************************************/
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 Q_BOOL qDbOpen(Q_DB *db) {
 	if (db == NULL) return Q_FALSE;
 
@@ -130,11 +163,11 @@ Q_BOOL qDbOpen(Q_DB *db) {
 #endif
 }
 
-/**********************************************
-** Usage :
-** Return: Success Q_TRUE. Otherwise Q_FALSE.
-** Do    :
-**********************************************/
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 Q_BOOL qDbClose(Q_DB *db) {
 	if (db == NULL || db->connected == Q_FALSE) return Q_FALSE;
 
@@ -147,11 +180,23 @@ Q_BOOL qDbClose(Q_DB *db) {
 #endif
 }
 
-/**********************************************
-** Usage :
-** Return: error string pointer.
-** Do    :
-**********************************************/
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
+Q_BOOL qDbFree(Q_DB *db)  {
+	if (db == NULL) return Q_FALSE;
+	qDbClose(db);
+	free(db);
+	return Q_TRUE;
+}
+
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 char *qDbGetErrMsg(Q_DB *db) {
 	static char msg[1024];
 	if (db == NULL || db->connected == Q_FALSE) return "(no opened db)";
@@ -165,11 +210,11 @@ char *qDbGetErrMsg(Q_DB *db) {
 	return msg;
 }
 
-/**********************************************
-** Usage :
-** Return: Success Q_TRUE. Otherwise Q_FALSE.
-** Do    :
-**********************************************/
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 Q_BOOL qDbPing(Q_DB *db) {
 	if (db == NULL) return Q_FALSE;
 
@@ -192,11 +237,11 @@ Q_BOOL qDbPing(Q_DB *db) {
 #endif
 }
 
-/**********************************************
-** Usage :
-** Return: if connected Q_TRUE. Otherwise Q_FALSE.
-** Do    :
-**********************************************/
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 Q_BOOL qDbGetLastConnStatus(Q_DB *db) {
 	if (db == NULL) return Q_FALSE;
 
@@ -207,11 +252,11 @@ Q_BOOL qDbGetLastConnStatus(Q_DB *db) {
 // PUBLIC FUNCTIONS - query
 /////////////////////////////////////////////////////////////////////////
 
-/**********************************************
-** Usage :
-** Return: If succeed, returns affected rows, Or, returns -1.
-** Do    :
-**********************************************/
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 int qDbExecuteUpdate(Q_DB *db, char *pszQuery) {
 	if (db == NULL || db->connected == Q_FALSE) return -1;
 
@@ -233,6 +278,11 @@ int qDbExecuteUpdate(Q_DB *db, char *pszQuery) {
 #endif
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery) {
 	if (db == NULL || db->connected == Q_FALSE) return NULL;
 
@@ -266,6 +316,11 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery) {
 #endif
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 int qDbGetRows(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
@@ -275,6 +330,11 @@ int qDbGetRows(Q_DBRESULT *result) {
 #endif
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 int qDbGetCols(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
@@ -284,11 +344,11 @@ int qDbGetCols(Q_DBRESULT *result) {
 #endif
 }
 
-/**********************************************
-** Usage :
-** Return: If succeed, returns cursor position, Or, returns 0.
-** Do    :
-**********************************************/
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 int qDbResultNext(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
@@ -302,6 +362,11 @@ int qDbResultNext(Q_DBRESULT *result) {
 #endif
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 Q_BOOL qDbResultFree(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
 	if (result == NULL) return Q_FALSE;
@@ -316,6 +381,11 @@ Q_BOOL qDbResultFree(Q_DBRESULT *result) {
 #endif
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 char *qDbGetValue(Q_DBRESULT *result, char *field) {
 #ifdef _Q_WITH_MYSQL
 	if (result == NULL || result->rs == NULL || result->cols <= 0) return NULL;
@@ -333,10 +403,20 @@ char *qDbGetValue(Q_DBRESULT *result, char *field) {
 #endif
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 int qDbGetInt(Q_DBRESULT *result, char *field) {
 	return atoi(qDbGetValue(result, field));
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
 #ifdef _Q_WITH_MYSQL
 	if (result == NULL || result->rs == NULL || idx <= 0 || idx > result->cols ) return NULL;
@@ -346,14 +426,20 @@ char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
 #endif
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 int qDbGetIntAt(Q_DBRESULT *result, int idx) {
 	return atoi(qDbGetValueAt(result, idx));
 }
 
-/////////////////////////////////////////////////////////////////////////
-// PUBLIC FUNCTIONS - transaction
-/////////////////////////////////////////////////////////////////////////
-
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 Q_BOOL qDbBeginTran(Q_DB *db) {
 	if (db == NULL) return Q_FALSE;
 
@@ -365,6 +451,11 @@ Q_BOOL qDbBeginTran(Q_DB *db) {
 #endif
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 Q_BOOL qDbEndTran(Q_DB *db, Q_BOOL commit) {
 	if (db == NULL) return Q_FALSE;
 
@@ -372,6 +463,11 @@ Q_BOOL qDbEndTran(Q_DB *db, Q_BOOL commit) {
 	return qDbCommit(db);
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 Q_BOOL qDbCommit(Q_DB *db) {
 	if (db == NULL) return Q_FALSE;
 
@@ -383,6 +479,11 @@ Q_BOOL qDbCommit(Q_DB *db) {
 #endif
 }
 
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
 Q_BOOL qDbRollback(Q_DB *db) {
 	if (db == NULL) return Q_FALSE;
 

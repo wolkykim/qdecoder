@@ -74,7 +74,7 @@ POST method: application/x-www-form-urlencoded<br>
 
 <!-- ex) upload.cgi -->
 <hr size="1" noshade>
-<h3>Example: <a href="upload.c">upload.c</a> (Simple version for uploading small size of file)</h3>
+<h3>Example: <a href="upload.c">upload.c</a> (default mode)</h3>
 <form method="post" action="upload.cgi" enctype="multipart/form-data">
   Input text: <input type="text" name="text">
   <br>Select file: <input type="file" name="binary">
@@ -84,9 +84,19 @@ qDecoder stores the binary data of uploaded file into memory.
 Then upload.c saves it into disk. All most case this is useful.
 And also this is default mode for multipart/form-data decoding.
 
+<!-- ex) uploadfile.cgi -->
+<hr size="1" noshade>
+<h3>Example: <a href="uploadfile.c">uploadfile.c</a> (file mode)</h3>
+<form method="post" action="uploadfile.cgi" enctype="multipart/form-data">
+  Input text: <input type="text" name="text">
+  <br>Select file: <input type="file" name="binary">
+  <br><input type="submit" value="UPLOAD FILE">
+</form>
+qDecoder stores the binary data of uploaded file into disk directly on the fly.
+
 <!-- ex) uploadprogress.cgi -->
 <hr size="1" noshade>
-<h3>Example: <a href="uploadprogress.c">uploadprogress.c</a> (Advanced version for uploading huge size of file)</h3>
+<h3>Example: <a href="uploadprogress.c">uploadprogress.c</a> (progress mode)</h3>
 <script language="JavaScript" src="qDecoder-upload/qDecoder-upload.js"></script>
 <form method="post" action="uploadprogress.cgi" enctype="multipart/form-data" onSubmit="return Q_UPLOAD(this);">
   <input type="hidden" name="Q_UPLOAD_ID" value="">

@@ -20,13 +20,13 @@
 
 #include "qDecoder.h"
 #define BASEPATH	"upload"
+#define TMPPATH		"tmp"
 
 int main(void) {
   int i;
 
-  // qDecoderSetUploadBase() and qDecoder() should be called at the first line of main() for progress bar upload.
-  qDecoderSetUploadBase("tmp", (1 * 60 * 60));
-  qDecoder();
+  qDecoderInit(Q_TRUE, TMPPATH, (1 * 60 * 60));	// MUST BE called at the first line of main()
+  qDecoder();					// CAN NOT BE OMITTED in case of progress uploading.
 
   qContentType("text/html");
 
@@ -50,6 +50,9 @@ int main(void) {
     }
   }
 
+  printf("\n<p><hr>--[ DUMP INTERNAL DATA STRUCTURE ]--\n<pre>");
+  qPrint();
+  printf("\n</pre>\n");
   qFree();
   return 0;
 }

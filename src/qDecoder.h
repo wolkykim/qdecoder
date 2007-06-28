@@ -151,11 +151,10 @@ char	qValueType(char *format, ...);
 int	qPrint(void);
 void	qFree(void);
 
-void	qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
-void	qCookieRemove(char *name, char *path, char *domain, char *secure);
+Q_BOOL	qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
+Q_BOOL	qCookieRemove(char *name, char *path, char *domain, char *secure);
 char	*qCookieValue(char *format, ...);
 
-void	qFreeAll(void);
 void	qReset(void);
 
 /*
@@ -177,7 +176,7 @@ char	*qSessionGetID(void);
 time_t	qSessionGetCreated(void);
 
 /*
- * qfDecoder.c
+* qfDecoder.c
  */
 Q_ENTRY	*qfDecoder(char *filename);
 char	*qfValue(Q_ENTRY *first, char *format, ...);
@@ -344,9 +343,9 @@ FILE	*qSocketConv2file(int sockfd);
  * qDatabase.c
  */
 Q_DB	*qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, Q_BOOL autocommit);
-Q_BOOL	qDbFree(Q_DB *db);
 Q_BOOL	qDbOpen(Q_DB *db);
 Q_BOOL	qDbClose(Q_DB *db);
+Q_BOOL	qDbFree(Q_DB *db);
 char	*qDbGetErrMsg(Q_DB *db);
 Q_BOOL	qDbPing(Q_DB *db);
 Q_BOOL	qDbGetLastConnStatus(Q_DB *db);
