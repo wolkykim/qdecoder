@@ -46,10 +46,10 @@ int qfclose(FILE *stream) {
 
 /**********************************************
 **Usage : qCheckFile(filename);
-** Return: If file exist returns Q_TRUE. Or returns Q_FALSE.
+** Return: If file exist returns true. Or returns false.
 ** Do    : Check filethat file is existGet environment of CGI.
 **********************************************/
-Q_BOOL qCheckFile(char *format, ...) {
+bool qCheckFile(char *format, ...) {
 	struct stat finfo;
 	char filename[1024];
 	int status;
@@ -60,9 +60,9 @@ Q_BOOL qCheckFile(char *format, ...) {
 	if (strlen(filename) + 1 > sizeof(filename) || status == EOF) qError("qCheckFile(): File name is too long or invalid.");
 	va_end(arglist);
 
-	if (stat(filename, &finfo) < 0) return Q_FALSE;
+	if (stat(filename, &finfo) < 0) return false;
 
-	return Q_TRUE;
+	return true;
 }
 
 /**********************************************

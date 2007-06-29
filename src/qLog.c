@@ -30,7 +30,7 @@ static int _realOpen(Q_LOG *log);
  *
  * @since 8.1R
  */
-Q_LOG *qLogOpen(char *logbase, char *filenameformat, int rotateinterval, Q_BOOL flush) {
+Q_LOG *qLogOpen(char *logbase, char *filenameformat, int rotateinterval, bool flush) {
 	Q_LOG *log;
 
 	/* malloc Q_LOG structure */
@@ -40,7 +40,7 @@ Q_LOG *qLogOpen(char *logbase, char *filenameformat, int rotateinterval, Q_BOOL 
 	strcpy(log->logbase, logbase);
 	strcpy(log->nameformat, filenameformat);
 	log->fp = NULL;
-	log->console = Q_FALSE;
+	log->console = false;
 	log->rotateinterval = ((rotateinterval > 0) ? rotateinterval : 0);
 	log->nextrotate = 0;
 	log->flush = flush;
@@ -58,14 +58,14 @@ Q_LOG *qLogOpen(char *logbase, char *filenameformat, int rotateinterval, Q_BOOL 
  *
  * @since 8.1R
  */
-Q_BOOL qLogClose(Q_LOG *log) {
-	if (log == NULL) return Q_FALSE;
+bool qLogClose(Q_LOG *log) {
+	if (log == NULL) return false;
 	if (log->fp != NULL) {
 		fclose(log->fp);
 		log->fp = NULL;
 	}
 	free(log);
-	return Q_TRUE;
+	return true;
 }
 
 /**
@@ -73,10 +73,10 @@ Q_BOOL qLogClose(Q_LOG *log) {
  *
  * @since 8.1R
  */
-Q_BOOL qLogSetConsole(Q_LOG *log, Q_BOOL onoff) {
-	if (log == NULL) return Q_FALSE;
+bool qLogSetConsole(Q_LOG *log, bool onoff) {
+	if (log == NULL) return false;
 	log->console = onoff;
-	return Q_TRUE;
+	return true;
 }
 
 /**
@@ -84,13 +84,13 @@ Q_BOOL qLogSetConsole(Q_LOG *log, Q_BOOL onoff) {
  *
  * @since 8.1R
  */
-Q_BOOL qLogFlush(Q_LOG *log) {
-	if (log == NULL || log->fp == NULL) return Q_FALSE;
+bool qLogFlush(Q_LOG *log) {
+	if (log == NULL || log->fp == NULL) return false;
 
-	if (log->flush != Q_FALSE) return Q_TRUE; /* already flushed */
+	if (log->flush != false) return true; /* already flushed */
 
-	if(fflush(log->fp) == 0) return Q_TRUE;
-	return Q_FALSE;
+	if(fflush(log->fp) == 0) return true;
+	return false;
 }
 
 /**
@@ -98,19 +98,19 @@ Q_BOOL qLogFlush(Q_LOG *log) {
  *
  * @since 8.1R
  */
-Q_BOOL qLog(Q_LOG *log, char *format, ...) {
+bool qLog(Q_LOG *log, char *format, ...) {
 	char szStr[1024];
 	va_list arglist;
 	time_t nowTime = time(NULL);
 
-	if (log == NULL || log->fp == NULL) return Q_FALSE;
+	if (log == NULL || log->fp == NULL) return false;
 
 	va_start(arglist, format);
 	vsprintf(szStr, format, arglist);
 	va_end(arglist);
 
 	/* console out */
-	if (log->console != Q_FALSE) printf("%s(%d): %s\n", qGetTimeStr(), getpid(), szStr);
+	if (log->console != false) printf("%s(%d): %s\n", qGetTimeStr(), getpid(), szStr);
 
 	/* check log rotate is needed*/
 	if (log->nextrotate > 0 && nowTime >= log->nextrotate) {
@@ -118,12 +118,12 @@ Q_BOOL qLog(Q_LOG *log, char *format, ...) {
 	}
 
 	/* log to file */
-	if (fprintf(log->fp, "%s(%d): %s\n", qGetTimeStr(), getpid(), szStr) < 0) return Q_FALSE;
+	if (fprintf(log->fp, "%s(%d): %s\n", qGetTimeStr(), getpid(), szStr) < 0) return false;
 
 	/* check flash flag */
-	if (log->flush != Q_FALSE) fflush(log->fp);
+	if (log->flush != false) fflush(log->fp);
 
-	return Q_TRUE;
+	return true;
 }
 
 /*

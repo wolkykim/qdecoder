@@ -91,7 +91,7 @@
  *   }
  * @endcode
  */
-Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, Q_BOOL autocommit) {
+Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, bool autocommit) {
 	Q_DB *db;
 	char *support_db;
 
@@ -106,7 +106,7 @@ Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password
 
 	if ((db = (Q_DB *)malloc(sizeof(Q_DB))) == NULL) return NULL;
 	memset((void *)db, 0, sizeof(Q_DB));
-	db->connected = Q_FALSE;
+	db->connected = false;
 
 	// set info
 	strcpy(db->info.dbtype, dbtype);
@@ -125,18 +125,18 @@ Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password
  *
  * @since 8.1R
  */
-Q_BOOL qDbOpen(Q_DB *db) {
-	if (db == NULL) return Q_FALSE;
+bool qDbOpen(Q_DB *db) {
+	if (db == NULL) return false;
 
 	// if connected, close first
-	if (db->connected == Q_TRUE) {
+	if (db->connected == true) {
 		qDbClose(db);
 	}
 
 #ifdef _Q_WITH_MYSQL
 	// initialize mysql structure
 	if (!mysql_init(&db->mysql)) {
-		return Q_FALSE;
+		return false;
 	}
 
 	// set options
@@ -145,21 +145,21 @@ Q_BOOL qDbOpen(Q_DB *db) {
 
 	// try to connect
 	if (!mysql_real_connect(&db->mysql, db->info.addr, db->info.username, db->info.password, db->info.database, db->info.port, NULL, 0)) {
-		return Q_FALSE;
+		return false;
 	}
 
 	// set auto-commit
 	if (mysql_autocommit(&db->mysql, db->info.autocommit) != 0) {
 		qDbClose(db);
-		return Q_FALSE;
+		return false;
 	}
 
 	// set flag
-	db->connected = Q_TRUE;
+	db->connected = true;
 
-	return Q_TRUE;
+	return true;
 #else
-	return Q_FALSE;
+	return false;
 #endif
 }
 
@@ -168,15 +168,15 @@ Q_BOOL qDbOpen(Q_DB *db) {
  *
  * @since 8.1R
  */
-Q_BOOL qDbClose(Q_DB *db) {
-	if (db == NULL || db->connected == Q_FALSE) return Q_FALSE;
+bool qDbClose(Q_DB *db) {
+	if (db == NULL || db->connected == false) return false;
 
 #ifdef _Q_WITH_MYSQL
 	mysql_close(&db->mysql);
-	db->connected = Q_FALSE;
-	return Q_TRUE;
+	db->connected = false;
+	return true;
 #else
-	return Q_FALSE;
+	return false;
 #endif
 }
 
@@ -185,11 +185,11 @@ Q_BOOL qDbClose(Q_DB *db) {
  *
  * @since 8.1R
  */
-Q_BOOL qDbFree(Q_DB *db)  {
-	if (db == NULL) return Q_FALSE;
+bool qDbFree(Q_DB *db)  {
+	if (db == NULL) return false;
 	qDbClose(db);
 	free(db);
-	return Q_TRUE;
+	return true;
 }
 
 /**
@@ -199,7 +199,7 @@ Q_BOOL qDbFree(Q_DB *db)  {
  */
 char *qDbGetErrMsg(Q_DB *db) {
 	static char msg[1024];
-	if (db == NULL || db->connected == Q_FALSE) return "(no opened db)";
+	if (db == NULL || db->connected == false) return "(no opened db)";
 
 #ifdef _Q_WITH_MYSQL
 	strcpy(msg, mysql_error(&db->mysql));
@@ -215,25 +215,25 @@ char *qDbGetErrMsg(Q_DB *db) {
  *
  * @since 8.1R
  */
-Q_BOOL qDbPing(Q_DB *db) {
-	if (db == NULL) return Q_FALSE;
+bool qDbPing(Q_DB *db) {
+	if (db == NULL) return false;
 
 #ifdef _Q_WITH_MYSQL
-	if (db->connected == Q_TRUE && mysql_ping(&db->mysql) == 0) {
-		return Q_TRUE;
+	if (db->connected == true && mysql_ping(&db->mysql) == 0) {
+		return true;
 	} else { // ping test failed
-		if (db->connected == Q_TRUE) {
-			qDbClose(db); // now db->connected == Q_FALSE;
+		if (db->connected == true) {
+			qDbClose(db); // now db->connected == false;
 		}
 
-		if (qDbOpen(db) == Q_TRUE) { // try re-connect
-			return Q_TRUE;
+		if (qDbOpen(db) == true) { // try re-connect
+			return true;
 		}
 	}
 
-	return Q_FALSE;
+	return false;
 #else
-	return Q_FALSE;
+	return false;
 #endif
 }
 
@@ -242,8 +242,8 @@ Q_BOOL qDbPing(Q_DB *db) {
  *
  * @since 8.1R
  */
-Q_BOOL qDbGetLastConnStatus(Q_DB *db) {
-	if (db == NULL) return Q_FALSE;
+bool qDbGetLastConnStatus(Q_DB *db) {
+	if (db == NULL) return false;
 
 	return db->connected;
 }
@@ -258,7 +258,7 @@ Q_BOOL qDbGetLastConnStatus(Q_DB *db) {
  * @since 8.1R
  */
 int qDbExecuteUpdate(Q_DB *db, char *query) {
-	if (db == NULL || db->connected == Q_FALSE) return -1;
+	if (db == NULL || db->connected == false) return -1;
 
 #ifdef _Q_WITH_MYSQL
 	int affected;
@@ -284,7 +284,7 @@ int qDbExecuteUpdate(Q_DB *db, char *query) {
  * @since 8.1R
  */
 Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
-	if (db == NULL || db->connected == Q_FALSE) return NULL;
+	if (db == NULL || db->connected == false) return NULL;
 
 #ifdef _Q_WITH_MYSQL
 	// query
@@ -367,17 +367,17 @@ int qDbResultNext(Q_DBRESULT *result) {
  *
  * @since 8.1R
  */
-Q_BOOL qDbResultFree(Q_DBRESULT *result) {
+bool qDbResultFree(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
-	if (result == NULL) return Q_FALSE;
+	if (result == NULL) return false;
 	if (result->rs != NULL) {
 		mysql_free_result(result->rs);
 		result->rs = NULL;
 	}
 	free(result);
-	return Q_TRUE;
+	return true;
 #else
-	return Q_FALSE;
+	return false;
 #endif
 }
 
@@ -440,14 +440,14 @@ int qDbGetIntAt(Q_DBRESULT *result, int idx) {
  *
  * @since 8.1R
  */
-Q_BOOL qDbBeginTran(Q_DB *db) {
-	if (db == NULL) return Q_FALSE;
+bool qDbBeginTran(Q_DB *db) {
+	if (db == NULL) return false;
 
 #ifdef _Q_WITH_MYSQL
 	qDbExecuteUpdate(db, "START TRANSACTION");
-	return Q_TRUE;
+	return true;
 #else
-	return Q_FALSE;
+	return false;
 #endif
 }
 
@@ -456,10 +456,10 @@ Q_BOOL qDbBeginTran(Q_DB *db) {
  *
  * @since 8.1R
  */
-Q_BOOL qDbEndTran(Q_DB *db, Q_BOOL commit) {
-	if (db == NULL) return Q_FALSE;
+bool qDbEndTran(Q_DB *db, bool commit) {
+	if (db == NULL) return false;
 
-	if (commit == Q_FALSE) return qDbRollback(db);
+	if (commit == false) return qDbRollback(db);
 	return qDbCommit(db);
 }
 
@@ -468,14 +468,14 @@ Q_BOOL qDbEndTran(Q_DB *db, Q_BOOL commit) {
  *
  * @since 8.1R
  */
-Q_BOOL qDbCommit(Q_DB *db) {
-	if (db == NULL) return Q_FALSE;
+bool qDbCommit(Q_DB *db) {
+	if (db == NULL) return false;
 
 #ifdef _Q_WITH_MYSQL
-	if (mysql_commit(&db->mysql) != 0) return Q_FALSE;
-	return Q_TRUE;
+	if (mysql_commit(&db->mysql) != 0) return false;
+	return true;
 #else
-	return Q_FALSE;
+	return false;
 #endif
 }
 
@@ -484,14 +484,14 @@ Q_BOOL qDbCommit(Q_DB *db) {
  *
  * @since 8.1R
  */
-Q_BOOL qDbRollback(Q_DB *db) {
-	if (db == NULL) return Q_FALSE;
+bool qDbRollback(Q_DB *db) {
+	if (db == NULL) return false;
 
 #ifdef _Q_WITH_MYSQL
 	if (mysql_rollback(&db->mysql) != 0) {
-		return Q_FALSE;
+		return false;
 	}
-	return Q_TRUE;
+	return true;
 #else
 	return 0;
 #endif

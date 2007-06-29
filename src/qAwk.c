@@ -93,12 +93,12 @@ int qAwkNext(FILE *fp, char array[][1024], char delim) {
  *
  * @param fp	file pointer which is retruned by qAwkOpen()
  *
- * @return	in case of success, returns Q_TRUE. otherwise Q_FALSE.
+ * @return	in case of success, returns true. otherwise false.
  */
-Q_BOOL qAwkClose(FILE *fp) {
-	if (fp == NULL) return Q_FALSE;
-	if(fclose(fp) == 0) return Q_TRUE;
-	return Q_FALSE;
+bool qAwkClose(FILE *fp) {
+	if (fp == NULL) return false;
+	if(fclose(fp) == 0) return true;
+	return false;
 }
 
 /**

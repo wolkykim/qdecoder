@@ -31,7 +31,7 @@
  *
  * @since 8.1R
  */
-int qShmInit(char *keyfile, size_t nSize, Q_BOOL autodestroy) {
+int qShmInit(char *keyfile, size_t nSize, bool autodestroy) {
 	int shmid;
 
 	// generate unique key using ftok();
@@ -40,7 +40,7 @@ int qShmInit(char *keyfile, size_t nSize, Q_BOOL autodestroy) {
 
 	// create shared memory
 	if ((shmid = shmget(nShmKey, nSize, IPC_CREAT | IPC_EXCL | 0666)) == -1) {
-		if(autodestroy == Q_FALSE) return -1;
+		if(autodestroy == false) return -1;
 
 		// destroy & re-create
 		if(qShmDestroy(keyfile) == 0) return -1;
@@ -69,10 +69,10 @@ void *qShmGet(int shmid) {
  *
  * @since 8.1R
  */
-Q_BOOL qShmFree(int shmid) {
-	if (shmid < 0) return Q_FALSE;
-	if (shmctl(shmid, IPC_RMID, 0) != 0) return Q_FALSE;
-	return Q_TRUE;
+bool qShmFree(int shmid) {
+	if (shmid < 0) return false;
+	if (shmctl(shmid, IPC_RMID, 0) != 0) return false;
+	return true;
 }
 
 /**
@@ -80,15 +80,15 @@ Q_BOOL qShmFree(int shmid) {
  *
  * @since 8.1R
  */
-Q_BOOL qShmDestroy(char *keyfile) {
+bool qShmDestroy(char *keyfile) {
 	int shmid;
 
 	// generate unique key using ftok();
 	key_t nShmKey = ftok(keyfile, 'Q');
-	if (nShmKey == -1) return Q_FALSE;
+	if (nShmKey == -1) return false;
 
 	// get current shared memory id
-	if ((shmid = shmget(nShmKey, 0, 0)) == -1) return Q_FALSE;
+	if ((shmid = shmget(nShmKey, 0, 0)) == -1) return false;
 
 	// destory current shared memory
 	return qShmFree(shmid);

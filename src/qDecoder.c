@@ -99,7 +99,7 @@
  *   [Code sample]
  *   int main(...) {
  *     // change mode to "file mode".
- *     qDecoderInit(Q_TRUE, "/tmp", 86400);	// must be called at the first file of main();
+ *     qDecoderInit(true, "/tmp", 86400);	// must be called at the first file of main();
  *     qDecoder();				// must be called right next of qDecoderInit().
  *
  *     (...your codes here...)
@@ -133,7 +133,7 @@ static Q_ENTRY *_first_entry = NULL;
 static Q_ENTRY *_multi_last_entry = NULL;
 static char _multi_last_key[1024];
 
-static Q_BOOL _upload_base_init = Q_FALSE;
+static bool _upload_base_init = false;
 static char _upload_base[1024];
 static int _upload_clear_olderthan = 0;	/* seconds */
 
@@ -142,11 +142,11 @@ static int _cookie_cnt = 0, _get_cnt = 0, _post_cnt = 0, _new_cnt = 0; /* counts
 /**
  * Initialize how qDecoder() handle file uploading(multipart/form-data).
  *
- * @param filemode	to turn on file mode set to Q_TRUE. Q_FALSE means default mode.
- * @param upload_base	the base path where the temporary created files are located. if filemode is Q_FALSE, just set to NULL.
+ * @param filemode	to turn on file mode set to true. false means default mode.
+ * @param upload_base	the base path where the temporary created files are located. if filemode is false, just set to NULL.
  * @param clear_olderthan automatically remove temporary uploading file older than this secconds. to disable, set to 0.
  *
- * @return	in case of success, returns Q_TRUE. otherwise(upload_base not found) Q_FALSE.
+ * @return	in case of success, returns true. otherwise(upload_base not found) false.
  *
  * @note
  * You do not need to call for setting up memory mode, because it's default operation.
@@ -155,24 +155,24 @@ static int _cookie_cnt = 0, _get_cnt = 0, _post_cnt = 0, _new_cnt = 0; /* counts
  * @code
  *   int main(...) {
  *     // change mode to "file mode".
- *     qDecoderInit(Q_TRUE, "/tmp", 86400);	// must be called at the first file of main();
+ *     qDecoderInit(true, "/tmp", 86400);	// must be called at the first file of main();
  *     qDecoder();				// must be called right next of qDecoderInit().
  *
  *     (...your code here...)
  *   }
  * @endcode
  */
-Q_BOOL qDecoderInit(Q_BOOL filemode, char *upload_base, int clear_olderthan) {
-	if(filemode == Q_FALSE) {
-		_upload_base_init = Q_FALSE;
+bool qDecoderInit(bool filemode, char *upload_base, int clear_olderthan) {
+	if(filemode == false) {
+		_upload_base_init = false;
 	} else {
-		if (qCheckFile(upload_base) == Q_FALSE) return Q_FALSE;
+		if (qCheckFile(upload_base) == false) return false;
 		strcpy(_upload_base, upload_base);
 		_upload_clear_olderthan = clear_olderthan;
-		_upload_base_init = Q_TRUE;
+		_upload_base_init = true;
 	}
 
-return Q_TRUE;
+return true;
 }
 
 /**
@@ -205,7 +205,7 @@ int qDecoder(void) {
 			q_upload_id = qValue("Q_UPLOAD_ID");
 
 			if (q_upload_id != NULL) {
-				if (_upload_base_init == Q_FALSE) qError("qDecoder(): qDecoderInit(Q_TRUE, ...) must be called before.");
+				if (_upload_base_init == false) qError("qDecoder(): qDecoderInit(true, ...) must be called before.");
 				_upload_progressbar(q_upload_id);
 				exit(0);
 			}
@@ -400,7 +400,7 @@ static int _parse_multipart_data(void) {
 		/* check file save mode */
 		if (_first_entry != NULL && upload_type == 0) {
 
-			if (_upload_base_init == Q_TRUE) {
+			if (_upload_base_init == true) {
 				char *upload_id;
 
 				upload_id = qValue("Q_UPLOAD_ID");
@@ -425,11 +425,11 @@ static int _parse_multipart_data(void) {
 
 				/* save total contents length */
 				sprintf(upload_tmppath, "%s/Q_UPLOAD_TSIZE", upload_savedir);
-				if (qCountSave(upload_tmppath, atoi(getenv("CONTENT_LENGTH"))) == Q_FALSE) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
+				if (qCountSave(upload_tmppath, atoi(getenv("CONTENT_LENGTH"))) == false) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
 
 				/* save start time */
 				sprintf(upload_tmppath, "%s/Q_UPLOAD_START", upload_savedir);
-				if (qCountSave(upload_tmppath, time(NULL)) == Q_FALSE) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
+				if (qCountSave(upload_tmppath, time(NULL)) == false) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
 			}
 		}
 
@@ -518,7 +518,7 @@ static int _parse_multipart_data(void) {
 
 	if (upload_type == 1) { /* save end time */
 		sprintf(upload_tmppath, "%s/Q_UPLOAD_END", upload_savedir);
-		if (qCountSave(upload_tmppath, time(NULL)) == Q_FALSE) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
+		if (qCountSave(upload_tmppath, time(NULL)) == false) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
 	}
 
 	return amount;
@@ -710,7 +710,7 @@ static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, cha
 static char *_upload_getsavedir(char *upload_id, char *upload_savedir) {
 	char md5seed[1024];
 
-	if (_upload_base_init == Q_FALSE || upload_id == NULL) return NULL;
+	if (_upload_base_init == false || upload_id == NULL) return NULL;
 	if (!strcmp(upload_id, "")) return NULL;
 
 	sprintf(md5seed, "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
@@ -861,7 +861,7 @@ static int _upload_clear_base() {
 	int     delcnt = 0;
 	time_t  now = time(NULL);
 
-	if (_upload_base_init == Q_FALSE) return -1;
+	if (_upload_base_init == false) return -1;
 	if (_upload_clear_olderthan <= 0) return 0;
 
 	/* open upload folder */
@@ -1297,7 +1297,7 @@ int qPrint(void) {
  * by adding values to the cookie linked-list. But with regard to qCookieSet(), setting up cookies
  * at clients (browsers) does not succeed always. Thus, users should be careful when using qValueAdd().
  *
- * @return	in case of success, returns Q_TRUE. otherwise(qContentType() is called before) Q_FALSE
+ * @return	in case of success, returns true. otherwise(qContentType() is called before) false
  *
  * @note
  * @code
@@ -1315,12 +1315,12 @@ int qPrint(void) {
  *   qCookieSet(name, value, 0, NULL, NULL, "SECURE");
  * @endcode
  */
-Q_BOOL qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure) {
+bool qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure) {
 	char *Name, *Value;
 	char cookie[(4 * 1024) + 256];
 
 	/* check content flag */
-	if (qGetContentFlag() == 1) return Q_FALSE;
+	if (qGetContentFlag() == 1) return false;
 
 	/* Name=Value */
 	Name = qURLencode(name), Value = qURLencode(value);
@@ -1354,7 +1354,7 @@ Q_BOOL qCookieSet(char *name, char *value, int exp_days, char *path, char *domai
 
 	printf("Set-Cookie: %s\n", cookie);
 
-	return Q_TRUE;
+	return true;
 }
 
 /**
@@ -1373,7 +1373,7 @@ Q_BOOL qCookieSet(char *name, char *value, int exp_days, char *path, char *domai
  * removing cookies at clients (browsers) does not succeed always.
  * Thus, users should be careful when using qValueRemove().
  *
- * @return	in case of success, returns Q_TRUE. otherwise(qContentType() is called before) Q_FALSE
+ * @return	in case of success, returns true. otherwise(qContentType() is called before) false
  *
  * @note
  * @code
@@ -1384,14 +1384,14 @@ Q_BOOL qCookieSet(char *name, char *value, int exp_days, char *path, char *domai
  *   qCookieRemove("NAME", "/", "www.qdecoder.org", NULL);
  * @endcode
  */
-Q_BOOL qCookieRemove(char *name, char *path, char *domain, char *secure) {
+bool qCookieRemove(char *name, char *path, char *domain, char *secure) {
 
 	/* check content flag */
-	if (qGetContentFlag() == 1) return Q_FALSE;
+	if (qGetContentFlag() == 1) return false;
 
 	qCookieSet(name, "", -1, path, domain, secure);
 
-	return Q_TRUE;
+	return true;
 }
 
 /**

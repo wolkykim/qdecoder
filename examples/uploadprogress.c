@@ -25,7 +25,7 @@
 int main(void) {
 	int i;
 
-	qDecoderInit(Q_TRUE, TMPPATH, (1 * 60 * 60));	// MUST BE called at the first line of main()
+	qDecoderInit(true, TMPPATH, (1 * 60 * 60));	// MUST BE called at the first line of main()
 	qDecoder();					// CAN NOT BE OMITTED in case of progress uploading.
 
 	qContentType("text/html");

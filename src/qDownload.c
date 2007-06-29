@@ -72,7 +72,7 @@ int qDownloadMime(char *filename, char *mime) {
 	if (mime == NULL) mime = "application/octet-stream";
 
 	if (filename == NULL) qError("qDownload(): Null pointer can not be used.");
-	if (qCheckFile(filename) == Q_FALSE) return -1;
+	if (qCheckFile(filename) == false) return -1;
 
 	file = strdup(filename);
 

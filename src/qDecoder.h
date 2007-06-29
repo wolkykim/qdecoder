@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
@@ -51,14 +52,6 @@
 #endif
 
 /**
- * qDecoder's Boolean type
- */
-#ifndef _Q_BOOL_DEFINED
-typedef enum { Q_FALSE=0, Q_TRUE=1 } Q_BOOL;
-#define _Q_BOOL_DEFINED
-#endif
-
-/**
  * qDecoder's linked list type
  */
 typedef struct Q_ENTRY {
@@ -76,7 +69,7 @@ typedef struct Q_ENTRY {
  * Structure for independent database interface.
  */
 typedef struct {
-	Q_BOOL connected;	// if opened Q_TRUE, if closed Q_FALSE;
+	bool connected;	// if opened true, if closed false;
 
 	struct {
 		char	dbtype[16+1];
@@ -85,7 +78,7 @@ typedef struct {
 		char	username[31+1];
 		char	password[31+1];
 		char	database[31+1];
-		Q_BOOL	autocommit;
+		bool	autocommit;
 	} info;
 
 	// for mysql database
@@ -119,10 +112,10 @@ typedef struct {
 	char	logpath[1024];	/* final full path*/
 	FILE	*fp;
 
-	Q_BOOL	console;
+	bool	console;
 	int	rotateinterval;
 	int	nextrotate;
-	Q_BOOL	flush;
+	bool	flush;
 } Q_LOG;
 
 #ifndef _DOXYGEN_SKIP
@@ -135,7 +128,7 @@ extern "C" {
 /*
  * qDecoder.c
  */
-Q_BOOL	qDecoderInit(Q_BOOL filemode, char *upload_base, int clear_olderthan);
+bool	qDecoderInit(bool filemode, char *upload_base, int clear_olderthan);
 int	qDecoder(void);
 char	*qValue(char *format, ...);
 int	qiValue(char *format, ...);
@@ -151,8 +144,8 @@ char	qValueType(char *format, ...);
 int	qPrint(void);
 void	qFree(void);
 
-Q_BOOL	qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
-Q_BOOL	qCookieRemove(char *name, char *path, char *domain, char *secure);
+bool	qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
+bool	qCookieRemove(char *name, char *path, char *domain, char *secure);
 char	*qCookieValue(char *format, ...);
 
 void	qReset(void);
@@ -252,7 +245,7 @@ char	*qUniqId(void);
  */
 FILE	*qfopen(char *path, char *mode);
 int	qfclose(FILE *stream);
-Q_BOOL	qCheckFile(char *format, ...);
+bool	qCheckFile(char *format, ...);
 int	qCatFile(char *format, ...);
 char	*qReadFile(char *filename, int *size);
 int	qSaveStr(char *sp, int spsize, char *filename, char *mode);
@@ -281,7 +274,7 @@ void	qArgFree(char **qlist);
  */
 FILE	*qAwkOpen(char *filename);
 int	qAwkNext(FILE *fp, char array[][1024], char delim);
-Q_BOOL	qAwkClose(FILE *fp);
+bool	qAwkClose(FILE *fp);
 int	qAwkStr(char array[][1024], char *str, char delim);
 
 /*
@@ -298,7 +291,7 @@ int	qSedFile(Q_ENTRY *first, char *filename, FILE *fpout);
  * qCount.c
  */
 int	qCountRead(char *filename);
-Q_BOOL	qCountSave(char *filename, int number);
+bool	qCountSave(char *filename, int number);
 int	qCountUpdate(char *filename, int number);
 
 /*
@@ -317,11 +310,11 @@ char	*qGetTimeStr(void);
 /*
  * qLog.c
  */
-Q_LOG	*qLogOpen(char *logbase, char *filenameformat, int rotateinterval, Q_BOOL flush);
-Q_BOOL	qLogClose(Q_LOG *log);
-Q_BOOL	qLogSetConsole(Q_LOG *log, Q_BOOL onoff);
-Q_BOOL	qLogFlush(Q_LOG *log);
-Q_BOOL	qLog(Q_LOG *log, char *format, ...);
+Q_LOG	*qLogOpen(char *logbase, char *filenameformat, int rotateinterval, bool flush);
+bool	qLogClose(Q_LOG *log);
+bool	qLogSetConsole(Q_LOG *log, bool onoff);
+bool	qLogFlush(Q_LOG *log);
+bool	qLog(Q_LOG *log, char *format, ...);
 
 /*
  * qSocket.c
@@ -342,13 +335,13 @@ FILE	*qSocketConv2file(int sockfd);
 /*
  * qDatabase.c
  */
-Q_DB	*qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, Q_BOOL autocommit);
-Q_BOOL	qDbOpen(Q_DB *db);
-Q_BOOL	qDbClose(Q_DB *db);
-Q_BOOL	qDbFree(Q_DB *db);
+Q_DB	*qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, bool autocommit);
+bool	qDbOpen(Q_DB *db);
+bool	qDbClose(Q_DB *db);
+bool	qDbFree(Q_DB *db);
 char	*qDbGetErrMsg(Q_DB *db);
-Q_BOOL	qDbPing(Q_DB *db);
-Q_BOOL	qDbGetLastConnStatus(Q_DB *db);
+bool	qDbPing(Q_DB *db);
+bool	qDbGetLastConnStatus(Q_DB *db);
 
 int	qDbExecuteUpdate(Q_DB *db, char *query);
 Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query);
@@ -356,25 +349,25 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query);
 int     qDbGetRows(Q_DBRESULT *result);
 int     qDbGetCols(Q_DBRESULT *result);
 int	qDbResultNext(Q_DBRESULT *result);
-Q_BOOL	qDbResultFree(Q_DBRESULT *result);
+bool	qDbResultFree(Q_DBRESULT *result);
 
 char	*qDbGetValue(Q_DBRESULT *result, char *field);
 int	qDbGetInt(Q_DBRESULT *result, char *field);
 char	*qDbGetValueAt(Q_DBRESULT *result, int idx);
 int	qDbGetIntAt(Q_DBRESULT *result, int idx);
 
-Q_BOOL	qDbBeginTran(Q_DB *db);
-Q_BOOL	qDbEndTran(Q_DB *db, Q_BOOL commit);
-Q_BOOL	qDbCommit(Q_DB *db);
-Q_BOOL	qDbRollback(Q_DB *db);
+bool	qDbBeginTran(Q_DB *db);
+bool	qDbEndTran(Q_DB *db, bool commit);
+bool	qDbCommit(Q_DB *db);
+bool	qDbRollback(Q_DB *db);
 
 /*
  * qShm.c
  */
-int	qShmInit(char *keyfile, size_t nSize, Q_BOOL autodestroy);
+int	qShmInit(char *keyfile, size_t nSize, bool autodestroy);
 void	*qShmGet(int shmid);
-Q_BOOL	qShmFree(int shmid);
-Q_BOOL	qShmDestroy(char *keyfile);
+bool	qShmFree(int shmid);
+bool	qShmDestroy(char *keyfile);
 
 #ifdef __cplusplus
 }

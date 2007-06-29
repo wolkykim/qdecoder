@@ -62,21 +62,21 @@ int qCountRead(char *filename) {
  * @param filename	file path
  * @param number	counter integer value
  *
- * @return	in case of success, returns Q_TRUE. otherwise Q_FALSE.
+ * @return	in case of success, returns true. otherwise false.
  *
  * @note
  * @code
  *   qCountSave("number.dat", 75);
  * @endcode
  */
-Q_BOOL qCountSave(char *filename, int number) {
+bool qCountSave(char *filename, int number) {
 	FILE *fp;
 
-	if ((fp = qfopen(filename, "w")) == NULL) return Q_FALSE;
+	if ((fp = qfopen(filename, "w")) == NULL) return false;
 	fprintf(fp, "%d\n", number);
 	qfclose(fp);
 
-	return Q_TRUE;
+	return true;
 }
 
 /**
