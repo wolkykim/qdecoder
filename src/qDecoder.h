@@ -112,17 +112,17 @@ typedef struct {
  * Structure for Log
  */
 typedef struct {
-	char	szLogBase[1024];
-	char	szFilenameFormat[256];
+	char	logbase[1024];
+	char	nameformat[256];
 
-	char	szFilename[256];	/* generated filename */
-	char	szLogPath[1024];	/* final full path*/
+	char	filename[256];	/* generated filename */
+	char	logpath[1024];	/* final full path*/
 	FILE	*fp;
 
-	int	nConsole;
-	int	nRotateInterval;
-	int	nNextRotate;
-	int	nFlushFlag;
+	Q_BOOL	console;
+	int	rotateinterval;
+	int	nextrotate;
+	Q_BOOL	flush;
 } Q_LOG;
 
 #ifndef _DOXYGEN_SKIP
@@ -317,11 +317,11 @@ char	*qGetTimeStr(void);
 /*
  * qLog.c
  */
-Q_LOG	*qLogOpen(char *pszLogBase, char *pszFilenameFormat, int nRotateInterval, int nFlushFlag);
-int	qLogClose(Q_LOG *log);
-int	qLogSetConsole(Q_LOG *log, int nFlag);
-int	qLogFlush(Q_LOG *log);
-int	qLog(Q_LOG *log, char *pszFormat, ...);
+Q_LOG	*qLogOpen(char *logbase, char *filenameformat, int rotateinterval, Q_BOOL flush);
+Q_BOOL	qLogClose(Q_LOG *log);
+Q_BOOL	qLogSetConsole(Q_LOG *log, Q_BOOL onoff);
+Q_BOOL	qLogFlush(Q_LOG *log);
+Q_BOOL	qLog(Q_LOG *log, char *format, ...);
 
 /*
  * qSocket.c
@@ -350,8 +350,8 @@ char	*qDbGetErrMsg(Q_DB *db);
 Q_BOOL	qDbPing(Q_DB *db);
 Q_BOOL	qDbGetLastConnStatus(Q_DB *db);
 
-int	qDbExecuteUpdate(Q_DB *db, char *pszQuery);
-Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery);
+int	qDbExecuteUpdate(Q_DB *db, char *query);
+Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query);
 
 int     qDbGetRows(Q_DBRESULT *result);
 int     qDbGetCols(Q_DBRESULT *result);
@@ -371,10 +371,10 @@ Q_BOOL	qDbRollback(Q_DB *db);
 /*
  * qShm.c
  */
-int	qShmInit(char *pszKeyPath, size_t nSize, int nIfExistsDestroy);
-void	*qShmGet(int nShmId);
-int	qShmFree(int nShmId);
-int     qShmDestroy(char *pszKeyPath);
+int	qShmInit(char *keyfile, size_t nSize, Q_BOOL autodestroy);
+void	*qShmGet(int shmid);
+Q_BOOL	qShmFree(int shmid);
+Q_BOOL	qShmDestroy(char *keyfile);
 
 #ifdef __cplusplus
 }

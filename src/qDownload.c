@@ -18,25 +18,51 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  **************************************************************************/
 
+/**
+ * @file qDownload.c Download Handling API
+ */
+
 #include "qDecoder.h"
 #include "qInternal.h"
 
 
-/**********************************************
-** Usage : qDownload(filename);
-** Do    : Pump file to stdout, do not call qContentType().
-** Return: Success 1, File not found 0.
-**********************************************/
+/**
+ * Force to send(download) file to client.
+ *
+ * Do not call qContentType() before. This will force to set mime-type to application/octet-stream.
+ * So user can see downloading dialogue box even though you send text file.
+ *
+ * @param filename	file to send
+ *
+ * @return	 the number of bytes sent. otherwise(file not found) returns -1.
+ */
 int qDownload(char *filename) {
 	return qDownloadMime(filename, "application/octet-stream");
 }
 
-/**********************************************
-** Usage : qDownloadMime(filename, mime);
-** Do    : Pump file to stdout, should not call qContentType().
-**         if mime is 'application/octet-stream', forcing download.
-** Return: Success number of bytes sent, File not found -1.
-**********************************************/
+/**
+ * Force to send(download) file to client in accordance with given mime type.
+ *
+ * Do not call qContentType() before.
+ *
+ * The results of this function are the same as those acquired
+ * when the corresponding files are directly linked to the Web.
+ * But this is especially useful in preprocessing files to be downloaded
+ * only with user certification and in enabling downloading those files,
+ * which cannot be opned on the Web, only through specific programs.
+ *
+ * When mime is 'application/octet-stream', it isthe same as qDownload().
+ * And since processes are executed until streams are terminated,
+ * this is a file that can be linked on the Web.
+ *
+ * When it is to be used as preprocessing for the downloading count,
+ * it is better to utilize qRedirect().
+ *
+ * @param filename	file to send
+ * @param mime		mimefile to send
+ *
+ * @return	 the number of bytes sent. otherwise(file not found) returns -1.
+ */
 int qDownloadMime(char *filename, char *mime) {
 	char *file, *c, *disposition;
 	int sent;
@@ -69,4 +95,3 @@ int qDownloadMime(char *filename, char *mime) {
 	sent = qCatFile(filename);
 	return sent;
 }
-

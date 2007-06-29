@@ -1,11 +1,11 @@
-
-/** \mainpage The qDecoder Project
+/**
+ * @mainpage The qDecoder Project
  *
- * \section intro_sec Introduction
+ * @section intro_sec Introduction
  *
  * This is the introduction.
  *
- * \section install_sec Installation
+ * @section install_sec Installation
  *
  * \subsection step1 Step 1: Opening the box
  *

@@ -18,78 +18,78 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  **************************************************************************/
 
+/**
+ * @file qShm.c Shared Memory Handling API
+ */
+
 #include <sys/shm.h>
 #include "qDecoder.h"
 #include "qInternal.h"
 
-/**********************************************
-** Usage :
-** Return: In case of success returns shared memory
-**         identifier. Otherwise returns -1;
-** Do    :
-**********************************************/
-int qShmInit(char *pszKeyPath, size_t nSize, int nIfExistsDestroy) {
-	int nShmId;
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
+int qShmInit(char *keyfile, size_t nSize, Q_BOOL autodestroy) {
+	int shmid;
 
 	// generate unique key using ftok();
-	key_t nShmKey = ftok(pszKeyPath, 'Q');
+	key_t nShmKey = ftok(keyfile, 'Q');
 	if (nShmKey == -1) return -1;
 
 	// create shared memory
-	if ((nShmId = shmget(nShmKey, nSize, IPC_CREAT | IPC_EXCL | 0666)) == -1) {
-		if(nIfExistsDestroy == 0) return -1;
+	if ((shmid = shmget(nShmKey, nSize, IPC_CREAT | IPC_EXCL | 0666)) == -1) {
+		if(autodestroy == Q_FALSE) return -1;
 
 		// destroy & re-create
-		if(qShmDestroy(pszKeyPath) == 0) return -1;
-		if ((nShmId = shmget(nShmKey, nSize, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
+		if(qShmDestroy(keyfile) == 0) return -1;
+		if ((shmid = shmget(nShmKey, nSize, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
 	}
 
-	return nShmId;
+	return shmid;
 }
 
-/**********************************************
-** Usage :
-** Return: In case of success returns shared memory
-**         pointer. Otherwise returns NULL.
-** Do    :
-**********************************************/
-void *qShmGet(int nShmId) {
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
+void *qShmGet(int shmid) {
 	void *pShm;
 
-	if (nShmId < 0) return NULL;
-	pShm = shmat(nShmId, 0, 0);
+	if (shmid < 0) return NULL;
+	pShm = shmat(shmid, 0, 0);
 	if(pShm == (void *)-1) return NULL;
 	return pShm;
 }
 
-/**********************************************
-** Usage :
-** Return: In case of success returns 1.
-**         Otherwise returns 0;
-** Do    :
-**********************************************/
-int qShmFree(int nShmId) {
-	if (nShmId < 0) return 0;
-	if (shmctl(nShmId, IPC_RMID, 0) != 0) return 0;
-	return 1;
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
+Q_BOOL qShmFree(int shmid) {
+	if (shmid < 0) return Q_FALSE;
+	if (shmctl(shmid, IPC_RMID, 0) != 0) return Q_FALSE;
+	return Q_TRUE;
 }
 
-/**********************************************
-** Usage :
-** Return: In case of success returns 1,
-**         Otherwise returns 0;
-** Do    :
-**********************************************/
-int qShmDestroy(char *pszKeyPath) {
-	int nShmId;
+/**
+ * Under-development
+ *
+ * @since 8.1R
+ */
+Q_BOOL qShmDestroy(char *keyfile) {
+	int shmid;
 
 	// generate unique key using ftok();
-	key_t nShmKey = ftok(pszKeyPath, 'Q');
-	if (nShmKey == -1) return 0;
+	key_t nShmKey = ftok(keyfile, 'Q');
+	if (nShmKey == -1) return Q_FALSE;
 
 	// get current shared memory id
-	if ((nShmId = shmget(nShmKey, 0, 0)) == -1) return 0;
+	if ((shmid = shmget(nShmKey, 0, 0)) == -1) return Q_FALSE;
 
 	// destory current shared memory
-	return qShmFree(nShmId);
+	return qShmFree(shmid);
 }

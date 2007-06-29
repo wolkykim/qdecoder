@@ -19,7 +19,7 @@
  **************************************************************************/
 
 /**
- * @file qDatabase.c Database Independent Wrapper Functions
+ * @file qDatabase.c Database Independent Wrapper API
  *
  * @note
  * To use this API, you must include database header file before including qDecoder.h in your
@@ -257,14 +257,14 @@ Q_BOOL qDbGetLastConnStatus(Q_DB *db) {
  *
  * @since 8.1R
  */
-int qDbExecuteUpdate(Q_DB *db, char *pszQuery) {
+int qDbExecuteUpdate(Q_DB *db, char *query) {
 	if (db == NULL || db->connected == Q_FALSE) return -1;
 
 #ifdef _Q_WITH_MYSQL
 	int affected;
 
 	// query
-	if (mysql_query(&db->mysql, pszQuery)) {
+	if (mysql_query(&db->mysql, query)) {
 		qDbPing(db);
 		return -1;
 	}
@@ -283,12 +283,12 @@ int qDbExecuteUpdate(Q_DB *db, char *pszQuery) {
  *
  * @since 8.1R
  */
-Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *pszQuery) {
+Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
 	if (db == NULL || db->connected == Q_FALSE) return NULL;
 
 #ifdef _Q_WITH_MYSQL
 	// query
-	if (mysql_query(&db->mysql, pszQuery)) {
+	if (mysql_query(&db->mysql, query)) {
 		qDbPing(db);
 		return NULL;
 	}

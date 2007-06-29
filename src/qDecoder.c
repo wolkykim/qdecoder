@@ -110,10 +110,9 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-/**********************************************
-** Internal Functions Definition
-**********************************************/
-
+/*
+ * static function prototypes
+ */
 static int  _parse_urlencoded(void);
 static char *_get_query(char *method);
 static int  _parse_query(char *query, char sepchar);
@@ -127,10 +126,9 @@ static int _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csi
 static int _upload_clear_savedir(char *dir);
 static int _upload_clear_base();
 
-/**********************************************
-** Static Values Definition used only internal
-**********************************************/
-
+/*
+ * static variables used for internal
+ */
 static Q_ENTRY *_first_entry = NULL;
 static Q_ENTRY *_multi_last_entry = NULL;
 static char _multi_last_key[1024];
@@ -214,7 +212,7 @@ int qDecoder(void) {
 		}
 	}
 	/* for POST method : application/x-www-form-urlencoded */
-	else if (!strncmp (content_type, "application/x-www-form-urlencoded", strlen("application/x-www-form-urlencoded"))) {
+	else if (!strncmp(content_type, "application/x-www-form-urlencoded", strlen("application/x-www-form-urlencoded"))) {
 		amount = _parse_urlencoded();
 	}
 	/* for POST method : multipart/form-data */
@@ -1459,11 +1457,6 @@ void qFree(void) {
  *   qReset();
  * @endcode
  */
-/**********************************************
-** Usage : qReset();
-** Do    : Reset all static flags and de-allocate
-**         all reserved memories.
-**********************************************/
 void qReset(void) {
 	qFree();
 	qSessionFree();
