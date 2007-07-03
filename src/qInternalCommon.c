@@ -17,9 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <sys/file.h>
 #include "qDecoder.h"
 #include "qInternal.h"
-
 
 /**********************************************
 ** Usage : _x2c(HEX up character, HEX low character);

@@ -106,6 +106,16 @@
  *   @endcode
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdarg.h>
+#ifdef _WIN32	/* to use setmode() function for converting WIN32's stream mode to _O_BINARY */
+#include <io.h>
+#else
+#include <dirent.h>	/* to use opendir() */
+#endif
 #include "qDecoder.h"
 #include "qInternal.h"
 
@@ -121,8 +131,8 @@ static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, cha
 
 static char *_upload_getsavedir(char *upload_id, char *upload_savedir);
 static void _upload_progressbar(char *upload_id);
-static int _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csize, char *upload_cname);
-static int _upload_clear_savedir(char *dir);
+static bool _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csize, char *upload_cname);
+static bool _upload_clear_savedir(char *dir);
 static int _upload_clear_base();
 
 /*
@@ -795,7 +805,10 @@ static void _upload_progressbar(char *upload_id) {
 	fflush(stdout);
 }
 
-static int _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csize, char *upload_cname) {
+static bool _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csize, char *upload_cname) {
+#ifdef _WIN32
+	return false;
+#else
 	DIR     *dp;
 	struct  dirent *dirp;
 
@@ -809,7 +822,7 @@ static int _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csi
 	if (_upload_getsavedir(upload_id, upload_savedir) == NULL) qError("_upload_getstatus(): Q_UPLOAD_ID does not set.");
 
 	/* open upload folder */
-	if ((dp = opendir(upload_savedir)) == NULL) return 0;
+	if ((dp = opendir(upload_savedir)) == NULL) return false;
 
 	/* read tsize */
 	sprintf(upload_filepath, "%s/Q_UPLOAD_TSIZE", upload_savedir);
@@ -830,16 +843,20 @@ static int _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csi
 		strcpy(upload_cname, strstr(upload_cname, "-") + 1);
 	}
 
-	return 1;
+	return true;
+#endif
 }
 
-static int _upload_clear_savedir(char *dir) {
+static bool _upload_clear_savedir(char *dir) {
+#ifdef _WIN32
+	return false;
+#else
 	DIR     *dp;
 	struct  dirent *dirp;
 	char    filepath[1024];
 
 	/* open upload folder */
-	if ((dp = opendir(dir)) == NULL) return 0;
+	if ((dp = opendir(dir)) == NULL) return false;
 
 	while ((dirp = readdir(dp)) != NULL) {
 		if (!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..")) continue;
@@ -849,11 +866,15 @@ static int _upload_clear_savedir(char *dir) {
 	}
 	closedir(dp);
 
-	if (rmdir(dir) != 0) return 0;
-	return 1;
+	if (rmdir(dir) != 0) return false;
+	return true;
+#endif
 }
 
 static int _upload_clear_base() {
+#ifdef _WIN32
+	return 0;
+#else
 	DIR     *dp;
 	struct  dirent *dirp;
 	char    filepath[1024];
@@ -885,6 +906,7 @@ static int _upload_clear_base() {
 	closedir(dp);
 
 	return delcnt;
+#endif
 }
 
 /**

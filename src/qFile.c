@@ -17,8 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdarg.h>
+#include <sys/stat.h>
+#ifdef _WIN32	/* to use setmode() function for converting WIN32's stream mode to _O_BINARY */
+#include <io.h>
+#endif
 #include "qDecoder.h"
-#include "qInternal.h"
 
 /**********************************************
 ** Usage : qfopen(path, mode);

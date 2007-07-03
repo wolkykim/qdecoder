@@ -17,6 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
+#ifndef _QINTERNAL_H
+#define _QINTERNAL_H
+
 char    _x2c(char hex_up, char hex_low);
 char    *_makeword(char *str, char stop);
 char    *_fgets(char *str, int size, FILE *stream);
@@ -40,3 +43,5 @@ Q_ENTRY *_EntryLoad(char *filename);
 ** Internal Definition
 **********************************************/
 #define QDECODER_PRIVATEKEY	"qDecoder-by-Seung_young_Kim"
+
+#endif	/* _QINTERNAL_H */

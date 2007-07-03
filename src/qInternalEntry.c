@@ -17,14 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "qDecoder.h"
 #include "qInternal.h"
-
 
 /**********************************************
 ** Linked List(Entry) Routines
 **********************************************/
-
 
 /**********************************************
 ** Usage : _EntryAdd(first entry, name, value, replace);

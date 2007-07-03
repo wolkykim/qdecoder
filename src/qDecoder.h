@@ -27,28 +27,8 @@
 #define _QDECODER_H
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
-#include <stdarg.h>
-#include <ctype.h>
 #include <time.h>
-#include <libgen.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#ifdef _WIN32
-/* WIN32 ONLY */
-/* to use setmode() function for converting WIN32's stream mode to _O_BINARY */
-#include <io.h>
-#else
-/* UNIX ONLY */
-#include <dirent.h>	/* to use opendir() */
-#include <unistd.h>	/* to use unlink() */
-#include <sys/time.h>	/* to use struct timeval */
-#include <sys/file.h>	/* to use flock */
-#endif
 
 /**
  * qDecoder's linked list type
@@ -363,10 +343,19 @@ bool	qDbRollback(Q_DB *db);
 /*
  * qShm.c
  */
-int	qShmInit(char *keyfile, size_t nSize, bool autodestroy);
+int	qShmInit(char *keyfile, size_t size, bool autodestroy);
 void	*qShmGet(int shmid);
 bool	qShmFree(int shmid);
 bool	qShmDestroy(char *keyfile);
+
+/*
+ * qSem.c
+ */
+int	qSemInit(char *keyfile, int nsems, bool autodestroy);
+bool	qSemFree(int semid);
+bool	qSemDestroy(char *keyfile);
+bool	qSemCriticalEnter(int semid, int semno);
+bool	qSemCriticalLeave(int semid, int semno);
 
 #ifdef __cplusplus
 }

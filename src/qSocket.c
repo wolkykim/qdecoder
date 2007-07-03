@@ -19,12 +19,18 @@
 
 #ifndef _WIN32
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdarg.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
 #include "qDecoder.h"
-#include "qInternal.h"
-#include <sys/socket.h> /* for qSocket.c */
-#include <netinet/in.h> /* for qSocket.c */
-#include <arpa/inet.h>	/* for qSocket.c */
-#include <netdb.h>      /* for qSocket.c */
 
 /**********************************************
 ** Internal Functions Definition

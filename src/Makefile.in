@@ -81,6 +81,7 @@ OBJ		= qDecoder.o \
 		qSocket.o \
 		qDatabase.o \
 		qShm.o \
+		qSem.o \
 		qInternalCommon.o \
 		qInternalEntry.o \
 		md5/md5c.o

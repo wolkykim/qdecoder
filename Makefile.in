@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##########################################################################
 
-DIRS	= src examples contrib/qValue-1.0.2
+DIRS	= src examples
 RM	= @RM@
 
 all:

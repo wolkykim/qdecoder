@@ -21,9 +21,10 @@
  * @file qDownload.c Download Handling API
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "qDecoder.h"
-#include "qInternal.h"
-
 
 /**
  * Force to send(download) file to client.

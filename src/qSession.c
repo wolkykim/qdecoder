@@ -17,6 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdarg.h>
+#ifndef _WIN32
+#include <dirent.h>
+#endif
 #include "qDecoder.h"
 #include "qInternal.h"
 

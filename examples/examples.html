@@ -74,7 +74,7 @@ POST method: application/x-www-form-urlencoded<br>
 
 <!-- ex) upload.cgi -->
 <hr size="1" noshade>
-<h3>Example: <a href="upload.c">upload.c</a> (default mode)</h3>
+<h3>Example: <a href="upload.c">upload.c</a></h3>
 <form method="post" action="upload.cgi" enctype="multipart/form-data">
   Input text: <input type="text" name="text">
   <br>Select file: <input type="file" name="binary">
@@ -86,19 +86,21 @@ And also this is default mode for multipart/form-data decoding.
 
 <!-- ex) uploadfile.cgi -->
 <hr size="1" noshade>
-<h3>Example: <a href="uploadfile.c">uploadfile.c</a> (file mode)</h3>
+<h3>Example: <a href="uploadfile.c">uploadfile.c</a></h3>
+<h4>file mode example</h4>
 <form method="post" action="uploadfile.cgi" enctype="multipart/form-data">
   Input text: <input type="text" name="text">
-  <br>Select file: <input type="file" name="binary">
+  <br>Select file: <input type="file" name="binary1">
+  <br>Select file: <input type="file" name="binary2">
+  <br>Select file: <input type="file" name="binary3">
   <br><input type="submit" value="UPLOAD FILE">
 </form>
 qDecoder stores the binary data of uploaded file into disk directly on the fly.
+So qDecoder uses smaller memory to handle huge size of file.
 
-<!-- ex) uploadprogress.cgi -->
-<hr size="1" noshade>
-<h3>Example: <a href="uploadprogress.c">uploadprogress.c</a> (progress mode)</h3>
+<h4>progress mode example</h4>
 <script language="JavaScript" src="qDecoder-upload/qDecoder-upload.js"></script>
-<form method="post" action="uploadprogress.cgi" enctype="multipart/form-data" onSubmit="return Q_UPLOAD(this);">
+<form method="post" action="uploadfile.cgi" enctype="multipart/form-data" onSubmit="return Q_UPLOAD(this);">
   <input type="hidden" name="Q_UPLOAD_ID" value="">
 
   Input text: <input type="text" name="text">
@@ -108,9 +110,8 @@ qDecoder stores the binary data of uploaded file into disk directly on the fly.
   <br><input type="submit" value="UPLOAD FILE">
 </form>
 
-qDecoder stores the binary data of uploaded file into disk directly on the fly.
-So qDecoder uses smaller memory to handle huge size of file. If you want to activate
-this mode, please see this HTML source for hint.
+This will display progress status window to the user. This is sub mode
+of file mode and called progress mode.
 
 <!-- ex) download.cgi -->
 <hr size="1" noshade>

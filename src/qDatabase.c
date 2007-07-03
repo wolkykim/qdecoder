@@ -72,13 +72,15 @@
 #include "mysql.h"
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "qDecoder.h"
-#include "qInternal.h"
 
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  *
  * @note
  * @code
@@ -122,7 +124,7 @@ Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qDbOpen(Q_DB *db) {
 	if (db == NULL) return false;
@@ -165,7 +167,7 @@ bool qDbOpen(Q_DB *db) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qDbClose(Q_DB *db) {
 	if (db == NULL || db->connected == false) return false;
@@ -182,7 +184,7 @@ bool qDbClose(Q_DB *db) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qDbFree(Q_DB *db)  {
 	if (db == NULL) return false;
@@ -194,7 +196,7 @@ bool qDbFree(Q_DB *db)  {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 char *qDbGetErrMsg(Q_DB *db) {
 	static char msg[1024];
@@ -212,7 +214,7 @@ char *qDbGetErrMsg(Q_DB *db) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qDbPing(Q_DB *db) {
 	if (db == NULL) return false;
@@ -239,7 +241,7 @@ bool qDbPing(Q_DB *db) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qDbGetLastConnStatus(Q_DB *db) {
 	if (db == NULL) return false;
@@ -254,7 +256,7 @@ bool qDbGetLastConnStatus(Q_DB *db) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 int qDbExecuteUpdate(Q_DB *db, char *query) {
 	if (db == NULL || db->connected == false) return -1;
@@ -280,7 +282,7 @@ int qDbExecuteUpdate(Q_DB *db, char *query) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
 	if (db == NULL || db->connected == false) return NULL;
@@ -318,7 +320,7 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 int qDbGetRows(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
@@ -332,7 +334,7 @@ int qDbGetRows(Q_DBRESULT *result) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 int qDbGetCols(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
@@ -346,7 +348,7 @@ int qDbGetCols(Q_DBRESULT *result) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 int qDbResultNext(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
@@ -364,7 +366,7 @@ int qDbResultNext(Q_DBRESULT *result) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qDbResultFree(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
@@ -383,7 +385,7 @@ bool qDbResultFree(Q_DBRESULT *result) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 char *qDbGetValue(Q_DBRESULT *result, char *field) {
 #ifdef _Q_WITH_MYSQL
@@ -405,7 +407,7 @@ char *qDbGetValue(Q_DBRESULT *result, char *field) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 int qDbGetInt(Q_DBRESULT *result, char *field) {
 	return atoi(qDbGetValue(result, field));
@@ -414,7 +416,7 @@ int qDbGetInt(Q_DBRESULT *result, char *field) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
 #ifdef _Q_WITH_MYSQL
@@ -428,7 +430,7 @@ char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 int qDbGetIntAt(Q_DBRESULT *result, int idx) {
 	return atoi(qDbGetValueAt(result, idx));
@@ -437,7 +439,7 @@ int qDbGetIntAt(Q_DBRESULT *result, int idx) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qDbBeginTran(Q_DB *db) {
 	if (db == NULL) return false;
@@ -453,7 +455,7 @@ bool qDbBeginTran(Q_DB *db) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qDbEndTran(Q_DB *db, bool commit) {
 	if (db == NULL) return false;
@@ -465,7 +467,7 @@ bool qDbEndTran(Q_DB *db, bool commit) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qDbCommit(Q_DB *db) {
 	if (db == NULL) return false;
@@ -481,7 +483,7 @@ bool qDbCommit(Q_DB *db) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qDbRollback(Q_DB *db) {
 	if (db == NULL) return false;

@@ -70,8 +70,10 @@
  * @endcode
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "qDecoder.h"
-#include "qInternal.h"
 
 /**
  * Split string by space and double quotation(") then

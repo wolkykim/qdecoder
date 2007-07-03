@@ -21,29 +21,32 @@
  * @file qShm.c Shared Memory Handling API
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 #include <sys/shm.h>
 #include "qDecoder.h"
-#include "qInternal.h"
 
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
-int qShmInit(char *keyfile, size_t nSize, bool autodestroy) {
+int qShmInit(char *keyfile, size_t size, bool autodestroy) {
 	int shmid;
 
-	// generate unique key using ftok();
+	/* generate unique key using ftok() */
 	key_t nShmKey = ftok(keyfile, 'Q');
 	if (nShmKey == -1) return -1;
 
-	// create shared memory
-	if ((shmid = shmget(nShmKey, nSize, IPC_CREAT | IPC_EXCL | 0666)) == -1) {
+	/* create shared memory */
+	if ((shmid = shmget(nShmKey, size, IPC_CREAT | IPC_EXCL | 0666)) == -1) {
 		if(autodestroy == false) return -1;
 
-		// destroy & re-create
-		if(qShmDestroy(keyfile) == 0) return -1;
-		if ((shmid = shmget(nShmKey, nSize, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
+		/* destroy & re-create */
+		if(qShmDestroy(keyfile) == false) return -1;
+		if ((shmid = shmget(nShmKey, size, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
 	}
 
 	return shmid;
@@ -52,7 +55,7 @@ int qShmInit(char *keyfile, size_t nSize, bool autodestroy) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 void *qShmGet(int shmid) {
 	void *pShm;
@@ -66,7 +69,7 @@ void *qShmGet(int shmid) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qShmFree(int shmid) {
 	if (shmid < 0) return false;
@@ -77,18 +80,18 @@ bool qShmFree(int shmid) {
 /**
  * Under-development
  *
- * @since 8.1R
+ * @since not released yet
  */
 bool qShmDestroy(char *keyfile) {
 	int shmid;
 
-	// generate unique key using ftok();
+	/* generate unique key using ftok() */
 	key_t nShmKey = ftok(keyfile, 'Q');
 	if (nShmKey == -1) return false;
 
-	// get current shared memory id
+	/* get current shared memory id */
 	if ((shmid = shmget(nShmKey, 0, 0)) == -1) return false;
 
-	// destory current shared memory
+	/* destory current shared memory */
 	return qShmFree(shmid);
 }

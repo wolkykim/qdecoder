@@ -48,8 +48,10 @@
  * token1 and tokenN is ok. But token2 will be stored only first 1023 bytes.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "qDecoder.h"
-#include "qInternal.h"
 
 /**
  * Open file for tokenizing

@@ -17,10 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
-#include "qDecoder.h"
-#include "qInternal.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "md5/md5_global.h"
 #include "md5/md5.h"
+#include "qDecoder.h"
 
 /**********************************************
 ** Usage : qURLencode(string to encode);

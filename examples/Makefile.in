@@ -28,7 +28,7 @@ QLIB	= ../src/libqDecoder.a
 #QLIB	= ../src/libqDecoder.so
 
 ## Main
-all:	fetch.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi uploadprogress.cgi download.cgi streamedit.cgi arglist.cgi session.cgi confparser.cgi socket.cgi
+all:	fetch.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi arglist.cgi session.cgi confparser.cgi socket.cgi
 
 fetch.cgi: ${QLIB} fetch.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o fetch.cgi fetch.o ${QLIB}
@@ -46,10 +46,6 @@ upload.cgi: ${QLIB} upload.o
 uploadfile.cgi: ${QLIB} uploadfile.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o uploadfile.cgi uploadfile.o ${QLIB}
 	chmod 6755 uploadfile.cgi
-
-uploadprogress.cgi: ${QLIB} uploadprogress.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o uploadprogress.cgi uploadprogress.o ${QLIB}
-	chmod 6755 uploadprogress.cgi
 
 download.cgi: ${QLIB} download.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o download.cgi download.o ${QLIB}
