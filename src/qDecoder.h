@@ -353,8 +353,8 @@ bool	qShmFree(int shmid);
  */
 int	qSemInit(char *keyfile, int nsems, bool autodestroy);
 int	qSemGetId(char *keyfile);
-bool	qSemCriticalEnter(int semid, int semno);
-bool	qSemCriticalLeave(int semid, int semno);
+bool	qSemEnter(int semid, int semno);
+bool	qSemLeave(int semid, int semno);
 bool	qSemFree(int semid);
 
 #ifdef __cplusplus

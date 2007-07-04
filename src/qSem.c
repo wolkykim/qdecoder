@@ -40,16 +40,16 @@
  *
  *   [forked child]
  *   // critical section for resource 0
- *   qSemCriticalEnter(0);
+ *   qSemEnter(0);
  *   (... guaranteed as atomic procedure ...)
- *   qSemCriticalLeave(0);
+ *   qSemLeave(0);
  *
  *   (... some codes ...)
  *
  *   // critical section for resource 1
- *   qSemCriticalEnter(1);
+ *   qSemEnter(1);
  *   (... guaranteed as atomic procedure ...)
- *   qSemCriticalLeave(1);
+ *   qSemLeave(1);
  *
  *   [other program which uses resource 1]
  *   int semid = qSemGetId("/some/file/for/generating/unique/key");
@@ -59,9 +59,9 @@
  *   }
  *
  *   // critical section for resource 1
- *   qSemCriticalEnter(1);
+ *   qSemEnter(1);
  *   (... guaranteed as atomic procedure ...)
- *   qSemCriticalLeave(1);
+ *   qSemLeave(1);
  *
  * @endcode
  */
@@ -137,7 +137,7 @@ int qSemGetId(char *keyfile) {
  *
  * @since not released yet
  */
-bool qSemCriticalEnter(int semid, int semno) {
+bool qSemEnter(int semid, int semno) {
 	struct sembuf sbuf;
 
 	/* set sbuf */
@@ -155,7 +155,7 @@ bool qSemCriticalEnter(int semid, int semno) {
  *
  * @since not released yet
  */
-bool qSemCriticalLeave(int semid, int semno) {
+bool qSemLeave(int semid, int semno) {
 	struct sembuf sbuf;
 
 	/* set sbuf */
