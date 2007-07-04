@@ -119,7 +119,7 @@ int qSemInit(char *keyfile, int nsems, bool autodestroy) {
  *
  * @since not released yet
  */
-bool qSemGetId(char *keyfile) {
+int qSemGetId(char *keyfile) {
 	int semid;
 
 	/* generate unique key using ftok() */
