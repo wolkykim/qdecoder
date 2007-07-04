@@ -23,7 +23,7 @@
  * qDecoder supports parsing
  *   @li COOKIE
  *   @li GET method
- *   @li POST method (application/x-www-form-urlencoded: default <FORM> encoding)
+ *   @li POST method (application/x-www-form-urlencoded: default FORM encoding)
  *   @li POST method (multipart/form-data: especially used for file uploading)
  *
  * Anyway you don't care about this. You don't need to know which method(COOKIE/GET/POST)
@@ -1192,7 +1192,7 @@ char *qValueAdd(char *name, char *format, ...) {
  *
  * Multi-same-variables will be removed too.
  *
- * @param name		variable name to remove
+ * @param format	variable name to remove
  *
  * @note
  * @code
@@ -1236,7 +1236,7 @@ void qValueRemove(char *format, ...) {
 /**
  * Get the type of variable.
  *
- * @param name		variable name to remove
+ * @param format	variable name to remove
  *
  * @return	type character
  *		@li COOKIE			: 'C'

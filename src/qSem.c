@@ -19,6 +19,51 @@
 
 /**
  * @file qSem.c Semaphore Handling API
+ *
+ * @note
+ * @code
+ *   [daemon main]
+ *   #define MAX_SEMAPHORES (2)
+ *
+ *   // create semaphores
+ *   int semid = qSemInit("/some/file/for/generating/unique/key", MAX_SEMAPHORES, true);
+ *   if(semid < 0) {
+ *     printf("ERROR: Can't initialize semaphores.\n");
+ *     return -1;
+ *   }
+ *
+ *   // fork childs
+ *   (... child forking codes ...)
+ *
+ *   // at the end of daemon, free semaphores
+ *   if(semid >= 0) qSemFree(semid);
+ *
+ *   [forked child]
+ *   // critical section for resource 0
+ *   qSemCriticalEnter(0);
+ *   (... guaranteed as atomic procedure ...)
+ *   qSemCriticalLeave(0);
+ *
+ *   (... some codes ...)
+ *
+ *   // critical section for resource 1
+ *   qSemCriticalEnter(1);
+ *   (... guaranteed as atomic procedure ...)
+ *   qSemCriticalLeave(1);
+ *
+ *   [other program which uses resource 1]
+ *   int semid = qSemGetId("/some/file/for/generating/unique/key");
+ *   if(semid < 0) {
+ *     printf("ERROR: Can't get semaphore id.\n");
+ *     return -1;
+ *   }
+ *
+ *   // critical section for resource 1
+ *   qSemCriticalEnter(1);
+ *   (... guaranteed as atomic procedure ...)
+ *   qSemCriticalLeave(1);
+ *
+ * @endcode
  */
 
 #include <stdio.h>
@@ -44,7 +89,7 @@ int qSemInit(char *keyfile, int nsems, bool autodestroy) {
 		if(autodestroy == false) return -1;
 
 		// destroy & re-create
-		if(qSemDestroy(keyfile) == false) return -1;
+		if((semid = qSemGetId(keyfile)) >= 0) qSemFree(semid);
 		if ((semid = semget(semkey, nsems, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
 	}
 
@@ -68,34 +113,23 @@ int qSemInit(char *keyfile, int nsems, bool autodestroy) {
 	return semid;
 }
 
-/**
- * Under-development
- *
- * @since not released yet
- */
-bool qSemFree(int semid) {
-	if (semid < 0) return false;
-	if (semctl(semid, 0, IPC_RMID, 0) != 0) return false;
-	return true;
-}
 
 /**
  * Under-development
  *
  * @since not released yet
  */
-bool qSemDestroy(char *keyfile) {
+bool qSemGetId(char *keyfile) {
 	int semid;
 
 	/* generate unique key using ftok() */
 	key_t semkey = ftok(keyfile, 'q');
-	if (semkey == -1) return false;
+	if (semkey == -1) return -1;
 
 	/* get current semaphore id */
-	if ((semid = semget(semkey, 0, 0)) == -1) return false;
+	if ((semid = semget(semkey, 0, 0)) == -1) return -1;
 
-	/* destory semaphore */
-	return qSemFree(semid);
+	return semid;
 }
 
 /**
@@ -131,5 +165,16 @@ bool qSemCriticalLeave(int semid, int semno) {
 
 	/* unlock */
 	if (semop(semid, &sbuf, 1) != 0) return false;
+	return true;
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
+bool qSemFree(int semid) {
+	if (semid < 0) return false;
+	if (semctl(semid, 0, IPC_RMID, 0) != 0) return false;
 	return true;
 }

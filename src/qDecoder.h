@@ -34,9 +34,9 @@
  * qDecoder's linked list type
  */
 typedef struct Q_ENTRY {
-	char *name;
-	char *value;
-	struct Q_ENTRY *next;
+	char *name;		/*!< variable name */
+	char *value;		/*!< value */
+	struct Q_ENTRY *next;	/*!< next pointer */
 } Q_ENTRY;
 
 /* Database Support*/
@@ -48,7 +48,7 @@ typedef struct Q_ENTRY {
  * Structure for independent database interface.
  */
 typedef struct {
-	bool connected;	// if opened true, if closed false;
+	bool connected;			/*!< if opened true, if closed false */
 
 	struct {
 		char	dbtype[16+1];
@@ -58,7 +58,7 @@ typedef struct {
 		char	password[31+1];
 		char	database[31+1];
 		bool	autocommit;
-	} info;
+	} info;				/*!< database connection infomation */
 
 	// for mysql database
 #ifdef _Q_WITH_MYSQL
@@ -84,17 +84,17 @@ typedef struct {
  * Structure for Log
  */
 typedef struct {
-	char	logbase[1024];
-	char	nameformat[256];
+	char	logbase[1024];		/*!< directory which log file is located  */
+	char	nameformat[256];	/*!< file naming format like qdecoder-%Y%m%d.log */
 
-	char	filename[256];	/* generated filename */
-	char	logpath[1024];	/* final full path*/
-	FILE	*fp;
+	char	filename[256];		/*!< generated filename according to the name format */
+	char	logpath[1024];		/*!< generated system path of log file */
+	FILE	*fp;			/*!< file pointer of logpath */
 
-	bool	console;
-	int	rotateinterval;
-	int	nextrotate;
-	bool	flush;
+	bool	console;		/*!< flag for console print out */
+	int	rotateinterval;		/*!< log file will be rotate in this interval seconds */
+	int	nextrotate;		/*!< next rotate universal time, seconds */
+	bool	flush;			/*!< flag for immediate sync */
 } Q_LOG;
 
 #ifndef _DOXYGEN_SKIP
@@ -344,18 +344,18 @@ bool	qDbRollback(Q_DB *db);
  * qShm.c
  */
 int	qShmInit(char *keyfile, size_t size, bool autodestroy);
+int	qShmGetId(char *keyfile);
 void	*qShmGet(int shmid);
 bool	qShmFree(int shmid);
-bool	qShmDestroy(char *keyfile);
 
 /*
  * qSem.c
  */
 int	qSemInit(char *keyfile, int nsems, bool autodestroy);
-bool	qSemFree(int semid);
-bool	qSemDestroy(char *keyfile);
+int	qSemGetId(char *keyfile);
 bool	qSemCriticalEnter(int semid, int semno);
 bool	qSemCriticalLeave(int semid, int semno);
+bool	qSemFree(int semid);
 
 #ifdef __cplusplus
 }

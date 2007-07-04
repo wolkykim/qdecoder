@@ -26,7 +26,7 @@
  * or WITH_SOME_DATABASE option.
  *
  * @code
- *   In your source)
+ *   [include order at your source codes]
  *   #include "mysql.h"
  *   #include "qDecoder.h"
  * @endcode

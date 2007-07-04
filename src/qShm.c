@@ -19,6 +19,44 @@
 
 /**
  * @file qShm.c Shared Memory Handling API
+ *
+ * @note
+ * @code
+ *   [your header file]
+ *   struct SharedData {
+ *     (... structrue definitions ...)
+ *   }
+ *
+ *   [shared memory creater]
+ *   // create shared memory
+ *   int shmid = qShmInit("/some/file/for/generating/unique/key", sizeof(struct SharedData), true);
+ *   if(shmid < 0) {
+ *     printf("ERROR: Can't initialize shared memory.\n");
+ *     return -1;
+ *   }
+ *
+ *   // get shared memory pointer
+ *   struct SharedData *sdata = (SharedData *)qShmGet(shmid);
+ *   if(sdata == NULL) {
+ *     printf("ERROR: Can't get shared memory.\n");
+ *     return -1;
+ *   }
+ *   
+ *   [shared memory user]
+ *   // get shared memory id
+ *   int shmid = qShmGetId("/some/file/for/generating/unique/key");
+ *   if(shmid < 0) {
+ *     printf("ERROR: Can't get shared memory id.\n");
+ *     return -1;
+ *   }
+ *
+ *   // get shared memory pointer
+ *   struct SharedData *sdata = (SharedData *)qShmGet(shmid);
+ *   if(sdata == NULL) {
+ *     printf("ERROR: Can't get shared memory.\n");
+ *     return -1;
+ *   }
+ * @endcode
  */
 
 #include <stdio.h>
@@ -45,9 +83,27 @@ int qShmInit(char *keyfile, size_t size, bool autodestroy) {
 		if(autodestroy == false) return -1;
 
 		/* destroy & re-create */
-		if(qShmDestroy(keyfile) == false) return -1;
+		if((shmid = qShmGetId(keyfile)) >= 0) qShmFree(shmid);
 		if ((shmid = shmget(nShmKey, size, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
 	}
+
+	return shmid;
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
+int qShmGetId(char *keyfile) {
+	int shmid;
+
+	/* generate unique key using ftok() */
+	key_t nShmKey = ftok(keyfile, 'Q');
+	if (nShmKey == -1) return -1;
+
+	/* get current shared memory id */
+	if ((shmid = shmget(nShmKey, 0, 0)) == -1) return -1;
 
 	return shmid;
 }
@@ -75,23 +131,4 @@ bool qShmFree(int shmid) {
 	if (shmid < 0) return false;
 	if (shmctl(shmid, IPC_RMID, 0) != 0) return false;
 	return true;
-}
-
-/**
- * Under-development
- *
- * @since not released yet
- */
-bool qShmDestroy(char *keyfile) {
-	int shmid;
-
-	/* generate unique key using ftok() */
-	key_t nShmKey = ftok(keyfile, 'Q');
-	if (nShmKey == -1) return false;
-
-	/* get current shared memory id */
-	if ((shmid = shmget(nShmKey, 0, 0)) == -1) return false;
-
-	/* destory current shared memory */
-	return qShmFree(shmid);
 }
