@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdarg.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #ifndef _WIN32
 #include <dirent.h>
