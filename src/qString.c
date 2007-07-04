@@ -22,6 +22,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #include "qDecoder.h"
 
 /**********************************************
@@ -659,7 +662,7 @@ char *qUniqId(void) {
 	nUsec = tv.tv_usec;
 #endif
 
-	sprintf(szSeed, "%ld-%ld.%ld-%s:%s", random(), time(NULL), nUsec, qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
+	sprintf(szSeed, "%ld-%ld.%ld-%s:%s", random(), (long int)time(NULL), nUsec, qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
 	strcpy(szUniqId, qMD5Str(szSeed));
 
 	return szUniqId;

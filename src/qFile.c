@@ -27,6 +27,7 @@
 #include <io.h>
 #endif
 #include "qDecoder.h"
+#include "qInternal.h"
 
 /**********************************************
 ** Usage : qfopen(path, mode);

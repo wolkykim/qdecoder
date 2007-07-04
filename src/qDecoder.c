@@ -111,6 +111,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #ifdef _WIN32	/* to use setmode() function for converting WIN32's stream mode to _O_BINARY */
 #include <io.h>
 #else
