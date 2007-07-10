@@ -155,6 +155,24 @@ bool qSemEnter(int semid, int semno) {
  *
  * @since not released yet
  */
+bool qSemEnterNowait(int semid, int semno) {
+	struct sembuf sbuf;
+
+	/* set sbuf */
+	sbuf.sem_num = semno;
+	sbuf.sem_op = -1;
+	sbuf.sem_flg = SEM_UNDO | IPC_NOWAIT;
+
+	/* lock */
+	if (semop(semid, &sbuf, 1) != 0) return false;
+	return true;
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
 bool qSemLeave(int semid, int semno) {
 	struct sembuf sbuf;
 

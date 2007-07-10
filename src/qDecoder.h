@@ -354,6 +354,7 @@ bool	qShmFree(int shmid);
 int	qSemInit(char *keyfile, int nsems, bool autodestroy);
 int	qSemGetId(char *keyfile);
 bool	qSemEnter(int semid, int semno);
+bool	qSemEnterNowait(int semid, int semno);
 bool	qSemLeave(int semid, int semno);
 bool	qSemFree(int semid);
 
