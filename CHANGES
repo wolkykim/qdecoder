@@ -37,6 +37,8 @@ qDecoder Changes
     REM) qCGIenv()
     REM) qCGIname();
     FIX) Q_Entry -> Q_ENTRY
+    REM) qSocketSetNonblock();
+    FIX) qSocketGets(), qSocketPrintf()
 
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive
