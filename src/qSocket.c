@@ -167,15 +167,18 @@ int qSocketWrite(char *binary, int size, int sockfd) {
 
 /**********************************************
 ** Usage : qSocketPuts(string_pointer, sockfd);
-** Return: returns the value 1 if successful,
-**         otherwise the value 0 is returned.
+** Return: returns the number of bytes sent if successful,
+*          otherwise the value -1 is returned.
 ** Do    : send one line with terminating newline character to socket stream.
 **********************************************/
 int qSocketPuts(char *str, int sockfd) {
-	if (write(sockfd, str, strlen(str)) < 0) return 0;
-	if (write(sockfd, "\n", 1) < 0) return 0;
+	int sent;
 
-	return 1;
+
+	if ((sent = write(sockfd, str, strlen(str))) < 0) return -1;
+	if (write(sockfd, "\n", 1) < 0) return -1;
+
+	return (sent+1);
 }
 
 /**********************************************
@@ -194,9 +197,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 	vsprintf(buf, format, arglist);
 	va_end(arglist);
 
-	if (write(sockfd, buf, strlen(buf)) < 0) return 0;
-
-	return 1;
+	return write(sockfd, buf, strlen(buf));
 }
 
 /**********************************************
@@ -273,25 +274,6 @@ int qSocketSaveIntoFile(int sockfd, int size, int timeoutms, char *filepath, cha
 	fclose(fp);
 
 	return readbytes;
-}
-
-/**********************************************
-** Usage : qSocketSetNonblock(sockfd)
-** Return: returns the value 1 if successful,
-**         otherwise the value 0 is returned.
-** Do    : set the socket to non-blocking mode.
-** Comment: DO NOT USE this function untile you surely know what it means.
-**          Please use qSocketWaitReadable() instead.
-**********************************************/
-// 0: error, 1: ok
-int qSocketSetNonblock(int sockfd) {
-	int opts;
-
-	opts = fcntl(sockfd, F_GETFL);
-	if (opts < 0) return -1;
-	if (fcntl(sockfd, F_SETFL, opts | O_NONBLOCK) < 0) return 0;
-
-	return 1;
 }
 
 /**********************************************
