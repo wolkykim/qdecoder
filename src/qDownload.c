@@ -18,7 +18,7 @@
  *************************************************************************/
 
 /**
- * @file qDownload.c Download Handling API
+ * @file qDownload.c HTTP Download Handling API
  */
 
 #include <stdio.h>

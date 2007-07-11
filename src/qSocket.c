@@ -17,6 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
+/**
+ * @file qSocket.c Socket Handling API
+ */
+
 #ifndef _WIN32
 
 #include <stdio.h>
