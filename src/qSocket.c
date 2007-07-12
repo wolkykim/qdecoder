@@ -187,8 +187,7 @@ int qSocketPuts(char *str, int sockfd) {
 
 /**********************************************
 ** Usage : qSocketPrintf(sockfd, "Hello %s - %d day left", s, i);
-** Return: returns the value 1 if successful,
-**         otherwise(connection closed by foreign host?) the value 0 is returned.
+** Return: returns total sent bytes, otherwise the value -1 returned.
 ** Do    : send formatted data to socket stream.
 ** Notice: the final length of formatted data must be less than 1024.
 **         If you need to send more data, use qSocketPuts instead.
