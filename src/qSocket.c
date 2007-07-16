@@ -142,9 +142,11 @@ int qSocketGets(char *str, int size, int sockfd, int timeoutms) {
 	char *ptr;
 	int readcnt = 0;
 
-	if (qSocketWaitReadable(sockfd, timeoutms) <= 0) return 0;
-
 	for (ptr = str; size > 1; size--, ptr++) {
+		if (qSocketWaitReadable(sockfd, timeoutms) <= 0) {
+			*ptr = '\0';
+			return 0;
+		}
 		if (read(sockfd, ptr, 1) != 1) {
 			if (ptr == str) return -1;
 			break;
@@ -267,6 +269,10 @@ int qSocketSaveIntoFile(int sockfd, int size, int timeoutms, char *filepath, cha
 		else readsize = sizeof(buf);
 
 		// read data
+		if (qSocketWaitReadable(sockfd, timeoutms) <= 0) {
+			fclose(fp);
+			return -1;
+		}
 		readed = read(sockfd, buf, readsize);
 
 		if (readed == 0) break; // EOF
