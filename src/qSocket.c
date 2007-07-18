@@ -153,8 +153,8 @@ int qSocketGets(char *str, int size, int sockfd, int timeoutms) {
 		}
 
 		readcnt++;
+		if (*ptr == '\n') break;
 		if (*ptr == '\r') ptr--;
-		else if (*ptr == '\n') break;
 	}
 
 	*ptr = '\0';
@@ -178,16 +178,13 @@ int qSocketWrite(char *binary, int size, int sockfd) {
 ** Do    : send one line with terminating newline character to socket stream.
 **********************************************/
 int qSocketPuts(char *str, int sockfd) {
-	char *buf;
 	int sent;
 
-	buf = (char *)malloc(strlen(str)+2+1);
-	if(buf == NULL) return -1;
-	sprintf(buf, "%s\r\n", str);
-	if ((sent = write(sockfd, str, strlen(str))) < 0) return -1;
-	free(buf);
 
-	return sent;
+	if ((sent = write(sockfd, str, strlen(str))) < 0) return -1;
+	if (write(sockfd, "\n", 1) < 0) return -1;
+
+	return (sent+1);
 }
 
 /**********************************************
@@ -202,7 +199,8 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsprintf(buf, format, arglist);
+	vsnprintf(buf, sizeof(buf)-1, format, arglist);
+	buf[sizeof(buf)-1] = '\0';
 	va_end(arglist);
 
 	return write(sockfd, buf, strlen(buf));

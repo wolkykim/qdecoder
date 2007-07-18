@@ -108,18 +108,19 @@ bool qLogFlush(Q_LOG *log) {
  * @since 8.1R
  */
 bool qLog(Q_LOG *log, char *format, ...) {
-	char szStr[1024];
+	char buf[1024];
 	va_list arglist;
 	time_t nowTime = time(NULL);
 
 	if (log == NULL || log->fp == NULL) return false;
 
 	va_start(arglist, format);
-	vsprintf(szStr, format, arglist);
+	vsnprintf(buf, sizeof(buf)-1, format, arglist);
+	buf[sizeof(buf)-1] = '\0';
 	va_end(arglist);
 
 	/* console out */
-	if (log->console == true) printf("%s(%d): %s\n", qGetTimeStr(), getpid(), szStr);
+	if (log->console == true) printf("%s(%d): %s\n", qGetTimeStr(), getpid(), buf);
 
 	/* check log rotate is needed*/
 	if (log->nextrotate > 0 && nowTime >= log->nextrotate) {
@@ -127,7 +128,7 @@ bool qLog(Q_LOG *log, char *format, ...) {
 	}
 
 	/* log to file */
-	if (fprintf(log->fp, "%s(%d): %s\n", qGetTimeStr(), getpid(), szStr) < 0) return false;
+	if (fprintf(log->fp, "%s(%d): %s\n", qGetTimeStr(), getpid(), buf) < 0) return false;
 
 	/* check flash flag */
 	if (log->flush == true) fflush(log->fp);

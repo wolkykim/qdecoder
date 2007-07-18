@@ -78,12 +78,11 @@ void qRedirect(char *url) {
 **********************************************/
 void qJavaScript(char *format, ...) {
 	char jscode[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(jscode, format, arglist);
-	if (strlen(jscode) + 1 > sizeof(jscode) || status == EOF) qError("qJavaScript(): Message is too long or invalid.");
+	vsnprintf(jscode, sizeof(jscode)-1, format, arglist);
+	jscode[sizeof(jscode)-1] = '\0';
 	va_end(arglist);
 
 	qContentType("text/html");

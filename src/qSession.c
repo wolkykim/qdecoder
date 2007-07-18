@@ -189,7 +189,6 @@ int qSession(char *repository) {
 char *qSessionAdd(char *name, char *format, ...) {
 	Q_ENTRY *new_entry;
 	char value[1024];
-	int status;
 	va_list arglist;
 
 	if (_session_started == 0) qError("qSessionAdd(): qSession() must be called before.");
@@ -197,8 +196,8 @@ char *qSessionAdd(char *name, char *format, ...) {
 	if (!strncmp(name, INTER_PREFIX, strlen(INTER_PREFIX))) qError("qSessionAdd(): Name can not start with %s. It's reserved for internal uses.", INTER_PREFIX);
 
 	va_start(arglist, format);
-	status = vsprintf(value, format, arglist);
-	if (strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSessionAdd(): Message is too long or invalid.");
+	vsnprintf(value, sizeof(value)-1, format, arglist);
+	value[sizeof(value)-1] = '\0';
 	va_end(arglist);
 
 	new_entry = qEntryAdd(_session_first_entry, name, value, 1);
@@ -248,12 +247,11 @@ int qSessionUpdateInteger(char *name, int plusint) {
 **********************************************/
 void qSessionRemove(char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionRemove(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	if (!strcmp(name, "")) qError("qAddRemove(): can not remove empty name.");
@@ -277,14 +275,13 @@ void qSessionRemove(char *format, ...) {
 **********************************************/
 char *qSessionValue(char *format, ...) {
 	char name[1024], *value;
-	int status;
 	va_list arglist;
 
 	if (_session_started == 0) qError("qSessionValue(): qSession() must be called before.");
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionValue(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	value = qEntryValue(_session_first_entry, name);
@@ -303,14 +300,13 @@ char *qSessionValue(char *format, ...) {
 int qSessionValueInteger(char *format, ...) {
 	char name[1024];
 	int value;
-	int status;
 	va_list arglist;
 
 	if (_session_started == 0) qError("qSessionValue(): qSession() must be called before.");
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionValue(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	value = qEntryiValue(_session_first_entry, name);

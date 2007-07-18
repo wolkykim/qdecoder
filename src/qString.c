@@ -39,12 +39,13 @@
 **********************************************/
 int qPrintf(int mode, char *format, ...) {
 	char buf[1024*10];
-	int  status;
 	va_list arglist;
+	int status;
 
 	va_start(arglist, format);
-	if ((status = vsprintf(buf, format, arglist)) == EOF) return status;
-	if (strlen(buf) + 1 > sizeof(buf))qError("qPrintf(): Message is too long or invalid.");
+	status = vsnprintf(buf, sizeof(buf)-1, format, arglist);
+	buf[sizeof(buf)-1] = '\0';
+	va_end(arglist);
 
 	qPuts(mode, buf);
 
@@ -609,12 +610,12 @@ char *qitocomma(int value) {
 **********************************************/
 char *qStrcat(char *str, char *format, ...) {
 	char buf[1024];
-	int  status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	if ((status = vsprintf(buf, format, arglist)) == EOF) return NULL;
-	if (strlen(buf) + 1 > sizeof(buf))qError("qStrcat(): Message is too long or invalid.");
+	vsnprintf(buf, sizeof(buf)-1, format, arglist);
+	buf[sizeof(buf)-1] = '\0';
+	va_end(arglist);
 
 	return strcat(str, buf);
 }

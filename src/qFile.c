@@ -64,12 +64,11 @@ int qfclose(FILE *stream) {
 bool qCheckFile(char *format, ...) {
 	struct stat finfo;
 	char filename[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(filename, format, arglist);
-	if (strlen(filename) + 1 > sizeof(filename) || status == EOF) qError("qCheckFile(): File name is too long or invalid.");
+	vsnprintf(filename, sizeof(filename)-1, format, arglist);
+	filename[sizeof(filename)-1] = '\0';
 	va_end(arglist);
 
 	if (stat(filename, &finfo) < 0) return false;
@@ -85,13 +84,12 @@ bool qCheckFile(char *format, ...) {
 int qCatFile(char *format, ...) {
 	FILE *fp;
 	char filename[1024];
-	int status;
 	va_list arglist;
 	int c, counter;
 
 	va_start(arglist, format);
-	status = vsprintf(filename, format, arglist);
-	if (strlen(filename) + 1 > sizeof(filename) || status == EOF) qError("qCatFile(): File name is too long or invalid.");
+	vsnprintf(filename, sizeof(filename)-1, format, arglist);
+	filename[sizeof(filename)-1] = '\0';
 	va_end(arglist);
 
 #ifdef _WIN32

@@ -79,12 +79,11 @@ Q_ENTRY *qsDecoder(char *str) {
 
 char *qsValue(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsValue(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	return qEntryValue(first, name);
@@ -92,24 +91,22 @@ char *qsValue(Q_ENTRY *first, char *format, ...) {
 
 int qsiValue(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsiValue(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	return qEntryiValue(first, name);
 }
 
 char *qsValueFirst(Q_ENTRY *first, char *format, ...) {
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(_multi_last_key, format, arglist);
-	if (strlen(_multi_last_key) + 1 > sizeof(_multi_last_key) || status == EOF) qError("qsValueFirst(): Message is too long or invalid.");
+	vsnprintf(_multi_last_key, sizeof(_multi_last_key)-1, format, arglist);
+	_multi_last_key[sizeof(_multi_last_key)-1] = '\0';
 	va_end(arglist);
 
 	if (first == NULL) return NULL;

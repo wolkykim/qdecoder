@@ -43,7 +43,6 @@ static char *_error_log_file = NULL;
 void qError(char *format, ...) {
 	static int cnt = 0;
 	char buf[1024];
-	int status;
 	int logstatus;
 	va_list arglist;
 
@@ -51,12 +50,9 @@ void qError(char *format, ...) {
 	cnt++;
 
 	va_start(arglist, format);
-
-	status = vsprintf(buf, format, arglist);
-	if (strlen(buf) + 1 > sizeof(buf) || status == EOF) {
-		printf("qError(): Message is too long or invalid.");
-		exit(1);
-	}
+	vsnprintf(buf, sizeof(buf)-1, format, arglist);
+	buf[sizeof(buf)-1] = '\0';
+	va_end(arglist);
 
 	logstatus = 0;
 	if (_error_log_file != NULL) {

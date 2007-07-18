@@ -956,12 +956,11 @@ static int _upload_clear_base() {
  */
 char *qValue(char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValue(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -984,12 +983,11 @@ char *qValue(char *format, ...) {
  */
 int qiValue(char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qiValue(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1012,13 +1010,12 @@ int qiValue(char *format, ...) {
  */
 char *qValueDefault(char *defstr, char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 	char *value;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValueDefault(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1044,13 +1041,12 @@ char *qValueDefault(char *defstr, char *format, ...) {
  */
 char *qValueNotEmpty(char *errmsg, char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 	char *value;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValueNotEmpty(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1156,12 +1152,11 @@ char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
  * @endcode
  */
 char *qValueFirst(char *format, ...) {
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(_multi_last_key, format, arglist);
-	if (strlen(_multi_last_key) + 1 > sizeof(_multi_last_key) || status == EOF) qError("qValueFirst(): Message is too long or invalid.");
+	vsnprintf(_multi_last_key, sizeof(_multi_last_key)-1, format, arglist);
+	_multi_last_key[sizeof(_multi_last_key)-1] = '\0';
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1210,14 +1205,13 @@ char *qValueNext(void) {
 char *qValueAdd(char *name, char *format, ...) {
 	Q_ENTRY *new_entry;
 	char value[1024];
-	int status;
 	va_list arglist;
 
 	if (!strcmp(name, "")) return NULL;
 
 	va_start(arglist, format);
-	status = vsprintf(value, format, arglist);
-	if (strlen(value) + 1 > sizeof(value) || status == EOF) qError("qValueAdd(): Message is too long or invalid.");
+	vsnprintf(value, sizeof(value)-1, format, arglist);
+	value[sizeof(value)-1] = '\0';
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1243,12 +1237,11 @@ char *qValueAdd(char *name, char *format, ...) {
  */
 void qValueRemove(char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionRemove(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	if (!strcmp(name, "")) qError("qValueRemove(): can not remove empty name.");
@@ -1294,13 +1287,12 @@ void qValueRemove(char *format, ...) {
  */
 char qValueType(char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 	int v_no;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValue(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1490,12 +1482,11 @@ bool qCookieRemove(char *name, char *path, char *domain, char *secure) {
  */
 char *qCookieValue(char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qValue(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();

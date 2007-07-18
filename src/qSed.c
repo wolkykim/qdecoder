@@ -42,14 +42,13 @@
 Q_ENTRY *qSedArgAdd(Q_ENTRY *first, char *name, char *format, ...) {
 	Q_ENTRY *new_entry;
 	char value[1024];
-	int status;
 	va_list arglist;
 
 	if (!strcmp(name, "")) qError("qSedArgAdd(): can not add empty name.");
 
 	va_start(arglist, format);
-	status = vsprintf(value, format, arglist);
-	if (strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSedArgAdd(): Message is too long or invalid.");
+	vsnprintf(value, sizeof(value)-1, format, arglist);
+	value[sizeof(value)-1] = '\0';
 	va_end(arglist);
 
 	new_entry = qEntryAdd(first, name, value, 1);

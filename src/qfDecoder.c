@@ -120,12 +120,11 @@ Q_ENTRY *qfDecoder(char *file) {
 
 char *qfValue(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qfValue(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	return qEntryValueLast(first, name);
@@ -133,12 +132,11 @@ char *qfValue(Q_ENTRY *first, char *format, ...) {
 
 int qfiValue(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(name, format, arglist);
-	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qfiValue(): Message is too long or invalid.");
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
 	return qEntryiValueLast(first, name);
@@ -146,12 +144,11 @@ int qfiValue(Q_ENTRY *first, char *format, ...) {
 
 
 char *qfValueFirst(Q_ENTRY *first, char *format, ...) {
-	int status;
 	va_list arglist;
 
 	va_start(arglist, format);
-	status = vsprintf(_multi_last_key, format, arglist);
-	if (strlen(_multi_last_key) + 1 > sizeof(_multi_last_key) || status == EOF) qError("qfValueFirst(): Message is too long or invalid.");
+	vsnprintf(_multi_last_key, sizeof(_multi_last_key)-1, format, arglist);
+	_multi_last_key[sizeof(_multi_last_key)-1] = '\0';
 	va_end(arglist);
 
 	if (first == NULL) return NULL;
