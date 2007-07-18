@@ -83,7 +83,8 @@ OBJ		= qDecoder.o \
 		qShm.o \
 		qSem.o \
 		qInternalCommon.o \
-		qInternalEntry.o
+		qInternalEntry.o \
+		md5/md5c.o
 
 ## Make Library
 all: ${OBJ}

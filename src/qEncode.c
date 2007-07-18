@@ -25,7 +25,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <openssl/md5.h>
+#include "md5/md5_global.h"
+#include "md5/md5.h"
 #include "qDecoder.h"
 #include "qInternal.h"
 
@@ -103,9 +104,9 @@ char *qMD5Str(char *string) {
 	static char md5hex[16 * 2 + 1];
 	int i;
 
-	MD5_Init(&context);
-	MD5_Update(&context, string, strlen(string));
-	MD5_Final(digest, &context);
+	MD5Init(&context);
+	MD5Update(&context, string, strlen(string));
+	MD5Final(digest, &context);
 
 	for (i = 0; i < 16; i++) {
 		sprintf(md5hex + (i * 2), "%02x", digest[i]);
