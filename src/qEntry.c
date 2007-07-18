@@ -17,6 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
+/**
+ * @file qEntry.c Linked-list Structure Handling API
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -25,11 +29,7 @@
 #include "qInternal.h"
 
 /**********************************************
-** Linked List(Entry) Routines
-**********************************************/
-
-/**********************************************
-** Usage : _EntryAdd(first entry, name, value, replace);
+** Usage : qEntryAdd(first entry, name, value, replace);
 ** Return: New entry pointer.
 ** Do    : Add entry at last.
 **         flag = 0 : just append.
@@ -37,7 +37,7 @@
 **         flag = 2 : same as flag 0 but the name and value are binary pointer.
 **                    so the pointer will be used instead strdup().
 **********************************************/
-Q_ENTRY *_EntryAdd(Q_ENTRY *first, char *name, char *value, int flag) {
+Q_ENTRY *qEntryAdd(Q_ENTRY *first, char *name, char *value, int flag) {
 	Q_ENTRY *entries;
 
 	if (!strcmp(name, "")) return NULL;
@@ -74,11 +74,11 @@ Q_ENTRY *_EntryAdd(Q_ENTRY *first, char *name, char *value, int flag) {
 }
 
 /**********************************************
-** Usage : _EntryRemove(first entry, name to remove);
+** Usage : qEntryRemove(first entry, name to remove);
 ** Return: first entry pointer.
 ** Do    : Remove entry if same name exists, remove all.
 **********************************************/
-Q_ENTRY *_EntryRemove(Q_ENTRY *first, char *name) {
+Q_ENTRY *qEntryRemove(Q_ENTRY *first, char *name) {
 	Q_ENTRY *entries, *prev_entry;
 
 	if (!strcmp(name, "")) return first;
@@ -108,11 +108,11 @@ Q_ENTRY *_EntryRemove(Q_ENTRY *first, char *name) {
 }
 
 /**********************************************
-** Usage : _EntryValue(pointer of the first entry, name);
+** Usage : qEntryValue(pointer of the first entry, name);
 ** Return: Success pointer of value string, Fail NULL.
 ** Do    : Find the value string pointer in linked list.
 **********************************************/
-char *_EntryValue(Q_ENTRY *first, char *name) {
+char *qEntryValue(Q_ENTRY *first, char *name) {
 	Q_ENTRY *entries;
 
 	for (entries = first; entries; entries = entries->next) {
@@ -122,11 +122,11 @@ char *_EntryValue(Q_ENTRY *first, char *name) {
 }
 
 /**********************************************
-** Usage : _EntryValue(pointer of the first entry, name);
+** Usage : qEntryValue(pointer of the first entry, name);
 ** Return: Success pointer of value string, Fail NULL.
 ** Do    : Find the last value string pointer in linked list.
 **********************************************/
-char *_EntryValueLast(Q_ENTRY *first, char *name) {
+char *qEntryValueLast(Q_ENTRY *first, char *name) {
 	Q_ENTRY *entries;
 	char *value = NULL;
 
@@ -137,37 +137,37 @@ char *_EntryValueLast(Q_ENTRY *first, char *name) {
 }
 
 /**********************************************
-** Usage : _EntryiValue(pointer of the first entry, name);
+** Usage : qEntryiValue(pointer of the first entry, name);
 ** Return: Success integer of value string, Fail 0.
 ** Do    : Find the value string pointer and convert to integer.
 **********************************************/
-int _EntryiValue(Q_ENTRY *first, char *name) {
+int qEntryiValue(Q_ENTRY *first, char *name) {
 	char *str;
 
-	str = _EntryValue(first, name);
+	str = qEntryValue(first, name);
 	if (str == NULL) return 0;
 	return atoi(str);
 }
 
 /**********************************************
-** Usage : _EntryiValue(pointer of the first entry, name);
+** Usage : qEntryiValue(pointer of the first entry, name);
 ** Return: Success integer of value string, Fail 0.
 ** Do    : Find the last value string pointer and convert to integer.
 **********************************************/
-int _EntryiValueLast(Q_ENTRY *first, char *name) {
+int qEntryiValueLast(Q_ENTRY *first, char *name) {
 	char *str;
 
-	str = _EntryValueLast(first, name);
+	str = qEntryValueLast(first, name);
 	if (str == NULL) return 0;
 	return atoi(str);
 }
 
 /**********************************************
-** Usage : _EntryNo(pointer of the first entry, name);
+** Usage : qEntryNo(pointer of the first entry, name);
 ** Return: Success no. Fail 0;
 ** Do    : Find sequence number of value string pointer.
 **********************************************/
-int _EntryNo(Q_ENTRY *first, char *name) {
+int qEntryNo(Q_ENTRY *first, char *name) {
 	Q_ENTRY *entries;
 	int no;
 
@@ -178,11 +178,11 @@ int _EntryNo(Q_ENTRY *first, char *name) {
 }
 
 /**********************************************
-** Usage : _EntryReverse(pointer of the first entry);
+** Usage : qEntryReverse(pointer of the first entry);
 ** Return: first entry pointer
 ** Do    : Reverse the entries
 **********************************************/
-Q_ENTRY *_EntryReverse(Q_ENTRY *first) {
+Q_ENTRY *qEntryReverse(Q_ENTRY *first) {
 	Q_ENTRY *entries, *last, *next;
 
 	last = NULL;
@@ -196,11 +196,11 @@ Q_ENTRY *_EntryReverse(Q_ENTRY *first) {
 }
 
 /**********************************************
-** Usage : _EntryPrint(pointer of the first entry);
+** Usage : qEntryPrint(pointer of the first entry);
 ** Return: Amount of entries.
 ** Do    : Print all parsed value & name for debugging.
 **********************************************/
-int _EntryPrint(Q_ENTRY *first) {
+int qEntryPrint(Q_ENTRY *first) {
 	Q_ENTRY *entries;
 	int amount;
 
@@ -214,10 +214,10 @@ int _EntryPrint(Q_ENTRY *first) {
 }
 
 /**********************************************
-** Usage : _EntryFree(pointer of the first entry);
+** Usage : qEntryFree(pointer of the first entry);
 ** Do    : Make free of linked list memory.
 **********************************************/
-void _EntryFree(Q_ENTRY *first) {
+void qEntryFree(Q_ENTRY *first) {
 	Q_ENTRY *entries;
 
 	for (; first; first = entries) {
@@ -229,43 +229,47 @@ void _EntryFree(Q_ENTRY *first) {
 }
 
 /**********************************************
-** Usage : _EntrySave(pointer of the first entry, filename);
-** Return: Success 1, Fail 0.
+** Usage : qEntrySave(pointer of the first entry, filename);
+** Return: Number of saved entries.
 ** Do    : Save entries into file.
 **********************************************/
-int _EntrySave(Q_ENTRY *first, char *filename) {
+int qEntrySave(Q_ENTRY *first, char *filename, bool encodevalue) {
 	FILE *fp;
 	char gmt[32];
+	int amount;
 
 	qGetGMTime(gmt, (time_t)0);
-	if ((fp = qfopen(filename, "w")) == NULL) return 0;
+	if ((fp = qfopen(filename, "w")) == NULL) return -1;
 
 	fprintf(fp, "# automatically generated by qDecoder at %s.\n", gmt);
 	fprintf(fp, "# %s\n", filename);
-	for (; first; first = first->next) {
+	for (amount = 0; first; first = first->next, amount++) {
 		char *encvalue;
 
-		encvalue = qURLencode(first->value);
+		if(encodevalue == true) encvalue = qURLencode(first->value);
+		else encvalue = first->value;
 		fprintf(fp, "%s=%s\n", first->name, encvalue);
-		free(encvalue);
+		if(encodevalue == true) free(encvalue);
 	}
 
 	qfclose(fp);
-	return 1;
+	return amount;
 }
 
 /**********************************************
-** Usage : _EntryLoad(filename);
+** Usage : qEntryLoad(filename);
 ** Return: Success pointer of first entry, Fail NULL.
 ** Do    : Load entries from given filename.
 **********************************************/
-Q_ENTRY *_EntryLoad(char *filename) {
+Q_ENTRY *qEntryLoad(char *filename, bool decodevalue) {
 	Q_ENTRY *first, *entries;
 
 	if ((first = qfDecoder(filename)) == NULL) return NULL;
 
-	for (entries = first; entries; entries = entries->next) {
-		qURLdecode(entries->value);
+	if(decodevalue == true) {
+		for (entries = first; entries; entries = entries->next) {
+			qURLdecode(entries->value);
+		}
 	}
 
 	return first;

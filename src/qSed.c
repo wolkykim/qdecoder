@@ -52,7 +52,7 @@ Q_ENTRY *qSedArgAdd(Q_ENTRY *first, char *name, char *format, ...) {
 	if (strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSedArgAdd(): Message is too long or invalid.");
 	va_end(arglist);
 
-	new_entry = _EntryAdd(first, name, value, 1);
+	new_entry = qEntryAdd(first, name, value, 1);
 	if (!first) first = new_entry;
 
 	return first;
@@ -70,7 +70,7 @@ Q_ENTRY *qSedArgAddDirect(Q_ENTRY *first, char *name, char *value) {
 
 	if (!strcmp(name, "")) qError("qSedArgAddDirect(): can not add empty name.");
 
-	new_entry = _EntryAdd(first, name, value, 1);
+	new_entry = qEntryAdd(first, name, value, 1);
 	if (!first) first = new_entry;
 
 	return first;
@@ -82,7 +82,7 @@ Q_ENTRY *qSedArgAddDirect(Q_ENTRY *first, char *name, char *value) {
 ** Do    : Print all parsed values & names for debugging.
 **********************************************/
 int qSedArgPrint(Q_ENTRY *first) {
-	return _EntryPrint(first);
+	return qEntryPrint(first);
 }
 
 /**********************************************
@@ -90,7 +90,7 @@ int qSedArgPrint(Q_ENTRY *first) {
 ** Do    : Make free of linked list memory.
 **********************************************/
 void qSedArgFree(Q_ENTRY *first) {
-	_EntryFree(first);
+	qEntryFree(first);
 }
 
 /**********************************************

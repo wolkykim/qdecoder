@@ -149,10 +149,10 @@ int qSession(char *repository) {
 		nowtime = qGetGMTime(created_gmt, (time_t)0);
 		sprintf(created_sec, "%ld", (long)nowtime);
 
-		_session_first_entry = _EntryAdd(_session_first_entry, INTER_SESSIONID, sessionkey, 1);
-		_EntryAdd(_session_first_entry, INTER_CREATED_GMT, created_gmt, 1);
-		_EntryAdd(_session_first_entry, INTER_CREATED_SEC, created_sec, 1);
-		_EntryAdd(_session_first_entry, INTER_CONNECTIONS, "1", 1);
+		_session_first_entry = qEntryAdd(_session_first_entry, INTER_SESSIONID, sessionkey, 1);
+		qEntryAdd(_session_first_entry, INTER_CREATED_GMT, created_gmt, 1);
+		qEntryAdd(_session_first_entry, INTER_CREATED_SEC, created_sec, 1);
+		qEntryAdd(_session_first_entry, INTER_CONNECTIONS, "1", 1);
 
 		/* set timeout interval */
 		qSessionSetTimeout(_session_timeout_interval);
@@ -163,12 +163,12 @@ int qSession(char *repository) {
 		char connstr[16];
 
 		/* read exist session informations */
-		_session_first_entry = _EntryLoad(_session_storage_path);
+		_session_first_entry = qEntryLoad(_session_storage_path, true);
 
 		/* update session informations */
 		conns = qSessionValueInteger(INTER_CONNECTIONS);
 		sprintf(connstr, "%d", ++conns);
-		_EntryAdd(_session_first_entry, INTER_CONNECTIONS, connstr, 1);
+		qEntryAdd(_session_first_entry, INTER_CONNECTIONS, connstr, 1);
 
 		/* set timeout interval */
 		qSessionSetTimeout((time_t)atol(qSessionValue(INTER_INTERVAL_SEC)));
@@ -201,7 +201,7 @@ char *qSessionAdd(char *name, char *format, ...) {
 	if (strlen(value) + 1 > sizeof(value) || status == EOF) qError("qSessionAdd(): Message is too long or invalid.");
 	va_end(arglist);
 
-	new_entry = _EntryAdd(_session_first_entry, name, value, 1);
+	new_entry = qEntryAdd(_session_first_entry, name, value, 1);
 	if (!_session_first_entry) _session_first_entry = new_entry;
 
 	/* set modified flag */
@@ -260,7 +260,7 @@ void qSessionRemove(char *format, ...) {
 	if (_session_started == 0) qError("qSessionRemove(): qSession() must be called before.");
 	if (!strncmp(name, INTER_PREFIX, strlen(INTER_PREFIX))) qError("qSessionRemove(): can not remove reserved words.");
 
-	_session_first_entry = _EntryRemove(_session_first_entry, name);
+	_session_first_entry = qEntryRemove(_session_first_entry, name);
 
 	/* set modified flag */
 	_session_modified = 1;
@@ -287,7 +287,7 @@ char *qSessionValue(char *format, ...) {
 	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionValue(): Message is too long or invalid.");
 	va_end(arglist);
 
-	value = _EntryValue(_session_first_entry, name);
+	value = qEntryValue(_session_first_entry, name);
 
 	return value;
 }
@@ -313,7 +313,7 @@ int qSessionValueInteger(char *format, ...) {
 	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qSessionValue(): Message is too long or invalid.");
 	va_end(arglist);
 
-	value = _EntryiValue(_session_first_entry, name);
+	value = qEntryiValue(_session_first_entry, name);
 
 	return value;
 }
@@ -324,7 +324,7 @@ int qSessionValueInteger(char *format, ...) {
 **********************************************/
 int qSessionPrint(void) {
 	if (_session_started == 0) qError("qSessionPrint(): qSession() must be called before.");
-	return _EntryPrint(_session_first_entry);
+	return qEntryPrint(_session_first_entry);
 }
 
 /**********************************************
@@ -335,7 +335,7 @@ void qSessionSave(void) {
 	if (_session_started == 0 || _session_first_entry == NULL) return;
 	if (_session_new == 1 && _session_modified == 0) return;
 
-	if (_EntrySave(_session_first_entry, _session_storage_path) == 0) {
+	if (qEntrySave(_session_first_entry, _session_storage_path, true) == false) {
 		qError("qSessionSave(): Can not access session repository(%s).", _session_storage_path);
 	}
 	if (_updateTimeout(_session_timeout_path, _session_timeout_interval) == 0) {
@@ -357,7 +357,7 @@ void qSessionFree(void) {
 	qSessionSave();
 	_clearRepository();
 
-	if (_session_first_entry) _EntryFree(_session_first_entry);
+	if (_session_first_entry) qEntryFree(_session_first_entry);
 	_session_first_entry = NULL;
 	_session_started = 0;
 	_session_new = 0;
@@ -378,7 +378,7 @@ void qSessionDestroy(void) {
 
 	unlink(_session_storage_path);
 	unlink(_session_timeout_path);
-	if (_session_first_entry) _EntryFree(_session_first_entry);
+	if (_session_first_entry) qEntryFree(_session_first_entry);
 	_session_first_entry = NULL;
 
 	qSessionFree();
@@ -405,7 +405,7 @@ time_t qSessionSetTimeout(time_t seconds) {
 
 	/* save session informations */
 	sprintf(interval_sec, "%ld", (long)_session_timeout_interval);
-	_EntryAdd(_session_first_entry, INTER_INTERVAL_SEC, interval_sec, 1);
+	qEntryAdd(_session_first_entry, INTER_INTERVAL_SEC, interval_sec, 1);
 
 	return _session_timeout_interval;
 }

@@ -343,7 +343,7 @@ static int _parse_query(char *query, char sepchar) {
 		qURLdecode(name);
 		qURLdecode(value);
 
-		entry = _EntryAdd(_first_entry, name, value, 2);
+		entry = qEntryAdd(_first_entry, name, value, 2);
 		if (_first_entry == NULL) _first_entry = entry;
 	}
 
@@ -514,7 +514,7 @@ static int _parse_multipart_data(void) {
 			value = _parse_multipart_value_into_memory(boundary, &valuelen, &finish);
 		}
 
-		entry = _EntryAdd(_first_entry, name, value, 2);
+		entry = qEntryAdd(_first_entry, name, value, 2);
 		if (_first_entry == NULL) _first_entry = entry;
 
 		/* store some additional info */
@@ -526,19 +526,19 @@ static int _parse_multipart_data(void) {
 			evalue = (char *)malloc(sizeof(char) * 20 + 1);
 			sprintf(ename,  "%s.length", name);
 			sprintf(evalue, "%d", valuelen);
-			_EntryAdd(_first_entry, ename, evalue, 2);
+			qEntryAdd(_first_entry, ename, evalue, 2);
 
 			/* store filename, 'NAME.filename'*/
 			ename  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".filename") + 1));
 			sprintf(ename,  "%s.filename", name);
 			evalue = filename;
-			_EntryAdd(_first_entry, ename, evalue, 2);
+			qEntryAdd(_first_entry, ename, evalue, 2);
 
 			/* store contenttype, 'NAME.contenttype'*/
 			ename  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".contenttype") + 1));
 			sprintf(ename,  "%s.contenttype", name);
 			evalue = contenttype;
-			_EntryAdd(_first_entry, ename, evalue, 2);
+			qEntryAdd(_first_entry, ename, evalue, 2);
 
 			_post_cnt += 3;
 
@@ -546,7 +546,7 @@ static int _parse_multipart_data(void) {
 				ename  = (char *)malloc(sizeof(char) * (strlen(name) + strlen(".savepath") + 1));
 				sprintf(ename,  "%s.savepath", name);
 				evalue = strdup(value);
-				_EntryAdd(_first_entry, ename, evalue, 2);
+				qEntryAdd(_first_entry, ename, evalue, 2);
 
 				_post_cnt += 1;
 			}
@@ -965,7 +965,7 @@ char *qValue(char *format, ...) {
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
-	return _EntryValue(_first_entry, name);
+	return qEntryValue(_first_entry, name);
 }
 
 /**
@@ -993,7 +993,7 @@ int qiValue(char *format, ...) {
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
-	return _EntryiValue(_first_entry, name);
+	return qEntryiValue(_first_entry, name);
 }
 
 /**
@@ -1022,7 +1022,7 @@ char *qValueDefault(char *defstr, char *format, ...) {
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
-	if ((value = _EntryValue(_first_entry, name)) == NULL) value = defstr;
+	if ((value = qEntryValue(_first_entry, name)) == NULL) value = defstr;
 
 	return value;
 }
@@ -1054,7 +1054,7 @@ char *qValueNotEmpty(char *errmsg, char *format, ...) {
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
-	if ((value = _EntryValue(_first_entry, name)) == NULL) qError("%s", errmsg);
+	if ((value = qEntryValue(_first_entry, name)) == NULL) qError("%s", errmsg);
 	if (!strcmp(value, "")) qError("%s", errmsg);
 
 	return value;
@@ -1115,7 +1115,7 @@ char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
 
 	if (method != 't' && method != 's') qError("qValueReplace(): Unknown mode \"%s\".", mode);
 	if (memuse == 'n') { /* new */
-		if ((repstr = _EntryValue(_first_entry, name)) != NULL) {
+		if ((repstr = qEntryValue(_first_entry, name)) != NULL) {
 			retstr = qStrReplace(newmode, repstr, tokstr, word);
 		} else retstr = NULL;
 	} else if (memuse == 'r') { /* replace */
@@ -1223,7 +1223,7 @@ char *qValueAdd(char *name, char *format, ...) {
 	if (_first_entry == NULL) qDecoder();
 
 	if (qValue(name) == NULL) _new_cnt++; /* if it's new entry, count up. */
-	new_entry = _EntryAdd(_first_entry, name, value, 1);
+	new_entry = qEntryAdd(_first_entry, name, value, 1);
 	if (!_first_entry) _first_entry = new_entry;
 
 	return qValue(name);
@@ -1272,7 +1272,7 @@ void qValueRemove(char *format, ...) {
 		}
 	}
 
-	_first_entry = _EntryRemove(_first_entry, name);
+	_first_entry = qEntryRemove(_first_entry, name);
 }
 
 /**
@@ -1305,7 +1305,7 @@ char qValueType(char *format, ...) {
 
 	if (_first_entry == NULL) qDecoder();
 
-	v_no = _EntryNo(_first_entry, name);
+	v_no = qEntryNo(_first_entry, name);
 	if ((1 <= v_no) && (v_no <= _cookie_cnt)) return 'C';
 	else if ((_cookie_cnt + 1 <= v_no) && (v_no <= _cookie_cnt + _get_cnt)) return 'G';
 	else if ((_cookie_cnt + _get_cnt + 1 <= v_no) && (v_no <= _cookie_cnt + _get_cnt + _post_cnt)) return 'P';
@@ -1342,7 +1342,7 @@ Q_ENTRY *qGetFirstEntry(void) {
 int qPrint(void) {
 	int amount;
 	if (_first_entry == NULL) qDecoder();
-	amount = _EntryPrint(_first_entry);
+	amount = qEntryPrint(_first_entry);
 	printf("\n");
 	printf("COOKIE = %d , GET = %d , POST = %d, NEW = %d\n", _cookie_cnt, _get_cnt, _post_cnt, _new_cnt);
 	return amount;
@@ -1501,7 +1501,7 @@ char *qCookieValue(char *format, ...) {
 	if (_first_entry == NULL) qDecoder();
 
 	if (qValueType(name) == 'C') {
-		return _EntryValue(_first_entry, name);
+		return qEntryValue(_first_entry, name);
 	}
 
 	return NULL;
@@ -1516,7 +1516,7 @@ char *qCookieValue(char *format, ...) {
  * @endcode
  */
 void qFree(void) {
-	_EntryFree(_first_entry);
+	qEntryFree(_first_entry);
 	_first_entry = NULL;
 	_multi_last_entry = NULL;
 	strcpy(_multi_last_key, "");

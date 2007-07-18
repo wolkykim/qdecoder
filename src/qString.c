@@ -556,13 +556,14 @@ int qStrincmp(char *s1, char *s2, size_t len) {
 ** Return: Pointer of token & character of stop.
 **********************************************/
 char *qStrtok(char *str, char *token, char *retstop) {
-	static char *tokensp, *tokenep;
+	static char *tokenep;
+	char *tokensp;
 	int i, j;
 
 	if (str != NULL) tokensp = tokenep = str;
 	else tokensp = tokenep;
 
-	for (i = strlen(token);*tokenep;tokenep++) {
+	for (i = strlen(token); *tokenep; tokenep++) {
 		for (j = 0; j < i; j++) {
 			if (*tokenep == token[j]) {
 				if (retstop != NULL) *retstop = token[j];

@@ -68,7 +68,7 @@ Q_ENTRY *qsDecoder(char *str) {
 		qRemoveSpace(value);
 		qRemoveSpace(name);
 
-		entry = _EntryAdd(first, name, value, 2);
+		entry = qEntryAdd(first, name, value, 2);
 		if (first == NULL) first = entry;
 	}
 
@@ -87,7 +87,7 @@ char *qsValue(Q_ENTRY *first, char *format, ...) {
 	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsValue(): Message is too long or invalid.");
 	va_end(arglist);
 
-	return _EntryValue(first, name);
+	return qEntryValue(first, name);
 }
 
 int qsiValue(Q_ENTRY *first, char *format, ...) {
@@ -100,7 +100,7 @@ int qsiValue(Q_ENTRY *first, char *format, ...) {
 	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qsiValue(): Message is too long or invalid.");
 	va_end(arglist);
 
-	return _EntryiValue(first, name);
+	return qEntryiValue(first, name);
 }
 
 char *qsValueFirst(Q_ENTRY *first, char *format, ...) {
@@ -134,10 +134,10 @@ char *qsValueNext(void) {
 }
 
 int qsPrint(Q_ENTRY *first) {
-	return _EntryPrint(first);
+	return qEntryPrint(first);
 }
 
 void qsFree(Q_ENTRY *first) {
-	_EntryFree(first);
+	qEntryFree(first);
 }
 

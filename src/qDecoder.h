@@ -357,6 +357,23 @@ bool	qSemEnterNowait(int semid, int semno);
 bool	qSemLeave(int semid, int semno);
 bool	qSemFree(int semid);
 
+/*
+ * qEntry.c
+ */
+
+Q_ENTRY	*qEntryAdd(Q_ENTRY *first, char *name, char *value, int flag);
+Q_ENTRY	*qEntryRemove(Q_ENTRY *first, char *name);
+char	*qEntryValue(Q_ENTRY *first, char *name);
+char	*qEntryValueLast(Q_ENTRY *first, char *name);
+int	qEntryiValue(Q_ENTRY *first, char *name);
+int	qEntryiValueLast(Q_ENTRY *first, char *name);
+int	qEntryNo(Q_ENTRY *first, char *name);
+Q_ENTRY	*qEntryReverse(Q_ENTRY *first);
+int	qEntryPrint(Q_ENTRY *first);
+void	qEntryFree(Q_ENTRY *first);
+int	qEntrySave(Q_ENTRY *first, char *filename, bool encodevalue);
+Q_ENTRY	*qEntryLoad(char *filename, bool decodevalue);
+
 #ifdef __cplusplus
 }
 #endif

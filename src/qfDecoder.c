@@ -128,7 +128,7 @@ char *qfValue(Q_ENTRY *first, char *format, ...) {
 	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qfValue(): Message is too long or invalid.");
 	va_end(arglist);
 
-	return _EntryValueLast(first, name);
+	return qEntryValueLast(first, name);
 }
 
 int qfiValue(Q_ENTRY *first, char *format, ...) {
@@ -141,7 +141,7 @@ int qfiValue(Q_ENTRY *first, char *format, ...) {
 	if (strlen(name) + 1 > sizeof(name) || status == EOF) qError("qfiValue(): Message is too long or invalid.");
 	va_end(arglist);
 
-	return _EntryiValueLast(first, name);
+	return qEntryiValueLast(first, name);
 }
 
 
@@ -176,11 +176,11 @@ char *qfValueNext(void) {
 }
 
 int qfPrint(Q_ENTRY *first) {
-	return _EntryPrint(first);
+	return qEntryPrint(first);
 }
 
 void qfFree(Q_ENTRY *first) {
-	_EntryFree(first);
+	qEntryFree(first);
 }
 
 static char *parseValue(Q_ENTRY *first, char *value) {
@@ -236,7 +236,7 @@ static char *parseValue(Q_ENTRY *first, char *value) {
 					break;
 				}
 				default : {
-					if ((t = _EntryValueLast(first, buf)) == NULL) {
+					if ((t = qEntryValueLast(first, buf)) == NULL) {
 						s = e; /* not found */
 						continue;
 					}

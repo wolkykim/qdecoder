@@ -82,8 +82,8 @@ OBJ		= qDecoder.o \
 		qDatabase.o \
 		qShm.o \
 		qSem.o \
+		qEntry.o \
 		qInternalCommon.o \
-		qInternalEntry.o \
 		md5/md5c.o
 
 ## Make Library
