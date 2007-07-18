@@ -136,6 +136,15 @@ char *qEntryValueLast(Q_ENTRY *first, char *name) {
 	return value;
 }
 
+char *qEntryValueNoCase(Q_ENTRY *first, char *name) {
+	Q_ENTRY *entries;
+
+	for (entries = first; entries; entries = entries->next) {
+		if (!qStricmp(name, entries->name)) return entries->value;
+	}
+	return NULL;
+}
+
 /**********************************************
 ** Usage : qEntryiValue(pointer of the first entry, name);
 ** Return: Success integer of value string, Fail 0.
@@ -158,6 +167,14 @@ int qEntryiValueLast(Q_ENTRY *first, char *name) {
 	char *str;
 
 	str = qEntryValueLast(first, name);
+	if (str == NULL) return 0;
+	return atoi(str);
+}
+
+int qEntryiValueNoCase(Q_ENTRY *first, char *name) {
+	char *str;
+
+	str = qEntryValueNoCase(first, name);
 	if (str == NULL) return 0;
 	return atoi(str);
 }
@@ -203,8 +220,6 @@ Q_ENTRY *qEntryReverse(Q_ENTRY *first) {
 int qEntryPrint(Q_ENTRY *first) {
 	Q_ENTRY *entries;
 	int amount;
-
-	qContentType("text/plain");
 
 	for (amount = 0, entries = first; entries; amount++, entries = entries->next) {
 		printf("'%s' = '%s'\n" , entries->name, entries->value);
