@@ -450,6 +450,17 @@ int qStr09AZaz(char *str) {
 	return 1;
 }
 
+/*
+ * Copies at most len characters from src into dst including '\0'.
+ * The dst string will be always terminated by '\0'. That's the
+ * defference between this and strncpy().
+ */
+char *qStrncpy(char *dst, char *src, size_t sizeofdst) {
+	strncpy(dst, src, sizeofdst - 1);
+	dst[sizeofdst - 1] = '\0';
+	return dst;
+}
+
 /**********************************************
 ** Usage : qStrupr(string);
 ** Return: Pointer of converted string.
@@ -593,7 +604,7 @@ char *qitocomma(int value) {
 	char buf[10+1], *strp = str, *bufp;
 
 	if (value < 0) *strp++ = '-';
-	sprintf(buf, "%d", abs(value));
+	snprintf(buf, sizeof(buf), "%d", abs(value));
 	for (bufp = buf; *bufp != '\0'; strp++, bufp++) {
 		*strp = *bufp;
 		if ((strlen(bufp)) % 3 == 1 && *(bufp + 1) != '\0') *(++strp) = ',';
@@ -668,7 +679,7 @@ char *qUniqId(void) {
 	nUsec = tv.tv_usec;
 #endif
 
-	sprintf(szSeed, "%ld-%ld.%ld-%s:%s", random(), (long int)time(NULL), nUsec, qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
+	snprintf(szSeed, sizeof(szSeed), "%ld-%ld.%ld-%s:%s", random(), (long int)time(NULL), nUsec, qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
 	strcpy(szUniqId, qMD5Str(szSeed));
 
 	return szUniqId;

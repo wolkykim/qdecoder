@@ -116,10 +116,10 @@ int qSession(char *repository) {
 	}
 
 	/* make storage path for session */
-	if (repository != NULL) strcpy(_session_repository_path, repository);
-	else strcpy(_session_repository_path, SESSION_DEFAULT_REPOSITORY);
-	sprintf(_session_storage_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
-	sprintf(_session_timeout_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
+	if (repository != NULL) qStrncpy(_session_repository_path, repository, sizeof(_session_repository_path));
+	else qStrncpy(_session_repository_path, SESSION_DEFAULT_REPOSITORY, sizeof(_session_repository_path));
+	snprintf(_session_storage_path, sizeof(_session_storage_path), "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
+	snprintf(_session_timeout_path, sizeof(_session_timeout_path), "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
 	/* validate exist session */
 	if (new_session == 0) {
@@ -129,8 +129,8 @@ int qSession(char *repository) {
 
 			/* remake storage path */
 			sessionkey = qUniqId();
-			sprintf(_session_storage_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
-			sprintf(_session_timeout_path, "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
+			snprintf(_session_storage_path, sizeof(_session_storage_path), "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
+			snprintf(_session_timeout_path, sizeof(_session_timeout_path), "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
 			/* set flag */
 			new_session = 1;
@@ -147,7 +147,7 @@ int qSession(char *repository) {
 
 		/* save session informations */
 		nowtime = qGetGMTime(created_gmt, (time_t)0);
-		sprintf(created_sec, "%ld", (long)nowtime);
+		snprintf(created_sec, sizeof(created_sec), "%ld", (long)nowtime);
 
 		_session_first_entry = qEntryAdd(_session_first_entry, INTER_SESSIONID, sessionkey, 1);
 		qEntryAdd(_session_first_entry, INTER_CREATED_GMT, created_gmt, 1);
@@ -167,7 +167,7 @@ int qSession(char *repository) {
 
 		/* update session informations */
 		conns = qSessionValueInteger(INTER_CONNECTIONS);
-		sprintf(connstr, "%d", ++conns);
+		snprintf(connstr, sizeof(connstr), "%d", ++conns);
 		qEntryAdd(_session_first_entry, INTER_CONNECTIONS, connstr, 1);
 
 		/* set timeout interval */
@@ -219,7 +219,7 @@ char *qSessionAdd(char *name, char *format, ...) {
 int qSessionAddInteger(char *name, int valueint) {
 	char value[32];
 
-	sprintf(value, "%d", valueint);
+	snprintf(value, sizeof(value),"%d", valueint);
 	qSessionAdd(name, value);
 
 	return qSessionValueInteger(name);
@@ -400,7 +400,7 @@ time_t qSessionSetTimeout(time_t seconds) {
 	_session_timeout_interval = seconds;
 
 	/* save session informations */
-	sprintf(interval_sec, "%ld", (long)_session_timeout_interval);
+	snprintf(interval_sec, sizeof(interval_sec), "%ld", (long)_session_timeout_interval);
 	qEntryAdd(_session_first_entry, INTER_INTERVAL_SEC, interval_sec, 1);
 
 	return _session_timeout_interval;
@@ -455,7 +455,7 @@ static int _clearRepository(void) {
 	int clearcnt;
 
 	if (_session_started == 0) qError("_clearRepository(): qSession() must be called before.");
-	sprintf(timeoutpath, "%s/%s", _session_repository_path, SESSION_TIMETOCLEAR_FILENAME);
+	snprintf(timeoutpath, sizeof(timeoutpath), "%s/%s", _session_repository_path, SESSION_TIMETOCLEAR_FILENAME);
 
 	if (_isValidSession(timeoutpath) > 0) return 0; /* Valid */
 
@@ -470,7 +470,7 @@ static int _clearRepository(void) {
 
 	for (clearcnt = 0; (dirp = readdir(dp)) != NULL; ) {
 		if (strstr(dirp->d_name, SESSION_PREFIX) && strstr(dirp->d_name, SESSION_TIMEOUT_EXTENSION)) {
-			sprintf(timeoutpath, "%s/%s", _session_repository_path, dirp->d_name);
+			snprintf(timeoutpath, sizeof(timeoutpath), "%s/%s", _session_repository_path, dirp->d_name);
 			if (_isValidSession(timeoutpath) <= 0) { /* expired */
 				/* remove timeout */
 				unlink(timeoutpath);

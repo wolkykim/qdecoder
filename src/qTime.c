@@ -72,7 +72,7 @@ char *qGetTimeStr(void) {
 	struct tm *time;
 
 	time = qGetTime();
-	sprintf(datestr, "%04d%02d%02d%02d%02d%02d", time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
+	snprintf(datestr, sizeof(datestr), "%04d%02d%02d%02d%02d%02d", time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
 
 	return datestr;
 }

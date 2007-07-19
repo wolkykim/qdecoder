@@ -46,8 +46,8 @@ Q_LOG *qLogOpen(char *logbase, char *filenameformat, int rotateinterval, bool fl
 	if ((log = (Q_LOG *)malloc(sizeof(Q_LOG))) == NULL) return NULL;
 
 	/* fill structure */
-	strcpy(log->logbase, logbase);
-	strcpy(log->nameformat, filenameformat);
+	qStrncpy(log->logbase, logbase, sizeof(log->logbase));
+	qStrncpy(log->nameformat, filenameformat, sizeof(log->nameformat));
 	log->fp = NULL;
 	log->console = false;
 	log->rotateinterval = ((rotateinterval > 0) ? rotateinterval : 0);
@@ -144,7 +144,7 @@ static int _realOpen(Q_LOG *log) {
 
 	/* generate filename */
 	strftime(log->filename, sizeof(log->filename), log->nameformat, localtime(&nowtime));
-	sprintf(log->logpath, "%s/%s", log->logbase, log->filename);
+	snprintf(log->logpath, sizeof(log->logpath), "%s/%s", log->logbase, log->filename);
 	if (log->fp != NULL) fclose(log->fp);
 	if ((log->fp = fopen(log->logpath, "a")) == NULL) return 0;
 

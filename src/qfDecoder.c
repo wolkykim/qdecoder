@@ -83,7 +83,7 @@ Q_ENTRY *qfDecoder(char *file) {
 				newfile = strdup(file);
 				dir = dirname(newfile);
 				if (strlen(dir) + 1 + strlen(buf) >= sizeof(buf)) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
-				sprintf(tmp, "%s/%s", dir, buf);
+				snprintf(tmp, sizeof(tmp), "%s/%s", dir, buf);
 				strcpy(buf, tmp);
 				free(newfile);
 			}

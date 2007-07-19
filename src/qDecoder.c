@@ -201,7 +201,7 @@ bool qDecoderInit(bool filemode, char *upload_base, int clear_olderthan) {
 		_upload_base_init = false;
 	} else {
 		if (qCheckFile(upload_base) == false) return false;
-		strcpy(_upload_base, upload_base);
+		qStrncpy(_upload_base, upload_base, sizeof(_upload_base));
 		_upload_clear_olderthan = clear_olderthan;
 		_upload_base_init = true;
 	}
@@ -399,7 +399,7 @@ static int _parse_multipart_data(void) {
 	if (maxboundarylen >= sizeof(boundary)) qError("_parse_multipart_data(): The boundary string is too long(Overflow Attack?). Stopping process.");
 
 	/* find boundary string */
-	sprintf(boundary,    "--%s", strstr(getenv("CONTENT_TYPE"), "boundary=") + strlen("boundary="));
+	snprintf(boundary, sizeof(boundary), "--%s", strstr(getenv("CONTENT_TYPE"), "boundary=") + strlen("boundary="));
 	/* This is not necessary but, I can not trust MS Explore */
 	qRemoveSpace(boundary);
 
@@ -461,11 +461,11 @@ static int _parse_multipart_data(void) {
 				if (mkdir(upload_savedir, 0755) == -1) qError("_parse_multipart_data(): Can not make temporary uploading directory %s", upload_savedir);
 
 				/* save total contents length */
-				sprintf(upload_tmppath, "%s/Q_UPLOAD_TSIZE", upload_savedir);
+				snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_TSIZE", upload_savedir);
 				if (qCountSave(upload_tmppath, atoi(getenv("CONTENT_LENGTH"))) == false) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
 
 				/* save start time */
-				sprintf(upload_tmppath, "%s/Q_UPLOAD_START", upload_savedir);
+				snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_START", upload_savedir);
 				if (qCountSave(upload_tmppath, time(NULL)) == false) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
 			}
 		}
@@ -554,7 +554,7 @@ static int _parse_multipart_data(void) {
 	}
 
 	if (upload_type == 1) { /* save end time */
-		sprintf(upload_tmppath, "%s/Q_UPLOAD_END", upload_savedir);
+		snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_END", upload_savedir);
 		if (qCountSave(upload_tmppath, time(NULL)) == false) qError("_parse_multipart_data(): Can not save uploading information at %s", upload_tmppath);
 	}
 
@@ -571,10 +571,10 @@ static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, i
 	int  c, c_count, mallocsize;
 
 	/* set boundary strings */
-	sprintf(boundaryEOF, "%s--", boundary);
-	sprintf(rnboundaryEOF, "\r\n%s", boundaryEOF);
-	sprintf(boundaryrn, "%s\r\n", boundary);
-	sprintf(rnboundaryrn, "\r\n%s\r\n", boundary);
+	snprintf(boundaryEOF, sizeof(boundaryEOF), "%s--", boundary);
+	snprintf(rnboundaryEOF, sizeof(rnboundaryEOF), "\r\n%s", boundaryEOF);
+	snprintf(boundaryrn, sizeof(boundaryrn), "%s\r\n", boundary);
+	snprintf(rnboundaryrn, sizeof(rnboundaryrn), "\r\n%s\r\n", boundary);
 
 	boundarylen    = strlen(boundary);
 	boundaryEOFlen = strlen(boundaryEOF);
@@ -662,17 +662,17 @@ static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, cha
 	int i;
 
 	/* set boundary strings */
-	sprintf(boundaryEOF, "%s--", boundary);
-	sprintf(rnboundaryEOF, "\r\n%s", boundaryEOF);
-	sprintf(boundaryrn, "%s\r\n", boundary);
-	sprintf(rnboundaryrn, "\r\n%s\r\n", boundary);
+	snprintf(boundaryEOF, sizeof(boundaryEOF), "%s--", boundary);
+	snprintf(rnboundaryEOF, sizeof(rnboundaryEOF), "\r\n%s", boundaryEOF);
+	snprintf(boundaryrn, sizeof(boundaryrn), "%s\r\n", boundary);
+	snprintf(rnboundaryrn, sizeof(rnboundaryrn), "\r\n%s\r\n", boundary);
 
 	boundarylen    = strlen(boundary);
 	boundaryEOFlen = strlen(boundaryEOF);
 
 	/* initialize */
 	upload_fcnt++;
-	sprintf(upload_path, "%s/%d-%s", savedir, upload_fcnt, filename);
+	snprintf(upload_path, sizeof(upload_path), "%s/%d-%s", savedir, upload_fcnt, filename);
 
 	/* open file */
 	upload_fp = fopen(upload_path, "w");
@@ -750,8 +750,8 @@ static char *_upload_getsavedir(char *upload_id, char *upload_savedir) {
 	if (_upload_base_init == false || upload_id == NULL) return NULL;
 	if (!strcmp(upload_id, "")) return NULL;
 
-	sprintf(md5seed, "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
-	sprintf(upload_savedir, "%s/Q_%s", _upload_base, qMD5Str(md5seed));
+	snprintf(md5seed, sizeof(md5seed), "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
+	snprintf(upload_savedir, sizeof(upload_savedir), "%s/Q_%s", _upload_base, qMD5Str(md5seed));
 
 	return upload_savedir;
 }
@@ -853,22 +853,22 @@ static bool _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_cs
 	if ((dp = opendir(upload_savedir)) == NULL) return false;
 
 	/* read tsize */
-	sprintf(upload_filepath, "%s/Q_UPLOAD_TSIZE", upload_savedir);
+	snprintf(upload_filepath, sizeof(upload_filepath), "%s/Q_UPLOAD_TSIZE", upload_savedir);
 	*upload_tsize = qCountRead(upload_filepath);
 
 	while ((dirp = readdir(dp)) != NULL) {
 		if (dirp->d_name[0] - '0' <= 0 || dirp->d_name[0] - '0' > 9) continue; /* first char must be a number */
 
 		/* sort last filename */
-		if (strcmp(upload_cname, dirp->d_name) < 0) strcpy(upload_cname, dirp->d_name);
+		if (strcmp(upload_cname, dirp->d_name) < 0) qStrncpy(upload_cname, dirp->d_name, sizeof(upload_cname));
 
-		sprintf(upload_filepath, "%s/%s", upload_savedir, dirp->d_name);
+		snprintf(upload_filepath, sizeof(upload_filepath), "%s/%s", upload_savedir, dirp->d_name);
 		*upload_csize += qFileSize(upload_filepath);
 	}
 	closedir(dp);
 
 	if (strstr(upload_cname, "-") != NULL) {
-		strcpy(upload_cname, strstr(upload_cname, "-") + 1);
+		qStrncpy(upload_cname, strstr(upload_cname, "-") + 1, sizeof(upload_cname));
 	}
 
 	return true;
@@ -889,7 +889,7 @@ static bool _upload_clear_savedir(char *dir) {
 	while ((dirp = readdir(dp)) != NULL) {
 		if (!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..")) continue;
 
-		sprintf(filepath, "%s/%s", dir, dirp->d_name);
+		snprintf(filepath, sizeof(filepath), "%s/%s", dir, dirp->d_name);
 		unlink(filepath);
 	}
 	closedir(dp);
@@ -920,11 +920,11 @@ static int _upload_clear_base() {
 
 		if (!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..") || strncmp(dirp->d_name, "Q_", 2) != 0) continue;
 
-		sprintf(filepath, "%s/%s/Q_UPLOAD_START", _upload_base, dirp->d_name);
+		snprintf(filepath, sizeof(filepath), "%s/%s/Q_UPLOAD_START", _upload_base, dirp->d_name);
 		starttime = qCountRead(filepath);
 		if (starttime > 0 && now - starttime < _upload_clear_olderthan) continue;
 
-		sprintf(filepath, "%s/%s", _upload_base, dirp->d_name);
+		snprintf(filepath, sizeof(filepath), "%s/%s", _upload_base, dirp->d_name);
 		if (_upload_clear_savedir(filepath) == 0) {
 			delcnt = -1;
 			break;
@@ -1387,7 +1387,7 @@ bool qCookieSet(char *name, char *value, int exp_days, char *path, char *domain,
 
 	/* Name=Value */
 	Name = qURLencode(name), Value = qURLencode(value);
-	sprintf(cookie, "%s=%s", Name, Value);
+	snprintf(cookie, sizeof(cookie), "%s=%s", Name, Value);
 	free(Name), free(Value);
 
 	if (exp_days != 0) {

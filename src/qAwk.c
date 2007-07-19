@@ -120,8 +120,7 @@ int qAwkStr(char array[][1024], char *str, char delim) {
 		for (; *bp2 != delim && *bp2 != '\0'; bp2++);
 		if (*bp2 == '\0') exitflag = 1;
 		*bp2 = '\0';
-		strncpy(array[i], bp1, 1023);
-		array[i][1023] = '\0';
+		qStrncpy(array[i], bp1, sizeof(array[i]));
 		bp1 = ++bp2;
 	}
 
