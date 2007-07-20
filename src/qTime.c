@@ -57,7 +57,7 @@ time_t qGetGMTime(char *gmt, time_t plus_sec) {
 	nowtime += plus_sec;
 	nowgmtime = gmtime(&nowtime);
 
-	strftime(gmt, 256, "%a, %d-%b-%Y %H:%M:%S GMT", nowgmtime);
+	if(gmt != NULL) strftime(gmt, 256, "%a, %d-%b-%Y %H:%M:%S GMT", nowgmtime);
 
 	return nowtime;
 }
