@@ -302,13 +302,13 @@ bool	qLog(Q_LOG *log, char *format, ...);
 int	qSocketOpen(char *hostname, int port);
 int	qSocketClose(int sockfd);
 int	qSocketWaitReadable(int sockfd, int timeoutms);
-int	qSocketRead(char *binary, int size, int sockfd, int timeoutms);
-int	qSocketGets(char *str, int size, int sockfd, int timeoutms);
-int	qSocketWrite(char *binary, int size, int sockfd);
-int	qSocketPuts(char *str, int sockfd);
+int	qSocketRead(int sockfd, char *binary, int size, int timeoutms);
+int	qSocketGets(int sockfd, char *str, int size, int timeoutms);
+int	qSocketWrite(int sockfd, char *binary, int size);
+int	qSocketPuts(int sockfd, char *str);
 int	qSocketPrintf(int sockfd, char *format, ...);
-int	qSocketSendFile(char *filepath, int offset, int sockfd);
-int	qSocketSaveIntoFile(int sockfd, int size, int timeoutms, char *filepath, char *mode);
+int	qSocketSendFile(int sockfd, char *filepath, int offset);
+int	qSocketSaveIntoFile(int sockfd, int size, char *filepath, char *mode, int timeoutms);
 FILE	*qSocketConv2file(int sockfd);
 
 /*

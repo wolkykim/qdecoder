@@ -121,7 +121,7 @@ int qSocketWaitReadable(int sockfd, int timeoutms) {
 ** Do    : read socket stream.
 ** Notice: You don't need to set the socket as non-block mode.
 **********************************************/
-int qSocketRead(char *binary, int size, int sockfd, int timeoutms) {
+int qSocketRead(int sockfd, char *binary, int size, int timeoutms) {
 	int readcnt;
 
 	if (qSocketWaitReadable(sockfd, timeoutms) <= 0) return 0;
@@ -138,7 +138,7 @@ int qSocketRead(char *binary, int size, int sockfd, int timeoutms) {
 **         returns -1 if an error occured.
 ** Do    : read line from the stream. it does not contain the character '\r', '\n'.
 **********************************************/
-int qSocketGets(char *str, int size, int sockfd, int timeoutms) {
+int qSocketGets(int sockfd, char *str, int size, int timeoutms) {
 	char *ptr;
 	int readcnt = 0;
 
@@ -167,7 +167,7 @@ int qSocketGets(char *str, int size, int sockfd, int timeoutms) {
 *          otherwise the value -1 is returned.
 ** Do    : send some data(text/binary) to socket stream .
 **********************************************/
-int qSocketWrite(char *binary, int size, int sockfd) {
+int qSocketWrite(int sockfd, char *binary, int size) {
 	return write(sockfd, binary, size);
 }
 
@@ -177,7 +177,7 @@ int qSocketWrite(char *binary, int size, int sockfd) {
 *          otherwise the value -1 is returned.
 ** Do    : send one line with terminating newline character to socket stream.
 **********************************************/
-int qSocketPuts(char *str, int sockfd) {
+int qSocketPuts(int sockfd, char *str) {
 	int sent;
 
 
@@ -211,7 +211,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 ** Return: returns total sent bytes, otherwise the value -1 returned.
 ** Do    : send file data to socket stream.
 **********************************************/
-int qSocketSendFile(char *filepath, int offset, int sockfd) {
+int qSocketSendFile(int sockfd, char *filepath, int offset) {
 	FILE *fp;
 	char buf[1024*16];
 
@@ -251,7 +251,7 @@ int qSocketSendFile(char *filepath, int offset, int sockfd) {
 ** Do    : save stream data into file directly.
 **********************************************/
 // returns get bytes
-int qSocketSaveIntoFile(int sockfd, int size, int timeoutms, char *filepath, char *mode) {
+int qSocketSaveIntoFile(int sockfd, int size, char *filepath, char *mode, int timeoutms) {
 	FILE *fp;
 	char buf[1024*16]; // read buffer size
 
