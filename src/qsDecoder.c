@@ -77,7 +77,7 @@ Q_ENTRY *qsDecoder(char *str) {
 	return first;
 }
 
-char *qsValue(Q_ENTRY *first, char *format, ...) {
+char *qsGetValue(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
 	va_list arglist;
 
@@ -86,10 +86,10 @@ char *qsValue(Q_ENTRY *first, char *format, ...) {
 	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
-	return qEntryValue(first, name);
+	return qEntryGetValue(first, name);
 }
 
-int qsiValue(Q_ENTRY *first, char *format, ...) {
+int qsGetInt(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
 	va_list arglist;
 
@@ -98,10 +98,10 @@ int qsiValue(Q_ENTRY *first, char *format, ...) {
 	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
-	return qEntryiValue(first, name);
+	return qEntryGetInt(first, name);
 }
 
-char *qsValueFirst(Q_ENTRY *first, char *format, ...) {
+char *qsGetValueFirst(Q_ENTRY *first, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
@@ -112,10 +112,10 @@ char *qsValueFirst(Q_ENTRY *first, char *format, ...) {
 	if (first == NULL) return NULL;
 	_multi_last_entry = first;
 
-	return qfValueNext();
+	return qfGetValueNext();
 }
 
-char *qsValueNext(void) {
+char *qsGetValueNext(void) {
 	Q_ENTRY *entries;
 
 	for (entries = _multi_last_entry; entries; entries = entries->next) {

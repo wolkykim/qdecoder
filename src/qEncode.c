@@ -31,11 +31,11 @@
 #include "qInternal.h"
 
 /**********************************************
-** Usage : qURLencode(string to encode);
+** Usage : qUrlEncode(string to encode);
 ** Return: Pointer of encoded str which is memory allocated.
 ** Do    : Encode string.
 **********************************************/
-char *qURLencode(char *str) {
+char *qUrlEncode(char *str) {
 	char *encstr, buf[2+1];
 	unsigned char c;
 	int i, j;
@@ -63,11 +63,11 @@ char *qURLencode(char *str) {
 }
 
 /**********************************************
-** Usage : qURLdecode(query pointer);
+** Usage : qUrlDecode(query pointer);
 ** Return: Pointer of query string.
 ** Do    : Decode query string.
 **********************************************/
-char *qURLdecode(char *str) {
+char *qUrlDecode(char *str) {
 	int i, j;
 
 	if (!str) return NULL;
@@ -94,11 +94,11 @@ char *qURLdecode(char *str) {
 }
 
 /**********************************************
-** Usage : qMD5Str(string);
+** Usage : qMd5Str(string);
 ** Return: MD5 digested static string pointer.
 ** Do    : Digest string through MD5 algorithm.
 **********************************************/
-char *qMD5Str(char *string) {
+char *qMd5Str(char *string) {
 	MD5_CTX context;
 	unsigned char digest[16];
 	static char md5hex[16 * 2 + 1];
@@ -116,15 +116,15 @@ char *qMD5Str(char *string) {
 }
 
 /**********************************************
-** Usage : qMD5File(filename);
+** Usage : qMd5File(filename);
 ** Return: MD5 digested static string pointer.
 ** Do    : Digest string through MD5 algorithm.
 **********************************************/
-char *qMD5File(char *filename) {
+char *qMd5File(char *filename) {
 	char *sp, *md5hex;
 
 	if ((sp = qReadFile(filename, NULL)) == NULL) return NULL;
-	md5hex = qMD5Str(sp);
+	md5hex = qMd5Str(sp);
 	free(sp);
 
 	return md5hex;

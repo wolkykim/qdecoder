@@ -28,7 +28,7 @@
  *
  * Anyway you don't care about this. You don't need to know which method
  * (COOKIE/GET/POST) is used for sending data. All you need to know is you
- * can get the value by calling qValue("value name"). (See examples/fetch.c)
+ * can get the value by calling qGetValue("value name"). (See examples/fetch.c)
  *
  * @code
  *   [HTML sample]
@@ -39,12 +39,12 @@
  *
  *   [Your Source]
  *   char *query;
- *   query = qValue("query");
+ *   query = qGetValue("query");
  *   qPrint(); // if you want to see debugging information
  * @endcode
  *
  * The parsing sequence is (1)COOKIE (2)GET (3)POST. Thus if same query names
- * (which are sent by different method) exist, qValue() will return the value
+ * (which are sent by different method) exist, qGetValue() will return the value
  * of COOKIE.
  *
  * In case of multipart/form-data encoding(used for file uploading), qDecoder
@@ -214,10 +214,10 @@ return true;
  * internal linked-list.
  *
  * The parsing sequence is (1)COOKIE (2)GET (3)POST. Thus if same query names
- * (which are sent by different method) exist, qValue() will return the value
+ * (which are sent by different method) exist, qGetValue() will return the value
  * of COOKIE.
  *
- * This function, qDecoder(), is called automatically when you use qValue() or
+ * This function, qDecoder(), is called automatically when you use qGetValue() or
  * related functions, so you do not need to call directly.
  *
  * @return	the number of received arguments(not stored).
@@ -239,7 +239,7 @@ int qDecoder(void) {
 		if (_first_entry != NULL) {
 			char *q_upload_id;
 
-			q_upload_id = qValue("Q_UPLOAD_ID");
+			q_upload_id = qGetValue("Q_UPLOAD_ID");
 
 			if (q_upload_id != NULL) {
 				if (_upload_base_init == false) qError("qDecoder(): qDecoderInit(true, ...) must be called before.");
@@ -340,8 +340,8 @@ static int _parse_query(char *query, char sepchar) {
 
 		value = _makeword(query, sepchar);
 		name = qRemoveSpace(_makeword(value, '='));
-		qURLdecode(name);
-		qURLdecode(value);
+		qUrlDecode(name);
+		qUrlDecode(value);
 
 		entry = qEntryAdd(_first_entry, name, value, 2);
 		if (_first_entry == NULL) _first_entry = entry;
@@ -440,7 +440,7 @@ static int _parse_multipart_data(void) {
 			if (_upload_base_init == true) {
 				char *upload_id;
 
-				upload_id = qValue("Q_UPLOAD_ID");
+				upload_id = qGetValue("Q_UPLOAD_ID");
 				if (upload_id == NULL || strlen(upload_id) == 0)  upload_id = qUniqId(); /* not progress, just file mode */
 
 				/* turn on the flag - save into file directly */
@@ -751,14 +751,14 @@ static char *_upload_getsavedir(char *upload_id, char *upload_savedir) {
 	if (!strcmp(upload_id, "")) return NULL;
 
 	snprintf(md5seed, sizeof(md5seed), "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
-	snprintf(upload_savedir, sizeof(upload_savedir), "%s/Q_%s", _upload_base, qMD5Str(md5seed));
+	snprintf(upload_savedir, sizeof(upload_savedir), "%s/Q_%s", _upload_base, qMd5Str(md5seed));
 
 	return upload_savedir;
 }
 
 static void _upload_progressbar(char *upload_id) {
-	int  drawrate = qiValue("Q_UPLOAD_DRAWRATE");
-	char *template = qValue("Q_UPLOAD_TEMPLATE");
+	int  drawrate = qGetInt("Q_UPLOAD_DRAWRATE");
+	char *template = qGetValue("Q_UPLOAD_TEMPLATE");
 
 	int last_csize = 0, freezetime = 0;
 	int upload_tsize = 0, upload_csize = 0;
@@ -947,14 +947,14 @@ static int _upload_clear_base() {
  * @note
  * @code
  *   char *test;
- *   test = qValue("name");
+ *   test = qGetValue("name");
  *
  *   char *test;
  *   int i = 1;
- *   test = qValue("arg%d", i);
+ *   test = qGetValue("arg%d", i);
  * @endcode
  */
-char *qValue(char *format, ...) {
+char *qGetValue(char *format, ...) {
 	char name[1024];
 	va_list arglist;
 
@@ -964,7 +964,7 @@ char *qValue(char *format, ...) {
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
-	return qEntryValue(_first_entry, name);
+	return qEntryGetValue(_first_entry, name);
 }
 
 /**
@@ -978,10 +978,10 @@ char *qValue(char *format, ...) {
  * @note
  * @code
  *   int num;
- *   num = qiValue("num");
+ *   num = qGetInt("num");
  * @endcode
  */
-int qiValue(char *format, ...) {
+int qGetInt(char *format, ...) {
 	char name[1024];
 	va_list arglist;
 
@@ -991,7 +991,7 @@ int qiValue(char *format, ...) {
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
-	return qEntryiValue(_first_entry, name);
+	return qEntryGetInt(_first_entry, name);
 }
 
 /**
@@ -1005,10 +1005,10 @@ int qiValue(char *format, ...) {
  * @note
  * @code
  *   char *test;
- *   test = qValueDefault("this is default value", "name");
+ *   test = qGetValueDefault("this is default value", "name");
  * @endcode
  */
-char *qValueDefault(char *defstr, char *format, ...) {
+char *qGetValueDefault(char *defstr, char *format, ...) {
 	char name[1024];
 	va_list arglist;
 	char *value;
@@ -1019,7 +1019,7 @@ char *qValueDefault(char *defstr, char *format, ...) {
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
-	if ((value = qEntryValue(_first_entry, name)) == NULL) value = defstr;
+	if ((value = qEntryGetValue(_first_entry, name)) == NULL) value = defstr;
 
 	return value;
 }
@@ -1036,10 +1036,10 @@ char *qValueDefault(char *defstr, char *format, ...) {
  * @note
  * @code
  *   char *test;
- *   test = qValueNotEmpty("DO NOT USE MANUALLY", "name");
+ *   test = qGetValueNotEmpty("DO NOT USE MANUALLY", "name");
  * @endcode
  */
-char *qValueNotEmpty(char *errmsg, char *format, ...) {
+char *qGetValueNotEmpty(char *errmsg, char *format, ...) {
 	char name[1024];
 	va_list arglist;
 	char *value;
@@ -1050,7 +1050,7 @@ char *qValueNotEmpty(char *errmsg, char *format, ...) {
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
-	if ((value = qEntryValue(_first_entry, name)) == NULL) qError("%s", errmsg);
+	if ((value = qEntryGetValue(_first_entry, name)) == NULL) qError("%s", errmsg);
 	if (!strcmp(value, "")) qError("%s", errmsg);
 
 	return value;
@@ -1059,12 +1059,12 @@ char *qValueNotEmpty(char *errmsg, char *format, ...) {
 /**
  * Find out the value with replacing tokens.
  *
- * Basically, qValueReplace() is the wrapping function of qStrReplace().
+ * Basically, qGetValueReplace() is the wrapping function of qStrReplace().
  * The difference is that the source string is the query value (the value of
  * the linked-list for names),
  * and the conversion can be directly done to the linked-list itself.
  *
- * Accordingly, the usage of arguments of qValueReplace() is basically the same
+ * Accordingly, the usage of arguments of qGetValueReplace() is basically the same
  * as that of qStrReplace(). The 'mode' argument is a character string made up
  * of two separate characters like "sr".
  *
@@ -1088,15 +1088,15 @@ char *qValueNotEmpty(char *errmsg, char *format, ...) {
  *   char *test;
  *
  *   // replace space, quotation, double quotation to '_'
- *   test = qValueReplace("tr", "name", " '\"", "_");
+ *   test = qGetValueReplace("tr", "name", " '\"", "_");
  *
  *   // replace "bad" to "good"
- *   test = qValueReplace("sr", "name", "bad", "good");
+ *   test = qGetValueReplace("sr", "name", "bad", "good");
  * @endcode
  *
  * @see qStrReplace()
  */
-char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
+char *qGetValueReplace(char *mode, char *name, char *tokstr, char *word) {
 	Q_ENTRY *entries;
 	char *retstr, *repstr, method, memuse, newmode[2+1];
 
@@ -1105,20 +1105,20 @@ char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
 
 	if (_first_entry == NULL) qDecoder();
 
-	if (strlen(mode) != 2) qError("qValueReplace(): Unknown mode \"%s\".", mode);
+	if (strlen(mode) != 2) qError("qGetValueReplace(): Unknown mode \"%s\".", mode);
 	method = mode[0], memuse = mode[1];
 	newmode[0] = method, newmode[1] = 'n', newmode[2] = '\0';
 
-	if (method != 't' && method != 's') qError("qValueReplace(): Unknown mode \"%s\".", mode);
+	if (method != 't' && method != 's') qError("qGetValueReplace(): Unknown mode \"%s\".", mode);
 	if (memuse == 'n') { /* new */
-		if ((repstr = qEntryValue(_first_entry, name)) != NULL) {
+		if ((repstr = qEntryGetValue(_first_entry, name)) != NULL) {
 			retstr = qStrReplace(newmode, repstr, tokstr, word);
 		} else retstr = NULL;
 	} else if (memuse == 'r') { /* replace */
 		/* To support multiful queries, it searches whole list and convert all of
 		   matched ones due to the possibility of duplicated query name.
 		   So when you need to do this replacement for duplicated query name,
-		   you can call this once before qValueFirst(). */
+		   you can call this once before qGetValueFirst(). */
 		for (retstr = NULL, entries = _first_entry; entries; entries = entries->next) {
 			if (!strcmp(name, entries->name)) {
 				repstr = qStrReplace(newmode, entries->value, tokstr, word);
@@ -1127,7 +1127,7 @@ char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
 				if (retstr == NULL) retstr = repstr; /* To catch first matched one */
 			}
 		}
-	} else qError("qValueReplace(): Unknown mode \"%s\".", mode);
+	} else qError("qGetValueReplace(): Unknown mode \"%s\".", mode);
 
 	/* Return the value of first matched one */
 	return retstr;
@@ -1146,12 +1146,12 @@ char *qValueReplace(char *mode, char *name, char *tokstr, char *word) {
  * @note
  * @code
  *   char *list;
- *   for(list = qValueFirst("checklist"); list; list = qValueNext()) {
+ *   for(list = qGetValueFirst("checklist"); list; list = qGetValueNext()) {
  *     printf("checklist = %s<br>\n", list);
  *   }
  * @endcode
  */
-char *qValueFirst(char *format, ...) {
+char *qGetValueFirst(char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
@@ -1162,7 +1162,7 @@ char *qValueFirst(char *format, ...) {
 	if (_first_entry == NULL) qDecoder();
 	_multi_last_entry = _first_entry;
 
-	return qValueNext();
+	return qGetValueNext();
 }
 
 /**
@@ -1171,7 +1171,7 @@ char *qValueFirst(char *format, ...) {
  * @return	the pointer of the next variable value.
  *		otherwise(no more value) returns NULL.
  */
-char *qValueNext(void) {
+char *qGetValueNext(void) {
 	Q_ENTRY *entries;
 
 	for (entries = _multi_last_entry; entries; entries = entries->next) {
@@ -1199,10 +1199,10 @@ char *qValueNext(void) {
  *
  * @note
  * @code
- *   qValueAdd("NAME", "Seung-young Kim");
+ *   qAdd("NAME", "Seung-young Kim");
  * @endcode
  */
-char *qValueAdd(char *name, char *format, ...) {
+char *qAdd(char *name, char *format, ...) {
 	Q_ENTRY *new_entry;
 	char value[1024];
 	va_list arglist;
@@ -1216,11 +1216,11 @@ char *qValueAdd(char *name, char *format, ...) {
 
 	if (_first_entry == NULL) qDecoder();
 
-	if (qValue(name) == NULL) _new_cnt++; /* if it's new entry, count up. */
+	if (qGetValue(name) == NULL) _new_cnt++; /* if it's new entry, count up. */
 	new_entry = qEntryAdd(_first_entry, name, value, 1);
 	if (!_first_entry) _first_entry = new_entry;
 
-	return qValue(name);
+	return qGetValue(name);
 }
 
 /**
@@ -1232,10 +1232,10 @@ char *qValueAdd(char *name, char *format, ...) {
  *
  * @note
  * @code
- *   qValueRemove("NAME");
+ *   qRemove("NAME");
  * @endcode
  */
-void qValueRemove(char *format, ...) {
+void qRemove(char *format, ...) {
 	char name[1024];
 	va_list arglist;
 
@@ -1244,9 +1244,9 @@ void qValueRemove(char *format, ...) {
 	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
-	if (!strcmp(name, "")) qError("qValueRemove(): can not remove empty name.");
+	if (!strcmp(name, "")) qError("qRemove(): can not remove empty name.");
 
-	switch (qValueType(name)) {
+	switch (qGetType(name)) {
 		case 'C' : {
 			_cookie_cnt--;
 			break;
@@ -1277,15 +1277,15 @@ void qValueRemove(char *format, ...) {
  *		@li COOKIE			: 'C'
  *		@li GET method			: 'G'
  *		@li POST method			: 'P'
- *		@li New(added by qValueAdd())	: 'N'
+ *		@li New(added by qAdd())	: 'N'
  *		@li Not found			: '-'
  *
  * @note
  * @code
- *   char t = qValueType("NAME");
+ *   char t = qGetType("NAME");
  * @endcode
  */
-char qValueType(char *format, ...) {
+char qGetType(char *format, ...) {
 	char name[1024];
 	va_list arglist;
 	int v_no;
@@ -1297,7 +1297,7 @@ char qValueType(char *format, ...) {
 
 	if (_first_entry == NULL) qDecoder();
 
-	v_no = qEntryNo(_first_entry, name);
+	v_no = qEntryGetNo(_first_entry, name);
 	if ((1 <= v_no) && (v_no <= _cookie_cnt)) return 'C';
 	else if ((_cookie_cnt + 1 <= v_no) && (v_no <= _cookie_cnt + _get_cnt)) return 'G';
 	else if ((_cookie_cnt + _get_cnt + 1 <= v_no) && (v_no <= _cookie_cnt + _get_cnt + _post_cnt)) return 'P';
@@ -1346,16 +1346,16 @@ int qPrint(void) {
  * This should be used before qContentType() is called.
  *
  * When cookie is set up through qCookieSet(), the point of time when values
- * are handed over through qValue() is when the next program is called.
+ * are handed over through qGetValue() is when the next program is called.
  * In some implementations, however, cookies need to be set up for the
  * simplicity of logic while, at the same time, this needs to be applied to
  * other routines.
  *
- * In this case, qValueAdd() can prevent the alteration of logic and the waste
+ * In this case, qAdd() can prevent the alteration of logic and the waste
  * of additional codes by adding values to the cookie linked-list.
  * But with regard to qCookieSet(), setting up cookies at clients (browsers)
  * does not succeed always. Thus, users should be careful when using
- * qValueAdd().
+ * qAdd().
  *
  * @return	in case of success, returns true.
  *		otherwise(qContentType() is called before) false
@@ -1386,7 +1386,7 @@ bool qCookieSet(char *name, char *value, int exp_days, char *path, char *domain,
 	if (qGetContentFlag() == 1) return false;
 
 	/* Name=Value */
-	Name = qURLencode(name), Value = qURLencode(value);
+	Name = qUrlEncode(name), Value = qUrlEncode(value);
 	snprintf(cookie, sizeof(cookie), "%s=%s", Name, Value);
 	free(Name), free(Value);
 
@@ -1394,7 +1394,7 @@ bool qCookieSet(char *name, char *value, int exp_days, char *path, char *domain,
 		time_t plus_sec;
 		char gmt[256];
 		plus_sec = (time_t)(exp_days * 24 * 60 * 60);
-		qGetGMTime(gmt, plus_sec);
+		qGetGmtime(gmt, plus_sec);
 		strcat(cookie, "; expires=");
 		strcat(cookie, gmt);
 	}
@@ -1433,12 +1433,12 @@ bool qCookieSet(char *name, char *value, int exp_days, char *path, char *domain,
  * removed for the simplicity of logic while, at the same time,
  * this needs to be applied to other routines.
  *
- * In this case, qValueRemove() can prevent the alteration of logic and
+ * In this case, qRemove() can prevent the alteration of logic and
  * the waste of additional codes by removing values to the linked-list.
  * But with regard to qCookieRemove(), removing cookies at clients (browsers)
  * does not succeed always.
  *
- * Thus, users should be careful when using qValueRemove().
+ * Thus, users should be careful when using qRemove().
  *
  * @return	in case of success, returns true.
  *		otherwise(qContentType() is called before) false
@@ -1465,10 +1465,12 @@ bool qCookieRemove(char *name, char *path, char *domain, char *secure) {
 /**
  * Find out the cookie value.
  *
- * This only find the cookie value. Of course, you can use qValue() instead
- * but qValue() finds out variable from query(GET/POST) too. So it's different.
+ * This only find the cookie value. Of course, you can use qGetValue() instead
+ * but qGetValue() finds out variable from query(GET/POST) too. So it's different.
  * For some security reason, sometimes you need to get only cookie value,
  * in case of that, use this.
+ *
+ * @param format	variable name
  *
  * @return	the pointer of the cookie value.
  *		otherwise(not found) returns NULL.
@@ -1476,11 +1478,11 @@ bool qCookieRemove(char *name, char *path, char *domain, char *secure) {
  * @note
  * @code
  *   char *cookie;
- *   cookie = qCookieValue("NAME");
+ *   cookie = qCookieGetValue("NAME");
  *   if(cookie == NULL) printf("cookie not found.\n");
  * @endcode
  */
-char *qCookieValue(char *format, ...) {
+char *qCookieGetValue(char *format, ...) {
 	char name[1024];
 	va_list arglist;
 
@@ -1491,11 +1493,43 @@ char *qCookieValue(char *format, ...) {
 
 	if (_first_entry == NULL) qDecoder();
 
-	if (qValueType(name) == 'C') {
-		return qEntryValue(_first_entry, name);
+	if (qGetType(name) == 'C') {
+		return qEntryGetValue(_first_entry, name);
 	}
 
 	return NULL;
+}
+
+/**
+ * Finds out the cookie value then converts to integer.
+ *
+ * @param format	variable name
+ *
+ * @return	integer converted value.
+ *		otherwise(convertion error, not found) returns 0.
+ *
+ * @note
+ * @code
+ *   int cookieint;
+ *   cookieint = qCookieGetInt("NAME");
+ * @endcode
+ */
+int qCookieGetInt(char *format, ...) {
+	char name[1024];
+	va_list arglist;
+
+	va_start(arglist, format);
+	vsnprintf(name, sizeof(name)-1, format, arglist);
+	name[sizeof(name)-1] = '\0';
+	va_end(arglist);
+
+	if (_first_entry == NULL) qDecoder();
+
+	if (qGetType(name) == 'C') {
+		return qEntryGetInt(_first_entry, name);
+	}
+
+	return 0;
 }
 
 /**

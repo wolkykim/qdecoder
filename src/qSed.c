@@ -33,18 +33,18 @@
 #define SSI_INCLUDE_END		"\"-->"
 
 /**********************************************
-** Usage : qSedArgAdd(entry pointer, name, value);
+** Usage : qSedAdd(entry pointer, name, value);
 ** Do    : Add given name and value to linked list.
 **         If same name exists, it'll be replaced.
 **
 ** ex) qValueAdd("NAME", "Seung-young Kim");
 **********************************************/
-Q_ENTRY *qSedArgAdd(Q_ENTRY *first, char *name, char *format, ...) {
+Q_ENTRY *qSedAdd(Q_ENTRY *first, char *name, char *format, ...) {
 	Q_ENTRY *new_entry;
 	char value[1024];
 	va_list arglist;
 
-	if (!strcmp(name, "")) qError("qSedArgAdd(): can not add empty name.");
+	if (!strcmp(name, "")) qError("qSedAdd(): can not add empty name.");
 
 	va_start(arglist, format);
 	vsnprintf(value, sizeof(value)-1, format, arglist);
@@ -58,38 +58,21 @@ Q_ENTRY *qSedArgAdd(Q_ENTRY *first, char *name, char *format, ...) {
 }
 
 /**********************************************
-** Usage : qSedArgAddDirect(entry pointer, value);
+** Usage : qSedAddDirect(entry pointer, value);
 ** Do    : Add given name and value to linked list.
 **         If same name exists, it'll be replaced.
 **
-** ex) qSedArgAddDirect(entries, "NAME", value);
+** ex) qSedAddDirect(entries, "NAME", value);
 **********************************************/
-Q_ENTRY *qSedArgAddDirect(Q_ENTRY *first, char *name, char *value) {
+Q_ENTRY *qSedAddDirect(Q_ENTRY *first, char *name, char *value) {
 	Q_ENTRY *new_entry;
 
-	if (!strcmp(name, "")) qError("qSedArgAddDirect(): can not add empty name.");
+	if (!strcmp(name, "")) qError("qSedAddDirect(): can not add empty name.");
 
 	new_entry = qEntryAdd(first, name, value, 1);
 	if (!first) first = new_entry;
 
 	return first;
-}
-
-/**********************************************
-** Usage : qPrint(pointer of the first Entry);
-** Return: Amount of entries.
-** Do    : Print all parsed values & names for debugging.
-**********************************************/
-int qSedArgPrint(Q_ENTRY *first) {
-	return qEntryPrint(first);
-}
-
-/**********************************************
-** Usage : qFree(pointer of the first Entry);
-** Do    : Make free of linked list memory.
-**********************************************/
-void qSedArgFree(Q_ENTRY *first) {
-	qEntryFree(first);
 }
 
 /**********************************************
@@ -152,3 +135,19 @@ int qSedFile(Q_ENTRY *first, char *filename, FILE *fpout) {
 	return flag;
 }
 
+/**********************************************
+** Usage : qPrint(pointer of the first Entry);
+** Return: Amount of entries.
+** Do    : Print all parsed values & names for debugging.
+**********************************************/
+int qSedPrint(Q_ENTRY *first) {
+	return qEntryPrint(first);
+}
+
+/**********************************************
+** Usage : qFree(pointer of the first Entry);
+** Do    : Make free of linked list memory.
+**********************************************/
+void qSedFree(Q_ENTRY *first) {
+	qEntryFree(first);
+}

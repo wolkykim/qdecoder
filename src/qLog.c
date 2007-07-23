@@ -82,9 +82,9 @@ bool qLogClose(Q_LOG *log) {
  *
  * @since 8.1R
  */
-bool qLogSetConsole(Q_LOG *log, bool onoff) {
+bool qLogSetConsole(Q_LOG *log, bool consoleout) {
 	if (log == NULL) return false;
-	log->console = onoff;
+	log->console = consoleout;
 	return true;
 }
 

@@ -118,7 +118,7 @@ Q_ENTRY *qfDecoder(char *file) {
 	return first;
 }
 
-char *qfValue(Q_ENTRY *first, char *format, ...) {
+char *qfGetValue(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
 	va_list arglist;
 
@@ -127,10 +127,10 @@ char *qfValue(Q_ENTRY *first, char *format, ...) {
 	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
-	return qEntryValueLast(first, name);
+	return qEntryGetValueLast(first, name);
 }
 
-int qfiValue(Q_ENTRY *first, char *format, ...) {
+int qfGetInt(Q_ENTRY *first, char *format, ...) {
 	char name[1024];
 	va_list arglist;
 
@@ -139,11 +139,11 @@ int qfiValue(Q_ENTRY *first, char *format, ...) {
 	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
-	return qEntryiValueLast(first, name);
+	return qEntryGetIntLast(first, name);
 }
 
 
-char *qfValueFirst(Q_ENTRY *first, char *format, ...) {
+char *qfGetValueFirst(Q_ENTRY *first, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
@@ -154,10 +154,10 @@ char *qfValueFirst(Q_ENTRY *first, char *format, ...) {
 	if (first == NULL) return NULL;
 	_multi_last_entry = first;
 
-	return qfValueNext();
+	return qfGetValueNext();
 }
 
-char *qfValueNext(void) {
+char *qfGetValueNext(void) {
 	Q_ENTRY *entries;
 
 	for (entries = _multi_last_entry; entries; entries = entries->next) {
@@ -233,7 +233,7 @@ static char *parseValue(Q_ENTRY *first, char *value) {
 					break;
 				}
 				default : {
-					if ((t = qEntryValueLast(first, buf)) == NULL) {
+					if ((t = qEntryGetValueLast(first, buf)) == NULL) {
 						s = e; /* not found */
 						continue;
 					}

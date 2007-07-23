@@ -107,7 +107,7 @@ int qSession(char *repository) {
 	if (qGetContentFlag() == 1) qError("qSession(): must be called before qContentType() and any stream out.");
 
 	/* check session status & get session id */
-	sessionkey = qValue(SESSION_ID);
+	sessionkey = qGetValue(SESSION_ID);
 	if (sessionkey == NULL) {  /* new session */
 		sessionkey = qUniqId();
 		new_session = 1;
@@ -143,10 +143,10 @@ int qSession(char *repository) {
 		time_t nowtime;
 
 		qCookieSet(SESSION_ID, sessionkey, 0, "/", NULL, NULL);
-		qValueAdd(SESSION_ID, sessionkey); /* force to add session_in to query list */
+		qAdd(SESSION_ID, sessionkey); /* force to add session_in to query list */
 
 		/* save session informations */
-		nowtime = qGetGMTime(created_gmt, (time_t)0);
+		nowtime = qGetGmtime(created_gmt, (time_t)0);
 		snprintf(created_sec, sizeof(created_sec), "%ld", (long)nowtime);
 
 		_session_first_entry = qEntryAdd(_session_first_entry, INTER_SESSIONID, sessionkey, 1);
@@ -166,12 +166,12 @@ int qSession(char *repository) {
 		_session_first_entry = qEntryLoad(_session_storage_path, true);
 
 		/* update session informations */
-		conns = qSessionValueInteger(INTER_CONNECTIONS);
+		conns = qSessionGetInt(INTER_CONNECTIONS);
 		snprintf(connstr, sizeof(connstr), "%d", ++conns);
 		qEntryAdd(_session_first_entry, INTER_CONNECTIONS, connstr, 1);
 
 		/* set timeout interval */
-		qSessionSetTimeout((time_t)atol(qSessionValue(INTER_INTERVAL_SEC)));
+		qSessionSetTimeout((time_t)atol(qSessionGetValue(INTER_INTERVAL_SEC)));
 	}
 
 	/* set globals */
@@ -206,36 +206,36 @@ char *qSessionAdd(char *name, char *format, ...) {
 	/* set modified flag */
 	_session_modified = 1;
 
-	return qSessionValue(name);
+	return qSessionGetValue(name);
 }
 
 /**********************************************
-** Usage : qSessionAddInteger(name, integer);
+** Usage : qSessionAddInt(name, integer);
 ** Return: Stored integer value.
 ** Do    : Add session value of integer type.
 **
-** ex) qSessionAddInteger("count", 32);
+** ex) qSessionAddInt("count", 32);
 **********************************************/
-int qSessionAddInteger(char *name, int valueint) {
+int qSessionAddInt(char *name, int valueint) {
 	char value[32];
 
 	snprintf(value, sizeof(value),"%d", valueint);
 	qSessionAdd(name, value);
 
-	return qSessionValueInteger(name);
+	return qSessionGetInt(name);
 }
 
 /**********************************************
-** Usage : qSessionUpdateInteger(name, plus integer);
+** Usage : qSessionUpdateInt(name, plus integer);
 ** Return: Updated integer value.
 ** Do    : Update session value of integer type.
 **
-** ex) qSessionUpdateInteger("count", -4);
+** ex) qSessionUpdateInt("count", -4);
 **********************************************/
-int qSessionUpdateInteger(char *name, int plusint) {
-	qSessionAddInteger(name, qSessionValueInteger(name) + plusint);
+int qSessionUpdateInt(char *name, int plusint) {
+	qSessionAddInt(name, qSessionGetInt(name) + plusint);
 
-	return qSessionValueInteger(name);
+	return qSessionGetInt(name);
 }
 
 /**********************************************
@@ -265,53 +265,110 @@ void qSessionRemove(char *format, ...) {
 }
 
 /**********************************************
-** Usage : qSessionValue(name);
+** Usage : qSessionGetValue(name);
 ** Return: Success pointer of value string, Fail NULL.
 ** Do    : Return session value.
 **
 ** ex) char *value;
-**     value = qSessionValue("name");
-**     value = qSessionValue("%d.name", i);
+**     value = qSessionGetValue("name");
+**     value = qSessionGetValue("%d.name", i);
 **********************************************/
-char *qSessionValue(char *format, ...) {
+char *qSessionGetValue(char *format, ...) {
 	char name[1024], *value;
 	va_list arglist;
 
-	if (_session_started == 0) qError("qSessionValue(): qSession() must be called before.");
+	if (_session_started == 0) qError("qSessionGetValue(): qSession() must be called before.");
 
 	va_start(arglist, format);
 	vsnprintf(name, sizeof(name)-1, format, arglist);
 	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
-	value = qEntryValue(_session_first_entry, name);
+	value = qEntryGetValue(_session_first_entry, name);
 
 	return value;
 }
 
 /**********************************************
-** Usage : qSessionValueInteger(name);
+** Usage : qSessionGetInt(name);
 ** Return: Success integer of value, Fail 0.
 ** Do    : Return session value.
 **
 ** ex) int value;
-**     value = qSessionValueInteger("count");
+**     value = qSessionGetInt("count");
 **********************************************/
-int qSessionValueInteger(char *format, ...) {
+int qSessionGetInt(char *format, ...) {
 	char name[1024];
 	int value;
 	va_list arglist;
 
-	if (_session_started == 0) qError("qSessionValue(): qSession() must be called before.");
+	if (_session_started == 0) qError("qSessionGetInt(): qSession() must be called before.");
 
 	va_start(arglist, format);
 	vsnprintf(name, sizeof(name)-1, format, arglist);
 	name[sizeof(name)-1] = '\0';
 	va_end(arglist);
 
-	value = qEntryiValue(_session_first_entry, name);
+	value = qEntryGetInt(_session_first_entry, name);
 
 	return value;
+}
+
+/**********************************************
+** Usage : qSessionSetTimeout(interval seconds);
+** Return: New expiration period.
+** Do    : Change session expiration period.
+**
+** ex) qSessionSetTimeout((time_t)3600);
+**********************************************/
+time_t qSessionSetTimeout(time_t seconds) {
+	char interval_sec[32];
+
+	if (_session_started == 0) qError("qSessionSetTimeout(): qSession() must be called before.");
+	if (seconds <= (time_t)0) qError("qSessionSetTimeout(): can not set negative interval. Use qSessionDestory() instead.");
+
+	_session_timeout_interval = seconds;
+
+	/* save session informations */
+	snprintf(interval_sec, sizeof(interval_sec), "%ld", (long)_session_timeout_interval);
+	qEntryAdd(_session_first_entry, INTER_INTERVAL_SEC, interval_sec, 1);
+
+	return _session_timeout_interval;
+}
+
+/**********************************************
+** Usage : qSessionGetID();
+** Return: String pointer of session id.
+** Do    : Return current session id.
+**
+** ex) char *sessionid;
+**     sessionid = qSessionGetID();
+**********************************************/
+char *qSessionGetID(void) {
+	if (_session_started == 0) qError("qSessionGetID(): qSession() must be called before.");
+	return qSessionGetValue(INTER_SESSIONID);
+}
+
+/**********************************************
+** Usage : qSessionGetCreated();
+** Return: Value of time in seconds since 0 hours,
+**         0 minutes, 0 seconds, January 1, 1970.
+** Do    : Return session created time in seconds.
+**
+** ex) time_t created;
+**     struct tm *gmtime;
+**     created = qSessionGetCreated();
+**     gmtime = gmtime(&created);
+**********************************************/
+time_t qSessionGetCreated(void) {
+	time_t created;
+	char *tmp;
+
+	if (_session_started == 0) qError("qSessionGetCreated(): qSession() must be called before.");
+	tmp = qSessionGetValue(INTER_CREATED_SEC);
+	created = (time_t)atol(tmp);
+
+	return created;
 }
 
 /**********************************************
@@ -382,63 +439,6 @@ void qSessionDestroy(void) {
 	if (qGetContentFlag() == 0) {
 		qCookieRemove(SESSION_ID, "/", NULL, NULL);
 	}
-}
-
-/**********************************************
-** Usage : qSessionSetTimeout(interval seconds);
-** Return: New expiration period.
-** Do    : Change session expiration period.
-**
-** ex) qSessionSetTimeout((time_t)3600);
-**********************************************/
-time_t qSessionSetTimeout(time_t seconds) {
-	char interval_sec[32];
-
-	if (_session_started == 0) qError("qSessionSetTimeout(): qSession() must be called before.");
-	if (seconds <= (time_t)0) qError("qSessionSetTimeout(): can not set negative interval. Use qSessionDestory() instead.");
-
-	_session_timeout_interval = seconds;
-
-	/* save session informations */
-	snprintf(interval_sec, sizeof(interval_sec), "%ld", (long)_session_timeout_interval);
-	qEntryAdd(_session_first_entry, INTER_INTERVAL_SEC, interval_sec, 1);
-
-	return _session_timeout_interval;
-}
-
-/**********************************************
-** Usage : qSessionGetID();
-** Return: String pointer of session id.
-** Do    : Return current session id.
-**
-** ex) char *sessionid;
-**     sessionid = qSessionGetID();
-**********************************************/
-char *qSessionGetID(void) {
-	if (_session_started == 0) qError("qSessionGetID(): qSession() must be called before.");
-	return qSessionValue(INTER_SESSIONID);
-}
-
-/**********************************************
-** Usage : qSessionGetCreated();
-** Return: Value of time in seconds since 0 hours,
-**         0 minutes, 0 seconds, January 1, 1970.
-** Do    : Return session created time in seconds.
-**
-** ex) time_t created;
-**     struct tm *gmtime;
-**     created = qSessionGetCreated();
-**     gmtime = gmtime(&created);
-**********************************************/
-time_t qSessionGetCreated(void) {
-	time_t created;
-	char *tmp;
-
-	if (_session_started == 0) qError("qSessionGetCreated(): qSession() must be called before.");
-	tmp = qSessionValue(INTER_CREATED_SEC);
-	created = (time_t)atol(tmp);
-
-	return created;
 }
 
 /**********************************************

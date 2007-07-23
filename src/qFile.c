@@ -34,11 +34,11 @@
 #include "qInternal.h"
 
 /**********************************************
-** Usage : qfopen(path, mode);
+** Usage : qFileOpen(path, mode);
 ** Return: Same as fclose().
 ** Do    : Open file with file lock.
 **********************************************/
-FILE *qfopen(char *path, char *mode) {
+FILE *qFileOpen(char *path, char *mode) {
 	FILE *stream;
 
 	if ((stream = fopen(path, mode)) == NULL) return NULL;
@@ -47,13 +47,87 @@ FILE *qfopen(char *path, char *mode) {
 }
 
 /**********************************************
-** Usage : qfclose(stream);
+** Usage : qFileClose(stream);
 ** Return: Same as fclose().
 ** Do    : Close the file stream which is opened by qfopen().
 **********************************************/
-int qfclose(FILE *stream) {
+int qFileClose(FILE *stream) {
 	_flockclose(stream);
 	return fclose(stream);
+}
+
+
+/*********************************************
+** Usage : qFileReadString(file pointer);
+** Return: Success string pointer, End of file NULL.
+** Do    : Read text stream.
+**********************************************/
+char *qFileReadString(FILE *fp) {
+	int memsize;
+	int c, c_count;
+	char *string = NULL;
+
+	for (memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
+		if (c_count == 0) {
+			string = (char *)malloc(sizeof(char) * memsize);
+			if (string == NULL) qError("qFileReadString(): Memory allocation fail.");
+		} else if (c_count == memsize - 1) {
+			char *stringtmp;
+
+			memsize *= 2;
+
+			/* Here, we do not use realloc(). Because sometimes it is unstable. */
+			stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
+			if (stringtmp == NULL) qError("qFileReadString(): Memory allocation fail.");
+			memcpy(stringtmp, string, c_count);
+			free(string);
+			string = stringtmp;
+		}
+		string[c_count++] = (char)c;
+	}
+
+	if (c_count == 0 && c == EOF) return NULL;
+	string[c_count] = '\0';
+
+	return string;
+}
+
+/*********************************************
+** Usage : qfGetLine(file pointer);
+** Return: Success string pointer, End of file NULL.
+** Do    : Read one line from file pointer without length
+**         limitation. String will be saved into dynamically
+**         allocated memory. The newline, if any, is retained.
+**********************************************/
+char *qfGetLine(FILE *fp) {
+	int memsize;
+	int c, c_count;
+	char *string = NULL;
+
+	for (memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
+		if (c_count == 0) {
+			string = (char *)malloc(sizeof(char) * memsize);
+			if (string == NULL) qError("qfGetLine(): Memory allocation fail.");
+		} else if (c_count == memsize - 1) {
+			char *stringtmp;
+
+			memsize *= 2;
+
+			/* Here, we do not use realloc(). Because sometimes it is unstable. */
+			stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
+			if (stringtmp == NULL) qError("qfGetLine(): Memory allocation fail.");
+			memcpy(stringtmp, string, c_count);
+			free(string);
+			string = stringtmp;
+		}
+		string[c_count++] = (char)c;
+		if ((char)c == '\n') break;
+	}
+
+	if (c_count == 0 && c == EOF) return NULL;
+	string[c_count] = '\0';
+
+	return string;
 }
 
 /**********************************************
@@ -158,79 +232,6 @@ long qFileSize(char *filename) {
 	return finfo.st_size;
 }
 
-/*********************************************
-** Usage : qfGetLine(file pointer);
-** Return: Success string pointer, End of file NULL.
-** Do    : Read one line from file pointer without length
-**         limitation. String will be saved into dynamically
-**         allocated memory. The newline, if any, is retained.
-**********************************************/
-char *qfGetLine(FILE *fp) {
-	int memsize;
-	int c, c_count;
-	char *string = NULL;
-
-	for (memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
-		if (c_count == 0) {
-			string = (char *)malloc(sizeof(char) * memsize);
-			if (string == NULL) qError("qfGetLine(): Memory allocation fail.");
-		} else if (c_count == memsize - 1) {
-			char *stringtmp;
-
-			memsize *= 2;
-
-			/* Here, we do not use realloc(). Because sometimes it is unstable. */
-			stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
-			if (stringtmp == NULL) qError("qfGetLine(): Memory allocation fail.");
-			memcpy(stringtmp, string, c_count);
-			free(string);
-			string = stringtmp;
-		}
-		string[c_count++] = (char)c;
-		if ((char)c == '\n') break;
-	}
-
-	if (c_count == 0 && c == EOF) return NULL;
-	string[c_count] = '\0';
-
-	return string;
-}
-
-/*********************************************
-** Usage : qfGets(file pointer);
-** Return: Success string pointer, End of file NULL.
-** Do    : Read text stream.
-**********************************************/
-char *qfGets(FILE *fp) {
-	int memsize;
-	int c, c_count;
-	char *string = NULL;
-
-	for (memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
-		if (c_count == 0) {
-			string = (char *)malloc(sizeof(char) * memsize);
-			if (string == NULL) qError("qfGetLine(): Memory allocation fail.");
-		} else if (c_count == memsize - 1) {
-			char *stringtmp;
-
-			memsize *= 2;
-
-			/* Here, we do not use realloc(). Because sometimes it is unstable. */
-			stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
-			if (stringtmp == NULL) qError("qfGetLine(): Memory allocation fail.");
-			memcpy(stringtmp, string, c_count);
-			free(string);
-			string = stringtmp;
-		}
-		string[c_count++] = (char)c;
-	}
-
-	if (c_count == 0 && c == EOF) return NULL;
-	string[c_count] = '\0';
-
-	return string;
-}
-
 /**********************************************
 ** Usage : qCmd(external command);
 ** Return: Size of file in byte, File not found -1.
@@ -241,7 +242,7 @@ char *qCmd(char *cmd) {
 
 	fp = popen(cmd, "r");
 	if (fp == NULL) return NULL;
-	str = qfGets(fp);
+	str = qFileReadString(fp);
 	pclose(fp);
 
 	return str;

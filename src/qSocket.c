@@ -178,13 +178,13 @@ int qSocketWrite(int sockfd, char *binary, int size) {
 ** Do    : send one line with terminating newline character to socket stream.
 **********************************************/
 int qSocketPuts(int sockfd, char *str) {
-	int sent;
+	char *buf;
 
+	buf = (char *)malloc(strlen(str) + 2 + 1);
+	if(buf == NULL) return -1;
+	sprintf(buf, "%s\r\n", str);
 
-	if ((sent = write(sockfd, str, strlen(str))) < 0) return -1;
-	if (write(sockfd, "\n", 1) < 0) return -1;
-
-	return (sent+1);
+	return write(sockfd, buf, strlen(buf));
 }
 
 /**********************************************

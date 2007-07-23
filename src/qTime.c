@@ -44,12 +44,12 @@ struct tm *qGetTime(void) {
 }
 
 /**********************************************
-** Usage : qGetGMTime(gmt, plus_sec);
+** Usage : qGetGmtime(gmt, plus_sec);
 ** Do    : Make string of GMT Time for Cookie.
 ** Return: Amount second from 1970/00/00 00:00:00.
 ** Note  : plus_sec will be added to current time.
 **********************************************/
-time_t qGetGMTime(char *gmt, time_t plus_sec) {
+time_t qGetGmtime(char *gmt, time_t plus_sec) {
 	time_t nowtime;
 	struct tm *nowgmtime;
 

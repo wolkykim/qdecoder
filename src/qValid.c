@@ -32,22 +32,22 @@
 ** Return: If it is valid return 1. Or return 0.
 ** Do    : Check E-mail address.
 **********************************************/
-int qCheckEmail(char *email) {
+bool qCheckEmail(char *email) {
 	int i, alpa, dot, gol;
 
-	if (email == NULL) return 0;
+	if (email == NULL) return false;
 
 	for (i = alpa = dot = gol = 0; email[i] != '\0'; i++) {
 		switch (email[i]) {
 			case '@' : {
-				if (alpa == 0) return 0;
-				if (gol > 0)   return 0;
+				if (alpa == 0) return false;
+				if (gol > 0)   return false;
 				gol++;
 				break;
 			}
 			case '.' : {
-				if ((i > 0)   && (email[i - 1] == '@')) return 0;
-				if ((gol > 0) && (email[i - 1] == '.')) return 0;
+				if ((i > 0)   && (email[i - 1] == '@')) return false;
+				if ((gol > 0) && (email[i - 1] == '.')) return false;
 				dot++;
 				break;
 			}
@@ -57,27 +57,26 @@ int qCheckEmail(char *email) {
 				else if ((email[i] >= 'A') && (email[i] <= 'Z')) break;
 				else if ((email[i] >= 'a') && (email[i] <= 'z')) break;
 				else if ((email[i] == '-') || (email[i] == '_')) break;
-				else return 0;
+				else return false;
 			}
 		}
 	}
 
-	if ((alpa <= 3) || (gol == 0) || (dot == 0))return 0;
+	if ((alpa <= 3) || (gol == 0) || (dot == 0)) return false;
 
-	return 1;
+	return true;
 }
 
 /**********************************************
-** Usage : qCheckURL(internet address);
+** Usage : qCheckUrl(internet address);
 ** Return: If it is valid return 1. Or return 0.
 ** Do    : Check valid URL.
 **********************************************/
-int qCheckURL(char *url) {
-	if (!strncmp(url, "http://", 7)) return 1;
-	else if (!strncmp(url, "ftp://", 6)) return 1;
-	else if (!strncmp(url, "telnet://", 9)) return 1;
-	else if (!strncmp(url, "mailto:", 7)) return 1;
-	else if (!strncmp(url, "news:", 5)) return 1;
-	return 0;
+bool qCheckUrl(char *url) {
+	if (!strncmp(url, "http://", 7)) return true;
+	else if (!strncmp(url, "ftp://", 6)) return true;
+	else if (!strncmp(url, "telnet://", 9)) return true;
+	else if (!strncmp(url, "mailto:", 7)) return true;
+	else if (!strncmp(url, "news:", 5)) return true;
+	return false;
 }
-
