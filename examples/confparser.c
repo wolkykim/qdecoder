@@ -33,9 +33,9 @@ int main(void) {
 	if (!(conf = qfDecoder(CONF_FILE))) qError("Configuration file(%s) not found.", CONF_FILE);
 
 	/* Get variable */
-	protocol = qfValue(conf, "PROTOCOL");
-	host     = qfValue(conf, "HOST");
-	port     = qfiValue(conf, "PORT");
+	protocol = qfGetValue(conf, "PROTOCOL");
+	host     = qfGetValue(conf, "HOST");
+	port     = qfGetInt(conf, "PORT");
 
 	/* Print out */
 	qContentType("text/plain");

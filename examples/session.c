@@ -28,10 +28,10 @@ int main(void) {
 	time_t expire;
 
 	/* fetch queries */
-	expire = (time_t)qiValue("expire");
-	mode   = qValueNotEmpty("Mode not found", "mode");
-	name   = qValue("name");
-	value  = qValue("value");
+	expire = (time_t)qGetInt("expire");
+	mode   = qGetValueNotEmpty("Mode not found", "mode");
+	name   = qGetValue("name");
+	value  = qGetValue("value");
 
 	/* Set valid interval of this session */
 	/* start session. this function should be called before qContentType(). */
@@ -47,7 +47,7 @@ int main(void) {
 			break;
 		}
 		case 'i': {
-			qSessionAddInteger(name, atoi(value));
+			qSessionAddInt(name, atoi(value));
 			break;
 		}
 		case 'r': {

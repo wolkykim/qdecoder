@@ -45,7 +45,7 @@ int dumpHttp(char *hostname) {
 	// read data
 	for (lineno = 1; ; lineno++) {
 		// read line from socket
-		if (qSocketGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) <= 0) qError("Timeout or socket closed.");
+		if (qSocketGets(sockfd, buf, sizeof(buf), SOCKET_TIMEOUT) <= 0) qError("Timeout or socket closed.");
 
 		// if the http header block ended, stop reading.
 		if (strlen(buf) == 0) break;
@@ -66,7 +66,7 @@ int main(void) {
 
 	qContentType("text/plain");
 
-	hostname = qValueDefault("", "hostname");
+	hostname = qGetValueDefault("", "hostname");
 	if (strlen(hostname) == 0) qError("Invalid usages.");
 
 	retflag = dumpHttp(hostname);

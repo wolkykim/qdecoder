@@ -30,14 +30,14 @@ int main(void) {
 
 	qContentType("text/html");
 
-	name = qValueDefault("Not Found", "name");
-	hobby = qValueDefault("Not Found", "hobby");
+	name = qGetValueDefault("Not Found", "name");
+	hobby = qGetValueDefault("Not Found", "hobby");
 
 	args = NULL;
-	args = qSedArgAdd(args, "${NAME}", name);
-	args = qSedArgAdd(args, "${HOBBY}", hobby);
+	args = qSedAdd(args, "${NAME}", name);
+	args = qSedAdd(args, "${HOBBY}", hobby);
 	if (qSedFile(args, SOURCE, stdout) == 0) qError("File(%s) not found.", SOURCE);
-	qSedArgFree(args);
+	qSedFree(args);
 
 	return 0;
 }

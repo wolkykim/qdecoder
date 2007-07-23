@@ -28,13 +28,12 @@ int main(void) {
 	qDecoder();
 
 	qContentType("text/html");
-	if ((list = qValueFirst("checklist")) == NULL) qError("Check what you want to order please.");
+	if ((list = qGetValueFirst("checklist")) == NULL) qError("Check what you want to order please.");
 	printf("You ordered ");
-	for (; list; list = qValueNext()) {
+	for (; list; list = qGetValueNext()) {
 		printf("<b>%s</b> \n", list);
 	}
 
 	qFree();
 	return 0;
 }
-

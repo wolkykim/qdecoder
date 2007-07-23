@@ -34,7 +34,7 @@ int main(void) {
 
 	/* If the query is not found, the variable will be set default string.
 	   Also, you can use qValueDefault() or qValueNotEmpty() instead. */
-	if (!(value = qValue("query"))) value = "";
+	if (!(value = qGetValue("query"))) value = "";
 
 	printf("You entered: <b>%s</b>\n", value);
 

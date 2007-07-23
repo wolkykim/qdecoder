@@ -31,12 +31,12 @@ int main(void) {
 	qContentType("text/html");
 	qDecoder();
 
-	text = qValueDefault("", "text");
+	text = qGetValueDefault("", "text");
 
-	filedata   = qValue("binary");
-	if ((filelength = qiValue("binary.length")) == 0) qError("Select file, please.");
-	filename   = qValue("binary.filename");
-	contenttype = qValue("binary.contenttype");
+	filedata   = qGetValue("binary");
+	if ((filelength = qGetInt("binary.length")) == 0) qError("Select file, please.");
+	filename   = qGetValue("binary.filename");
+	contenttype = qGetValue("binary.contenttype");
 	sprintf(filepath, "%s/%s", BASEPATH, filename);
 
 	if (qSaveStr(filedata, filelength, filepath, "w") < 0) {

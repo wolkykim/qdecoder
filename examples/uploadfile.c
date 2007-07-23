@@ -32,7 +32,7 @@ int main(void) {
 
 	qContentType("text/html");
 
-	printf("You entered: <b>%s</b>\n", qValueDefault("", "text"));
+	printf("You entered: <b>%s</b>\n", qGetValueDefault("", "text"));
 
 	for (i = 1; i <= 3; i++) {
 		char *filename, *contenttype, *savepath;
@@ -40,10 +40,10 @@ int main(void) {
 
 		char newpath[1024];
 
-		if ((length = qiValue("binary%d.length", i)) > 0) {
-			filename = qValue("binary%d.filename", i);
-			contenttype = qValue("binary%d.contenttype", i);
-			savepath = qValue("binary%d.savepath", i);
+		if ((length = qGetInt("binary%d.length", i)) > 0) {
+			filename = qGetValue("binary%d.filename", i);
+			contenttype = qGetValue("binary%d.contenttype", i);
+			savepath = qGetValue("binary%d.savepath", i);
 
 			sprintf(newpath, "%s/%s", BASEPATH, filename);
 			if (rename(savepath, newpath) == -1) qError("Can not move uploaded file. %s-%s", savepath, newpath);

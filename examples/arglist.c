@@ -30,8 +30,8 @@ int main(void) {
 	qContentType("text/html");
 	qDecoder();
 
-	string = qValueNotEmpty("Type any string.", "string");
-	query = qValueNotEmpty("Type any query.", "query");
+	string = qGetValueNotEmpty("Type any string.", "string");
+	query = qGetValueNotEmpty("Type any query.", "query");
 
 	queries = qArgMake(query, qlist);
 	matches = qArgMatch(string, qlist);
@@ -53,4 +53,3 @@ int main(void) {
 	qFree();
 	return 0;
 }
-

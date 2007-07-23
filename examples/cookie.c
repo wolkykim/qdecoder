@@ -26,9 +26,9 @@
 int main(void) {
 	char *mode, *name, *value;
 
-	mode = qValue("mode");
-	name = qValue("cname");
-	value = qValue("cvalue");
+	mode = qGetValue("mode");
+	name = qGetValue("cname");
+	value = qGetValue("cvalue");
 
 	if (mode == NULL) { /* View Cookie */
 		int amount;
