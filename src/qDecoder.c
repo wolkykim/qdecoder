@@ -121,6 +121,8 @@
  * @endcode
  */
 
+#ifndef WITHOUT_CGISUPPORT
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -1331,12 +1333,14 @@ Q_ENTRY *qGetFirstEntry(void) {
  *   qPrint();
  * @endcode
  */
-int qPrint(void) {
+int qPrint(FILE *out) {
 	int amount;
 	if (_first_entry == NULL) qDecoder();
-	amount = qEntryPrint(_first_entry);
-	printf("\n");
-	printf("COOKIE = %d , GET = %d , POST = %d, NEW = %d\n", _cookie_cnt, _get_cnt, _post_cnt, _new_cnt);
+
+	if(out == NULL) out = stdout;
+	amount = qEntryPrint(_first_entry, out);
+	fprintf(out, "\n");
+	fprintf(out, "COOKIE = %d , GET = %d , POST = %d, NEW = %d\n", _cookie_cnt, _get_cnt, _post_cnt, _new_cnt);
 	return amount;
 }
 
@@ -1570,3 +1574,5 @@ void qReset(void) {
 	qErrorContact(NULL);
 	qResetContentFlag();
 }
+
+#endif /* WITHOUT_CGISUPPORT */

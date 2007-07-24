@@ -70,6 +70,8 @@
  * @endcode
  */
 
+#ifndef WITHOUT_ARG
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -277,3 +279,5 @@ void qArgFree(char **qlist) {
 	for (qp = qlist; *qp; qp++) free(*qp);
 	*qlist = NULL;
 }
+
+#endif /* WITHOUT_ARG */

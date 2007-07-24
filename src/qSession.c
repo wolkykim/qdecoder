@@ -21,6 +21,8 @@
  * @file qSession.c HTTP Session Handling API
  */
 
+#ifndef WITHOUT_CGISUPPORT
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -73,9 +75,9 @@ static time_t _updateTimeout(char *filename, time_t timeout_interval);
 ** Static Values Definition used only internal
 **********************************************/
 
-static int _session_started = 0;
-static int _session_new = 0;
-static int _session_modified = 0;
+static bool _session_started = false;
+static bool _session_new = false;
+static bool _session_modified = false;
 static Q_ENTRY *_session_first_entry = NULL;
 
 static char _session_repository_path[1024];
@@ -94,14 +96,14 @@ static time_t _session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERV
 **********************************************/
 /* Initialize session data */
 int qSession(char *repository) {
-	int new_session;
+	bool new_session;
 	char *sessionkey;
 
 	/* check if session already started */
-	if (_session_started) return _session_new;
+	if (_session_started == true) return _session_new;
 	_session_first_entry = NULL;
-	_session_started = 1;
-	_session_modified = 0;
+	_session_started = true;
+	_session_modified = false;
 
 	/* check content flag */
 	if (qGetContentFlag() == 1) qError("qSession(): must be called before qContentType() and any stream out.");
@@ -110,9 +112,9 @@ int qSession(char *repository) {
 	sessionkey = qGetValue(SESSION_ID);
 	if (sessionkey == NULL) {  /* new session */
 		sessionkey = qUniqId();
-		new_session = 1;
+		new_session = true;
 	} else {
-		new_session = 0;
+		new_session = false;
 	}
 
 	/* make storage path for session */
@@ -122,7 +124,7 @@ int qSession(char *repository) {
 	snprintf(_session_timeout_path, sizeof(_session_timeout_path), "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
 	/* validate exist session */
-	if (new_session == 0) {
+	if (new_session == false) {
 		if (_isValidSession(_session_timeout_path) <= 0) { /* expired or not found */
 			unlink(_session_storage_path);
 			unlink(_session_timeout_path);
@@ -133,12 +135,12 @@ int qSession(char *repository) {
 			snprintf(_session_timeout_path, sizeof(_session_timeout_path), "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
 			/* set flag */
-			new_session = 1;
+			new_session = true;
 		}
 	}
 
 	/* if new session, set session id */
-	if (new_session == 1) {
+	if (new_session == true) {
 		char created_gmt[32], created_sec[32];
 		time_t nowtime;
 
@@ -191,7 +193,7 @@ char *qSessionAdd(char *name, char *format, ...) {
 	char value[1024];
 	va_list arglist;
 
-	if (_session_started == 0) qError("qSessionAdd(): qSession() must be called before.");
+	if (_session_started == false) qError("qSessionAdd(): qSession() must be called before.");
 	if (!strcmp(name, "")) qError("qSessionAdd(): can not add empty name.");
 	if (!strncmp(name, INTER_PREFIX, strlen(INTER_PREFIX))) qError("qSessionAdd(): Name can not start with %s. It's reserved for internal uses.", INTER_PREFIX);
 
@@ -204,7 +206,7 @@ char *qSessionAdd(char *name, char *format, ...) {
 	if (!_session_first_entry) _session_first_entry = new_entry;
 
 	/* set modified flag */
-	_session_modified = 1;
+	_session_modified = true;
 
 	return qSessionGetValue(name);
 }
@@ -255,13 +257,13 @@ void qSessionRemove(char *format, ...) {
 	va_end(arglist);
 
 	if (!strcmp(name, "")) qError("qAddRemove(): can not remove empty name.");
-	if (_session_started == 0) qError("qSessionRemove(): qSession() must be called before.");
+	if (_session_started == false) qError("qSessionRemove(): qSession() must be called before.");
 	if (!strncmp(name, INTER_PREFIX, strlen(INTER_PREFIX))) qError("qSessionRemove(): can not remove reserved words.");
 
 	_session_first_entry = qEntryRemove(_session_first_entry, name);
 
 	/* set modified flag */
-	_session_modified = 1;
+	_session_modified = true;
 }
 
 /**********************************************
@@ -277,7 +279,7 @@ char *qSessionGetValue(char *format, ...) {
 	char name[1024], *value;
 	va_list arglist;
 
-	if (_session_started == 0) qError("qSessionGetValue(): qSession() must be called before.");
+	if (_session_started == false) qError("qSessionGetValue(): qSession() must be called before.");
 
 	va_start(arglist, format);
 	vsnprintf(name, sizeof(name)-1, format, arglist);
@@ -302,7 +304,7 @@ int qSessionGetInt(char *format, ...) {
 	int value;
 	va_list arglist;
 
-	if (_session_started == 0) qError("qSessionGetInt(): qSession() must be called before.");
+	if (_session_started == false) qError("qSessionGetInt(): qSession() must be called before.");
 
 	va_start(arglist, format);
 	vsnprintf(name, sizeof(name)-1, format, arglist);
@@ -324,7 +326,7 @@ int qSessionGetInt(char *format, ...) {
 time_t qSessionSetTimeout(time_t seconds) {
 	char interval_sec[32];
 
-	if (_session_started == 0) qError("qSessionSetTimeout(): qSession() must be called before.");
+	if (_session_started == false) qError("qSessionSetTimeout(): qSession() must be called before.");
 	if (seconds <= (time_t)0) qError("qSessionSetTimeout(): can not set negative interval. Use qSessionDestory() instead.");
 
 	_session_timeout_interval = seconds;
@@ -345,7 +347,7 @@ time_t qSessionSetTimeout(time_t seconds) {
 **     sessionid = qSessionGetID();
 **********************************************/
 char *qSessionGetID(void) {
-	if (_session_started == 0) qError("qSessionGetID(): qSession() must be called before.");
+	if (_session_started == false) qError("qSessionGetID(): qSession() must be called before.");
 	return qSessionGetValue(INTER_SESSIONID);
 }
 
@@ -364,7 +366,7 @@ time_t qSessionGetCreated(void) {
 	time_t created;
 	char *tmp;
 
-	if (_session_started == 0) qError("qSessionGetCreated(): qSession() must be called before.");
+	if (_session_started == false) qError("qSessionGetCreated(): qSession() must be called before.");
 	tmp = qSessionGetValue(INTER_CREATED_SEC);
 	created = (time_t)atol(tmp);
 
@@ -375,9 +377,9 @@ time_t qSessionGetCreated(void) {
 ** Usage : qSessionPrint();
 ** Do    : Print all session variables for debugging
 **********************************************/
-int qSessionPrint(void) {
-	if (_session_started == 0) qError("qSessionPrint(): qSession() must be called before.");
-	return qEntryPrint(_session_first_entry);
+int qSessionPrint(FILE *out) {
+	if (_session_started == false) qError("qSessionPrint(): qSession() must be called before.");
+	return qEntryPrint(_session_first_entry, out);
 }
 
 /**********************************************
@@ -385,8 +387,8 @@ int qSessionPrint(void) {
 ** Do    : Save session data immediately.
 **********************************************/
 void qSessionSave(void) {
-	if (_session_started == 0 || _session_first_entry == NULL) return;
-	if (_session_new == 1 && _session_modified == 0) return;
+	if (_session_started == false || _session_first_entry == NULL) return;
+	if (_session_new == true && _session_modified == false) return;
 
 	if (qEntrySave(_session_first_entry, _session_storage_path, true) == false) {
 		qError("qSessionSave(): Can not access session repository(%s).", _session_storage_path);
@@ -396,7 +398,7 @@ void qSessionSave(void) {
 	}
 
 	/* clear modified flag */
-	_session_modified = 0;
+	_session_modified = false;
 }
 
 /**********************************************
@@ -405,16 +407,16 @@ void qSessionSave(void) {
 **********************************************/
 /* Free & Save */
 void qSessionFree(void) {
-	if (_session_started == 0) return;
+	if (_session_started == false) return;
 
 	qSessionSave();
 	_clearRepository();
 
 	if (_session_first_entry) qEntryFree(_session_first_entry);
 	_session_first_entry = NULL;
-	_session_started = 0;
-	_session_new = 0;
-	_session_modified = 0;
+	_session_started = false;
+	_session_new = false;
+	_session_modified = false;
 	_session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERVAL;
 	strcpy(_session_repository_path, "");
 	strcpy(_session_storage_path, "");
@@ -427,7 +429,7 @@ void qSessionFree(void) {
 **         will be removed.
 **********************************************/
 void qSessionDestroy(void) {
-	if (_session_started == 0) qError("qSessionDestroy(): qSession() must be called before.");
+	if (_session_started == false) qError("qSessionDestroy(): qSession() must be called before.");
 
 	unlink(_session_storage_path);
 	unlink(_session_timeout_path);
@@ -454,7 +456,7 @@ static int _clearRepository(void) {
 	char timeoutpath[1024];
 	int clearcnt;
 
-	if (_session_started == 0) qError("_clearRepository(): qSession() must be called before.");
+	if (_session_started == false) qError("_clearRepository(): qSession() must be called before.");
 	snprintf(timeoutpath, sizeof(timeoutpath), "%s/%s", _session_repository_path, SESSION_TIMETOCLEAR_FILENAME);
 
 	if (_isValidSession(timeoutpath) > 0) return 0; /* Valid */
@@ -519,3 +521,4 @@ static time_t _updateTimeout(char *filename, time_t timeout_interval) {
 	return timeout;
 }
 
+#endif /* WITHOUT_CGISUPPORT */

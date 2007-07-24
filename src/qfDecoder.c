@@ -21,6 +21,8 @@
  * @file qfDecoder.c Configuration File Handling API
  */
 
+#ifndef WITHOUT_CONFIGPARSER
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -172,8 +174,8 @@ char *qfGetValueNext(void) {
 	return NULL;
 }
 
-int qfPrint(Q_ENTRY *first) {
-	return qEntryPrint(first);
+int qfPrint(Q_ENTRY *first, FILE *out) {
+	return qEntryPrint(first, out);
 }
 
 void qfFree(Q_ENTRY *first) {
@@ -258,3 +260,5 @@ static char *parseValue(Q_ENTRY *first, char *value) {
 
 	return value;
 }
+
+#endif /* WITHOUT_CONFIGPARSER */

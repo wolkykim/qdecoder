@@ -66,6 +66,8 @@
  * @endcode
  */
 
+#ifndef WITHOUT_IPC
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -196,3 +198,5 @@ bool qSemFree(int semid) {
 	if (semctl(semid, 0, IPC_RMID, 0) != 0) return false;
 	return true;
 }
+
+#endif /* WITHOUT_IPC */

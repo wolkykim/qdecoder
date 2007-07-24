@@ -41,7 +41,7 @@
  *     printf("ERROR: Can't get shared memory.\n");
  *     return -1;
  *   }
- *   
+ *
  *   [shared memory user]
  *   // get shared memory id
  *   int shmid = qShmGetId("/some/file/for/generating/unique/key");
@@ -58,6 +58,8 @@
  *   }
  * @endcode
  */
+
+#ifndef WITHOUT_IPC
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -132,3 +134,5 @@ bool qShmFree(int shmid) {
 	if (shmctl(shmid, IPC_RMID, 0) != 0) return false;
 	return true;
 }
+
+#endif /* WITHOUT_IPC */

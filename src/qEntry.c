@@ -217,12 +217,13 @@ Q_ENTRY *qEntryReverse(Q_ENTRY *first) {
 ** Return: Amount of entries.
 ** Do    : Print all parsed value & name for debugging.
 **********************************************/
-int qEntryPrint(Q_ENTRY *first) {
+int qEntryPrint(Q_ENTRY *first, FILE *out) {
 	Q_ENTRY *entries;
 	int amount;
 
+	if(out == NULL) out = stdout;
 	for (amount = 0, entries = first; entries; amount++, entries = entries->next) {
-		printf("'%s' = '%s'\n" , entries->name, entries->value);
+		fprintf(out, "%s=%s\n" , entries->name, entries->value);
 	}
 
 	return amount;

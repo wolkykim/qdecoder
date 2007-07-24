@@ -101,10 +101,15 @@ typedef struct {
  * Structure for Hash-table
  */
 typedef struct {
-	int	size;			/*!<   */
-	char	**key;			/*!<   */
-	char	**value;		/*!<   */
-} Q_HASHTABLE;
+	int	max;			/*!< maximum hashtable size  */
+	int	num;			/*!< used slot counter */
+
+	int	*count;			/*!< hash collision counter. 0 indicate empty slot, -1 is used for temporary move slot dut to hash collision */
+	int	*hash;			/*!< key hash */
+	char	**key;			/*!< key */
+	char	**value;		/*!< value */
+	int	*size;			/*!< value size */
+} Q_HASHTBL;
 
 #ifndef _DOXYGEN_SKIP
 
@@ -129,7 +134,7 @@ char	*qGetValueNext(void);
 char	*qAdd(char *name, char *format, ...);
 void	qRemove(char *format, ...);
 char	qGetType(char *format, ...);
-int	qPrint(void);
+int	qPrint(FILE *out);
 void	qFree(void);
 
 bool	qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
@@ -152,32 +157,10 @@ int	qSessionGetInt(char *format, ...);
 time_t	qSessionSetTimeout(time_t seconds);
 char	*qSessionGetID(void);
 time_t	qSessionGetCreated(void);
-int	qSessionPrint(void);
+int	qSessionPrint(FILE *out);
 void	qSessionSave(void);
 void	qSessionFree(void);
 void	qSessionDestroy(void);
-
-/*
-* qfDecoder.c
- */
-Q_ENTRY	*qfDecoder(char *filename);
-char	*qfGetValue(Q_ENTRY *first, char *format, ...);
-int	qfGetInt(Q_ENTRY *first, char *format, ...);
-char	*qfGetValueFirst(Q_ENTRY *first, char *format, ...);
-char	*qfGetValueNext(void);
-int	qfPrint(Q_ENTRY *first);
-void	qfFree(Q_ENTRY *first);
-
-/*
- * qsDecoder.c
- */
-Q_ENTRY	*qsDecoder(char *str);
-char	*qsGetValue(Q_ENTRY *first, char *format, ...);
-int	qsGetInt(Q_ENTRY *first, char *format, ...);
-char	*qsGetValueFirst(Q_ENTRY *first, char *format, ...);
-char	*qsGetValueNext(void);
-int	qsPrint(Q_ENTRY *first);
-void	qsFree(Q_ENTRY *first);
 
 /*
  * qHttpHeader.c
@@ -189,11 +172,160 @@ void	qRedirect(char *url);
 void	qJavaScript(char *format, ...);
 
 /*
- * qError.c
+ * qDownload.c
  */
-void	qError(char *format, ...);
-void	qErrorLog(char *file);
-void	qErrorContact(char *msg);
+int	qDownload(char *filename);
+int	qDownloadMime(char *filename, char *mime);
+
+/*
+* qfDecoder.c
+ */
+Q_ENTRY	*qfDecoder(char *filename);
+char	*qfGetValue(Q_ENTRY *first, char *format, ...);
+int	qfGetInt(Q_ENTRY *first, char *format, ...);
+char	*qfGetValueFirst(Q_ENTRY *first, char *format, ...);
+char	*qfGetValueNext(void);
+int	qfPrint(Q_ENTRY *first, FILE *out);
+void	qfFree(Q_ENTRY *first);
+
+/*
+ * qsDecoder.c
+ */
+Q_ENTRY	*qsDecoder(char *str);
+char	*qsGetValue(Q_ENTRY *first, char *format, ...);
+int	qsGetInt(Q_ENTRY *first, char *format, ...);
+char	*qsGetValueFirst(Q_ENTRY *first, char *format, ...);
+char	*qsGetValueNext(void);
+int	qsPrint(Q_ENTRY *first, FILE *out);
+void	qsFree(Q_ENTRY *first);
+
+/*
+ * qArg.c
+ */
+int	qArgMake(char *str, char **qlist);
+int	qArgMatch(char *str, char **qlist);
+int	qArgEmprint(int mode, char *str, char **qlist);
+int	qArgPrint(char **qlist);
+void	qArgFree(char **qlist);
+
+/*
+ * qAwk.c
+ */
+FILE	*qAwkOpen(char *filename);
+int	qAwkNext(FILE *fp, char array[][1024], char delim);
+bool	qAwkClose(FILE *fp);
+int	qAwkStr(char array[][1024], char *str, char delim);
+
+/*
+ * qSed.c
+ */
+Q_ENTRY	*qSedAdd(Q_ENTRY *first, char *name, char *format, ...);
+Q_ENTRY *qSedAddDirect(Q_ENTRY *first, char *name, char *value);
+int	qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout);
+int	qSedFile(Q_ENTRY *first, char *filename, FILE *fpout);
+int	qSedPrint(Q_ENTRY *first, FILE *out);
+void	qSedFree(Q_ENTRY *first);
+
+/*
+ * qSem.c
+ */
+int	qSemInit(char *keyfile, int nsems, bool autodestroy);
+int	qSemGetId(char *keyfile);
+bool	qSemEnter(int semid, int semno);
+bool	qSemEnterNowait(int semid, int semno);
+bool	qSemLeave(int semid, int semno);
+bool	qSemFree(int semid);
+
+/*
+ * qShm.c
+ */
+int	qShmInit(char *keyfile, size_t size, bool autodestroy);
+int	qShmGetId(char *keyfile);
+void	*qShmGet(int shmid);
+bool	qShmFree(int shmid);
+
+/*
+ * qSocket.c
+ */
+int	qSocketOpen(char *hostname, int port);
+int	qSocketClose(int sockfd);
+int	qSocketWaitReadable(int sockfd, int timeoutms);
+int	qSocketRead(int sockfd, char *binary, int size, int timeoutms);
+int	qSocketGets(int sockfd, char *str, int size, int timeoutms);
+int	qSocketWrite(int sockfd, char *binary, int size);
+int	qSocketPuts(int sockfd, char *str);
+int	qSocketPrintf(int sockfd, char *format, ...);
+int	qSocketSendFile(int sockfd, char *filepath, int offset);
+int	qSocketSaveIntoFile(int sockfd, int size, char *filepath, char *mode, int timeoutms);
+FILE	*qSocketConv2file(int sockfd);
+
+/*
+ * qDatabase.c
+ */
+Q_DB	*qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, bool autocommit);
+bool	qDbOpen(Q_DB *db);
+bool	qDbClose(Q_DB *db);
+bool	qDbFree(Q_DB *db);
+char	*qDbGetErrMsg(Q_DB *db);
+bool	qDbPing(Q_DB *db);
+bool	qDbGetLastConnStatus(Q_DB *db);
+
+int	qDbExecuteUpdate(Q_DB *db, char *query);
+Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query);
+
+int     qDbGetRows(Q_DBRESULT *result);
+int     qDbGetCols(Q_DBRESULT *result);
+int	qDbResultNext(Q_DBRESULT *result);
+bool	qDbResultFree(Q_DBRESULT *result);
+
+char	*qDbGetValue(Q_DBRESULT *result, char *field);
+int	qDbGetInt(Q_DBRESULT *result, char *field);
+char	*qDbGetValueAt(Q_DBRESULT *result, int idx);
+int	qDbGetIntAt(Q_DBRESULT *result, int idx);
+
+bool	qDbBeginTran(Q_DB *db);
+bool	qDbEndTran(Q_DB *db, bool commit);
+bool	qDbCommit(Q_DB *db);
+bool	qDbRollback(Q_DB *db);
+
+/*
+ * qEntry.c
+ */
+
+Q_ENTRY	*qEntryAdd(Q_ENTRY *first, char *name, char *value, int flag);
+Q_ENTRY	*qEntryRemove(Q_ENTRY *first, char *name);
+char	*qEntryGetValue(Q_ENTRY *first, char *name);
+char	*qEntryGetValueLast(Q_ENTRY *first, char *name);
+char	*qEntryGetValueNoCase(Q_ENTRY *first, char *name);
+int	qEntryGetInt(Q_ENTRY *first, char *name);
+int	qEntryGetIntLast(Q_ENTRY *first, char *name);
+int	qEntryGetIntNoCase(Q_ENTRY *first, char *name);
+int	qEntryGetNo(Q_ENTRY *first, char *name);
+Q_ENTRY	*qEntryReverse(Q_ENTRY *first);
+int	qEntryPrint(Q_ENTRY *first, FILE *out);
+void	qEntryFree(Q_ENTRY *first);
+int	qEntrySave(Q_ENTRY *first, char *filename, bool encodevalue);
+Q_ENTRY	*qEntryLoad(char *filename, bool decodevalue);
+
+/*
+ * qHashtbl.c
+ */
+
+Q_HASHTBL *qHashtblInit(int max);
+bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size);
+char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size);
+bool qHashtblRemove(Q_HASHTBL *tbl, char *key);
+void qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
+bool qHashtblFree(Q_HASHTBL *tbl);
+
+/*
+ * qLog.c
+ */
+Q_LOG	*qLogOpen(char *logbase, char *filenameformat, int rotateinterval, bool flush);
+bool	qLogClose(Q_LOG *log);
+bool	qLogSetConsole(Q_LOG *log, bool consoleout);
+bool	qLogFlush(Q_LOG *log);
+bool	qLog(Q_LOG *log, char *format, ...);
 
 /*
  * qEnv.c
@@ -250,32 +382,6 @@ char	*qCmd(char *cmd);
 bool	qCheckEmail(char *email);
 bool	qCheckURL(char *url);
 
-/*
- * qArg.c
- */
-int	qArgMake(char *str, char **qlist);
-int	qArgMatch(char *str, char **qlist);
-int	qArgEmprint(int mode, char *str, char **qlist);
-int	qArgPrint(char **qlist);
-void	qArgFree(char **qlist);
-
-/*
- * qAwk.c
- */
-FILE	*qAwkOpen(char *filename);
-int	qAwkNext(FILE *fp, char array[][1024], char delim);
-bool	qAwkClose(FILE *fp);
-int	qAwkStr(char array[][1024], char *str, char delim);
-
-/*
- * qSed.c
- */
-Q_ENTRY	*qSedAdd(Q_ENTRY *first, char *name, char *format, ...);
-Q_ENTRY *qSedAddDirect(Q_ENTRY *first, char *name, char *value);
-int	qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout);
-int	qSedFile(Q_ENTRY *first, char *filename, FILE *fpout);
-int	qSedPrint(Q_ENTRY *first);
-void	qSedFree(Q_ENTRY *first);
 
 /*
  * qCount.c
@@ -285,12 +391,6 @@ bool	qCountSave(char *filename, int number);
 int	qCountUpdate(char *filename, int number);
 
 /*
- * qDownload.c
- */
-int	qDownload(char *filename);
-int	qDownloadMime(char *filename, char *mime);
-
-/*
  * qTime.c
  */
 struct tm *qGetTime(void);
@@ -298,94 +398,11 @@ time_t	qGetGmtime(char *gmt, time_t plus_sec);
 char	*qGetTimeStr(void);
 
 /*
- * qLog.c
+ * qError.c
  */
-Q_LOG	*qLogOpen(char *logbase, char *filenameformat, int rotateinterval, bool flush);
-bool	qLogClose(Q_LOG *log);
-bool	qLogSetConsole(Q_LOG *log, bool consoleout);
-bool	qLogFlush(Q_LOG *log);
-bool	qLog(Q_LOG *log, char *format, ...);
-
-/*
- * qSocket.c
- */
-int	qSocketOpen(char *hostname, int port);
-int	qSocketClose(int sockfd);
-int	qSocketWaitReadable(int sockfd, int timeoutms);
-int	qSocketRead(int sockfd, char *binary, int size, int timeoutms);
-int	qSocketGets(int sockfd, char *str, int size, int timeoutms);
-int	qSocketWrite(int sockfd, char *binary, int size);
-int	qSocketPuts(int sockfd, char *str);
-int	qSocketPrintf(int sockfd, char *format, ...);
-int	qSocketSendFile(int sockfd, char *filepath, int offset);
-int	qSocketSaveIntoFile(int sockfd, int size, char *filepath, char *mode, int timeoutms);
-FILE	*qSocketConv2file(int sockfd);
-
-/*
- * qDatabase.c
- */
-Q_DB	*qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, bool autocommit);
-bool	qDbOpen(Q_DB *db);
-bool	qDbClose(Q_DB *db);
-bool	qDbFree(Q_DB *db);
-char	*qDbGetErrMsg(Q_DB *db);
-bool	qDbPing(Q_DB *db);
-bool	qDbGetLastConnStatus(Q_DB *db);
-
-int	qDbExecuteUpdate(Q_DB *db, char *query);
-Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query);
-
-int     qDbGetRows(Q_DBRESULT *result);
-int     qDbGetCols(Q_DBRESULT *result);
-int	qDbResultNext(Q_DBRESULT *result);
-bool	qDbResultFree(Q_DBRESULT *result);
-
-char	*qDbGetValue(Q_DBRESULT *result, char *field);
-int	qDbGetInt(Q_DBRESULT *result, char *field);
-char	*qDbGetValueAt(Q_DBRESULT *result, int idx);
-int	qDbGetIntAt(Q_DBRESULT *result, int idx);
-
-bool	qDbBeginTran(Q_DB *db);
-bool	qDbEndTran(Q_DB *db, bool commit);
-bool	qDbCommit(Q_DB *db);
-bool	qDbRollback(Q_DB *db);
-
-/*
- * qShm.c
- */
-int	qShmInit(char *keyfile, size_t size, bool autodestroy);
-int	qShmGetId(char *keyfile);
-void	*qShmGet(int shmid);
-bool	qShmFree(int shmid);
-
-/*
- * qSem.c
- */
-int	qSemInit(char *keyfile, int nsems, bool autodestroy);
-int	qSemGetId(char *keyfile);
-bool	qSemEnter(int semid, int semno);
-bool	qSemEnterNowait(int semid, int semno);
-bool	qSemLeave(int semid, int semno);
-bool	qSemFree(int semid);
-
-/*
- * qEntry.c
- */
-
-Q_ENTRY	*qEntryAdd(Q_ENTRY *first, char *name, char *value, int flag);
-Q_ENTRY	*qEntryRemove(Q_ENTRY *first, char *name);
-char	*qEntryGetValue(Q_ENTRY *first, char *name);
-char	*qEntryGetValueLast(Q_ENTRY *first, char *name);
-char	*qEntryGetValueNoCase(Q_ENTRY *first, char *name);
-int	qEntryGetInt(Q_ENTRY *first, char *name);
-int	qEntryGetIntLast(Q_ENTRY *first, char *name);
-int	qEntryGetIntNoCase(Q_ENTRY *first, char *name);
-int	qEntryGetNo(Q_ENTRY *first, char *name);
-Q_ENTRY	*qEntryReverse(Q_ENTRY *first);
-int	qEntryPrint(Q_ENTRY *first);
-void	qEntryFree(Q_ENTRY *first);
-int	qEntrySave(Q_ENTRY *first, char *filename, bool encodevalue);
-Q_ENTRY	*qEntryLoad(char *filename, bool decodevalue);
+void	qError(char *format, ...);
+void	qErrorLog(char *file);
+void	qErrorContact(char *msg);
 
 #ifdef __cplusplus
 }

@@ -21,6 +21,8 @@
  * @file qsDecoder.c Configuration String Handling API
  */
 
+#ifndef WITHOUT_CONFIGPARSER
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -130,11 +132,12 @@ char *qsGetValueNext(void) {
 	return NULL;
 }
 
-int qsPrint(Q_ENTRY *first) {
-	return qEntryPrint(first);
+int qsPrint(Q_ENTRY *first, FILE *out) {
+	return qEntryPrint(first, out);
 }
 
 void qsFree(Q_ENTRY *first) {
 	qEntryFree(first);
 }
 
+#endif /* WITHOUT_CONFIGPARSER */

@@ -20,34 +20,93 @@
 prefix		= @prefix@
 exec_prefix	= ${prefix}
 
-# Name
+##########################################################################
+## Compile time options
+##########################################################################
+
+## Web Application(CGI) API
+## Influence on : qDecoder.c, qSession.c, qHttpHeader.c qDownload.c
+##
+## If you do not use qDecoder for CGI interfacing, uncomments WITHOUT_CGISUPPORT.
+## This will disable all CGI interface functions such like qDecoder(), qGetValue(),
+## qSession(), qContentType(), qDownload(), etc...
+#WITHOUT_CGISUPPORT	= -DWITHOUT_CGISUPPORT
+
+## Configuration File & String Handling API
+## Influence on : qfDecode.cr, qsDecoder.c
+#WITHOUT_CONFIGPARSER	= -DWITHOUT_CONFIGPARSER
+
+## Pattern Matching & String Search API
+## Influence on : qArg.c
+#WITHOUT_ARG	= -DWITHOUT_ARG
+
+## File & String Tokenizing API
+## Influence on : qAwk.c
+#WITHOUT_AWK	= -DWITHOUT_AWK
+
+## Server Side Include and Variable Replacement API
+## Influence on : qSed.c
+#WITHOUT_SED	= -DWITHOUT_SED
+
+## IPC(Semaphore, Shared-memory) Support
+## Influence on : qSem.c, qShm.c
+#WITHOUT_IPC	= -DWITHOUT_IPC
+
+## Socket Support
+## Influence on : qSocket.c
+#WITHOUT_SOCKET	= -DWITHOUT_SOCKET
+
+## Database Surrpot
+## Influence on : qDatabase.c
+#WITH_MYSQL	= -DWITH_MYSQL
+#MYSQL_INCLUDE	= -I/usr/local/include/mysql -I /usr/local/mysql/include
+
+## Hash-table Support - qHashtbl.c
+## Influence on : qHashtbl.c
+#WITHOUT_HASHTBL	= -DWITHOUT_HASHTBL
+
+## Rotating File Logging API
+## Influence on : qLog.c
+#WITHOUT_LOG	= -DWITHOUT_LOG
+
+##########################################################################
+## YOU DON'T NEED TO MODIFY BELOW BEFORE YOU GOT COMPILE TIME TROUBLES
+##########################################################################
+OPT_DEFS	= ${WITHOUT_CGISUPPORT}		\
+		 ${WITHOUT_CONFIGPARSER}	\
+		 ${WITHOUT_ARG}			\
+		 ${WITHOUT_AWK}			\
+		 ${WITHOUT_SED}			\
+		 ${WITHOUT_IPC}			\
+		 ${WITHOUT_SOCKET}		\
+		 ${WITH_MYSQL}			\
+		 ${WITHOUT_HASHTBL}		\
+		 ${WITHOUT_LOG}
+
+OPT_INCLUDE	=  ${MYSQL_INCLUDE}
+
+## Name
 PRGNAME		= qDecoder
 
-# Static Library Name
+## Static Library Name
 LIBNAME		= lib${PRGNAME}.a
 
-# Shared Library Name
-SLIBVERSION	= 3
+## Shared Library Name
+SLIBVERSION	= 4
 SLIBNAME	= lib${PRGNAME}.so
 SLIBREALNAME	= ${SLIBNAME}.${SLIBVERSION}
 
-# System library directory
+## System library directory
 LIBDIR		= @libdir@
 HEADERDIR	= @includedir@
 
-# To Support Database
-#WITH_MYSQL	= -DWITH_MYSQL
-WITH_MYSQL	=
-#MYSQL_INCLUDE	= -I/usr/local/include/mysql
-MYSQL_INCLUDE	=
-
-# Which compiler & options for release
+## Which compiler & options for release
 CC		= @CC@
-CFLAGS		= @CFLAGS@
-DEFS		= @DEFS@ ${WITH_MYSQL}
-INCLUDE		= -I./ ${MYSQL_INCLUDE}
+CFLAGS		= -Wall @CFLAGS@
+DEFS		= @DEFS@ ${OPT_DEFS}
+INCLUDE		= -I./ ${OPT_INCLUDE}
 
-# Utilities
+## Utilities
 AR		= @AR@
 ARFLAGS		= -rc
 CHMOD		= @CHMOD@
@@ -58,32 +117,38 @@ LN_S		= @LN_S@
 RANLIB		= @RANLIB@
 RM		= @RM@
 
-
-# Objects List
-OBJ		= qDecoder.o \
-		qSession.o \
-		qHttpHeader.o \
-		qEnv.o \
-		qError.o \
-		qfDecoder.o \
-		qsDecoder.o \
-		qEncode.o \
-		qString.o \
-		qFile.o \
-		qValid.o \
-		qArg.o \
-		qAwk.o \
-		qSed.o \
-		qCount.o \
-		qDownload.o \
-		qTime.o \
-		qLog.o \
-		qSocket.o \
-		qDatabase.o \
-		qShm.o \
-		qSem.o \
-		qEntry.o \
-		qInternalCommon.o \
+## Objects List
+OBJ		= qDecoder.o		\
+		qSession.o		\
+		qHttpHeader.o		\
+		qDownload.o		\
+					\
+		qfDecoder.o		\
+		qsDecoder.o		\
+		qArg.o			\
+		qAwk.o			\
+		qSed.o			\
+					\
+		qSem.o			\
+		qShm.o			\
+		qSocket.o		\
+		qDatabase.o		\
+					\
+		qEntry.o		\
+		qHashtbl.o		\
+					\
+		qLog.o			\
+					\
+		qEnv.o			\
+		qEncode.o		\
+		qString.o		\
+		qFile.o			\
+		qValid.o		\
+		qCount.o		\
+		qTime.o			\
+		qError.o		\
+					\
+		qInternalCommon.o	\
 		md5/md5c.o
 
 ## Make Library

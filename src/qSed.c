@@ -21,6 +21,8 @@
  * @file qSed.c Server Side Include and Variable Replacement API
  */
 
+#ifndef WITHOUT_SED
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -140,8 +142,8 @@ int qSedFile(Q_ENTRY *first, char *filename, FILE *fpout) {
 ** Return: Amount of entries.
 ** Do    : Print all parsed values & names for debugging.
 **********************************************/
-int qSedPrint(Q_ENTRY *first) {
-	return qEntryPrint(first);
+int qSedPrint(Q_ENTRY *first, FILE *out) {
+	return qEntryPrint(first, out);
 }
 
 /**********************************************
@@ -151,3 +153,5 @@ int qSedPrint(Q_ENTRY *first) {
 void qSedFree(Q_ENTRY *first) {
 	qEntryFree(first);
 }
+
+#endif /* WITHOUT_SED */
