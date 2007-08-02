@@ -271,12 +271,14 @@ bool	qDbPing(Q_DB *db);
 bool	qDbGetLastConnStatus(Q_DB *db);
 
 int	qDbExecuteUpdate(Q_DB *db, char *query);
-Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query);
 
-int     qDbGetRows(Q_DBRESULT *result);
-int     qDbGetCols(Q_DBRESULT *result);
-int	qDbResultNext(Q_DBRESULT *result);
+Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query);
+bool	qDbResultNext(Q_DBRESULT *result);
 bool	qDbResultFree(Q_DBRESULT *result);
+
+int     qDbGetCols(Q_DBRESULT *result);
+int     qDbGetRows(Q_DBRESULT *result);
+int     qDbGetRow(Q_DBRESULT *result);
 
 char	*qDbGetValue(Q_DBRESULT *result, char *field);
 int	qDbGetInt(Q_DBRESULT *result, char *field);

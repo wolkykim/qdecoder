@@ -52,7 +52,7 @@
  *   result = qDbExecuteQuery(db, "SELECT name, population FROM City");
  *   if (result != NULL) {
  *     printf("COLS : %d , ROWS : %d\n", qDbGetCols(result), qDbGetRows(result));
- *     while (qDbResultNext(result) > 0) {
+ *     while (qDbResultNext(result) == true) {
  *       char *pszName = qDbGetValue(result, "name");
  *       int   nPopulation = qDbGetInt(result, "population");
  *       printf("Country : %s , Population : %d\n", pszName, nPopulation);
@@ -323,12 +323,35 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
  *
  * @since not released yet
  */
-int qDbGetRows(Q_DBRESULT *result) {
+bool qDbResultNext(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
-	if (result == NULL || result->rs == NULL) return 0;
-	return result->rows;
+	if (result == NULL || result->rs == NULL) return false;
+
+	if ((result->row = mysql_fetch_row(result->rs)) == NULL) return false;
+	result->cursor++;
+
+	return true;
 #else
-	return 0;
+	return false;
+#endif
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
+bool qDbResultFree(Q_DBRESULT *result) {
+#ifdef _Q_WITH_MYSQL
+	if (result == NULL) return false;
+	if (result->rs != NULL) {
+		mysql_free_result(result->rs);
+		result->rs = NULL;
+	}
+	free(result);
+	return true;
+#else
+	return false;
 #endif
 }
 
@@ -351,35 +374,26 @@ int qDbGetCols(Q_DBRESULT *result) {
  *
  * @since not released yet
  */
-int qDbResultNext(Q_DBRESULT *result) {
+int qDbGetRows(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
-
-	if ((result->row = mysql_fetch_row(result->rs)) == NULL) return 0;
-	result->cursor++;
-
-	return result->cursor;
+	return result->rows;
 #else
 	return 0;
 #endif
 }
 
 /**
- * Under-development
+ * Retrieves the current row number
  *
  * @since not released yet
  */
-bool qDbResultFree(Q_DBRESULT *result) {
+int qDbGetRow(Q_DBRESULT *result) {
 #ifdef _Q_WITH_MYSQL
-	if (result == NULL) return false;
-	if (result->rs != NULL) {
-		mysql_free_result(result->rs);
-		result->rs = NULL;
-	}
-	free(result);
-	return true;
+	if (result == NULL || result->rs == NULL) return 0;
+	return result->cursor;
 #else
-	return false;
+	return 0;
 #endif
 }
 
@@ -411,7 +425,9 @@ char *qDbGetValue(Q_DBRESULT *result, char *field) {
  * @since not released yet
  */
 int qDbGetInt(Q_DBRESULT *result, char *field) {
-	return atoi(qDbGetValue(result, field));
+	char *val = qDbGetValue(result, field);
+	if(val == NULL) return 0;
+	return atoi(val);
 }
 
 /**
@@ -421,7 +437,7 @@ int qDbGetInt(Q_DBRESULT *result, char *field) {
  */
 char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
 #ifdef _Q_WITH_MYSQL
-	if (result == NULL || result->rs == NULL || idx <= 0 || idx > result->cols ) return NULL;
+	if (result == NULL || result->rs == NULL || result->cursor == 0 || idx <= 0 || idx > result->cols ) return NULL;
 	return result->row[idx-1];
 #else
 	return NULL;
