@@ -140,7 +140,7 @@ char *qEntryGetValueNoCase(Q_ENTRY *first, char *name) {
 	Q_ENTRY *entries;
 
 	for (entries = first; entries; entries = entries->next) {
-		if (!qStricmp(name, entries->name)) return entries->value;
+		if (!strcasecmp(name, entries->name)) return entries->value;
 	}
 	return NULL;
 }

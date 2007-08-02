@@ -513,55 +513,6 @@ char *qStristr(char *big, char *small) {
 	return retp;
 }
 
-/**********************************************
-** Usage : qStricmp(char *orgstr, char *tokstr);
-** Return: s1 < s2 less than 0, s1 = s2 0, s1 > s2 greater than 0.
-** Do    : qDecoder implementation of stricmp() because
-**         some systems do not support this function.
-**********************************************/
-int qStricmp(char *s1, char *s2) {
-	char *bs1, *bs2;
-	int result;
-
-	if (s1 == NULL || s2 == NULL) return 0;
-	if ((bs1 = strdup(s1)) == NULL) return 0;
-	if ((bs2 = strdup(s2)) == NULL) {
-		free(bs1);
-		return 0;
-	}
-
-	qStrupr(bs1), qStrupr(bs2);
-	result = strcmp(bs1, bs2);
-	free(bs1), free(bs2);
-
-	return result;
-}
-
-/**********************************************
-** Usage : qStrnicmp(s1, s2, length);
-** Return: Same as strncmp().
-** Do    : Compare n-byte strings with no case-censitive.
-**********************************************/
-int qStrincmp(char *s1, char *s2, size_t len) {
-	char *s1p, *s2p;
-	int result;
-
-	if (s1 == NULL || s2 == NULL) return 0;
-
-	if ((s1p = strdup(s1)) == NULL) return 0;
-	if ((s2p = strdup(s2)) == NULL) {
-		free(s1p);
-		return 0;
-	}
-
-	qStrupr(s1p), qStrupr(s2p);
-
-	result = strncmp(s1p, s2p, len);
-	free(s1p), free(s2p);
-
-	return result;
-}
-
 /*********************************************
 ** Usage : qStrtok(string, token stop string, return stop character);
 ** Do    : Find token string. (usage like strtok())

@@ -475,7 +475,7 @@ static int _parse_multipart_data(void) {
 		/* get information */
 		while (_fgets(buf, sizeof(buf), stdin)) {
 			if (!strcmp(buf, "\r\n")) break;
-			else if (!qStrincmp(buf, "Content-Disposition: ", strlen("Content-Disposition: "))) {
+			else if (!strncasecmp(buf, "Content-Disposition: ", strlen("Content-Disposition: "))) {
 				int c_count;
 
 				/* get name field */
@@ -501,7 +501,7 @@ static int _parse_multipart_data(void) {
 					}
 					qRemoveSpace(filename);
 				}
-			} else if (!qStrincmp(buf, "Content-Type: ", strlen("Content-Type: "))) {
+			} else if (!strncasecmp(buf, "Content-Type: ", strlen("Content-Type: "))) {
 				contenttype = strdup(buf + strlen("Content-Type: "));
 				qRemoveSpace(contenttype);
 			}

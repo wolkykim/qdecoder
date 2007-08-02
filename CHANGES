@@ -39,6 +39,7 @@ qDecoder Changes
     FIX) Q_Entry -> Q_ENTRY
     REM) qSocketSetNonblock();
     FIX) qSocketGets(), qSocketPrintf()
+    REM) qStricmp(), qStrincmp()
 
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive
