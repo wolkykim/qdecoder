@@ -260,24 +260,7 @@ bool qDbGetLastConnStatus(Q_DB *db) {
  *
  * @since not released yet
  */
-int qDbExecuteUpdate(Q_DB *db, char *format, ...) {
-	char query[1024];
-	va_list arglist;
-
-	va_start(arglist, format);
-	vsnprintf(query, sizeof(query)-1, format, arglist);
-	query[sizeof(query)-1] = '\0';
-	va_end(arglist);
-
-	return qDbExecuteUpdateHuge(db, query);
-}
-
-/**
- * Under-development
- *
- * @since not released yet
- */
-int qDbExecuteUpdateHuge(Q_DB *db, char *query) {
+int qDbExecuteUpdate(Q_DB *db, char *query) {
 	if (db == NULL || db->connected == false) return -1;
 
 #ifdef _Q_WITH_MYSQL
@@ -303,7 +286,7 @@ int qDbExecuteUpdateHuge(Q_DB *db, char *query) {
  *
  * @since not released yet
  */
-Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *format, ...) {
+int qDbExecuteUpdatef(Q_DB *db, char *format, ...) {
 	char query[1024];
 	va_list arglist;
 
@@ -312,7 +295,7 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *format, ...) {
 	query[sizeof(query)-1] = '\0';
 	va_end(arglist);
 
-	return qDbExecuteQueryHuge(db, query);
+	return qDbExecuteUpdate(db, query);
 }
 
 /**
@@ -320,7 +303,7 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *format, ...) {
  *
  * @since not released yet
  */
-Q_DBRESULT *qDbExecuteQueryHuge(Q_DB *db, char *query) {
+Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
 	if (db == NULL || db->connected == false) return NULL;
 
 #ifdef _Q_WITH_MYSQL
@@ -351,6 +334,23 @@ Q_DBRESULT *qDbExecuteQueryHuge(Q_DB *db, char *query) {
 #else
 	return NULL;
 #endif
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
+Q_DBRESULT *qDbExecuteQueryf(Q_DB *db, char *format, ...) {
+	char query[1024];
+	va_list arglist;
+
+	va_start(arglist, format);
+	vsnprintf(query, sizeof(query)-1, format, arglist);
+	query[sizeof(query)-1] = '\0';
+	va_end(arglist);
+
+	return qDbExecuteQuery(db, query);
 }
 
 /**

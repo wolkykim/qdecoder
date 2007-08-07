@@ -212,7 +212,7 @@ int qArgEmprint(int mode, char *str, char **qlist) {
 
 	for (matches = 0; *sp != '\0';) {
 		for (i = 0, flag = 0; qlist[i] != NULL; i++) {
-			if (!qStrincmp(sp, qlist[i], strlen(qlist[i]))) {
+			if (!strncasecmp(sp, qlist[i], strlen(qlist[i]))) {
 				*bp = '\0'; /* Mark string end */
 				qPuts(mode, buf); /* flash buffer */
 				bp = buf; /* reset buffer pointer */
