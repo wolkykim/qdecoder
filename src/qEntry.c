@@ -65,7 +65,7 @@ Q_ENTRY *qEntryAdd(Q_ENTRY *first, char *name, char *value, int flag) {
 	entries->next  = NULL;
 
 	/* If first is not NULL, find last entry then make a link*/
-	if (first) {
+	if (first != NULL) {
 		for (; first->next; first = first->next);
 		first->next = entries;
 	}

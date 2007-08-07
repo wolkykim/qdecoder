@@ -61,9 +61,13 @@ exec_prefix	= ${prefix}
 #WITH_MYSQL	= -DWITH_MYSQL
 #MYSQL_INCLUDE	= -I/usr/local/include/mysql -I /usr/local/mysql/include
 
-## Hash-table Support - qHashtbl.c
+## Hash-table Support
 ## Influence on : qHashtbl.c
 #WITHOUT_HASHTBL	= -DWITHOUT_HASHTBL
+
+## Obstack Support
+## Influence on : qObstack.c
+#WITHOUT_OBSTACK	= -DWITHOUT_OBSTACK
 
 ## Rotating File Logging API
 ## Influence on : qLog.c
@@ -136,6 +140,7 @@ OBJ		= qDecoder.o		\
 					\
 		qEntry.o		\
 		qHashtbl.o		\
+		qObstack.o		\
 					\
 		qLog.o			\
 					\

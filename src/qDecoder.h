@@ -111,6 +111,17 @@ typedef struct {
 	int	*size;			/*!< value size */
 } Q_HASHTBL;
 
+/**
+ * Structure for Obstack
+ */
+typedef struct {
+	int	size;			/*!< total object size */
+	int	num;			/*!< number of objects */
+	struct Q_ENTRY *first;		/*!< first object pointer */
+	struct Q_ENTRY *last;		/*!< last object pointer */
+	void	*final;			/*!< final object pointer */
+} Q_OBSTACK;
+
 #ifndef _DOXYGEN_SKIP
 
 /* qDecoder C++ support */
@@ -322,6 +333,14 @@ char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size);
 bool qHashtblRemove(Q_HASHTBL *tbl, char *key);
 void qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
 bool qHashtblFree(Q_HASHTBL *tbl);
+
+/*
+ * qObstack.c
+ */
+Q_OBSTACK *qObstackInit(void);
+bool	qObstackGrow(Q_OBSTACK *obstack, void *data, int size);
+void	*qObstackFinish(Q_OBSTACK *obstack);
+bool	qObstackFree(Q_OBSTACK *obstack);
 
 /*
  * qLog.c
