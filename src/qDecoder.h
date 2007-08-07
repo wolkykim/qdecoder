@@ -271,9 +271,11 @@ char	*qDbGetErrMsg(Q_DB *db);
 bool	qDbPing(Q_DB *db);
 bool	qDbGetLastConnStatus(Q_DB *db);
 
-int	qDbExecuteUpdate(Q_DB *db, char *query);
+int	qDbExecuteUpdate(Q_DB *db, char *format, ...);
+int	qDbExecuteUpdateHuge(Q_DB *db, char *query);
 
-Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query);
+Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *format, ...);
+Q_DBRESULT *qDbExecuteQueryHuge(Q_DB *db, char *query);
 bool	qDbResultNext(Q_DBRESULT *result);
 bool	qDbResultFree(Q_DBRESULT *result);
 
