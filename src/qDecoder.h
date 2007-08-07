@@ -339,6 +339,7 @@ bool qHashtblFree(Q_HASHTBL *tbl);
  */
 Q_OBSTACK *qObstackInit(void);
 bool	qObstackGrow(Q_OBSTACK *obstack, void *data, int size);
+bool	qObstackGrowStr(Q_OBSTACK *obstack, char *str);
 void	*qObstackFinish(Q_OBSTACK *obstack);
 void	*qObstackGetFinal(Q_OBSTACK *obstack);
 int	qObstackGetSize(Q_OBSTACK *obstack);

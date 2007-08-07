@@ -28,9 +28,9 @@
  *   Q_OBSTACK *obstack = qObstackInit();
  *   char *final;
  *
- *   qObstackGrow(obstack, "A", 1);
- *   qObstackGrow(obstack, "BC", 2);
- *   qObstackGrow(obstack, "DEF", 3);
+ *   qObstackGrowStr(obstack, "AB");	// no need to supply size
+ *   qObstackGrow(obstack, "CDE", 3);	// same effects as above but this can
+ *   qObstackGrow(obstack, "FGH", 3);	// be used for object or binary
  *
  *   final = (char *)qObstackFinish(obstack);
  *   printf("%s\n", final);
@@ -88,6 +88,15 @@ bool qObstackGrow(Q_OBSTACK *obstack, void *data, int size) {
 	obstack->num++;
 
 	return true;
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
+bool qObstackGrowStr(Q_OBSTACK *obstack, char *str) {
+	return qObstackGrow(obstack, (void *)str, strlen(str));
 }
 
 /**
