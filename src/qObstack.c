@@ -25,18 +25,28 @@
  * -DWITHOUT_OBSTACK.
  *
  * @code
- *   Q_OBSTACK *obstack = qObstackInit();
+ *   [Code sample]
+ *   Q_OBSTACK *obstack;
  *   char *final;
+ *   int *tmp = "CDE";
+ *
+ *   obstack = qObstackInit();		// get new obstack
  *
  *   qObstackGrowStr(obstack, "AB");	// no need to supply size
- *   qObstackGrow(obstack, "CDE", 3);	// same effects as above but this can
- *   qObstackGrow(obstack, "FGH", 3);	// be used for object or binary
+ *   qObstackGrowStrf(obstack, "%s", tmp);	// for formatted string
+ *   qObstackGrow(obstack, "FGH", 3);	// same effects as above but this can
+ *					// be used for object or binary
  *
  *   final = (char *)qObstackFinish(obstack);
  *   printf("%s\n", final);
  *
  *   qObstackFree(obstack);
+ *
+ *   [Result]
+ *   ABCDEFGH
  * @endcode
+ *
+ *ABCDEFGH
  */
 
 #ifndef WITHOUT_OBSTACK
@@ -44,6 +54,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 #include "qDecoder.h"
 
@@ -96,6 +107,23 @@ bool qObstackGrow(Q_OBSTACK *obstack, void *data, int size) {
  * @since not released yet
  */
 bool qObstackGrowStr(Q_OBSTACK *obstack, char *str) {
+	return qObstackGrow(obstack, (void *)str, strlen(str));
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
+bool qObstackGrowStrf(Q_OBSTACK *obstack, char *format, ...) {
+	char str[1024];
+	va_list arglist;
+
+	va_start(arglist, format);
+	vsnprintf(str, sizeof(str)-1, format, arglist);
+	str[sizeof(str)-1] = '\0';
+	va_end(arglist);
+
 	return qObstackGrow(obstack, (void *)str, strlen(str));
 }
 

@@ -23,13 +23,21 @@
 #include "qDecoder.h"
 
 int main(void) {
-	Q_OBSTACK *obstack = qObstackInit();
+	Q_OBSTACK *obstack;
 
-	qObstackGrow(obstack, "A", 1);
-	qObstackGrow(obstack, "BC", 2);
-	qObstackGrow(obstack, "DEF", 3);
+	char *final;
+	int *tmp = "CDE";
+
+	obstack = qObstackInit();		// get new obstack
+
+	qObstackGrowStr(obstack, "AB");		// no need to supply size
+	qObstackGrowStrf(obstack, "%s", tmp);	// for formatted string
+	qObstackGrow(obstack, "FGH", 3);	// same effects as above but this can
+						// be used for object or binary
 
 	qContentType("text/plain");
-	printf("%s\n", qObstackFinish(obstack));
+	final = (char *)qObstackFinish(obstack);
+	printf("%s\n", final);
+
 	qObstackFree(obstack);
 }
