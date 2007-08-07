@@ -180,6 +180,16 @@ int qObstackGetSize(Q_OBSTACK *obstack) {
  *
  * @since not released yet
  */
+int qObstackGetNum(Q_OBSTACK *obstack) {
+	if(obstack == NULL) return 0;
+	return obstack->num;
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
 bool qObstackFree(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return false;
 	qEntryFree(obstack->first);

@@ -344,6 +344,7 @@ bool	qObstackGrowStrf(Q_OBSTACK *obstack, char *format, ...);
 void	*qObstackFinish(Q_OBSTACK *obstack);
 void	*qObstackGetFinal(Q_OBSTACK *obstack);
 int	qObstackGetSize(Q_OBSTACK *obstack);
+int	qObstackGetNum(Q_OBSTACK *obstack);
 bool	qObstackFree(Q_OBSTACK *obstack);
 
 /*
