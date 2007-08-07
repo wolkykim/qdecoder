@@ -79,10 +79,10 @@ Q_OBSTACK *qObstackInit(void) {
  * @since not released yet
  */
 bool qObstackGrow(Q_OBSTACK *obstack, void *data, int size) {
+	if(obstack == NULL || data == NULL || size <= 0) return false;
+
 	char *name;
 	void *value;
-
-	if(size <= 0) return false;
 
 	name = (char *)malloc(10+1);
 	if(name == NULL) return false;
@@ -116,6 +116,8 @@ bool qObstackGrowStr(Q_OBSTACK *obstack, char *str) {
  * @since not released yet
  */
 bool qObstackGrowStrf(Q_OBSTACK *obstack, char *format, ...) {
+	if(obstack == NULL) return false;
+
 	char str[1024];
 	va_list arglist;
 
@@ -133,6 +135,8 @@ bool qObstackGrowStrf(Q_OBSTACK *obstack, char *format, ...) {
  * @since not released yet
  */
 void *qObstackFinish(Q_OBSTACK *obstack) {
+	if(obstack == NULL) return NULL;
+
 	Q_ENTRY *entries;
 	void *dp;
 
@@ -157,6 +161,7 @@ void *qObstackFinish(Q_OBSTACK *obstack) {
  * @since not released yet
  */
 void *qObstackGetFinal(Q_OBSTACK *obstack) {
+	if(obstack == NULL) return NULL;
 	return obstack->final;
 }
 
@@ -166,6 +171,7 @@ void *qObstackGetFinal(Q_OBSTACK *obstack) {
  * @since not released yet
  */
 int qObstackGetSize(Q_OBSTACK *obstack) {
+	if(obstack == NULL) return 0;
 	return obstack->size;
 }
 
@@ -175,6 +181,7 @@ int qObstackGetSize(Q_OBSTACK *obstack) {
  * @since not released yet
  */
 bool qObstackFree(Q_OBSTACK *obstack) {
+	if(obstack == NULL) return false;
 	qEntryFree(obstack->first);
 	free(obstack);
 	return true;
