@@ -22,22 +22,74 @@
 #include <stdbool.h>
 #include "qDecoder.h"
 
-int main(void) {
+void stringSample(void) {
 	Q_OBSTACK *obstack;
 
 	char *final;
-	int *tmp = "CDE";
+	char *tmp = "CDE";
 
-	obstack = qObstackInit();		// get new obstack
+	// get new obstack
+	obstack = qObstackInit();
 
+	// stack
 	qObstackGrowStr(obstack, "AB");		// no need to supply size
 	qObstackGrowStrf(obstack, "%s", tmp);	// for formatted string
 	qObstackGrow(obstack, "FGH", 3);	// same effects as above but this can
 						// be used for object or binary
 
-	qContentType("text/plain");
+	// final
 	final = (char *)qObstackFinish(obstack);
-	printf("%s\n", final);
+
+
+	// print out
+	qContentType("text/plain");
+	printf("[String Sample]\n");
+	printf("Final string = %s\n", final);
+	printf("Total Size = %d, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
 
 	qObstackFree(obstack);
+}
+
+
+void objectSample(void) {
+	Q_OBSTACK *obstack;
+	int i;
+
+	// sample object
+	struct sampleobj {
+		int	num;
+		char	str[10];
+	} obj, *final;
+
+	// get new obstack
+	obstack = qObstackInit();
+
+	// stack
+	for(i = 0; i < 3; i++) {
+		// filling object with sample data
+		obj.num  = i;
+		sprintf(obj.str, "hello%d", i);
+
+		// stack
+		qObstackGrow(obstack, (void *)&obj, sizeof(struct sampleobj));
+	}
+
+	// final
+	final = (struct sampleobj *)qObstackFinish(obstack);
+
+	// print out
+	qContentType("text/plain");
+	printf("[Object Sample]\n");
+	for(i = 0; i < qObstackGetNum(obstack); i++) {
+		printf("Object%d final = %d, %s\n", i+1, final[i].num, final[i].str);
+	}
+	printf("Total Size = %d, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
+
+	qObstackFree(obstack);
+}
+
+int main(void) {
+	stringSample();
+	printf("\n");
+	objectSample();
 }

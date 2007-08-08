@@ -25,28 +25,81 @@
  * -DWITHOUT_OBSTACK.
  *
  * @code
- *   [Code sample]
+ *   [Code sample - String]
  *   Q_OBSTACK *obstack;
+ *
  *   char *final;
- *   int *tmp = "CDE";
+ *   char *tmp = "CDE";
  *
- *   obstack = qObstackInit();		// get new obstack
+ *   // get new obstack
+ *   obstack = qObstackInit();
  *
- *   qObstackGrowStr(obstack, "AB");	// no need to supply size
+ *   // stack
+ *   qObstackGrowStr(obstack, "AB");		// no need to supply size
  *   qObstackGrowStrf(obstack, "%s", tmp);	// for formatted string
  *   qObstackGrow(obstack, "FGH", 3);	// same effects as above but this can
- *					// be used for object or binary
+ *   					// be used for object or binary
  *
+ *   // final
  *   final = (char *)qObstackFinish(obstack);
- *   printf("%s\n", final);
+ *
+ *
+ *   // print out
+ *   printf("Final string = %s\n", final);
+ *   printf("Total Size = %d, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
  *
  *   qObstackFree(obstack);
  *
  *   [Result]
- *   ABCDEFGH
+ *   Final string = ABCDEFGH
+ *   Total Size = 8, Number of Objects = 3
  * @endcode
  *
- *ABCDEFGH
+ * @code
+ *   [Code sample - Object]
+ *   struct sampleobj {
+ *   	int	num;
+ *   	char	str[10];
+ *   };
+ *
+ *   Q_OBSTACK *obstack;
+ *   int i;
+ *
+ *   // sample object
+ *   struct sampleobj obj;
+ *   struct sampleobj *final;
+ *
+ *   // get new obstack
+ *   obstack = qObstackInit();
+ *
+ *   // stack
+ *   for(i = 0; i < 3; i++) {
+ *   	// filling object with sample data
+ *   	obj.num  = i;
+ *   	sprintf(obj.str, "hello%d", i);
+ *
+ *   	// stack
+ *   	qObstackGrow(obstack, (void *)&obj, sizeof(struct sampleobj));
+ *   }
+ *
+ *   // final
+ *   final = (struct sampleobj *)qObstackFinish(obstack);
+ *
+ *   // print out
+ *   qContentType("text/plain");
+ *   for(i = 0; i < qObstackGetNum(obstack); i++) {
+ *   	printf("Object%d final = %d, %s\n", i+1, final[i].num, final[i].str);
+ *   }
+ *   printf("Total Size = %d, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
+ *
+ *   qObstackFree(obstack);
+ *
+ *   [Result]
+ *   Object1 final = 0, hello0
+ *   Object2 final = 1, hello1
+ *   Object3 final = 2, hello2
+ *   Total Size = 48, Number of Objects = 3
+ * @endcode
  */
 
 #ifndef WITHOUT_OBSTACK
