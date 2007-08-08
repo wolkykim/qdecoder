@@ -26,53 +26,101 @@
 #include <stdbool.h>
 #include "qDecoder.h"
 
-/**********************************************
-** Usage : qGetTime();
-** Return: Pointer of struct tm.
-** Do    : Get time.
-**********************************************/
-struct tm *qGetTime(void) {
-	time_t nowtime;
-	static struct tm *nowlocaltime;
+/**
+ * Get adjusted time structure tm.
+ *
+ * tm_year = YYYY
+ * tm_mon = 1~12
+ *
+ * @param univtime	0 for current time, universal time for specific time
+ *
+ * @return	struct tm
+ *
+ * @code
+ *   struct tm *now = qGetTimeStructure(0);
+ *   struct tm *onedaylater = qGetTimeStructure(time(NULL) + 86400);
+ * @endcode
+ */
+struct tm *qGetTimeStructure(time_t univtime) {
+	struct tm *localtm;
 
-	nowtime = time(NULL);
-	nowlocaltime = localtime(&nowtime);
-	nowlocaltime->tm_year += 1900;
-	nowlocaltime->tm_mon++;
+	if(univtime == 0) univtime = time(NULL);
+	localtm = localtime(&univtime);
+	localtm->tm_year += 1900;
+	localtm->tm_mon++;
 
-	return nowlocaltime;
+	return localtm;
 }
 
-/**********************************************
-** Usage : qGetGmtime(gmt, plus_sec);
-** Do    : Make string of GMT Time for Cookie.
-** Return: Amount second from 1970/00/00 00:00:00.
-** Note  : plus_sec will be added to current time.
-**********************************************/
-time_t qGetGmtime(char *gmt, time_t plus_sec) {
-	time_t nowtime;
-	struct tm *nowgmtime;
+/**
+ * Get local time string formatted by 'YYYYMMDDhhmmss'.
+ *
+ * @param univtime	0 for current time, universal time for specific time
+ *
+ * @return	string pointer which points time string formatted by 'YYYYMMDDhhmmss'
+ *
+ * @code
+ *   printf("%s", qGetTimeStr(0));			// now
+ *   printf("%s", qGetTimeStr(time(NULL)));		// same as above
+ *   printf("%s", qGetTimeStr(time(NULL) + 86400));	// 1 day later
+ * @endcode
+ */
+char *qGetTimeStr(time_t univtime) {
+	struct tm *localtm;
+	static char timestr[14+1];
 
-	nowtime = time(NULL);
-	nowtime += plus_sec;
-	nowgmtime = gmtime(&nowtime);
+	if(univtime == 0) univtime = time(NULL);
+	localtm = qGetTimeStructure(univtime);
 
-	if(gmt != NULL) strftime(gmt, 256, "%a, %d-%b-%Y %H:%M:%S GMT", nowgmtime);
-
-	return nowtime;
+	snprintf(timestr, sizeof(timestr), "%04d%02d%02d%02d%02d%02d", localtm->tm_year, localtm->tm_mon, localtm->tm_mday, localtm->tm_hour, localtm->tm_min, localtm->tm_sec);
+	return timestr;
 }
 
-/**********************************************
-** Usage : qGetTimeStr();
-** Return: returns the string formatted by 'YYYYMMDDhhmmss'.
-** Do    : get time string.
-**********************************************/
-char *qGetTimeStr(void) {
-	static char datestr[14+1];
-	struct tm *time;
+/**
+ * Get custom formmatted local time string.
+ *
+ * @param univtime	0 for current time, universal time for specific time
+ * @param savebuf	where to string saved
+ * @param bufsize	size of savebuf
+ * @param format	format for strftime()
+ *
+ * @return	string pointer of savebuf
+ *
+ * @code
+ *   char savebuf[30+1];
+ *   qGetTimeStrf(0, savebuf, sizeof(savebuf), "%H:%M:%S"); // HH:MM:SS
+ * @endcode
+ */
+char *qGetTimeStrf(time_t univtime, char *savebuf, int bufsize, char *format) {
+	struct tm *localtm;
 
-	time = qGetTime();
-	snprintf(datestr, sizeof(datestr), "%04d%02d%02d%02d%02d%02d", time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
+	if(univtime == 0) univtime = time(NULL);
+	localtm = localtime(&univtime);
 
-	return datestr;
+	strftime(savebuf, bufsize, format, localtm);
+
+	return savebuf;
+}
+
+/**
+ * Get gmt time string formatted like 'Wed, 11-Nov-2007 23:19:25 GMT'.
+ *
+ * @param univtime	0 for current time, universal time for specific time
+ *
+ * @return	string pointer which points gmt time string.
+ *
+ * @code
+ *   printf("%s", qGetTimeStr(0));			// now
+ *   printf("%s", qGetTimeStr(time(NULL) + 86400));	// 1 day later
+ * @endcode
+ */
+char *qGetGmtimeStr(time_t univtime) {
+	struct tm *gmtm;
+	static char timestr[29+1];
+
+	if(univtime == 0) univtime = time(NULL);
+	gmtm = gmtime(&univtime);
+
+	strftime(timestr, sizeof(timestr), "%a, %d-%b-%Y %H:%M:%S GMT", gmtm);
+	return timestr;
 }

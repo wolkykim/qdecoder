@@ -1395,10 +1395,8 @@ bool qCookieSet(char *name, char *value, int exp_days, char *path, char *domain,
 	free(Name), free(Value);
 
 	if (exp_days != 0) {
-		time_t plus_sec;
-		char gmt[256];
-		plus_sec = (time_t)(exp_days * 24 * 60 * 60);
-		qGetGmtime(gmt, plus_sec);
+		time_t plus_sec = (time_t)(exp_days * 24 * 60 * 60);
+		char *gmt = qGetGmtimeStr(time(NULL) + plus_sec);
 		strcat(cookie, "; expires=");
 		strcat(cookie, gmt);
 	}

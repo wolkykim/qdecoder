@@ -421,9 +421,10 @@ int	qCountUpdate(char *filename, int number);
 /*
  * qTime.c
  */
-struct tm *qGetTime(void);
-time_t	qGetGmtime(char *gmt, time_t plus_sec);
-char	*qGetTimeStr(void);
+struct tm *qGetTimeStructure(time_t univtime);
+char	*qGetTimeStr(time_t univtime);
+char	*qGetTimeStrf(time_t univtime, char *savebuf, int bufsize, char *format);
+char	*qGetGmtimeStr(time_t univtime);
 
 /*
  * qError.c

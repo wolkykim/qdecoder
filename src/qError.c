@@ -65,7 +65,7 @@ void qError(char *format, ...) {
 			char *http_user_agent, *remote_host;
 			struct tm *time;
 
-			time = qGetTime();
+			time = qGetTimeStructure(0);
 
 			if ((http_user_agent = getenv("HTTP_USER_AGENT")) == NULL) http_user_agent = "null";
 			if ((remote_host     = getenv("REMOTE_HOST"))     == NULL) {

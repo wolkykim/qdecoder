@@ -141,18 +141,16 @@ int qSession(char *repository) {
 
 	/* if new session, set session id */
 	if (new_session == true) {
-		char created_gmt[32], created_sec[32];
-		time_t nowtime;
+		char created_sec[32];
 
 		qCookieSet(SESSION_ID, sessionkey, 0, "/", NULL, NULL);
 		qAdd(SESSION_ID, sessionkey); /* force to add session_in to query list */
 
 		/* save session informations */
-		nowtime = qGetGmtime(created_gmt, (time_t)0);
-		snprintf(created_sec, sizeof(created_sec), "%ld", (long)nowtime);
+		snprintf(created_sec, sizeof(created_sec), "%ld", time(NULL));
 
 		_session_first_entry = qEntryAdd(_session_first_entry, INTER_SESSIONID, sessionkey, 1);
-		qEntryAdd(_session_first_entry, INTER_CREATED_GMT, created_gmt, 1);
+		qEntryAdd(_session_first_entry, INTER_CREATED_GMT, qGetGmtimeStr(0), 1);
 		qEntryAdd(_session_first_entry, INTER_CREATED_SEC, created_sec, 1);
 		qEntryAdd(_session_first_entry, INTER_CONNECTIONS, "1", 1);
 
