@@ -55,6 +55,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "qDecoder.h"
+#include "qInternal.h"
 
 /**
  * Open file for tokenizing
@@ -84,7 +85,10 @@ int qAwkNext(FILE *fp, char array[][1024], char delim) {
 	char *buf;
 	int num;
 
-	if (fp == NULL) qError("qAwkNext(): There is no opened handle.");
+	if (fp == NULL) {
+		DEBUG("There is no opened handle.");
+		return -1;
+	}
 	if ((buf = qRemoveSpace(qFileReadLine(fp))) == NULL) return -1;
 	num = qAwkStr(array, buf, delim);
 	free(buf);

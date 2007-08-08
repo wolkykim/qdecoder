@@ -70,7 +70,10 @@ char *qFileReadString(FILE *fp) {
 	for (memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
 		if (c_count == 0) {
 			string = (char *)malloc(sizeof(char) * memsize);
-			if (string == NULL) qError("qFileReadString(): Memory allocation fail.");
+			if (string == NULL) {
+				DEBUG("Memory allocation failed.");
+				return NULL;
+			}
 		} else if (c_count == memsize - 1) {
 			char *stringtmp;
 
@@ -78,7 +81,11 @@ char *qFileReadString(FILE *fp) {
 
 			/* Here, we do not use realloc(). Because sometimes it is unstable. */
 			stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
-			if (stringtmp == NULL) qError("qFileReadString(): Memory allocation fail.");
+			if (stringtmp == NULL) {
+				DEBUG("Memory allocation failed.");
+				free(string);
+				return NULL;
+			}
 			memcpy(stringtmp, string, c_count);
 			free(string);
 			string = stringtmp;
@@ -107,7 +114,10 @@ char *qfGetLine(FILE *fp) {
 	for (memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
 		if (c_count == 0) {
 			string = (char *)malloc(sizeof(char) * memsize);
-			if (string == NULL) qError("qfGetLine(): Memory allocation fail.");
+			if (string == NULL) {
+				DEBUG("Memory allocation failed.");
+				return NULL;
+			}
 		} else if (c_count == memsize - 1) {
 			char *stringtmp;
 
@@ -115,7 +125,11 @@ char *qfGetLine(FILE *fp) {
 
 			/* Here, we do not use realloc(). Because sometimes it is unstable. */
 			stringtmp = (char *)malloc(sizeof(char) * (memsize + 1));
-			if (stringtmp == NULL) qError("qfGetLine(): Memory allocation fail.");
+			if (stringtmp == NULL) {
+				DEBUG("Memory allocation failed.");
+				free(string);
+				return NULL;
+			}
 			memcpy(stringtmp, string, c_count);
 			free(string);
 			string = stringtmp;
@@ -199,7 +213,11 @@ char *qReadFile(char *filename, int *size) {
 	for (tmp = sp, i = 0; (c = fgetc(fp)) != EOF; tmp++, i++) *tmp = (char)c;
 	*tmp = '\0';
 
-	if (fstat.st_size != i) qError("qReadFile: Size(File:%d, Readed:%d) mismatch.", fstat.st_size, i);
+	if (fstat.st_size != i) {
+		DEBUG("Size(File:%d, Readed:%d) mismatch.", (int)fstat.st_size, i);
+		free(sp);
+		return NULL;
+	}
 	fclose(fp);
 	if (size != NULL) *size = i;
 	return sp;

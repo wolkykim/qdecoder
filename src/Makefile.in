@@ -25,11 +25,11 @@ exec_prefix	= ${prefix}
 ##########################################################################
 
 ## Web Application(CGI) API
-## Influence on : qDecoder.c, qSession.c, qHttpHeader.c qDownload.c
+## Influence on : qDecoder.c, qSession.c, qHttpHeader.c qDownload.c qError.c
 ##
-## If you do not use qDecoder for CGI interfacing, uncomments WITHOUT_CGISUPPORT.
-## This will disable all CGI interface functions such like qDecoder(), qGetValue(),
-## qSession(), qContentType(), qDownload(), etc...
+## If you do not use qDecoder for CGI interfacing, uncomment WITHOUT_CGISUPPORT.
+## This will disable all CGI interface functions such like qDecoder(),
+## qGetValue(), qSession(), qContentType(), qDownload(), qError(), etc...
 #WITHOUT_CGISUPPORT	= -DWITHOUT_CGISUPPORT
 
 ## Configuration File & String Handling API

@@ -77,6 +77,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "qDecoder.h"
+#include "qInternal.h"
 
 /**
  * Split string by space and double quotation(") then
@@ -186,7 +187,7 @@ int qArgMatch(char *str, char **qlist) {
  *
  * @return	the number of tokens found in a character string.
  *		unlike qArgMatch(), this returns all the matching counts
- *		including repeated matchings.
+ *		including repeated matchings. On the error, returns -1;
  *
  * @code
  *   qArgEmprint(1, "Hi, I'm a pretty boy. Are you pretty girl?", qlist);
@@ -208,7 +209,11 @@ int qArgEmprint(int mode, char *str, char **qlist) {
 	sp = freestr = strdup(str);
 	qStrupr(sp);
 
-	if ((bp = buf = (char *)malloc(strlen(str) + 1)) == NULL) qError("Memory allocation fail.");
+	if ((bp = buf = (char *)malloc(strlen(str) + 1)) == NULL) {
+		DEBUG("Memory allocation failed.");
+		free(str);
+		return -1;
+	}
 
 	for (matches = 0; *sp != '\0';) {
 		for (i = 0, flag = 0; qlist[i] != NULL; i++) {

@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include "qDecoder.h"
+#include "qInternal.h"
 
 /**********************************************
 ** Usage : qPrintf(mode, format, arg);
@@ -37,7 +38,7 @@
 ** Do    : Print message like printf.
 **         Mode : see qPuts()
 **********************************************/
-int qPrintf(int mode, char *format, ...) {
+bool qPrintf(int mode, char *format, ...) {
 	char buf[1024*10];
 	va_list arglist;
 	int status;
@@ -47,9 +48,7 @@ int qPrintf(int mode, char *format, ...) {
 	buf[sizeof(buf)-1] = '\0';
 	va_end(arglist);
 
-	qPuts(mode, buf);
-
-	return status;
+	return qPuts(mode, buf);
 }
 
 /**********************************************
@@ -90,9 +89,9 @@ int qPrintf(int mode, char *format, ...) {
 ** You can use 1x mode, to wrap long lines with no <pre> tag.
 ** Note) It modify argument string.
 **********************************************/
-void qPuts(int mode, char *buf) {
+bool qPuts(int mode, char *buf) {
 
-	if (buf == NULL) return;
+	if (buf == NULL) return false;
 
 	if (mode == 0) printf("%s", buf);
 	else if (mode == 10) {
@@ -216,8 +215,8 @@ void qPuts(int mode, char *buf) {
 			}
 
 			default: {
-				qError("_autolink(): Invalid Mode (%d).", mode);
-				break;
+				DEBUG("_autolink(): Invalid Mode (%d).", mode);
+				return false;
 			}
 		}
 
@@ -278,6 +277,8 @@ void qPuts(int mode, char *buf) {
 			ptr = qStrtok(NULL, token, &retstop);
 		}
 	}
+
+	return true;
 }
 
 /**********************************************
@@ -385,7 +386,10 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
 	/* initialize pointers to avoid compile warnings */
 	newstr = newp = srcp = tokenp = retp = NULL;
 
-	if (strlen(mode) != 2) qError("qStrReplace(): Unknown mode \"%s\".", mode);
+	if (strlen(mode) != 2) {
+		DEBUG("Unknown mode \"%s\".", mode);
+		return NULL;
+	}
 	method = mode[0], memuse = mode[1];
 
 	/* Put replaced string into malloced 'newstr' */
@@ -422,7 +426,10 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
 			} else *newp++ = *srcp;
 		}
 		*newp = '\0';
-	} else qError("qStrReplace(): Unknown mode \"%s\".", mode);
+	} else {
+		DEBUG("Unknown mode \"%s\".", mode);
+		return NULL;
+	}
 
 	/* Decide whether newing the memory or replacing into exist one */
 	if (memuse == 'n') retp = newstr;
@@ -430,7 +437,11 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
 		strcpy(srcstr, newstr);
 		free(newstr);
 		retp = srcstr;
-	} else qError("qStrReplace(): Unknown mode \"%s\".", mode);
+	} else {
+		DEBUG("Unknown mode \"%s\".", mode);
+		free(newstr);
+		return NULL;
+	}
 
 	return retp;
 }

@@ -46,7 +46,10 @@ Q_ENTRY *qSedAdd(Q_ENTRY *first, char *name, char *format, ...) {
 	char value[1024];
 	va_list arglist;
 
-	if (!strcmp(name, "")) qError("qSedAdd(): can not add empty name.");
+	if (!strcmp(name, "")) {
+		DEBUG("Can't add empty name.");
+		return first;
+	}
 
 	va_start(arglist, format);
 	vsnprintf(value, sizeof(value)-1, format, arglist);
@@ -69,7 +72,10 @@ Q_ENTRY *qSedAdd(Q_ENTRY *first, char *name, char *format, ...) {
 Q_ENTRY *qSedAddDirect(Q_ENTRY *first, char *name, char *value) {
 	Q_ENTRY *new_entry;
 
-	if (!strcmp(name, "")) qError("qSedAddDirect(): can not add empty name.");
+	if (!strcmp(name, "")) {
+		DEBUG("Can't add empty name.");
+		return first;
+	}
 
 	new_entry = qEntryAdd(first, name, value, 1);
 	if (!first) first = new_entry;

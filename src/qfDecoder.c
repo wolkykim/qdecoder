@@ -74,7 +74,11 @@ Q_ENTRY *qfDecoder(char *file) {
 			/* parse filename */
 			for (e = p + strlen(_INCLUDE_DIRECTIVE); *e != '\n' && *e != '\0'; e++);
 			len = e - (p + strlen(_INCLUDE_DIRECTIVE));
-			if (len >= sizeof(buf)) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
+			if (len >= sizeof(buf)) {
+				DEBUG("Can't process %s directive.", _INCLUDE_DIRECTIVE);
+				free(str);
+				return NULL;
+			}
 			strncpy(buf, p + strlen(_INCLUDE_DIRECTIVE), len);
 			buf[len] = '\0';
 			qRemoveSpace(buf);
@@ -84,14 +88,22 @@ Q_ENTRY *qfDecoder(char *file) {
 				char tmp[1024], *dir, *newfile;
 				newfile = strdup(file);
 				dir = dirname(newfile);
-				if (strlen(dir) + 1 + strlen(buf) >= sizeof(buf)) qError("qfDecoder(): Can't process %s directive.", _INCLUDE_DIRECTIVE);
+				if (strlen(dir) + 1 + strlen(buf) >= sizeof(buf)) {
+					DEBUG("Can't process %s directive.", _INCLUDE_DIRECTIVE);
+					free(str);
+					return NULL;
+				}
 				snprintf(tmp, sizeof(tmp), "%s/%s", dir, buf);
 				strcpy(buf, tmp);
 				free(newfile);
 			}
 
 			/* read file */
-			if (strlen(buf) == 0 || (t = qReadFile(buf, NULL)) == NULL) qError("qfDecoder(): Can't process '%s%s' directive.", _INCLUDE_DIRECTIVE, buf);
+			if (strlen(buf) == 0 || (t = qReadFile(buf, NULL)) == NULL) {
+				DEBUG("Can't process '%s%s' directive.", _INCLUDE_DIRECTIVE, buf);
+				free(str);
+				return NULL;
+			}
 
 			/* replace */
 			strncpy(buf, p, strlen(_INCLUDE_DIRECTIVE) + len);

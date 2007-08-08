@@ -32,10 +32,7 @@ int     _flockclose(FILE *fp);
 #define QDECODER_PRIVATEKEY	"qDecoder-by-Seung_young_Kim"
 
 #ifdef BUILD_DEBUG
-#define DEBUG(fmt, args...) {						\
-	    printf("[DEBUG] " fmt, ##args);				\
-	    printf(" (%s:%d)\n", __FILE__, __LINE__);			\
-	}
+#define DEBUG(fmt, args...)	fprintf(stderr, "[DEBUG] " fmt " (%s:%d)\n", ##args, __FILE__, __LINE__);
 #else
 #define DEBUG(fms, args...)
 #endif

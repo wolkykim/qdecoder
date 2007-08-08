@@ -21,6 +21,8 @@
  * @file qError.c Error Handling API
  */
 
+#ifndef WITHOUT_CGISUPPORT
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -121,3 +123,4 @@ void qErrorContact(char *msg) {
 	_error_contact_info = msg;
 }
 
+#endif /* WITHOUT_CGISUPPORT */

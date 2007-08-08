@@ -374,8 +374,8 @@ unsigned int qFnv32Hash(char *str, unsigned int max);
 /*
  * qString.c
  */
-int	qPrintf(int mode, char *format, ...);
-void	qPuts(int mode, char *buf);
+bool	qPrintf(int mode, char *format, ...);
+bool	qPuts(int mode, char *buf);
 char	*qRemoveSpace(char *str);
 char	*qRemoveTailSpace(char *str);
 char	*qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
