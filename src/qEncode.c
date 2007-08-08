@@ -105,7 +105,7 @@ char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
 
 	if(fromstr == NULL) return NULL;
 
-	fromsize = strlen(fromstr);
+	fromsize = strlen(fromstr) + 1;
 	tosize = (int)ceilf((float)fromsize * mag) + 1;
 	tostr = tp = (char *)malloc(tosize);
 	if(tostr == NULL) return NULL;
