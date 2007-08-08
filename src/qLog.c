@@ -122,7 +122,7 @@ bool qLog(Q_LOG *log, char *format, ...) {
 	va_end(arglist);
 
 	/* console out */
-	if (log->console == true) puts(buf);
+	if (log->console == true) printf("%s\n", buf);
 
 	/* check log rotate is needed*/
 	if (log->nextrotate > 0 && nowTime >= log->nextrotate) {
@@ -130,7 +130,7 @@ bool qLog(Q_LOG *log, char *format, ...) {
 	}
 
 	/* log to file */
-	if (fputs(buf, log->fp) < 0) return false;
+	if (fprintf(log->fp, "%s\n", buf) < 0) return false;
 
 	/* check flash flag */
 	if (log->flush == true) fflush(log->fp);

@@ -25,6 +25,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <iconv.h>
+#include <math.h>
+#include <errno.h>
 #include "md5/md5_global.h"
 #include "md5/md5.h"
 #include "qDecoder.h"
@@ -91,6 +94,36 @@ char *qUrlDecode(char *str) {
 	str[i] = '\0';
 
 	return str;
+}
+
+/**
+ * qCharEncode("ÇÑ±Û", "EUC-KR", "UTF-8", 1.5);
+ */
+char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
+	char *tostr, *tp;
+	size_t fromsize, tosize;
+
+	if(fromstr == NULL) return NULL;
+
+	fromsize = strlen(fromstr);
+	tosize = (int)ceilf((float)fromsize * mag) + 1;
+	tostr = tp = (char *)malloc(tosize);
+	if(tostr == NULL) return NULL;
+
+	iconv_t it = iconv_open(tocode, fromcode);
+	if(it < 0) {
+		DEBUG("iconv_open() failed. errno=%d", errno);
+		return NULL;
+	}
+	int ret = iconv(it, &fromstr, &fromsize, &tostr, &tosize);
+	if(ret < 0) {
+		DEBUG("iconv() failed. errno=%d", errno);
+		free(tostr);
+		return NULL;
+	}
+	iconv_close(it);
+
+	return tp;
 }
 
 /**********************************************

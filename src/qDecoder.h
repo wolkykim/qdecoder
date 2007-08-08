@@ -366,6 +366,7 @@ char	*qGetenvDefault(char *nullstr, char *envname);
  */
 char	*qUrlEncode(char *str);
 char	*qUrlDecode(char *str);
+char	*qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag);
 char	*qMd5Str(char *string);
 char	*qMd5File(char *filename);
 unsigned int qFnv32Hash(char *str, unsigned int max);

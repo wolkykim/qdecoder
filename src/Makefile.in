@@ -105,8 +105,9 @@ LIBDIR		= @libdir@
 HEADERDIR	= @includedir@
 
 ## Which compiler & options for release
+#BUILD_DEBUG	= -Wall -g -O0 -DBUILD_DEBUG
 CC		= @CC@
-CFLAGS		= -Wall @CFLAGS@
+CFLAGS		= @CFLAGS@  ${BUILD_DEBUG}
 DEFS		= @DEFS@ ${OPT_DEFS}
 INCLUDE		= -I./ ${OPT_INCLUDE}
 
