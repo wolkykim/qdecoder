@@ -78,6 +78,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include "qDecoder.h"
+#include "qInternal.h"
 
 /**
  * Under-development
@@ -267,6 +268,7 @@ int qDbExecuteUpdate(Q_DB *db, char *query) {
 	int affected;
 
 	// query
+	DEBUG("%s", query);
 	if (mysql_query(&db->mysql, query)) {
 		qDbPing(db);
 		return -1;
@@ -308,6 +310,7 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
 
 #ifdef _Q_WITH_MYSQL
 	// query
+	DEBUG("%s", query);
 	if (mysql_query(&db->mysql, query)) {
 		qDbPing(db);
 		return NULL;
@@ -497,7 +500,9 @@ bool qDbBeginTran(Q_DB *db) {
 	if (db == NULL) return false;
 
 #ifdef _Q_WITH_MYSQL
-	qDbExecuteUpdate(db, "START TRANSACTION");
+	if(db->info.autocommit == true) {
+		if (mysql_autocommit(&db->mysql, false) != 0) return false;
+	}
 	return true;
 #else
 	return false;
@@ -510,10 +515,19 @@ bool qDbBeginTran(Q_DB *db) {
  * @since not released yet
  */
 bool qDbEndTran(Q_DB *db, bool commit) {
+	bool ret = false;
+
 	if (db == NULL) return false;
 
-	if (commit == false) return qDbRollback(db);
-	return qDbCommit(db);
+	if (commit == true) ret = qDbCommit(db);
+	else ret = qDbRollback(db);
+
+	// restore autocommit mode
+	if(db->info.autocommit == true) {
+		if (mysql_autocommit(&db->mysql, true) != 0) return false;
+	}
+
+	return ret;
 }
 
 /**
