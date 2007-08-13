@@ -500,9 +500,10 @@ bool qDbBeginTran(Q_DB *db) {
 	if (db == NULL) return false;
 
 #ifdef _Q_WITH_MYSQL
-	if(db->info.autocommit == true) {
-		if (mysql_autocommit(&db->mysql, false) != 0) return false;
-	}
+	Q_DBRESULT *result;
+	result = qDbExecuteQuery(db, "START TRANSACTION");
+	if(result == NULL) return false;
+	qDbResultFree(result);
 	return true;
 #else
 	return false;
@@ -515,19 +516,10 @@ bool qDbBeginTran(Q_DB *db) {
  * @since not released yet
  */
 bool qDbEndTran(Q_DB *db, bool commit) {
-	bool ret = false;
-
 	if (db == NULL) return false;
 
-	if (commit == true) ret = qDbCommit(db);
-	else ret = qDbRollback(db);
-
-	// restore autocommit mode
-	if(db->info.autocommit == true) {
-		if (mysql_autocommit(&db->mysql, true) != 0) return false;
-	}
-
-	return ret;
+	if (commit == false) return qDbRollback(db);
+	return qDbCommit(db);
 }
 
 /**
