@@ -206,7 +206,8 @@ char *qDbGetErrMsg(Q_DB *db) {
 	if (db == NULL || db->connected == false) return "(no opened db)";
 
 #ifdef _Q_WITH_MYSQL
-	qStrncpy(msg, (char *)mysql_error(&db->mysql), sizeof(msg));
+	if(mysql_errno(&db->mysql) == 0 ) strcpy(msg, "NO ERROR");
+	else qStrncpy(msg, (char *)mysql_error(&db->mysql), sizeof(msg));
 #else
 	strcpy(msg, "");
 #endif
@@ -269,10 +270,7 @@ int qDbExecuteUpdate(Q_DB *db, char *query) {
 
 	// query
 	DEBUG("%s", query);
-	if (mysql_query(&db->mysql, query)) {
-		qDbPing(db);
-		return -1;
-	}
+	if (mysql_query(&db->mysql, query)) return -1;
 
 	/* get affected rows */
 	if ((affected = mysql_affected_rows(&db->mysql)) < 0) return -1;
@@ -311,10 +309,7 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
 #ifdef _Q_WITH_MYSQL
 	// query
 	DEBUG("%s", query);
-	if (mysql_query(&db->mysql, query)) {
-		qDbPing(db);
-		return NULL;
-	}
+	if (mysql_query(&db->mysql, query)) return NULL;
 
 	// store
 	Q_DBRESULT *result = (Q_DBRESULT *)malloc(sizeof(Q_DBRESULT));
@@ -322,7 +317,6 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
 
 	if ((result->rs = mysql_store_result(&db->mysql)) == NULL) {
 		free(result);
-		qDbPing(db);
 		return NULL;
 	}
 
