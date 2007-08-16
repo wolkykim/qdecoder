@@ -97,7 +97,9 @@ char *qUrlDecode(char *str) {
 }
 
 /**
- * qCharEncode("한글", "EUC-KR", "UTF-8", 1.5);
+ * qCharEncode("한글", "EUC-KR", "UTF-8", 2);
+ *
+ * @return malloced string pointer.
  */
 char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
 	char *tostr, *tp;

@@ -121,6 +121,7 @@ char *qGetGmtimeStr(time_t univtime) {
 	if(univtime == 0) univtime = time(NULL);
 	gmtm = gmtime(&univtime);
 
-	strftime(timestr, sizeof(timestr), "%a, %d-%b-%Y %H:%M:%S GMT", gmtm);
+	//strftime(timestr, sizeof(timestr), "%a, %d-%b-%Y %H:%M:%S GMT", gmtm);
+	strftime(timestr, sizeof(timestr), "%a, %d %b %Y %H:%M:%S GMT", gmtm);
 	return timestr;
 }

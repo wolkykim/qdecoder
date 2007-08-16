@@ -289,8 +289,7 @@ bool qPuts(int mode, char *buf) {
 char *qRemoveSpace(char *str) {
 	int i, j;
 
-	if (!str)return NULL;
-
+	if (str == NULL) return NULL;
 	for (j = 0; str[j] == ' ' || str[j] == '\t' || str[j] == '\r' || str[j] == '\n'; j++);
 	for (i = 0; str[j] != '\0'; i++, j++) str[i] = str[j];
 	for (i--; (i >= 0) && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'); i--);
@@ -307,7 +306,7 @@ char *qRemoveSpace(char *str) {
 char *qRemoveTailSpace(char *str) {
 	int i;
 
-	if (!str)return NULL;
+	if (str == NULL)return NULL;
 	for (i = strlen(str) - 1; (i >= 0) && (str[i] == ' ' || str[i] == '\t' || str[i] == '\r' || str[i] == '\n'); i--);
 	str[i+1] = '\0';
 

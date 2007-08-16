@@ -232,6 +232,7 @@ bool qDbPing(Q_DB *db) {
 		}
 
 		if (qDbOpen(db) == true) { // try re-connect
+			DEBUG("Connection recovered.");
 			return true;
 		}
 	}
