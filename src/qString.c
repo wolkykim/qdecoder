@@ -393,7 +393,7 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
 
 	/* Put replaced string into malloced 'newstr' */
 	if (method == 't') { /* Token replace */
-		maxstrlen = strlen(srcstr) * strlen(word);
+		maxstrlen = strlen(srcstr) * ( (strlen(word) > 0) ? strlen(word) : 1 );
 		newstr = (char *)malloc(maxstrlen + 1);
 
 		for (srcp = srcstr, newp = newstr; *srcp; srcp++) {
