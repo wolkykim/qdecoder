@@ -63,9 +63,6 @@ void qError(char *format, ...) {
 		if ((fp = fopen(_error_log_file, "at")) == NULL) logstatus = -1;
 		else {
 			char *http_user_agent, *remote_host;
-			struct tm *time;
-
-			time = qGetTimeStructure(0);
 
 			if ((http_user_agent = getenv("HTTP_USER_AGENT")) == NULL) http_user_agent = "null";
 			if ((remote_host     = getenv("REMOTE_HOST"))     == NULL) {
@@ -73,9 +70,7 @@ void qError(char *format, ...) {
 				if ((remote_host     = getenv("REMOTE_ADDR"))   == NULL) remote_host = "null";
 			}
 
-			fprintf(fp, "%04d/%02d/%02d(%02d:%02d) : '%s' from %s (%s)\n",
-			        time->tm_year, time->tm_mon, time->tm_mday, time->tm_hour, time->tm_min,
-			        buf, remote_host, http_user_agent);
+			fprintf(fp, "%s : '%s' from %s (%s)\n", qGetTimeStr(0), buf, remote_host, http_user_agent);
 
 			fclose(fp);
 			logstatus = 1;
