@@ -201,20 +201,20 @@ int qCatFile(char *format, ...) {
 **********************************************/
 char *qReadFile(char *filename, int *size) {
 	FILE *fp;
-	struct stat fstat;
+	struct stat filestat;
 	char *sp, *tmp;
 	int c, i;
 
 	if (size != NULL) *size = 0;
-	if (stat(filename, &fstat) < 0) return NULL;
+	if (stat(filename, &filestat) < 0) return NULL;
 	if ((fp = fopen(filename, "rb")) == NULL) return NULL;
 
-	sp = (char *)malloc(fstat.st_size + 1);
+	sp = (char *)malloc(filestat.st_size + 1);
 	for (tmp = sp, i = 0; (c = fgetc(fp)) != EOF; tmp++, i++) *tmp = (char)c;
 	*tmp = '\0';
 
-	if (fstat.st_size != i) {
-		DEBUG("Size(File:%d, Readed:%d) mismatch.", (int)fstat.st_size, i);
+	if (filestat.st_size != i) {
+		DEBUG("Size(File:%d, Readed:%d) mismatch.", (int)filestat.st_size, i);
 		free(sp);
 		return NULL;
 	}
