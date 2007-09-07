@@ -23,11 +23,13 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
 #include <iconv.h>
 #include <math.h>
 #include <errno.h>
@@ -160,7 +162,7 @@ char *qMd5Str(char *string) {
 **********************************************/
 char *qMd5File(char *filename) {
 	char *md5hex;
-	int e, f, i;
+	int f, i;
 	off_t n;
 	struct stat stbuf;
 	unsigned char szBuffer[BUFSIZ], szDigest[16];
