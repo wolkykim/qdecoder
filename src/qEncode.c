@@ -21,6 +21,9 @@
  * @file qEncode.c Encoding/decoding API
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -156,11 +159,43 @@ char *qMd5Str(char *string) {
 ** Do    : Digest string through MD5 algorithm.
 **********************************************/
 char *qMd5File(char *filename) {
-	char *sp, *md5hex;
+	char *md5hex;
+	int e, f, i;
+	off_t n;
+	struct stat stbuf;
+	unsigned char szBuffer[BUFSIZ], szDigest[16];
+	MD5_CTX context;
 
-	if ((sp = qReadFile(filename, NULL)) == NULL) return NULL;
-	md5hex = qMd5Str(sp);
-	free(sp);
+	MD5Init(&context);
+	if ((f = open(filename, O_RDONLY)) < 0)
+		return NULL;
+	if (fstat(f, &stbuf) < 0)
+		return NULL;
+	n = stbuf.st_size;
+	i = 0;
+	while (n > 0) {
+		if (n > sizeof(szBuffer))
+			i = read(f, szBuffer, sizeof(szBuffer));
+		else
+			i = read(f, szBuffer, n);
+		if (i < 0)
+			break;
+		MD5Update(&context, szBuffer, i);
+		n -= i;
+	}
+	close(f);
+	if (i < 0)
+		return NULL;
+
+	(void)MD5Final(szDigest, &context);
+
+	md5hex = malloc(16 * 2 + 1);
+	if (md5hex == NULL)
+		return NULL;
+
+	for (i = 0; i < 16; i++) {
+		sprintf(md5hex + (i * 2), "%02x", szDigest[i]);
+	}
 
 	return md5hex;
 }
