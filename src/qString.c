@@ -450,14 +450,14 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
 ** Return: Valid 1, Invalid 0.
 ** Do    : Check characters of string is in 0-9, A-Z, a-z.
 **********************************************/
-int qStr09AZaz(char *str) {
+bool qStr09AZaz(char *str) {
 	for (; *str; str++) {
 		if ((*str >= '0') && (*str <= '9')) continue;
 		else if ((*str >= 'A') && (*str <= 'Z')) continue;
 		else if ((*str >= 'a') && (*str <= 'z')) continue;
-		else return 0;
+		else return false;
 	}
-	return 1;
+	return true;
 }
 
 /*

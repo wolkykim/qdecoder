@@ -379,7 +379,7 @@ bool	qPuts(int mode, char *buf);
 char	*qRemoveSpace(char *str);
 char	*qRemoveTailSpace(char *str);
 char	*qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
-int	qStr09AZaz(char *str);
+bool	qStr09AZaz(char *str);
 char	*qStrncpy(char *dst, char *src, size_t sizeofdst);
 char	*qStrupr(char *str);
 char	*qStrlwr(char *str);
