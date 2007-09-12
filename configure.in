@@ -36,6 +36,11 @@ AC_PATH_PROG(RANLIB, ranlib)
 AC_PATH_PROG(RM, rm)
 
 dnl Checks for libraries.
+AC_ARG_WITH(mysql,
+	[  --with-mysql            enable MySQL supports],
+	[WITH_MYSQL=yes],
+	[WITH_MYSQL=no])
+AC_SUBST(WITH_MYSQL)
 
 dnl Checks for header files.
 AC_HEADER_STDC

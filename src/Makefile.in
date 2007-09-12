@@ -58,8 +58,10 @@ exec_prefix	= ${prefix}
 
 ## Database Surrpot
 ## Influence on : qDatabase.c
-#WITH_MYSQL	= -DWITH_MYSQL
-#MYSQL_INCLUDE	= -I/usr/local/include/mysql -I /usr/local/mysql/include
+ifeq (@WITH_MYSQL@, yes)
+WITH_MYSQL	= -DWITH_MYSQL
+MYSQL_INCLUDE	= -I/usr/local/include/mysql -I /usr/local/mysql/include
+endif
 
 ## Hash-table Support
 ## Influence on : qHashtbl.c
