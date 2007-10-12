@@ -107,7 +107,7 @@ bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size) {
 	int hash = (int)qFnv32Hash(key, tbl->max);
 
 	// if size is less than 0, we assume the the value is null terminated string.
-	if(size < 0) size = strlen(value);
+	if(size < 0) size = strlen(value) + 1;
 
 	// check, is slot empty
 	if (tbl->count[hash] == 0) { // empty slot
