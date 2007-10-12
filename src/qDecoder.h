@@ -240,7 +240,7 @@ void	qSedFree(Q_ENTRY *first);
 /*
  * qSem.c
  */
-int	qSemInit(char *keyfile, int nsems, bool autodestroy);
+int	qSemInit(char *keyfile, int keyid, int nsems, bool autodestroy);
 int	qSemGetId(char *keyfile);
 bool	qSemEnter(int semid, int semno);
 bool	qSemEnterNowait(int semid, int semno);
@@ -250,7 +250,7 @@ bool	qSemFree(int semid);
 /*
  * qShm.c
  */
-int	qShmInit(char *keyfile, size_t size, bool autodestroy);
+int	qSemInit(char *keyfile, int keyid, int nsems, bool autodestroy);
 int	qShmGetId(char *keyfile);
 void	*qShmGet(int shmid);
 bool	qShmFree(int shmid);

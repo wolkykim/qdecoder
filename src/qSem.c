@@ -79,12 +79,17 @@
  *
  * @since not released yet
  */
-int qSemInit(char *keyfile, int nsems, bool autodestroy) {
+int qSemInit(char *keyfile, int keyid, int nsems, bool autodestroy) {
+	key_t semkey;
 	int semid;
 
 	// generate unique key using ftok();
-	key_t semkey = ftok(keyfile, 'q');
-	if (semkey == -1) return -1;
+	if(keyfile != NULL) {
+		semkey = ftok(keyfile, keyid);
+		if (semkey == -1) return -1;
+	} else {
+		semkey = IPC_PRIVATE;
+	}
 
 	// create semaphores
 	if ((semid = semget(semkey, nsems, IPC_CREAT | IPC_EXCL | 0666)) == -1) {

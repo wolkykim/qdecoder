@@ -73,20 +73,25 @@
  *
  * @since not released yet
  */
-int qShmInit(char *keyfile, size_t size, bool autodestroy) {
+int qShmInit(char *keyfile, int keyid, size_t size, bool autodestroy) {
+	key_t semkey;
 	int shmid;
 
 	/* generate unique key using ftok() */
-	key_t nShmKey = ftok(keyfile, 'Q');
-	if (nShmKey == -1) return -1;
+	if(keyfile != NULL) {
+		semkey = ftok(keyfile, keyid);
+		if (semkey == -1) return -1;
+	} else {
+		semkey = IPC_PRIVATE;
+	}
 
 	/* create shared memory */
-	if ((shmid = shmget(nShmKey, size, IPC_CREAT | IPC_EXCL | 0666)) == -1) {
+	if ((shmid = shmget(semkey, size, IPC_CREAT | IPC_EXCL | 0666)) == -1) {
 		if(autodestroy == false) return -1;
 
 		/* destroy & re-create */
 		if((shmid = qShmGetId(keyfile)) >= 0) qShmFree(shmid);
-		if ((shmid = shmget(nShmKey, size, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
+		if ((shmid = shmget(semkey, size, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
 	}
 
 	return shmid;
@@ -101,11 +106,11 @@ int qShmGetId(char *keyfile) {
 	int shmid;
 
 	/* generate unique key using ftok() */
-	key_t nShmKey = ftok(keyfile, 'Q');
-	if (nShmKey == -1) return -1;
+	key_t semkey = ftok(keyfile, 'Q');
+	if (semkey == -1) return -1;
 
 	/* get current shared memory id */
-	if ((shmid = shmget(nShmKey, 0, 0)) == -1) return -1;
+	if ((shmid = shmget(semkey, 0, 0)) == -1) return -1;
 
 	return shmid;
 }
