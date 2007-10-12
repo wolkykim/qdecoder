@@ -26,7 +26,7 @@
  *   #define MAX_SEMAPHORES (2)
  *
  *   // create semaphores
- *   int semid = qSemInit("/some/file/for/generating/unique/key", MAX_SEMAPHORES, true);
+ *   int semid = qSemInit("/some/file/for/generating/unique/key", 'q', MAX_SEMAPHORES, true);
  *   if(semid < 0) {
  *     printf("ERROR: Can't initialize semaphores.\n");
  *     return -1;
@@ -52,7 +52,7 @@
  *   qSemLeave(1);
  *
  *   [other program which uses resource 1]
- *   int semid = qSemGetId("/some/file/for/generating/unique/key");
+ *   int semid = qSemGetId("/some/file/for/generating/unique/key", 'q');
  *   if(semid < 0) {
  *     printf("ERROR: Can't get semaphore id.\n");
  *     return -1;
@@ -96,7 +96,7 @@ int qSemInit(char *keyfile, int keyid, int nsems, bool autodestroy) {
 		if(autodestroy == false) return -1;
 
 		// destroy & re-create
-		if((semid = qSemGetId(keyfile)) >= 0) qSemFree(semid);
+		if((semid = qSemGetId(keyfile, keyid)) >= 0) qSemFree(semid);
 		if ((semid = semget(semkey, nsems, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
 	}
 
@@ -126,11 +126,11 @@ int qSemInit(char *keyfile, int keyid, int nsems, bool autodestroy) {
  *
  * @since not released yet
  */
-int qSemGetId(char *keyfile) {
+int qSemGetId(char *keyfile, int keyid) {
 	int semid;
 
 	/* generate unique key using ftok() */
-	key_t semkey = ftok(keyfile, 'q');
+	key_t semkey = ftok(keyfile, keyid);
 	if (semkey == -1) return -1;
 
 	/* get current semaphore id */

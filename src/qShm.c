@@ -29,7 +29,7 @@
  *
  *   [shared memory creater]
  *   // create shared memory
- *   int shmid = qShmInit("/some/file/for/generating/unique/key", sizeof(struct SharedData), true);
+ *   int shmid = qShmInit("/some/file/for/generating/unique/key", 's', sizeof(struct SharedData), true);
  *   if(shmid < 0) {
  *     printf("ERROR: Can't initialize shared memory.\n");
  *     return -1;
@@ -44,7 +44,7 @@
  *
  *   [shared memory user]
  *   // get shared memory id
- *   int shmid = qShmGetId("/some/file/for/generating/unique/key");
+ *   int shmid = qShmGetId("/some/file/for/generating/unique/key", 's');
  *   if(shmid < 0) {
  *     printf("ERROR: Can't get shared memory id.\n");
  *     return -1;
@@ -90,7 +90,7 @@ int qShmInit(char *keyfile, int keyid, size_t size, bool autodestroy) {
 		if(autodestroy == false) return -1;
 
 		/* destroy & re-create */
-		if((shmid = qShmGetId(keyfile)) >= 0) qShmFree(shmid);
+		if((shmid = qShmGetId(keyfile, keyid)) >= 0) qShmFree(shmid);
 		if ((shmid = shmget(semkey, size, IPC_CREAT | IPC_EXCL | 0666)) == -1) return -1;
 	}
 
@@ -102,11 +102,11 @@ int qShmInit(char *keyfile, int keyid, size_t size, bool autodestroy) {
  *
  * @since not released yet
  */
-int qShmGetId(char *keyfile) {
+int qShmGetId(char *keyfile, int keyid) {
 	int shmid;
 
 	/* generate unique key using ftok() */
-	key_t semkey = ftok(keyfile, 'Q');
+	key_t semkey = ftok(keyfile, keyid);
 	if (semkey == -1) return -1;
 
 	/* get current shared memory id */
