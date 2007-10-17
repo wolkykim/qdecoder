@@ -98,6 +98,7 @@ static time_t _session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERV
 int qSession(char *repository) {
 	bool new_session;
 	char *sessionkey;
+	char keymethod;
 
 	/* check if session already started */
 	if (_session_started == true) return _session_new;
@@ -109,12 +110,13 @@ int qSession(char *repository) {
 	if (qGetContentFlag() == 1) qError("qSession(): must be called before qContentType() and any stream out.");
 
 	/* check session status & get session id */
-	sessionkey = qGetValue(SESSION_ID);
-	if (sessionkey == NULL) {  /* new session */
+	keymethod = qGetType(SESSION_ID);
+	if(keymethod == 'C' || keymethod == 'N') {
+		sessionkey = qGetValue(SESSION_ID);
+		new_session = false;
+	} else { /* new session */
 		sessionkey = qUniqId();
 		new_session = true;
-	} else {
-		new_session = false;
 	}
 
 	/* make storage path for session */
