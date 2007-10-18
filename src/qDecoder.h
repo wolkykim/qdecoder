@@ -105,11 +105,46 @@ typedef struct {
 	int	num;			/*!< used slot counter */
 
 	int	*count;			/*!< hash collision counter. 0 indicate empty slot, -1 is used for temporary move slot dut to hash collision */
-	int	*hash;			/*!< key hash */
-	char	**key;			/*!< key */
+	int	*hash;			/*!< key hash. we use qFnv32Hash() to generate hash integer */
+	char	**key;			/*!< key string */
 	char	**value;		/*!< value */
 	int	*size;			/*!< value size */
 } Q_HASHTBL;
+
+/**
+ * Structure for Hash-table based on Array
+ *
+ * Don't worry you can store key and value more than size of _Q_HASHARR_MAX_KEYLEN and _Q_HASHARR_DEF_VALUESIZE.
+ *
+ * In this array hash-table, we use some technics to effectively use memory. To verify key we use two way,
+ * if the key is smaller than _Q_HASHARR_MAX_KEYLEN, we compare key itself. But if the key is bigger than
+ * _Q_HASHARR_MAX_KEYLEN, we compare md5 of key and key length. If the key length and md5 of key are same
+ * we consider it's same key. So we don't need to store full key string. Actually it's not necessary to keep
+ * original key string, but we keep this because of two reasons. 1) if the length of the key is smaller than 16,
+ * it will be little bit quicker to compare key. 2) debugging reason.
+ *
+ * Basically this hash-table based on array defines small size slot then it can links several slot for one data.
+ * This mechanism can save some wastes of memory. You can adjust default slot size to modify _Q_HASHARR_DEF_VALUESIZE.
+ *
+ */
+#define _Q_HASHARR_MAX_KEYLEN		(31)
+#define _Q_HASHARR_DEF_VALUESIZE	(32)
+typedef struct {
+	int	count;					/*!< hash collision counter.
+								 0 indicates empty slot,
+								-1 is used for temporary move slot dut to hash collision,
+								-2 is used for indicating linked block
+							*/
+	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
+
+	char	key[_Q_HASHARR_MAX_KEYLEN+1];		/*!< key string which can be size truncated */
+	int	keylen;					/*!< original key length */
+	char	keymd5[16];				/*!< md5 hash of the key */
+
+	char	value[_Q_HASHARR_DEF_VALUESIZE];	/*!< value */
+	int	size;					/*!< value size */
+	int	link;					/*!< next index of the value. */
+} Q_HASHARR;
 
 /**
  * Structure for Obstack
@@ -189,7 +224,7 @@ int	qDownload(char *filename);
 int	qDownloadMime(char *filename, char *mime);
 
 /*
-* qfDecoder.c
+ * qfDecoder.c
  */
 Q_ENTRY	*qfDecoder(char *filename);
 char	*qfGetValue(Q_ENTRY *first, char *format, ...);
@@ -326,13 +361,22 @@ Q_ENTRY	*qEntryLoad(char *filename, bool decodevalue);
 /*
  * qHashtbl.c
  */
-
 Q_HASHTBL *qHashtblInit(int max);
 bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size);
-char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size);
 bool qHashtblRemove(Q_HASHTBL *tbl, char *key);
+char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size);
 void qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
 bool qHashtblFree(Q_HASHTBL *tbl);
+
+/*
+ * qHasharr.c
+ */
+size_t	qHasharrSize(int max);
+bool	qHasharrInit(Q_HASHARR *tbl, size_t memsize);
+bool	qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size);
+bool	qHasharrRemove(Q_HASHARR *tbl, char *key);
+char	*qHasharrGet(Q_HASHARR *tbl, char *key, int *size);
+void	qHasharrPrint(Q_HASHARR *tbl, FILE *out);
 
 /*
  * qObstack.c
@@ -367,7 +411,8 @@ char	*qGetenvDefault(char *nullstr, char *envname);
 char	*qUrlEncode(char *str);
 char	*qUrlDecode(char *str);
 char	*qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag);
-char	*qMd5Str(char *string);
+unsigned char *qMd5Hash(char *data, int len);
+char	*qMd5Str(char *data, int len);
 char	*qMd5File(char *filename);
 unsigned int qFnv32Hash(char *str, unsigned int max);
 

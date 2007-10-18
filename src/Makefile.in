@@ -64,7 +64,7 @@ MYSQL_INCLUDE	= -I/usr/local/include/mysql -I /usr/local/mysql/include
 endif
 
 ## Hash-table Support
-## Influence on : qHashtbl.c
+## Influence on : qHashtbl.c, qHasharr.c
 #WITHOUT_HASHTBL	= -DWITHOUT_HASHTBL
 
 ## Obstack Support
@@ -147,6 +147,7 @@ OBJ		= qDecoder.o		\
 					\
 		qEntry.o		\
 		qHashtbl.o		\
+		qHasharr.o		\
 		qObstack.o		\
 					\
 		qLog.o			\

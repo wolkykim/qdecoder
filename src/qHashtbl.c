@@ -34,10 +34,10 @@
 // PRIVATE FUNCTION PROTOTYPES
 /////////////////////////////////////////////////////////////////////////
 
+static int _findEmpty(Q_HASHTBL *tbl, int startidx);
+static int _getIdx(Q_HASHTBL *tbl, char *key, int hash);
 static bool _putData(Q_HASHTBL *tbl, int idx, int hash, char *key, char *value, int size, int count);
 static bool _removeData(Q_HASHTBL *tbl, int idx);
-static int _getIdx(Q_HASHTBL *tbl, char *key);
-static int _findEmpty(Q_HASHTBL *tbl, int startidx);
 
 /////////////////////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS
@@ -100,9 +100,6 @@ bool qHashtblFree(Q_HASHTBL *tbl) {
  */
 
 bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size) {
-	// check full
-	if (tbl->num >= tbl->max) return false;
-
 	// get hash integer
 	int hash = (int)qFnv32Hash(key, tbl->max);
 
@@ -117,20 +114,15 @@ bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size) {
 		DEBUG("hashtbl: put(new) %s (idx=%d,hash=%d,tot=%d)", key, hash, hash, tbl->num);
 	} else if (tbl->count[hash] > 0) { // same key exists or hash collision
 		// check same key;
-		int idx = _getIdx(tbl, key);
+		int idx = _getIdx(tbl, key, hash);
 		if (idx >= 0) { // same key
-			// replace
-			int backupcount = tbl->count[idx];
-			_removeData(tbl, idx);
-			_putData(tbl, idx, hash, key, value, size, backupcount);
-			DEBUG("hashtbl: put(rep) %s (idx=%d,hash=%d,tot=%d)", key, idx, hash, tbl->num);
+			// remove and recall
+			qHashtblRemove(tbl, key);
+			return qHashtblPut(tbl, key, value, size);
 		} else { // no same key, just hash collision
 			// find empty slot
 			int idx = _findEmpty(tbl, hash);
-			if (idx < 0) {
-				DEBUG("hashtbl: BUG put failed %s", key);
-				return false;
-			}
+			if (idx < 0) return false;
 
 			// put data
 			_putData(tbl, idx, hash, key, value, size, -1); // -1 is used for idx != hash;
@@ -152,28 +144,18 @@ bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size) {
 		// store data
 		_putData(tbl, hash, hash, key, value, size, 1);
 
-		DEBUG("hashtbl: put(swp) %s (idx=%d,hash=%d,tot=%d)", key, idx, hash, tbl->num);
+		DEBUG("hashtbl: put(swp) %s (idx=%d,hash=%d,tot=%d)", key, hash, hash, tbl->num);
 	}
 
 	return true;
 }
 
 /**
- * @return value
- */
-char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size) {
-	int idx = _getIdx(tbl, key);
-	if (idx < 0) return NULL;
-
-	if(size != NULL) *size = tbl->size[idx];
-	return tbl->value[idx];
-}
-
-/**
  * @return true or false
  */
 bool qHashtblRemove(Q_HASHTBL *tbl, char *key) {
-	int idx = _getIdx(tbl, key);
+	int hash = (int)qFnv32Hash(key, tbl->max);
+	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) return false;
 
 	if (tbl->count[idx] == 1) {
@@ -200,7 +182,6 @@ bool qHashtblRemove(Q_HASHTBL *tbl, char *key) {
 		_removeData(tbl, idx2); // remove dup slot
 
 		DEBUG("hashtbl: rem(lead) %s (idx=%d,tot=%d)", key, idx, tbl->num);
-		return true;
 	} else { // in case of -1. used for dup data
 		// decrease counter from leading slot
 		if(tbl->count[tbl->hash[idx]] <= 1) {
@@ -218,19 +199,78 @@ bool qHashtblRemove(Q_HASHTBL *tbl, char *key) {
 	return true;
 }
 
+/**
+ * @return value
+ */
+char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size) {
+	int hash = (int)qFnv32Hash(key, tbl->max);
+	int idx = _getIdx(tbl, key, hash);
+	if (idx < 0) return NULL;
+
+	if(size != NULL) *size = tbl->size[idx];
+	return tbl->value[idx];
+}
+
 void qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
 	int idx, num;
 	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
 		if (tbl->count[idx] == 0) continue;
 		fprintf(out, "%s=%s (idx=%d,hash=%d,size=%d)", tbl->key[idx], (showvalue)?tbl->value[idx]:"_binary_", idx, tbl->hash[idx], tbl->size[idx]);
 		num++;
-		if(num >= tbl->num) break;
 	}
 }
 
 /////////////////////////////////////////////////////////////////////////
 // PRIVATE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////
+
+/*
+ * find empty slot
+ * @return empty slow number, otherwise returns -1.
+ */
+static int _findEmpty(Q_HASHTBL *tbl, int startidx) {
+	if (startidx >= tbl->max) startidx = 0;
+
+	int idx = startidx;
+	while (true) {
+		if (tbl->count[idx] == 0) return idx;
+
+		idx++;
+		if (idx >= tbl->max) idx = 0;
+		if(idx == startidx) break;
+	}
+
+	return -1;
+}
+
+static int _getIdx(Q_HASHTBL *tbl, char *key, int hash) {
+	if (tbl->count[hash] > 0) {
+		int count, idx;
+		for (count = 0, idx = hash; count < tbl->count[hash]; ) {
+			// find same hash
+			while(true) {
+				if (idx >= tbl->max) idx = 0;
+
+				if (tbl->count[idx] != 0 && tbl->hash[idx] == hash) {
+					// found same hash
+					count++;
+					break;
+				}
+
+				idx = (idx + 1) % tbl->max;
+				if(idx == hash) return -1;
+			}
+
+			// is same key?
+			if (!strcmp(tbl->key[idx], key)) return idx;
+
+			idx = (idx + 1) % tbl->max;
+			if(idx == hash) break;
+		}
+	}
+
+	return -1;
+}
 
 static bool _putData(Q_HASHTBL *tbl, int idx, int hash, char *key, char *value, int size, int count) {
 	// check if used
@@ -259,63 +299,12 @@ static bool _removeData(Q_HASHTBL *tbl, int idx) {
 
 	free(tbl->key[idx]);
 	free(tbl->value[idx]);
-	tbl->count = 0;
+	tbl->count[idx] = 0;
 
 	// decrease used counter
 	tbl->num--;
 
 	return true;
-}
-
-static int _getIdx(Q_HASHTBL *tbl, char *key) {
-	// get hash integer
-	int hash = (int)qFnv32Hash(key, tbl->max);
-
-	if (tbl->count[hash] <= 0) { // not found. empty or used for dup.
-		return -1;
-	}
-	else {
-		int count, idx;
-		for (count = 0, idx = hash; count < tbl->count[hash]; ) {
-			// find same hash
-			while(true) {
-				if (idx >= tbl->max) idx = 0;
-
-				if (tbl->count[idx] != 0 && tbl->hash[idx] == hash) {
-					// found same hash
-					count++;
-					break;
-				}
-
-				idx = (idx + 1) % tbl->max;
-				if(idx == hash) return -1;
-			}
-
-			// is same key?
-			if (!strcmp(tbl->key[idx], key)) return idx;
-
-			idx = (idx + 1) % tbl->max;
-			if(idx == hash) return -1;
-		}
-	}
-
-	return -1;
-}
-
-/*
- * find empty slot
- * @return empty slow number, otherwise returns -1.
- */
-static int _findEmpty(Q_HASHTBL *tbl, int startidx) {
-	int idx = startidx;
-	while (true) {
-		if (idx >= tbl->max) idx = 0;
-		if (tbl->count[idx] == 0) break;
-		idx++;
-		if(idx == startidx) return -1;
-	}
-
-	return idx;
 }
 
 #endif /* WITHOUT_HASHTBL */

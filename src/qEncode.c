@@ -134,20 +134,35 @@ char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
 }
 
 /**********************************************
-** Usage : qMd5Str(string);
+** Usage : qMd5Digest(string);
 ** Return: MD5 digested static string pointer.
-** Do    : Digest string through MD5 algorithm.
+** Do    : 16 bytes digest binary data through MD5 algorithm.
 **********************************************/
-char *qMd5Str(char *string) {
+unsigned char *qMd5Hash(char *data, int len) {
+	static unsigned char digest[16 + 1];
 	MD5_CTX context;
-	unsigned char digest[16];
-	static char md5hex[16 * 2 + 1];
 	int i;
 
 	MD5Init(&context);
-	MD5Update(&context, string, strlen(string));
+	MD5Update(&context, data, len);
 	MD5Final(digest, &context);
 
+	// for safety
+	digest[16] = '\0';
+	return digest;
+}
+
+/**********************************************
+** Usage : qMd5Str(string);
+** Return: MD5 digested static string pointer.
+** Do    : Strng converted digest string through MD5 algorithm.
+**********************************************/
+char *qMd5Str(char *data, int len) {
+	static char md5hex[16 * 2 + 1];
+	unsigned char *digest;
+	int i;
+
+	digest = qMd5Hash(data, len);
 	for (i = 0; i < 16; i++) {
 		sprintf(md5hex + (i * 2), "%02x", digest[i]);
 	}
@@ -158,10 +173,10 @@ char *qMd5Str(char *string) {
 /**********************************************
 ** Usage : qMd5File(filename);
 ** Return: MD5 digested static string pointer.
-** Do    : Digest string through MD5 algorithm.
+** Do    : Strng converted digest string through MD5 algorithm.
 **********************************************/
 char *qMd5File(char *filename) {
-	char *md5hex;
+	static char md5hex[16 * 2 + 1];
 	int f, i;
 	off_t n;
 	struct stat stbuf;
@@ -191,7 +206,6 @@ char *qMd5File(char *filename) {
 
 	(void)MD5Final(szDigest, &context);
 
-	md5hex = malloc(16 * 2 + 1);
 	if (md5hex == NULL)
 		return NULL;
 

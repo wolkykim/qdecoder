@@ -641,7 +641,7 @@ char *qUniqId(void) {
 #endif
 
 	snprintf(szSeed, sizeof(szSeed), "%ld-%ld.%ld-%s:%s", random(), (long int)time(NULL), nUsec, qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
-	strcpy(szUniqId, qMd5Str(szSeed));
+	strcpy(szUniqId, qMd5Str(szSeed, strlen(szSeed)));
 
 	return szUniqId;
 }

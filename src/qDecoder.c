@@ -753,7 +753,7 @@ static char *_upload_getsavedir(char *upload_id, char *upload_savedir) {
 	if (!strcmp(upload_id, "")) return NULL;
 
 	snprintf(md5seed, sizeof(md5seed), "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
-	snprintf(upload_savedir, sizeof(upload_savedir), "%s/Q_%s", _upload_base, qMd5Str(md5seed));
+	snprintf(upload_savedir, sizeof(upload_savedir), "%s/Q_%s", _upload_base, qMd5Str(md5seed, strlen(md5seed)));
 
 	return upload_savedir;
 }

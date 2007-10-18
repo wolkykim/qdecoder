@@ -56,7 +56,6 @@ int qFileClose(FILE *stream) {
 	return fclose(stream);
 }
 
-
 /*********************************************
 ** Usage : qFileReadString(file pointer);
 ** Return: Success string pointer, End of file NULL.
