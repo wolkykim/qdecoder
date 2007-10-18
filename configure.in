@@ -42,6 +42,14 @@ AC_ARG_WITH(mysql,
 	[WITH_MYSQL=no])
 AC_SUBST(WITH_MYSQL)
 
+dnl Checks whether qDecoder supports 64 bits
+AC_ARG_ENABLE(64bits,
+	AC_HELP_STRING([--enable-64bits],
+		[enable 64 bits supports]),
+	[ENABLE_X86_64=yes],
+	[ENABLE_X86_64=no])
+AC_SUBST(ENABLE_X86_64)
+
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(stdio.h stdlib.h string.h stdarg.h ctype.h time.h sys/stat.h sys/types.h dirent.h unistd.h sys/time.h sys/file.h)
