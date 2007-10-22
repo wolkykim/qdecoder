@@ -67,6 +67,20 @@ bool qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
 	return true;
 }
 
+bool qHasharrClear(Q_HASHARR *tbl) {
+	// calculate max
+	int max = tbl[0].keylen;
+
+	// clear memory
+	memset((void *)tbl, 0, qHasharrSize(max));
+
+	// 0번 테이블은 전체 테이블의 정보를 갖음
+	tbl[0].count = 0;	// 사용중인 슬롯의 갯수
+	tbl[0].keylen = max;	// 최대 슬롯 크기
+
+	return true;
+}
+
 /**
  * @return true or false
  */
@@ -76,6 +90,9 @@ bool qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size) {
 
 	// get hash integer
 	int hash = ((int)qFnv32Hash(key, tbl[0].keylen)) + 1; // 0번은 안쓰므로
+
+	// if size is less than 0, we assume that the value is null terminated string.
+	if(size < 0) size = strlen(value) + 1;
 
 	// check, is slot empty
 	if (tbl[hash].count == 0) { // empty slot
@@ -135,6 +152,61 @@ bool qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size) {
 	return true;
 }
 
+bool qHasharrPutStr(Q_HASHARR *tbl, char *key, char *value) {
+	return qHasharrPut(tbl, key, value, -1);
+}
+
+bool qHasharrPutInt(Q_HASHARR *tbl, char *key, int value) {
+	char data[10+1];
+	sprintf(data, "%d", value);
+	return qHasharrPut(tbl, key, data, -1);
+}
+
+/**
+ * @return value data which is malloced
+ */
+char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
+	// get hash integer
+	int hash = ((int)qFnv32Hash(key, tbl[0].keylen)) + 1; // 0번은 안쓰므로
+
+	int idx = _getIdx(tbl, key, hash);
+	if (idx < 0) return NULL;
+
+	char *value, *vp;
+	int newidx, valsize;
+
+	for(newidx = idx, valsize = 0; ; newidx = tbl[newidx].link) {
+		valsize += tbl[newidx].size;
+		if(tbl[newidx].link == 0) break;
+	}
+
+	value = (char *)malloc(valsize);
+	if(value == NULL) return NULL;
+
+	for(newidx = idx, vp = value; ; newidx = tbl[newidx].link) {
+		memcpy((void *)vp, (void *)tbl[newidx].value, tbl[newidx].size);
+		vp += tbl[newidx].size;
+		if(tbl[newidx].link == 0) break;
+	}
+
+	if(size != NULL) *size = valsize;
+	return value;
+}
+
+char *qHasharrGetStr(Q_HASHARR *tbl, char *key) {
+	return qHasharrGet(tbl, key, NULL);
+}
+
+int qHasharrGetInt(Q_HASHARR *tbl, char *key) {
+	char *data = qHasharrGet(tbl, key, NULL);
+	if(data == NULL) return 0;
+
+	int value = atoi(data);
+	free(data);
+
+	return value;
+}
+
 /**
  * @return true or false
  */
@@ -188,37 +260,6 @@ bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
 	}
 
 	return true;
-}
-
-/**
- * @return value
- */
-char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
-	// get hash integer
-	int hash = ((int)qFnv32Hash(key, tbl[0].keylen)) + 1; // 0번은 안쓰므로
-
-	int idx = _getIdx(tbl, key, hash);
-	if (idx < 0) return NULL;
-
-	char *value, *vp;
-	int newidx, valsize;
-
-	for(newidx = idx, valsize = 0; ; newidx = tbl[newidx].link) {
-		valsize += tbl[newidx].size;
-		if(tbl[newidx].link == 0) break;
-	}
-
-	value = (char *)malloc(valsize);
-	if(value == NULL) return NULL;
-
-	for(newidx = idx, vp = value; ; newidx = tbl[newidx].link) {
-		memcpy((void *)vp, (void *)tbl[newidx].value, tbl[newidx].size);
-		vp += tbl[newidx].size;
-		if(tbl[newidx].link == 0) break;
-	}
-
-	if(size != NULL) *size = valsize;
-	return value;
 }
 
 void qHasharrPrint(Q_HASHARR *tbl, FILE *out) {

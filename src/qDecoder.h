@@ -114,8 +114,6 @@ typedef struct {
 /**
  * Structure for Hash-table based on Array
  *
- * Don't worry you can store key and value more than size of _Q_HASHARR_MAX_KEYLEN and _Q_HASHARR_DEF_VALUESIZE.
- *
  * In this array hash-table, we use some technics to effectively use memory. To verify key we use two way,
  * if the key is smaller than _Q_HASHARR_MAX_KEYLEN, we compare key itself. But if the key is bigger than
  * _Q_HASHARR_MAX_KEYLEN, we compare md5 of key and key length. If the key length and md5 of key are same
@@ -362,20 +360,29 @@ Q_ENTRY	*qEntryLoad(char *filename, bool decodevalue);
  * qHashtbl.c
  */
 Q_HASHTBL *qHashtblInit(int max);
-bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size);
-bool qHashtblRemove(Q_HASHTBL *tbl, char *key);
-char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size);
-void qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
-bool qHashtblFree(Q_HASHTBL *tbl);
+bool	qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size);
+bool	qHashtblPutStr(Q_HASHTBL *tbl, char *key, char *value);
+bool	qHashtblPutInt(Q_HASHTBL *tbl, char *key, int value);
+char	*qHashtblGet(Q_HASHTBL *tbl, char *key, int *size);
+char	*qHashtblGetStr(Q_HASHTBL *tbl, char *key);
+int	qHashtblGetInt(Q_HASHTBL *tbl, char *key);
+bool	qHashtblRemove(Q_HASHTBL *tbl, char *key);
+void	qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
+bool	qHashtblFree(Q_HASHTBL *tbl);
 
 /*
  * qHasharr.c
  */
 size_t	qHasharrSize(int max);
 bool	qHasharrInit(Q_HASHARR *tbl, size_t memsize);
+bool	qHasharrClear(Q_HASHARR *tbl);
 bool	qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size);
-bool	qHasharrRemove(Q_HASHARR *tbl, char *key);
+bool	qHasharrPutStr(Q_HASHARR *tbl, char *key, char *value);
+bool	qHasharrPutInt(Q_HASHARR *tbl, char *key, int value);
 char	*qHasharrGet(Q_HASHARR *tbl, char *key, int *size);
+char	*qHasharrGetStr(Q_HASHARR *tbl, char *key);
+int	qHasharrGetInt(Q_HASHARR *tbl, char *key);
+bool	qHasharrRemove(Q_HASHARR *tbl, char *key);
 void	qHasharrPrint(Q_HASHARR *tbl, FILE *out);
 
 /*

@@ -150,6 +150,45 @@ bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size) {
 	return true;
 }
 
+bool qHashtblPutStr(Q_HASHTBL *tbl, char *key, char *value) {
+	return qHashtblPut(tbl, key, value, -1);
+}
+
+bool qHashtblPutInt(Q_HASHTBL *tbl, char *key, int value) {
+	char data[10+1];
+	sprintf(data, "%d", value);
+	return qHashtblPut(tbl, key, data, -1);
+}
+
+/**
+ * @return alue data which is malloced
+ */
+char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size) {
+	int hash = (int)qFnv32Hash(key, tbl->max);
+	int idx = _getIdx(tbl, key, hash);
+	if (idx < 0) return NULL;
+
+	char *value = (char *)malloc(tbl->size[idx]);
+	memcpy((void *)value, (void *)tbl->value[idx], tbl->size[idx]);
+
+	if(size != NULL) *size = tbl->size[idx];
+	return value;
+}
+
+char *qHashtblGetStr(Q_HASHTBL *tbl, char *key) {
+	return qHashtblGet(tbl, key, NULL);
+}
+
+int qHashtblGetInt(Q_HASHTBL *tbl, char *key) {
+	char *data = qHashtblGet(tbl, key, NULL);
+	if(data == NULL) return 0;
+
+	int value = atoi(data);
+	free(data);
+
+	return value;
+}
+
 /**
  * @return true or false
  */
@@ -197,18 +236,6 @@ bool qHashtblRemove(Q_HASHTBL *tbl, char *key) {
 	}
 
 	return true;
-}
-
-/**
- * @return value
- */
-char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size) {
-	int hash = (int)qFnv32Hash(key, tbl->max);
-	int idx = _getIdx(tbl, key, hash);
-	if (idx < 0) return NULL;
-
-	if(size != NULL) *size = tbl->size[idx];
-	return tbl->value[idx];
 }
 
 void qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
