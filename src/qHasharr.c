@@ -281,7 +281,8 @@ int qHasharrGetInt(Q_HASHARR *tbl, char *key) {
 }
 
 /**
- * @return true or false
+ * Under-development
+ *
  */
 bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
 	// get hash integer
