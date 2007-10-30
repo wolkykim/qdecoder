@@ -89,9 +89,9 @@ static bool _copySlot(Q_HASHARR *tbl, int idx1, int idx2);
 static bool _removeSlot(Q_HASHARR *tbl, int idx);
 static bool _removeData(Q_HASHARR *tbl, int idx);
 
-/////////////////////////////////////////////////////////////////////////
-// PUBLIC FUNCTIONS
-/////////////////////////////////////////////////////////////////////////
+/**
+ * Under-development
+ */
 size_t qHasharrSize(int max) {
 	size_t memsize;
 
@@ -100,6 +100,9 @@ size_t qHasharrSize(int max) {
 	return memsize;
 }
 
+/**
+ * Under-development
+ */
 bool qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
 	// calculate max
 	int max = (memsize / sizeof(Q_HASHARR)) - 1;
@@ -115,6 +118,10 @@ bool qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
 	return true;
 }
 
+
+/**
+ * Under-development
+ */
 bool qHasharrClear(Q_HASHARR *tbl) {
 	// calculate max
 	int max = tbl[0].keylen;
@@ -130,7 +137,9 @@ bool qHasharrClear(Q_HASHARR *tbl) {
 }
 
 /**
- * @return true or false
+ * Under-development
+ *
+ * @return true when successful, otherwise(table full) false
  */
 bool qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size) {
 	// check full
@@ -200,10 +209,20 @@ bool qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size) {
 	return true;
 }
 
+/**
+ * Under-development
+ *
+ * @return true when successful, otherwise(table full) false
+ */
 bool qHasharrPutStr(Q_HASHARR *tbl, char *key, char *value) {
 	return qHasharrPut(tbl, key, value, -1);
 }
 
+/**
+ * Under-development
+ *
+ * @return true when successful, otherwise(table full) false
+ */
 bool qHasharrPutInt(Q_HASHARR *tbl, char *key, int value) {
 	char data[10+1];
 	sprintf(data, "%d", value);
@@ -241,10 +260,16 @@ char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
 	return value;
 }
 
+/**
+ * Under-development
+ */
 char *qHasharrGetStr(Q_HASHARR *tbl, char *key) {
 	return qHasharrGet(tbl, key, NULL);
 }
 
+/**
+ * Under-development
+ */
 int qHasharrGetInt(Q_HASHARR *tbl, char *key) {
 	char *data = qHasharrGet(tbl, key, NULL);
 	if(data == NULL) return 0;
@@ -310,6 +335,9 @@ bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
 	return true;
 }
 
+/**
+ * Under-development
+ */
 void qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
 	int idx, num;
 	for (idx = 1, num = 0; idx <= tbl[0].keylen && num < tbl[0].count; idx++) {
@@ -324,7 +352,7 @@ void qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
 // PRIVATE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////
 
-/*
+/**
  * find empty slot
  * @return empty slow number, otherwise returns -1.
  */
