@@ -31,13 +31,73 @@
 #include <time.h>
 
 /**
- * Structure for qDecoder's linked list.
+ * Structure for linked-list data structure.
  */
 typedef struct Q_ENTRY {
 	char *name;		/*!< variable name */
 	char *value;		/*!< value */
 	struct Q_ENTRY *next;	/*!< next pointer */
 } Q_ENTRY;
+
+/**
+ * Structure for hash-table data structure.
+ */
+typedef struct {
+	int	max;			/*!< maximum hashtable size  */
+	int	num;			/*!< used slot counter */
+
+	int	*count;			/*!< hash collision counter. 0 indicate empty slot, -1 is used for temporary move slot dut to hash collision */
+	int	*hash;			/*!< key hash. we use qFnv32Hash() to generate hash integer */
+	char	**key;			/*!< key string */
+	char	**value;		/*!< value */
+	int	*size;			/*!< value size */
+} Q_HASHTBL;
+
+#define _Q_HASHARR_MAX_KEYLEN		(31)
+#define _Q_HASHARR_DEF_VALUESIZE	(32)
+/**
+ * Structure for hash-table data structure based on array.
+ */
+typedef struct {
+	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for temporary move slot dut to hash collision, -2 is used for indicating linked block */
+	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
+
+	char	key[_Q_HASHARR_MAX_KEYLEN+1];		/*!< key string which can be size truncated */
+	int	keylen;					/*!< original key length */
+	char	keymd5[16];				/*!< md5 hash of the key */
+
+	char	value[_Q_HASHARR_DEF_VALUESIZE];	/*!< value */
+	int	size;					/*!< value size */
+	int	link;					/*!< next index of the value. */
+} Q_HASHARR;
+
+/**
+ * Structure for obstack data structure.
+ */
+typedef struct {
+	int	size;			/*!< total object size */
+	int	num;			/*!< number of objects */
+	struct Q_ENTRY *first;		/*!< first object pointer */
+	struct Q_ENTRY *last;		/*!< last object pointer */
+	void	*final;			/*!< final object pointer */
+} Q_OBSTACK;
+
+/**
+ * Structure for file log.
+ */
+typedef struct {
+	char	logbase[1024];		/*!< directory which log file is located  */
+	char	nameformat[256];	/*!< file naming format like qdecoder-%Y%m%d.log */
+
+	char	filename[256];		/*!< generated filename according to the name format */
+	char	logpath[1024];		/*!< generated system path of log file */
+	FILE	*fp;			/*!< file pointer of logpath */
+
+	bool	console;		/*!< flag for console print out */
+	int	rotateinterval;		/*!< log file will be rotate in this interval seconds */
+	int	nextrotate;		/*!< next rotate universal time, seconds */
+	bool	flush;			/*!< flag for immediate sync */
+} Q_LOG;
 
 /* Database Support*/
 #ifdef _mysql_h
@@ -79,66 +139,6 @@ typedef struct {
 	int		cursor;
 #endif
 } Q_DBRESULT;
-
-/**
- * Structure for file log.
- */
-typedef struct {
-	char	logbase[1024];		/*!< directory which log file is located  */
-	char	nameformat[256];	/*!< file naming format like qdecoder-%Y%m%d.log */
-
-	char	filename[256];		/*!< generated filename according to the name format */
-	char	logpath[1024];		/*!< generated system path of log file */
-	FILE	*fp;			/*!< file pointer of logpath */
-
-	bool	console;		/*!< flag for console print out */
-	int	rotateinterval;		/*!< log file will be rotate in this interval seconds */
-	int	nextrotate;		/*!< next rotate universal time, seconds */
-	bool	flush;			/*!< flag for immediate sync */
-} Q_LOG;
-
-/**
- * Structure for hash-table.
- */
-typedef struct {
-	int	max;			/*!< maximum hashtable size  */
-	int	num;			/*!< used slot counter */
-
-	int	*count;			/*!< hash collision counter. 0 indicate empty slot, -1 is used for temporary move slot dut to hash collision */
-	int	*hash;			/*!< key hash. we use qFnv32Hash() to generate hash integer */
-	char	**key;			/*!< key string */
-	char	**value;		/*!< value */
-	int	*size;			/*!< value size */
-} Q_HASHTBL;
-
-#define _Q_HASHARR_MAX_KEYLEN		(31)
-#define _Q_HASHARR_DEF_VALUESIZE	(32)
-/**
- * Structure for hash-table based on array.
- */
-typedef struct {
-	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for temporary move slot dut to hash collision, -2 is used for indicating linked block */
-	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
-
-	char	key[_Q_HASHARR_MAX_KEYLEN+1];		/*!< key string which can be size truncated */
-	int	keylen;					/*!< original key length */
-	char	keymd5[16];				/*!< md5 hash of the key */
-
-	char	value[_Q_HASHARR_DEF_VALUESIZE];	/*!< value */
-	int	size;					/*!< value size */
-	int	link;					/*!< next index of the value. */
-} Q_HASHARR;
-
-/**
- * Structure for obstack.
- */
-typedef struct {
-	int	size;			/*!< total object size */
-	int	num;			/*!< number of objects */
-	struct Q_ENTRY *first;		/*!< first object pointer */
-	struct Q_ENTRY *last;		/*!< last object pointer */
-	void	*final;			/*!< final object pointer */
-} Q_OBSTACK;
 
 #ifndef _DOXYGEN_SKIP
 
@@ -446,7 +446,6 @@ char	*qCmd(char *cmd);
  */
 bool	qCheckEmail(char *email);
 bool	qCheckURL(char *url);
-
 
 /*
  * qCount.c
