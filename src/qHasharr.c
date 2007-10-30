@@ -18,7 +18,55 @@
  *************************************************************************/
 
 /**
- * @file qHashtable.c Hash-table Data Structure API
+ * @file qHasharr.c Array based Hash-table Data Structure API
+ *
+ * @note
+ * In this array hash-table, we use some technics to effectively use memory. To verify key we use two way,
+ * if the key is smaller than _Q_HASHARR_MAX_KEYLEN, we compare key itself. But if the key is bigger than
+ * _Q_HASHARR_MAX_KEYLEN, we compare md5 of key and key length. If the key length and md5 of key are same
+ * we consider it's same key. So we don't need to store full key string. Actually it's not necessary to keep
+ * original key string, but we keep this because of two reasons. 1) if the length of the key is smaller than 16,
+ * it will be little bit quicker to compare key. 2) debugging reason.
+ *
+ * Basically this hash-table based on array defines small size slot then it can links several slot for one data.
+ * This mechanism can save some wastes of memory. You can adjust default slot size to modify _Q_HASHARR_DEF_VALUESIZE.
+ *
+ * @code
+ *   int maxkeys = 1000;
+ *
+ *   // calculate how many memory do we need
+ *   int memsize = qHasharrSize(maxkeys * 2); // generally allocate double size of max to decrease hash collision
+ *
+ *   // allocate memory
+ *   Q_HASHARR *hasharr = (Q_HASHARR *)malloc(memsize);
+ *
+ *   // initialize hash-table
+ *   if(qHasharrInit(hasharr, memsize) == false) return -1;
+ *
+ *   // put some sample data
+ *   if(qHasharrPut(hasharr, "sample1", "binary", 6) == false) -1; // hash-table full
+ *   if(qHasharrPutStr(hasharr, "sample2", "string") == false) -1; // hash-table full
+ *   if(qHasharrPutInt(hasharr, "sample3", 3) == false) -1; // hash-table full
+ *
+ *   // fetch data
+ *   int size;
+ *   char *sample_bin = qHasharrGet(hasharr, "sample1", &size);
+ *   char *sample_str = qHasharrGetStr(hasharr, "sample2");
+ *   int  sample_int  = qHasharrGetInt(hasharr, "sample3");
+ * @endcode
+ *
+ * Another simple way to initialize hash-table.
+ *
+ * @code
+ *   // define data memory as much as you needed.
+ *   char datamem[10 * 1024];
+ *
+ *   // just set the Q_HASHARR points to data memory.
+ *   Q_HASHARR *hasharr = (Q_HASHARR *)datamem;
+ *
+ *   // initialize hash-table.
+ *   if(qHasharrInit(hasharr, sizeof(datamem)) == false) return -1;
+ * @endcode
  */
 
 #ifndef WITHOUT_HASHTBL

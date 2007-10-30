@@ -18,7 +18,7 @@
  *************************************************************************/
 
 /**
- * @file qHashtable.c Hash-table Data Structure API
+ * @file qHashtbl.c Hash-table Data Structure API
  */
 
 #ifndef WITHOUT_HASHTBL
