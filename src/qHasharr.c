@@ -78,10 +78,6 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-/////////////////////////////////////////////////////////////////////////
-// PRIVATE FUNCTION PROTOTYPES
-/////////////////////////////////////////////////////////////////////////
-
 static int _findEmpty(Q_HASHARR *tbl, int startidx);
 static int _getIdx(Q_HASHARR *tbl, char *key, int hash);
 static bool _putData(Q_HASHARR *tbl, int idx, int hash, char *key, char *value, int size, int count);

@@ -30,19 +30,16 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-/////////////////////////////////////////////////////////////////////////
-// PRIVATE FUNCTION PROTOTYPES
-/////////////////////////////////////////////////////////////////////////
-
 static int _findEmpty(Q_HASHTBL *tbl, int startidx);
 static int _getIdx(Q_HASHTBL *tbl, char *key, int hash);
 static bool _putData(Q_HASHTBL *tbl, int idx, int hash, char *key, char *value, int size, int count);
 static bool _removeData(Q_HASHTBL *tbl, int idx);
 
-/////////////////////////////////////////////////////////////////////////
-// PUBLIC FUNCTIONS
-/////////////////////////////////////////////////////////////////////////
-
+/**
+ * Under-development
+ *
+ * @return
+ */
 Q_HASHTBL *qHashtblInit(int max) {
 	Q_HASHTBL *tbl;
 
@@ -72,6 +69,11 @@ Q_HASHTBL *qHashtblInit(int max) {
 	return tbl;
 }
 
+/**
+ * Under-development
+ *
+ * @return
+ */
 bool qHashtblFree(Q_HASHTBL *tbl) {
 	if(tbl == NULL) return false;
 
@@ -96,9 +98,10 @@ bool qHashtblFree(Q_HASHTBL *tbl) {
 }
 
 /**
- * @return true or false
+ * Under-development
+ *
+ * @return
  */
-
 bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size) {
 	// get hash integer
 	int hash = (int)qFnv32Hash(key, tbl->max);
@@ -150,10 +153,20 @@ bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size) {
 	return true;
 }
 
+/**
+ * Under-development
+ *
+ * @return
+ */
 bool qHashtblPutStr(Q_HASHTBL *tbl, char *key, char *value) {
 	return qHashtblPut(tbl, key, value, -1);
 }
 
+/**
+ * Under-development
+ *
+ * @return
+ */
 bool qHashtblPutInt(Q_HASHTBL *tbl, char *key, int value) {
 	char data[10+1];
 	sprintf(data, "%d", value);
@@ -161,7 +174,9 @@ bool qHashtblPutInt(Q_HASHTBL *tbl, char *key, int value) {
 }
 
 /**
- * @return alue data which is malloced
+ * Under-development
+ *
+ * @return
  */
 char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size) {
 	int hash = (int)qFnv32Hash(key, tbl->max);
@@ -175,10 +190,20 @@ char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size) {
 	return value;
 }
 
+/**
+ * Under-development
+ *
+ * @return
+ */
 char *qHashtblGetStr(Q_HASHTBL *tbl, char *key) {
 	return qHashtblGet(tbl, key, NULL);
 }
 
+/**
+ * Under-development
+ *
+ * @return
+ */
 int qHashtblGetInt(Q_HASHTBL *tbl, char *key) {
 	char *data = qHashtblGet(tbl, key, NULL);
 	if(data == NULL) return 0;
@@ -190,7 +215,9 @@ int qHashtblGetInt(Q_HASHTBL *tbl, char *key) {
 }
 
 /**
- * @return true or false
+ * Under-development
+ *
+ * @return
  */
 bool qHashtblRemove(Q_HASHTBL *tbl, char *key) {
 	int hash = (int)qFnv32Hash(key, tbl->max);
@@ -238,6 +265,11 @@ bool qHashtblRemove(Q_HASHTBL *tbl, char *key) {
 	return true;
 }
 
+/**
+ * Under-development
+ *
+ * @return
+ */
 void qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
 	int idx, num;
 	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
@@ -247,11 +279,7 @@ void qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////
-// PRIVATE FUNCTIONS
-/////////////////////////////////////////////////////////////////////////
-
-/*
+/**
  * find empty slot
  * @return empty slow number, otherwise returns -1.
  */
