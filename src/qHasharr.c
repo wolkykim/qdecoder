@@ -91,6 +91,8 @@ static bool _removeData(Q_HASHARR *tbl, int idx);
 
 /**
  * Under-development
+ *
+ * @return
  */
 size_t qHasharrSize(int max) {
 	size_t memsize;
@@ -102,6 +104,8 @@ size_t qHasharrSize(int max) {
 
 /**
  * Under-development
+ *
+ * @return
  */
 bool qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
 	// calculate max
@@ -121,6 +125,8 @@ bool qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
 
 /**
  * Under-development
+ *
+ * @return
  */
 bool qHasharrClear(Q_HASHARR *tbl) {
 	// calculate max
@@ -230,6 +236,8 @@ bool qHasharrPutInt(Q_HASHARR *tbl, char *key, int value) {
 }
 
 /**
+ * Under-development
+ *
  * @return value data which is malloced
  */
 char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
@@ -262,6 +270,8 @@ char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
 
 /**
  * Under-development
+ *
+ * @return
  */
 char *qHasharrGetStr(Q_HASHARR *tbl, char *key) {
 	return qHasharrGet(tbl, key, NULL);
@@ -269,6 +279,8 @@ char *qHasharrGetStr(Q_HASHARR *tbl, char *key) {
 
 /**
  * Under-development
+ *
+ * @return
  */
 int qHasharrGetInt(Q_HASHARR *tbl, char *key) {
 	char *data = qHasharrGet(tbl, key, NULL);
@@ -283,6 +295,7 @@ int qHasharrGetInt(Q_HASHARR *tbl, char *key) {
 /**
  * Under-development
  *
+ * @return
  */
 bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
 	// get hash integer
@@ -338,6 +351,8 @@ bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
 
 /**
  * Under-development
+ *
+ * @return
  */
 void qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
 	int idx, num;
