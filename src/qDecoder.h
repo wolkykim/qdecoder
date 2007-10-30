@@ -111,28 +111,13 @@ typedef struct {
 	int	*size;			/*!< value size */
 } Q_HASHTBL;
 
-/**
- * Structure for Hash-table based on Array
- *
- * In this array hash-table, we use some technics to effectively use memory. To verify key we use two way,
- * if the key is smaller than _Q_HASHARR_MAX_KEYLEN, we compare key itself. But if the key is bigger than
- * _Q_HASHARR_MAX_KEYLEN, we compare md5 of key and key length. If the key length and md5 of key are same
- * we consider it's same key. So we don't need to store full key string. Actually it's not necessary to keep
- * original key string, but we keep this because of two reasons. 1) if the length of the key is smaller than 16,
- * it will be little bit quicker to compare key. 2) debugging reason.
- *
- * Basically this hash-table based on array defines small size slot then it can links several slot for one data.
- * This mechanism can save some wastes of memory. You can adjust default slot size to modify _Q_HASHARR_DEF_VALUESIZE.
- *
- */
 #define _Q_HASHARR_MAX_KEYLEN		(31)
 #define _Q_HASHARR_DEF_VALUESIZE	(32)
+/**
+ * Structure for Hash-table based on Array
+ */
 typedef struct {
-	int	count;					/*!< hash collision counter.
-								 0 indicates empty slot,
-								-1 is used for temporary move slot dut to hash collision,
-								-2 is used for indicating linked block
-							*/
+	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for temporary move slot dut to hash collision, -2 is used for indicating linked block */
 	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
 
 	char	key[_Q_HASHARR_MAX_KEYLEN+1];		/*!< key string which can be size truncated */
