@@ -77,8 +77,8 @@ typedef struct {
 typedef struct {
 	int	size;			/*!< total object size */
 	int	num;			/*!< number of objects */
-	struct Q_ENTRY *first;		/*!< first object pointer */
-	struct Q_ENTRY *last;		/*!< last object pointer */
+	Q_ENTRY *first;		/*!< first object pointer */
+	Q_ENTRY	*last;		/*!< last object pointer */
 	void	*final;			/*!< final object pointer */
 } Q_OBSTACK;
 
