@@ -31,7 +31,7 @@
 #include <time.h>
 
 /**
- * qDecoder's linked list type
+ * Structure for qDecoder's linked list.
  */
 typedef struct Q_ENTRY {
 	char *name;		/*!< variable name */
@@ -67,7 +67,7 @@ typedef struct {
 } Q_DB;
 
 /**
- * Structure for Database Result Set
+ * Structure for database result set.
  */
 typedef struct {
 #ifdef _Q_WITH_MYSQL
@@ -81,7 +81,7 @@ typedef struct {
 } Q_DBRESULT;
 
 /**
- * Structure for Log
+ * Structure for file log.
  */
 typedef struct {
 	char	logbase[1024];		/*!< directory which log file is located  */
@@ -98,7 +98,7 @@ typedef struct {
 } Q_LOG;
 
 /**
- * Structure for Hash-table
+ * Structure for hash-table.
  */
 typedef struct {
 	int	max;			/*!< maximum hashtable size  */
@@ -114,7 +114,7 @@ typedef struct {
 #define _Q_HASHARR_MAX_KEYLEN		(31)
 #define _Q_HASHARR_DEF_VALUESIZE	(32)
 /**
- * Structure for Hash-table based on Array
+ * Structure for hash-table based on array.
  */
 typedef struct {
 	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for temporary move slot dut to hash collision, -2 is used for indicating linked block */
@@ -130,7 +130,7 @@ typedef struct {
 } Q_HASHARR;
 
 /**
- * Structure for Obstack
+ * Structure for obstack.
  */
 typedef struct {
 	int	size;			/*!< total object size */
