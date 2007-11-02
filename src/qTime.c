@@ -70,6 +70,19 @@ char *qGetTimeStr(time_t univtime) {
 	return qGetTimeStrf(univtime, timestr, sizeof(timestr), "%Y%m%d%H%M%S");
 }
 
+ /**
+ * Get local time string formatted like '02-Nov-2007 16:37:39 +0900'.
+ *
+ * @param univtime	0 for current time, universal time for specific time
+ *
+ * @return		string pointer which points time string.
+ *
+ * @code
+ *   printf("%s", qGetLocaltimeStr(0));				// now
+ *   printf("%s", qGetLocaltimeStr(time(NULL)));		// same as above
+ *   printf("%s", qGetLocaltimeStr(time(NULL) + 86400));	// 1 day later
+ * @endcode
+ */
 char *qGetLocaltimeStr(time_t univtime) {
 	static char timestr[29+1];
 	return qGetTimeStrf(univtime, timestr, sizeof(timestr), "%d-%b-%Y %H:%M:%S %z");
@@ -94,7 +107,29 @@ char *qGetGmtimeStr(time_t univtime) {
 	if(univtime == 0) univtime = time(NULL);
 	gmtm = gmtime(&univtime);
 
-	//strftime(timestr, sizeof(timestr), "%a, %d-%b-%Y %H:%M:%S GMT", gmtm);
 	strftime(timestr, sizeof(timestr), "%a, %d %b %Y %H:%M:%S GMT", gmtm);
 	return timestr;
+}
+
+/**
+ * This parses GMT formatted time sting like 'Wed, 11-Nov-2007 23:19:25 GMT',
+ * and returns as universal time.
+ *
+ * @param gmtstr	GMT formatted time string
+ *
+ * @return	universal time. in case of conversion error, returns -1.
+ *
+ * @code
+ *   time_t t = time(NULL);
+ *   char *s =  qGetGmtimeStr(t);
+ *   printf("%d\n", t);
+ *   printf("%s\n", s);
+ *   printf("%d\n", qParseGmtimeStr(s)); // this must be same as t
+ * @endcode
+ */
+time_t qParseGmtimeStr(char *gmtstr) {
+	struct tm gmtm;
+	if(strptime(gmtstr, "%a, %d %b %Y %H:%M:%S GMT", &gmtm) == NULL) return 0;
+
+	return timegm(&gmtm);
 }
