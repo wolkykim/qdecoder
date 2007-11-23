@@ -74,6 +74,22 @@ Q_ENTRY *qEntryAdd(Q_ENTRY *first, char *name, char *value, int flag) {
 }
 
 /**********************************************
+** Usage : qEntryAddInt(first entry, name, value, replace);
+** Return: New entry pointer.
+** Do    : Add entry at last.
+**         flag = 0 : just append.
+**         flag = 1 : if same name exists, replace it.
+**         flag = 2 : same as flag 0 but the name and value are binary pointer.
+**                    so the pointer will be used instead strdup().
+**********************************************/
+Q_ENTRY *qEntryAddInt(Q_ENTRY *first, char *name, int value, int flag) {
+	char buf[10+1];
+
+	sprintf(buf, "%d", value);
+	return qEntryAdd(first, name, buf, flag);
+}
+
+/**********************************************
 ** Usage : qEntryRemove(first entry, name to remove);
 ** Return: first entry pointer.
 ** Do    : Remove entry if same name exists, remove all.

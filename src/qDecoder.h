@@ -327,6 +327,7 @@ bool	qDbRollback(Q_DB *db);
  */
 
 Q_ENTRY	*qEntryAdd(Q_ENTRY *first, char *name, char *value, int flag);
+Q_ENTRY	*qEntryAddInt(Q_ENTRY *first, char *name, int value, int flag);
 Q_ENTRY	*qEntryRemove(Q_ENTRY *first, char *name);
 char	*qEntryGetValue(Q_ENTRY *first, char *name);
 char	*qEntryGetValueLast(Q_ENTRY *first, char *name);
