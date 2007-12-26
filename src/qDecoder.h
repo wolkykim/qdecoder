@@ -263,6 +263,7 @@ int	qSemGetId(char *keyfile, int keyid);
 bool	qSemEnter(int semid, int semno);
 bool	qSemEnterNowait(int semid, int semno);
 bool	qSemLeave(int semid, int semno);
+bool	qSemCheck(int semid, int semno);
 bool	qSemFree(int semid);
 
 /*
