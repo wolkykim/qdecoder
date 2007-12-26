@@ -198,6 +198,16 @@ bool qSemLeave(int semid, int semno) {
  *
  * @since not released yet
  */
+bool qSemCheck(int semid, int semno) {
+	if(semctl(semid, semno, GETVAL, 0) == 0) return true; // locked
+	return false; // unlocked
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
 bool qSemFree(int semid) {
 	if (semid < 0) return false;
 	if (semctl(semid, 0, IPC_RMID, 0) != 0) return false;

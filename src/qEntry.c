@@ -79,8 +79,6 @@ Q_ENTRY *qEntryAdd(Q_ENTRY *first, char *name, char *value, int flag) {
 ** Do    : Add entry at last.
 **         flag = 0 : just append.
 **         flag = 1 : if same name exists, replace it.
-**         flag = 2 : same as flag 0 but the name and value are binary pointer.
-**                    so the pointer will be used instead strdup().
 **********************************************/
 Q_ENTRY *qEntryAddInt(Q_ENTRY *first, char *name, int value, int flag) {
 	char buf[10+1];
