@@ -246,6 +246,7 @@ int qObstackGetNum(Q_OBSTACK *obstack) {
 bool qObstackFree(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return false;
 	qEntryFree(obstack->first);
+	if(obstack->final != NULL) free(obstack->final);
 	free(obstack);
 	return true;
 }
