@@ -31,7 +31,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <iconv.h>
-#include <math.h>
 #include <errno.h>
 #include "md5/md5_global.h"
 #include "md5/md5.h"
@@ -113,7 +112,7 @@ char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
 	if(fromstr == NULL) return NULL;
 
 	fromsize = strlen(fromstr) + 1;
-	tosize = (int)ceilf((float)fromsize * mag) + 1;
+	tosize = (int)(mag * fromsize) + 1;
 	tostr = tp = (char *)malloc(tosize);
 	if(tostr == NULL) return NULL;
 
