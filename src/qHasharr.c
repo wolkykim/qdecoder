@@ -118,7 +118,6 @@ bool qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
 	return true;
 }
 
-
 /**
  * Under-development
  *
@@ -240,7 +239,9 @@ char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
 	// get hash integer
 	int hash = ((int)qFnv32Hash(key, tbl[0].keylen)) + 1; // 0번은 안쓰므로
 
+	DEBUG("enter key %s %d %d", key, hash, tbl[0].keylen);
 	int idx = _getIdx(tbl, key, hash);
+	DEBUG("idx %s %d", key, idx);
 	if (idx < 0) return NULL;
 
 	char *value, *vp;
@@ -392,7 +393,7 @@ static int _getIdx(Q_HASHARR *tbl, char *key, int hash) {
 		for (count = 0, idx = hash; count < tbl[hash].count; ) {
 			// find same hash
 			while(true) {
-				if (idx >= tbl[0].keylen) idx = 0;
+				if (idx > tbl[0].keylen) idx = 1;
 
 				if ((tbl[idx].count > 0 || tbl[idx].count == -1) && tbl[idx].hash == hash) {
 					// found same hash
@@ -400,7 +401,7 @@ static int _getIdx(Q_HASHARR *tbl, char *key, int hash) {
 					break;
 				}
 
-				idx = (idx + 1) % tbl[0].keylen;
+				idx++;
 				if(idx == hash) return -1;
 			}
 

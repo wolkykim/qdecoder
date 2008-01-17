@@ -312,14 +312,15 @@ static int _getIdx(Q_HASHTBL *tbl, char *key, int hash) {
 					break;
 				}
 
-				idx = (idx + 1) % tbl->max;
+				idx++;
 				if(idx == hash) return -1;
 			}
 
 			// is same key?
 			if (!strcmp(tbl->key[idx], key)) return idx;
 
-			idx = (idx + 1) % tbl->max;
+			idx++;
+			if (idx >= tbl->max) idx = 0;
 			if(idx == hash) break;
 		}
 	}
