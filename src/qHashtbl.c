@@ -279,6 +279,11 @@ void qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
 	}
 }
 
+void qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max) {
+	if(used != NULL) *used = tbl->num;
+	if(max != NULL) *max = tbl->max;
+}
+
 /**
  * find empty slot
  * @return empty slow number, otherwise returns -1.

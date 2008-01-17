@@ -356,6 +356,7 @@ int	qHashtblGetInt(Q_HASHTBL *tbl, char *key);
 bool	qHashtblRemove(Q_HASHTBL *tbl, char *key);
 void	qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
 bool	qHashtblFree(Q_HASHTBL *tbl);
+void	qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
 
 /*
  * qHasharr.c
@@ -371,6 +372,7 @@ char	*qHasharrGetStr(Q_HASHARR *tbl, char *key);
 int	qHasharrGetInt(Q_HASHARR *tbl, char *key);
 bool	qHasharrRemove(Q_HASHARR *tbl, char *key);
 void	qHasharrPrint(Q_HASHARR *tbl, FILE *out);
+void	qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
 
 /*
  * qObstack.c

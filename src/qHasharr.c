@@ -44,9 +44,9 @@
  *   if(qHasharrInit(hasharr, memsize) == false) return -1;
  *
  *   // put some sample data
- *   if(qHasharrPut(hasharr, "sample1", "binary", 6) == false) -1; // hash-table full
- *   if(qHasharrPutStr(hasharr, "sample2", "string") == false) -1; // hash-table full
- *   if(qHasharrPutInt(hasharr, "sample3", 3) == false) -1; // hash-table full
+ *   if(qHasharrPut(hasharr, "sample1", "binary", 6) == false) return -1; // hash-table full
+ *   if(qHasharrPutStr(hasharr, "sample2", "string") == false) return -1; // hash-table full
+ *   if(qHasharrPutInt(hasharr, "sample3", 3) == false) return -1; // hash-table full
  *
  *   // fetch data
  *   int size;
@@ -66,6 +66,26 @@
  *
  *   // initialize hash-table.
  *   if(qHasharrInit(hasharr, sizeof(datamem)) == false) return -1;
+ * @endcode
+ *
+ * You can create hash table on shared memory like below.
+ *
+ * @code
+ *   int maxkeys = 1000;
+ *   int memsize = qHasharrSize(maxkeys * 2);
+ *
+ *   // create shared memory
+ *   int shmid = qShmInit(g_conf.szEgisdavdPidfile, 's', memsize, true);
+ *   if(shmid < 0) return -1; // creation failed
+ *   Q_HASHARR *hasharr = (Q_HASHARR *)qShmGet(shmid);
+ *
+ *   // initialize hash-table
+ *   if(qHasharrInit(hasharr, memsize) == false) return -1;
+ *
+ *   (...your codes here...)
+ *
+ *   // destroy shared memory
+ *   qShmFree(shmid);
  * @endcode
  */
 
@@ -359,6 +379,11 @@ void qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
 			idx, tbl[idx].count, tbl[idx].hash, tbl[idx].key, tbl[idx].keylen, tbl[idx].size, tbl[idx].link);
 		num++;
 	}
+}
+
+void qHasharrStatus(Q_HASHARR *tbl, int *used, int *max) {
+	if(used != NULL) *used = tbl[0].count;
+	if(max != NULL) *max = tbl[0].keylen;
 }
 
 /////////////////////////////////////////////////////////////////////////
