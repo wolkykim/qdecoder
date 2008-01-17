@@ -259,9 +259,7 @@ char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
 	// get hash integer
 	int hash = ((int)qFnv32Hash(key, tbl[0].keylen)) + 1; // 0번은 안쓰므로
 
-	DEBUG("enter key %s %d %d", key, hash, tbl[0].keylen);
 	int idx = _getIdx(tbl, key, hash);
-	DEBUG("idx %s %d", key, idx);
 	if (idx < 0) return NULL;
 
 	char *value, *vp;

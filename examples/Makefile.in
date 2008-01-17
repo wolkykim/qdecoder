@@ -1,29 +1,29 @@
-##########################################################################
-# qDecoder - Web Application Interface for C/C++   http://www.qDecoder.org
-#
-# Copyright (C) 2007 Seung-young Kim.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as published
-# by the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-##########################################################################
+###########################################################################
+## qDecoder - Web Application Interface for C/C++   http://www.qDecoder.org
+##
+## Copyright (C) 2007 Seung-young Kim.
+##
+## This program is free software: you can redistribute it and/or modify
+## it under the terms of the GNU Lesser General Public License as published
+## by the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU Lesser General Public License for more details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###########################################################################
 
-# Which compiler
+## Which compiler
 CC	= @CC@
 CFLAGS	= @CFLAGS@
 DEFS	= @DEFS@
 INCLUDE	= -I. -I../src
 
-# qDecoder Library Path
+## qDecoder Library Path
 QLIB	= ../src/libqDecoder.a
 #QLIB	= ../src/libqDecoder.so
 
@@ -69,10 +69,10 @@ socket.cgi: ${QLIB} socket.o
 ${QLIB}:
 	(cd ../src/; make all)
 
-## Compile Module
-.c.o:
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -c -o $@ $<
-
 ## Clear Module
 clean:
 	rm -rf *.o *.cgi upload/* tmp/*
+
+## Compile Module
+.c.o:
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -c -o $@ $<
