@@ -4501,7 +4501,6 @@ See \`config.log' for more details." >&2;}
    { (exit 1); exit 1; }; }
 	fi
 fi
-#todo MYSQL_INCLUDE
 
 
 	# Check whether --enable-cgisupport was given.

@@ -4,26 +4,14 @@
    */
 #undef HAVE_DIRENT_H
 
-/* Define to 1 if you have the <hello.h> header file. */
-#undef HAVE_HELLO_H
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define to 1 if you have the <mysql.h> header file. */
-#undef HAVE_MYSQL_H
-
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
-
-/* Define to 1 if you have the `sendfile' function. */
-#undef HAVE_SENDFILE
-
-/* Define to 1 if you have the `socket' function. */
-#undef HAVE_SOCKET
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #undef HAVE_STDBOOL_H
