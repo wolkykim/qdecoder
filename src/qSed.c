@@ -21,7 +21,7 @@
  * @file qSed.c Server Side Include and Variable Replacement API
  */
 
-#ifndef WITHOUT_SED
+#ifndef DISABLE_SED
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -160,4 +160,4 @@ void qSedFree(Q_ENTRY *first) {
 	qEntryFree(first);
 }
 
-#endif /* WITHOUT_SED */
+#endif /* DISABLE_SED */

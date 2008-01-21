@@ -22,8 +22,8 @@
  *
  * @note
  * To use this API, you must include database header file before including qDecoder.h in your
- * source code like below. And please remember that qDecoder must be compiled with WITH_MYSQL
- * or WITH_SOME_DATABASE option.
+ * source code like below. And please remember that qDecoder must be compiled with ENABLE_MYSQL
+ * or ENABLE_SOME_DATABASE option.
  *
  * @code
  *   [include order at your source codes]
@@ -68,7 +68,7 @@
  * @endcode
  */
 
-#ifdef WITH_MYSQL
+#ifdef ENABLE_MYSQL
 #include "mysql.h"
 #endif
 
@@ -99,7 +99,7 @@ Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password
 	Q_DB *db;
 	char *support_db;
 
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	support_db = "MYSQL";
 #else
 	support_db = "";
@@ -137,7 +137,7 @@ bool qDbOpen(Q_DB *db) {
 		qDbClose(db);
 	}
 
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	// initialize mysql structure
 	if (!mysql_init(&db->mysql)) {
 		return false;
@@ -175,7 +175,7 @@ bool qDbOpen(Q_DB *db) {
 bool qDbClose(Q_DB *db) {
 	if (db == NULL || db->connected == false) return false;
 
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	mysql_close(&db->mysql);
 	db->connected = false;
 	return true;
@@ -205,7 +205,7 @@ char *qDbGetErrMsg(Q_DB *db) {
 	static char msg[1024];
 	if (db == NULL || db->connected == false) return "(no opened db)";
 
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if(mysql_errno(&db->mysql) == 0 ) strcpy(msg, "NO ERROR");
 	else qStrncpy(msg, (char *)mysql_error(&db->mysql), sizeof(msg));
 #else
@@ -223,7 +223,7 @@ char *qDbGetErrMsg(Q_DB *db) {
 bool qDbPing(Q_DB *db) {
 	if (db == NULL) return false;
 
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if (db->connected == true && mysql_ping(&db->mysql) == 0) {
 		return true;
 	} else { // ping test failed
@@ -266,7 +266,7 @@ bool qDbGetLastConnStatus(Q_DB *db) {
 int qDbExecuteUpdate(Q_DB *db, char *query) {
 	if (db == NULL || db->connected == false) return -1;
 
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	int affected;
 
 	// query
@@ -307,7 +307,7 @@ int qDbExecuteUpdatef(Q_DB *db, char *format, ...) {
 Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
 	if (db == NULL || db->connected == false) return NULL;
 
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	// query
 	DEBUG("%s", query);
 	if (mysql_query(&db->mysql, query)) return NULL;
@@ -357,7 +357,7 @@ Q_DBRESULT *qDbExecuteQueryf(Q_DB *db, char *format, ...) {
  * @since not released yet
  */
 bool qDbResultNext(Q_DBRESULT *result) {
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL) return false;
 
 	if ((result->row = mysql_fetch_row(result->rs)) == NULL) return false;
@@ -375,7 +375,7 @@ bool qDbResultNext(Q_DBRESULT *result) {
  * @since not released yet
  */
 bool qDbResultFree(Q_DBRESULT *result) {
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if (result == NULL) return false;
 	if (result->rs != NULL) {
 		mysql_free_result(result->rs);
@@ -394,7 +394,7 @@ bool qDbResultFree(Q_DBRESULT *result) {
  * @since not released yet
  */
 int qDbGetCols(Q_DBRESULT *result) {
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
 	return result->cols;
 #else
@@ -408,7 +408,7 @@ int qDbGetCols(Q_DBRESULT *result) {
  * @since not released yet
  */
 int qDbGetRows(Q_DBRESULT *result) {
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
 	return result->rows;
 #else
@@ -422,7 +422,7 @@ int qDbGetRows(Q_DBRESULT *result) {
  * @since not released yet
  */
 int qDbGetRow(Q_DBRESULT *result) {
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
 	return result->cursor;
 #else
@@ -436,7 +436,7 @@ int qDbGetRow(Q_DBRESULT *result) {
  * @since not released yet
  */
 char *qDbGetValue(Q_DBRESULT *result, char *field) {
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL || result->cols <= 0) return NULL;
 
 	if (result->fields == NULL) result->fields = mysql_fetch_fields(result->rs);
@@ -469,7 +469,7 @@ int qDbGetInt(Q_DBRESULT *result, char *field) {
  * @since not released yet
  */
 char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL || result->cursor == 0 || idx <= 0 || idx > result->cols ) return NULL;
 	return result->row[idx-1];
 #else
@@ -494,7 +494,7 @@ int qDbGetIntAt(Q_DBRESULT *result, int idx) {
 bool qDbBeginTran(Q_DB *db) {
 	if (db == NULL) return false;
 
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	Q_DBRESULT *result;
 	result = qDbExecuteQuery(db, "START TRANSACTION");
 	if(result == NULL) return false;
@@ -525,7 +525,7 @@ bool qDbEndTran(Q_DB *db, bool commit) {
 bool qDbCommit(Q_DB *db) {
 	if (db == NULL) return false;
 
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if (mysql_commit(&db->mysql) != 0) return false;
 	return true;
 #else
@@ -541,7 +541,7 @@ bool qDbCommit(Q_DB *db) {
 bool qDbRollback(Q_DB *db) {
 	if (db == NULL) return false;
 
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	if (mysql_rollback(&db->mysql) != 0) {
 		return false;
 	}

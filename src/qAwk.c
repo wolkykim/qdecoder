@@ -48,7 +48,7 @@
  * token1 and tokenN is ok. But token2 will be stored only first 1023 bytes.
  */
 
-#ifndef WITHOUT_AWK
+#ifndef DISABLE_AWK
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,4 +133,4 @@ int qAwkStr(char array[][1024], char *str, char delim) {
 	return i;
 }
 
-#endif /* WITHOUT_AWK */
+#endif /* DISABLE_AWK */

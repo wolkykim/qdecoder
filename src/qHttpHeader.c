@@ -21,7 +21,7 @@
  * @file qHttpHeader.c HTTP Response Handling API
  */
 
-#ifndef WITHOUT_CGISUPPORT
+#ifndef DISABLE_CGISUPPORT
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,4 +96,4 @@ void qJavaScript(char *format, ...) {
 	printf("</html>\n");
 }
 
-#endif /* WITHOUT_CGISUPPORT */
+#endif /* DISABLE_CGISUPPORT */

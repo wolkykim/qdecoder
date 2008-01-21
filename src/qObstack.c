@@ -22,7 +22,7 @@
  *
  * @note
  * This API can be disabled(excluded in the library) with compile option
- * -DWITHOUT_OBSTACK.
+ * -DDISABLE_OBSTACK.
  *
  * @code
  *   [Code sample - String]
@@ -102,7 +102,7 @@
  * @endcode
  */
 
-#ifndef WITHOUT_OBSTACK
+#ifndef DISABLE_OBSTACK
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -251,4 +251,4 @@ bool qObstackFree(Q_OBSTACK *obstack) {
 	return true;
 }
 
-#endif /* WITHOUT_OBSTACK */
+#endif /* DISABLE_OBSTACK */

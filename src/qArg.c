@@ -70,7 +70,7 @@
  * @endcode
  */
 
-#ifndef WITHOUT_ARG
+#ifndef DISABLE_ARG
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -285,4 +285,4 @@ void qArgFree(char **qlist) {
 	*qlist = NULL;
 }
 
-#endif /* WITHOUT_ARG */
+#endif /* DISABLE_ARG */

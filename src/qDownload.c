@@ -21,7 +21,7 @@
  * @file qDownload.c HTTP Download Handling API
  */
 
-#ifndef WITHOUT_CGISUPPORT
+#ifndef DISABLE_CGISUPPORT
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,4 +99,4 @@ int qDownloadMime(char *filename, char *mime) {
 	return sent;
 }
 
-#endif /* WITHOUT_CGISUPPORT */
+#endif /* DISABLE_CGISUPPORT */

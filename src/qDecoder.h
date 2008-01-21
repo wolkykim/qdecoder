@@ -101,7 +101,7 @@ typedef struct {
 
 /* Database Support*/
 #ifdef _mysql_h
-#define _Q_WITH_MYSQL		(1)
+#define _Q_ENABLE_MYSQL		(1)
 #endif
 
 /**
@@ -121,7 +121,7 @@ typedef struct {
 	} info;				/*!< database connection infomation */
 
 	// for mysql database
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	MYSQL		mysql;
 #endif
 } Q_DB;
@@ -130,7 +130,7 @@ typedef struct {
  * Structure for database result set.
  */
 typedef struct {
-#ifdef _Q_WITH_MYSQL
+#ifdef _Q_ENABLE_MYSQL
 	MYSQL_RES	*rs;
 	MYSQL_FIELD	*fields;
 	MYSQL_ROW	row;

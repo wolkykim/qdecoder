@@ -59,7 +59,7 @@
  * @endcode
  */
 
-#ifndef WITHOUT_IPC
+#ifndef DISABLE_IPC
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,4 +140,4 @@ bool qShmFree(int shmid) {
 	return true;
 }
 
-#endif /* WITHOUT_IPC */
+#endif /* DISABLE_IPC */

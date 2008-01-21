@@ -21,7 +21,7 @@
  * @file qLog.c Rotating File Logging API
  */
 
-#ifndef WITHOUT_LOG
+#ifndef DISABLE_LOG
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -162,4 +162,4 @@ static int _realOpen(Q_LOG *log) {
 	return 1;
 }
 
-#endif /* WITHOUT_LOG */
+#endif /* DISABLE_LOG */

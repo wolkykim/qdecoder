@@ -27,67 +27,67 @@ exec_prefix	= ${prefix}
 ## Web Application(CGI) API
 ## Influence on : qDecoder.c, qSession.c, qHttpHeader.c qDownload.c qError.c
 ##
-## If you do not use qDecoder for CGI interfacing, uncomment WITHOUT_CGISUPPORT.
+## If you do not use qDecoder for CGI interfacing, uncomment DISABLE_CGISUPPORT.
 ## This will disable all CGI interface functions such like qDecoder(),
 ## qGetValue(), qSession(), qContentType(), qDownload(), qError(), etc...
-#WITHOUT_CGISUPPORT	= -DWITHOUT_CGISUPPORT
+#DISABLE_CGISUPPORT	= -DDISABLE_CGISUPPORT
 
 ## Configuration File & String Handling API
 ## Influence on : qfDecode.cr, qsDecoder.c
-#WITHOUT_CONFIGPARSER	= -DWITHOUT_CONFIGPARSER
+#DISABLE_CONFIGPARSER	= -DDISABLE_CONFIGPARSER
 
 ## Pattern Matching & String Search API
 ## Influence on : qArg.c
-#WITHOUT_ARG	= -DWITHOUT_ARG
+#DISABLE_ARG	= -DDISABLE_ARG
 
 ## File & String Tokenizing API
 ## Influence on : qAwk.c
-#WITHOUT_AWK	= -DWITHOUT_AWK
+#DISABLE_AWK	= -DDISABLE_AWK
 
 ## Server Side Include and Variable Replacement API
 ## Influence on : qSed.c
-#WITHOUT_SED	= -DWITHOUT_SED
+#DISABLE_SED	= -DDISABLE_SED
 
 ## IPC(Semaphore, Shared-memory) Support
 ## Influence on : qSem.c, qShm.c
-#WITHOUT_IPC	= -DWITHOUT_IPC
+#DISABLE_IPC	= -DDISABLE_IPC
 
 ## Socket Support
 ## Influence on : qSocket.c
-#WITHOUT_SOCKET	= -DWITHOUT_SOCKET
+#DISABLE_SOCKET	= -DDISABLE_SOCKET
 
 ## Database Support
 ## Influence on : qDatabase.c
-ifeq (@WITH_MYSQL@, yes)
-WITH_MYSQL	= -DWITH_MYSQL
+ifeq (@ENABLE_MYSQL@, yes)
+ENABLE_MYSQL	= -DENABLE_MYSQL
 MYSQL_INCLUDE	= -I/usr/local/include/mysql -I /usr/local/mysql/include
 endif
 
 ## Hash-table Support
 ## Influence on : qHashtbl.c, qHasharr.c
-#WITHOUT_HASHTBL	= -DWITHOUT_HASHTBL
+#DISABLE_HASHTBL	= -DDISABLE_HASHTBL
 
 ## Obstack Support
 ## Influence on : qObstack.c
-#WITHOUT_OBSTACK	= -DWITHOUT_OBSTACK
+#DISABLE_OBSTACK	= -DDISABLE_OBSTACK
 
 ## Rotating File Logging API
 ## Influence on : qLog.c
-#WITHOUT_LOG	= -DWITHOUT_LOG
+#DISABLE_LOG	= -DDISABLE_LOG
 
 ##########################################################################
 ## YOU DON'T NEED TO MODIFY BELOW BEFORE YOU GOT COMPILE TIME TROUBLES
 ##########################################################################
-OPT_DEFS	= ${WITHOUT_CGISUPPORT}		\
-		 ${WITHOUT_CONFIGPARSER}	\
-		 ${WITHOUT_ARG}			\
-		 ${WITHOUT_AWK}			\
-		 ${WITHOUT_SED}			\
-		 ${WITHOUT_IPC}			\
-		 ${WITHOUT_SOCKET}		\
-		 ${WITH_MYSQL}			\
-		 ${WITHOUT_HASHTBL}		\
-		 ${WITHOUT_LOG}
+OPT_DEFS	= ${DISABLE_CGISUPPORT}		\
+		 ${DISABLE_CONFIGPARSER}	\
+		 ${DISABLE_ARG}			\
+		 ${DISABLE_AWK}			\
+		 ${DISABLE_SED}			\
+		 ${DISABLE_IPC}			\
+		 ${DISABLE_SOCKET}		\
+		 ${ENABLE_MYSQL}			\
+		 ${DISABLE_HASHTBL}		\
+		 ${DISABLE_LOG}
 
 OPT_INCLUDE	=  ${MYSQL_INCLUDE}
 
@@ -107,14 +107,9 @@ LIBDIR		= @libdir@
 HEADERDIR	= @includedir@
 
 ## Which compiler & options for release
-#BUILD_DEBUG	= -Wall -g -O0 -DBUILD_DEBUG
-ifeq (@ENABLE_X86_64@, yes)
-CFLAGS64	= -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-endif
-
 CC		= @CC@
-CFLAGS		= @CFLAGS@  ${CFLAGS64} ${BUILD_DEBUG}
-DEFS		= @DEFS@ ${OPT_DEFS}
+CFLAGS		= @CFLAGS@
+DEFS		= @DEFS@ @OPT_DEFS@
 INCLUDE		= -I./ ${OPT_INCLUDE}
 
 ## Utilities
@@ -123,7 +118,7 @@ ARFLAGS		= -rc
 CHMOD		= @CHMOD@
 INSTALL		= @INSTALL@
 INSTALL_DATA	= @INSTALL_DATA@
-LD		= @LD@
+LD		= @LD@ -G
 LDFLAGS		= @LDFLAGS@
 LN_S		= @LN_S@
 RANLIB		= @RANLIB@

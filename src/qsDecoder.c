@@ -21,7 +21,7 @@
  * @file qsDecoder.c Configuration String Handling API
  */
 
-#ifndef WITHOUT_CONFIGPARSER
+#ifndef DISABLE_CONFIGPARSER
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,4 +140,4 @@ void qsFree(Q_ENTRY *first) {
 	qEntryFree(first);
 }
 
-#endif /* WITHOUT_CONFIGPARSER */
+#endif /* DISABLE_CONFIGPARSER */

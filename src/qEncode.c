@@ -140,7 +140,6 @@ char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
 unsigned char *qMd5Hash(char *data, int len) {
 	static unsigned char digest[16 + 1];
 	MD5_CTX context;
-	int i;
 
 	MD5Init(&context);
 	MD5Update(&context, data, len);

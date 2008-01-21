@@ -21,7 +21,7 @@
  * @file qSocket.c Socket Handling API
  */
 
-#ifndef WITHOUT_SOCKET
+#ifndef DISABLE_SOCKET
 #ifndef _WIN32
 
 #include <stdio.h>
@@ -357,4 +357,4 @@ int _StrToAddr(struct sockaddr_in *addr, unsigned char family, char *hostname, i
 }
 
 #endif /* _WIN32 */
-#endif /* WITHOUT_SOCKET */
+#endif /* DISABLE_SOCKET */

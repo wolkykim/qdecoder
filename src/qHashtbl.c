@@ -21,7 +21,7 @@
  * @file qHashtbl.c Hash-table Data Structure API
  */
 
-#ifndef WITHOUT_HASHTBL
+#ifndef DISABLE_HASHTBL
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -368,4 +368,4 @@ static bool _removeData(Q_HASHTBL *tbl, int idx) {
 	return true;
 }
 
-#endif /* WITHOUT_HASHTBL */
+#endif /* DISABLE_HASHTBL */

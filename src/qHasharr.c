@@ -89,7 +89,7 @@
  * @endcode
  */
 
-#ifndef WITHOUT_HASHTBL
+#ifndef DISABLE_HASHTBL
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -552,4 +552,4 @@ static bool _removeData(Q_HASHARR *tbl, int idx) {
 	return true;
 }
 
-#endif /* WITHOUT_HASHTBL */
+#endif /* DISABLE_HASHTBL */

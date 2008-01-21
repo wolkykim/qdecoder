@@ -48,3 +48,4 @@ distclean: clean
 		echo "===> Removing $${DIR}/Makefile"; \
 		(cd $${DIR}; rm -f Makefile); \
 	done
+	${RM} -f config.h
