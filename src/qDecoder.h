@@ -285,7 +285,7 @@ int	qSocketGets(int sockfd, char *str, int size, int timeoutms);
 int	qSocketWrite(int sockfd, char *binary, int size);
 int	qSocketPuts(int sockfd, char *str);
 int	qSocketPrintf(int sockfd, char *format, ...);
-int	qSocketSendFile(int sockfd, char *filepath, int offset);
+ssize_t	qSocketSendFile(int sockfd, char *filepath, off_t offset);
 int	qSocketSaveIntoFile(int sockfd, int size, char *filepath, char *mode, int timeoutms);
 int	qSocketSaveIntoMemory(int sockfd, int size, char *mem, int timeoutms);
 FILE	*qSocketConv2file(int sockfd);

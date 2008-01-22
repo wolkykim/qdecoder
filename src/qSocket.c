@@ -36,6 +36,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/sendfile.h>
 
 #include "qDecoder.h"
 
@@ -211,42 +213,33 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 }
 
 /**********************************************
-** Usage : qSocketSendFile("/home/mydata/hello.exe", 0, sockfd);
+** Usage : qSocketSendFile(sockfd, "/home/mydata/hello.exe", 0);
 ** Return: returns total sent bytes, otherwise the value -1 returned.
 ** Do    : send file data to socket stream.
 **********************************************/
-int qSocketSendFile(int sockfd, char *filepath, int offset) {
-	FILE *fp;
-	char buf[1024*16];
+#define MAX_SENDFILE_CHUNK_SIZE		(1024 * 1024)
+ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset) {
+	struct stat filestat;
+	int filefd;
 
-	int readed, sended, sendbytes;
+	if((filefd = open(filepath, O_RDONLY , 0))  < 0) return -1;
+	if (fstat(filefd, &filestat) < 0) return -1;
 
-	// file open
-	if ((fp = fopen(filepath, "r")) == NULL) return 0;
+	ssize_t rangesize = filestat.st_size - offset;
+	ssize_t sent = 0;		// total size sent
+	while(sent < rangesize) {
+		size_t sendsize;	// this time sending size
+		if(rangesize - sent > MAX_SENDFILE_CHUNK_SIZE) sendsize = MAX_SENDFILE_CHUNK_SIZE;
+		else sendsize = rangesize - sent;
 
-	// set offset
-	if (offset > 0) {
-		fseek(fp, offset, SEEK_SET);
+		ssize_t ret = sendfile(sockfd, filefd, &offset, sendsize);
+		if(ret <= 0) break; // Connection closed by peer
+
+		sent += ret;
 	}
+	close(filefd);
 
-	for (sendbytes = 0; ; sendbytes += sended) {
-		// read
-		readed = fread(buf, 1, sizeof(buf), fp);
-		if (readed == 0) break;
-
-		// send
-		sended = write(sockfd, buf, readed);
-
-		// connection check
-		if (readed != sended) {
-			fclose(fp);
-			return -1; // connection closed
-		}
-	}
-
-	fclose(fp);
-
-	return sendbytes;
+	return sent;
 }
 
 /**********************************************
