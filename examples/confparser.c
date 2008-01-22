@@ -44,7 +44,7 @@ int main(void) {
 	printf("Port     : %d\n", port);
 
 	printf("\n--[CONFIGURATION DUMP]--\n");
-	qfPrint(conf);
+	qfPrint(conf, stdout);
 
 	/* Deallocate parsed entries */
 	qfFree(conf);

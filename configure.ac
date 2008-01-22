@@ -69,6 +69,10 @@ AC_PREFIX_DEFAULT([/usr/local])
 
 ## Checks for programs.
 AC_PROG_CC
+if test "$CC" = gcc; then
+	CFLAGS="$CFLAGS -Wall"
+fi
+
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET

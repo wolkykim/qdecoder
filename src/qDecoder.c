@@ -40,7 +40,7 @@
  *   [Your Source]
  *   char *query;
  *   query = qGetValue("query");
- *   qPrint(); // if you want to see debugging information
+ *   qPrint(stdout); // if you want to see debugging information
  * @endcode
  *
  * The parsing sequence is (1)COOKIE (2)GET (3)POST. Thus if same query names
@@ -1326,11 +1326,13 @@ Q_ENTRY *qGetFirstEntry(void) {
 /**
  * Print out internal data for debugging.
  *
+ * @param out	output file stream
+ *
  * @return	the number of variables
  *
  * @note
  * @code
- *   qPrint();
+ *   qPrint(stdout);
  * @endcode
  */
 int qPrint(FILE *out) {

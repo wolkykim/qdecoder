@@ -65,7 +65,7 @@ int main(void) {
 
 	/* screen out */
 	qContentType("text/html");
-	qSessionPrint();
+	qSessionPrint(stdout);
 
 	/* save session & free allocated memories */
 	qSessionFree();

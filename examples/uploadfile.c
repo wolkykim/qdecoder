@@ -53,7 +53,7 @@ int main(void) {
 	}
 
 	printf("\n<p><hr>--[ DUMP INTERNAL DATA STRUCTURE ]--\n<pre>");
-	qPrint();
+	qPrint(stdout);
 	printf("\n</pre>\n");
 	qFree();
 	return 0;

@@ -465,7 +465,7 @@ char	*qGetTimeStrf(time_t univtime, char *savebuf, int bufsize, char *format);
 char	*qGetTimeStr(time_t univtime);
 char	*qGetLocaltimeStr(time_t univtime);
 char	*qGetGmtimeStr(time_t univtime);
-time_t	 qParseGmtimeStr(char *gmtstr);
+time_t	qParseGmtimeStr(char *gmtstr);
 
 /*
  * qError.c

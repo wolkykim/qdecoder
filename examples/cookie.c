@@ -33,7 +33,7 @@ int main(void) {
 	if (mode == NULL) { /* View Cookie */
 		int amount;
 		qContentType("text/html");
-		amount = qPrint();
+		amount = qPrint(stdout);
 		printf("<p>Total %d entries\n", amount);
 	} else if (!strcmp(mode, "set")) { /* Set Cookie */
 		if (name == NULL || value == NULL) qError("Query not found");

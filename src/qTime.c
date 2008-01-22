@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 #include "qDecoder.h"
 
 /**
@@ -117,7 +118,7 @@ char *qGetGmtimeStr(time_t univtime) {
  *
  * @param gmtstr	GMT formatted time string
  *
- * @return	universal time. in case of conversion error, returns -1.
+ * @return	universal time. in case of conversion error, returns 0.
  *
  * @code
  *   time_t t = time(NULL);
@@ -127,8 +128,10 @@ char *qGetGmtimeStr(time_t univtime) {
  *   printf("%d\n", qParseGmtimeStr(s)); // this must be same as t
  * @endcode
  */
+extern char *strptime(const char*, const char*, struct tm*);
 time_t qParseGmtimeStr(char *gmtstr) {
 	struct tm gmtm;
+
 	if(strptime(gmtstr, "%a, %d %b %Y %H:%M:%S GMT", &gmtm) == NULL) return 0;
 
 	return timegm(&gmtm);
