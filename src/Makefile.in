@@ -17,79 +17,62 @@
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
 
-prefix		= @prefix@
-exec_prefix	= ${prefix}
-
 ##########################################################################
 ## Compile time options
 ##########################################################################
-
-## Web Application(CGI) API
-## Influence on : qDecoder.c, qSession.c, qHttpHeader.c qDownload.c qError.c
 ##
-## If you do not use qDecoder for CGI interfacing, uncomment DISABLE_CGISUPPORT.
-## This will disable all CGI interface functions such like qDecoder(),
-## qGetValue(), qSession(), qContentType(), qDownload(), qError(), etc...
+## Please use configure script instead modifing Makefile to enable/disable
+## feature.
+##
+## enable MySQL database supports
+#ENABLE_MYSQL	= -DENABLE_MYSQL
+#MYSQL_INCLUDE	= -I/usr/local/include/mysql -I /usr/local/mysql/include
+
+## disable CGI(web application) related APIs
 #DISABLE_CGISUPPORT	= -DDISABLE_CGISUPPORT
 
-## Configuration File & String Handling API
-## Influence on : qfDecode.cr, qsDecoder.c
+## disable configuration file parser & string parser APIs
 #DISABLE_CONFIGPARSER	= -DDISABLE_CONFIGPARSER
 
-## Pattern Matching & String Search API
-## Influence on : qArg.c
+## disable pattern matching & string search APIs
 #DISABLE_ARG	= -DDISABLE_ARG
 
-## File & String Tokenizing API
-## Influence on : qAwk.c
+## disable file & string tokenizing APIs
 #DISABLE_AWK	= -DDISABLE_AWK
 
-## Server Side Include and Variable Replacement API
-## Influence on : qSed.c
+## disable server side include and variable replacement APIs
 #DISABLE_SED	= -DDISABLE_SED
 
-## IPC(Semaphore, Shared-memory) Support
-## Influence on : qSem.c, qShm.c
+## disable ipc(semaphore, shared-memory) APIs
 #DISABLE_IPC	= -DDISABLE_IPC
 
-## Socket Support
-## Influence on : qSocket.c
+## disable socket APIs (influence on: qSocket.c)
 #DISABLE_SOCKET	= -DDISABLE_SOCKET
 
-## Database Support
-## Influence on : qDatabase.c
-ifeq (@ENABLE_MYSQL@, yes)
-ENABLE_MYSQL	= -DENABLE_MYSQL
-MYSQL_INCLUDE	= -I/usr/local/include/mysql -I /usr/local/mysql/include
-endif
-
-## Hash-table Support
-## Influence on : qHashtbl.c, qHasharr.c
+## disable hash-table data structure APIs
 #DISABLE_HASHTBL	= -DDISABLE_HASHTBL
 
-## Obstack Support
-## Influence on : qObstack.c
+## disable obstack APIs
 #DISABLE_OBSTACK	= -DDISABLE_OBSTACK
 
-## Rotating File Logging API
-## Influence on : qLog.c
+## disable file logging APIs
 #DISABLE_LOG	= -DDISABLE_LOG
 
 ##########################################################################
 ## YOU DON'T NEED TO MODIFY BELOW BEFORE YOU GOT COMPILE TIME TROUBLES
 ##########################################################################
-OPT_DEFS	= ${DISABLE_CGISUPPORT}		\
+CUS_DEFS	= ${DISABLE_CGISUPPORT}		\
 		 ${DISABLE_CONFIGPARSER}	\
 		 ${DISABLE_ARG}			\
 		 ${DISABLE_AWK}			\
 		 ${DISABLE_SED}			\
 		 ${DISABLE_IPC}			\
 		 ${DISABLE_SOCKET}		\
-		 ${ENABLE_MYSQL}			\
+		 ${ENABLE_MYSQL}		\
 		 ${DISABLE_HASHTBL}		\
 		 ${DISABLE_LOG}
 
-OPT_INCLUDE	=  ${MYSQL_INCLUDE}
+CUS_INCS	=  ${MYSQL_INCLUDE}
 
 ## Name
 PRGNAME		= qDecoder
@@ -109,8 +92,8 @@ HEADERDIR	= @includedir@
 ## Which compiler & options for release
 CC		= @CC@
 CFLAGS		= @CFLAGS@
-DEFS		= @DEFS@ @OPT_DEFS@
-INCLUDE		= -I./ ${OPT_INCLUDE}
+DEFS		= @DEFS@ @OPT_DEFS@ ${CUS_DEFS}
+INCLUDE		= -I./ @OPT_INCS@  ${CUS_INCS}
 
 ## Utilities
 AR		= @AR@
@@ -118,8 +101,8 @@ ARFLAGS		= -rc
 CHMOD		= @CHMOD@
 INSTALL		= @INSTALL@
 INSTALL_DATA	= @INSTALL_DATA@
-LD		= @LD@ -G
-LDFLAGS		= @LDFLAGS@
+LD		= @LD@
+LDFLAGS		= @LDFLAGS@ -G
 LN_S		= @LN_S@
 RANLIB		= @RANLIB@
 RM		= @RM@

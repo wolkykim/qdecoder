@@ -693,6 +693,7 @@ CPP
 GREP
 EGREP
 OPT_DEFS
+OPT_INCS
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -1279,18 +1280,24 @@ Optional Features:
   --enable-64bit          enable 64 bit supports
   --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
                           enable MySQL database supports
-  --disable-cgisupport    exclude CGI related APIs
-  --disable-configparser  exclude configuration file parser & string parser
-                          APIs
-  --disable-arg           exclude pattern matching & string search APIs
-  --disable-awk           exclude file & string tokenizing APIs
-  --disable-sed           exclude server side include and variable replacement
-                          APIs
-  --disable-ipc           exclude ipc(semaphore, shared-memory) APIs
-  --disable-socket        exclude socket APIs
-  --disable-hashtbl       exclude hash-table data structure APIs
-  --disable-obstack       exclude obstack APIs
-  --disable-log           exclude file logging APIs
+  --disable-cgisupport    disable CGI(web application) related APIs (influence
+                          on: qDecoder.c, qSession.c, qHttpHeader.c
+                          qDownload.c qError.c)
+  --disable-configparser  disable configuration file parser & string parser
+                          APIs (influence on: qfDecode.cr, qsDecoder.c)
+  --disable-arg           disable pattern matching & string search APIs
+                          (influence on: qArg.c)
+  --disable-awk           disable file & string tokenizing APIs (influence on:
+                          qAwk.c)
+  --disable-sed           disable server side include and variable replacement
+                          APIs (influence on: qSed.c)
+  --disable-ipc           disable ipc(semaphore, shared-memory) APIs
+                          (influence on: qSem.c, qShm.c)
+  --disable-socket        disable socket APIs (influence on: qSocket.c)
+  --disable-hashtbl       disable hash-table data structure APIs (influence
+                          on: qHashtbl.c, qHasharr.c)
+  --disable-obstack       disable obstack APIs (influence on: qObstack.c)
+  --disable-log           disable file logging APIs (influence on: qLog.c)
 
 Some influential environment variables:
   CC          C compiler command
@@ -4426,6 +4433,7 @@ fi
 
 ## Set additional arguments
 opt_defs=""
+opt_incs=""
 
 
 	# Check whether --enable-debug was given.
@@ -4492,7 +4500,8 @@ fi
 	if test "$enableval" = yes; then
 		{ echo "$as_me:$LINENO: 'mysql' feature is enabled" >&5
 echo "$as_me: 'mysql' feature is enabled" >&6;}
-		opt_defs="$opt_defs -DENABLE_MYSQL -I$enable_mysql"
+		opt_defs="$opt_defs -DENABLE_MYSQL"
+		opt_incs="$opt_incs -I$enable_mysql"
 	else
 		{ { echo "$as_me:$LINENO: error: can't find 'mysql.h' header in '$enable_mysql' directory
 See \`config.log' for more details." >&5
@@ -4643,9 +4652,11 @@ echo "$as_me: 'log' feature is disabled" >&6;}
 	fi
 
 
-{ echo "$as_me:$LINENO: optional flags $opt_defs" >&5
-echo "$as_me: optional flags $opt_defs" >&6;}
+{ echo "$as_me:$LINENO: optional flags: $opt_defs $opt_incs" >&5
+echo "$as_me: optional flags: $opt_defs $opt_incs" >&6;}
 OPT_DEFS=$opt_defs
+
+OPT_INCS=$opt_incs
 
 
 ## Create Makefile
@@ -5325,11 +5336,12 @@ CPP!$CPP$ac_delim
 GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
 OPT_DEFS!$OPT_DEFS$ac_delim
+OPT_INCS!$OPT_INCS$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 60; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 61; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
