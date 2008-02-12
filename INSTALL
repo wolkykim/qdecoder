@@ -33,6 +33,7 @@ A directory corresponding to qDecoder-VERSION is created. And the package
 is unpacked like the following:
 
      $ cd qDecoder-VERSION
+
      $ ls -asCF
        1 ./                    3 Makefile.in           6 install-sh*
        1 ../                   7 README                2 qDecoder.jpg
@@ -42,10 +43,15 @@ is unpacked like the following:
        2 DISCLAIMER            1 contrib/
       12 INSTALL               1 examples/
 
+       4 ./               4 config.h.in     4 doc/           4 qDecoder.jpg
+       4 ../             32 config.sub*     4 examples/      8 README
+       4 AUTHORS        164 configure*     16 INSTALL        4 REFERENCE
+      16 CHANGES          8 configure.ac   16 install-sh*    4 src/
+      44 config.guess*    8 COPYING         4 Makefile.in    4 .svn/
+
      AUTHORS    - List of manufacturers' names
      CHANGES    - Changes of each version
      COPYING    - Copyright-related documents
-     DISCLAIMER - Copyright-related signatures
      INSTALL    - Installation guide
      README     - General guide
      REFERENCE  - Manual on how to use functions
@@ -53,14 +59,15 @@ is unpacked like the following:
 
      Makefile.in --+
      configure     +
-     configure.in  +--> Autoconf-related files
-     install-sh  --+
+     configure.ac  +
+     install-sh    +--> Autoconf-related files
+     config.guess  +
+     config.sub    +
+     config.h.in --+
 
-     contrib/... - A directory where distributed pertinent programs are located.
+     doc/... - Documentations
      examples/... - Collection of example sources.
-     rfc/... - Collection of RFC-related documents.
      src/... - qDecoder main sources.
-     win32/... - Static library creation project files for Microsoft Visual C++ use.
 
 Step 3. Compile
 
@@ -73,6 +80,33 @@ pertinent system can be used, and then constructs Makefile for them to be
 compiled in the system most efficiently.
 
      $ cd qDecoder-VERSION
+
+     $ ./configure -h
+     (...some messages...)
+     Optional Features:
+
+       --enable-debug          enable debugging print out
+       --enable-64bit          enable 64 bit supports
+       --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
+                               enable MySQL database supports
+       --disable-cgisupport    disable CGI(web application) related APIs (influence
+                               on: qDecoder.c, qSession.c, qHttpHeader.c
+                               qDownload.c qError.c)
+       --disable-configparser  disable configuration file parser & string parser
+                               APIs (influence on: qfDecode.cr, qsDecoder.c)
+       --disable-arg           disable pattern matching & string search APIs
+                               (influence on: qArg.c)
+       --disable-awk           disable file & string tokenizing APIs (influence on:
+                               qAwk.c)
+       --disable-sed           disable server side include and variable replacement
+                               APIs (influence on: qSed.c)
+       --disable-ipc           disable ipc(semaphore, shared-memory) APIs
+                               (influence on: qSem.c, qShm.c)
+       --disable-socket        disable socket APIs (influence on: qSocket.c)
+       --disable-hashtbl       disable hash-table data structure APIs (influence
+                               on: qHashtbl.c, qHasharr.c)
+       --disable-obstack       disable obstack APIs (influence on: qObstack.c)
+       --disable-log           disable file logging APIs (influence on: qLog.c)
 
      $ ./configure
      creating cache ./config.cache
@@ -87,14 +121,12 @@ compiled in the system most efficiently.
      creating contrib/qcValue-1.0/Makefile
 
      $ ls -asCF (We can note that Makefile is created.)
-       1 ./                    3 Makefile.in           1 contrib/
-       1 ../                   7 README                1 examples/
-       1 AUTHORS              48 REFERENCE             6 install-sh*
-       9 CHANGES               2 config.cache          2 qDecoder.jpg
-      26 COPYING               2 config.log            1 rfc/
-       2 DISCLAIMER            6 config.status*        1 src/
-      12 INSTALL              55 configure*            1 win32/
-       3 Makefile              3 configure.in
+      4 ./               4 config.h.in       8 COPYING        4 Makefile.in
+      4 ../             16 config.log        4 doc/           4 qDecoder.jpg
+      4 AUTHORS         24 config.status*    4 examples/      8 README
+     16 CHANGES         32 config.sub*      16 INSTALL        4 REFERENCE
+     44 config.guess*  164 configure*       16 install-sh*    4 src/
+      4 config.h         8 configure.ac      4 Makefile       4 .svn/
 
      $ make
      ===> src
@@ -164,12 +196,6 @@ created as libqDecoder.so.1 when the downward compatibility is maintained.
      $ cd qDecoder-VERSION
 
      $ make install
-     ln -s libqDecoder.so.1 libqDecoder.so
-     /usr/bin/install -c -m 444 qDecoder.h /usr/local/include/qDecoder.h
-     /usr/bin/install -c -m 444 libqDecoder.a /usr/local/lib/libqDecoder.a
-     /usr/bin/install -c -m 444 libqDecoder.so.1 /usr/local/lib/libqDecoder.so.1
-     /bin/rm -f /usr/local/lib/libqDecoder.so
-     ln -s /usr/local/lib/libqDecoder.so.1 /usr/local/lib/libqDecoder.so
 
 NOTE) A root privilege is required for an installation in the system area.
 
@@ -178,10 +204,6 @@ Step 5. Deinstall
 The installed qDecoder can be completely deleted by "make deinstall".
 
      $ make deinstall
-     /bin/rm -f /usr/local/include/qDecoder.h
-     /bin/rm -f /usr/local/lib/libqDecoder.a
-     /bin/rm -f /usr/local/lib/libqDecoder.so.1
-     /bin/rm -f /usr/local/lib/libqDecoder.so
 
 Step 6. Test
 
