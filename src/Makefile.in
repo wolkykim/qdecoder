@@ -61,6 +61,9 @@
 ##########################################################################
 ## YOU DON'T NEED TO MODIFY BELOW BEFORE YOU GOT COMPILE TIME TROUBLES
 ##########################################################################
+prefix		= @prefix@
+exec_prefix	= ${prefix}
+
 CUS_DEFS	= ${DISABLE_CGISUPPORT}		\
 		 ${DISABLE_CONFIGPARSER}	\
 		 ${DISABLE_ARG}			\
