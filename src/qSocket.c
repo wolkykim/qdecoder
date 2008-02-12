@@ -170,7 +170,7 @@ int qSocketGets(int sockfd, char *str, int size, int timeoutms) {
 /**********************************************
 ** Usage : qSocketWrite(data_array_pointer, data_length, sockfd);
 ** Return: returns the number of bytes sent if successful,
-*          otherwise the value -1 is returned.
+**         otherwise the value -1 is returned.
 ** Do    : send some data(text/binary) to socket stream .
 **********************************************/
 int qSocketWrite(int sockfd, char *binary, int size) {
@@ -180,7 +180,7 @@ int qSocketWrite(int sockfd, char *binary, int size) {
 /**********************************************
 ** Usage : qSocketPuts(string_pointer, sockfd);
 ** Return: returns the number of bytes sent if successful,
-*          otherwise the value -1 is returned.
+**         otherwise the value -1 is returned.
 ** Do    : send one line with terminating newline character to socket stream.
 **********************************************/
 int qSocketPuts(int sockfd, char *str) {
@@ -190,7 +190,10 @@ int qSocketPuts(int sockfd, char *str) {
 	if(buf == NULL) return -1;
 	sprintf(buf, "%s\r\n", str);
 
-	return write(sockfd, buf, strlen(buf));
+	int sent = write(sockfd, buf, strlen(buf));
+	free(buf);
+
+	return sent;
 }
 
 /**********************************************
