@@ -102,7 +102,7 @@ int qSocketWaitReadable(int sockfd, int timeoutms) {
 	FD_ZERO(&readfds);
 	FD_SET(sockfd, &readfds);
 	if (timeoutms > 0) {
-		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = (timeoutms % 1000);
+		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = ((timeoutms % 1000) * 1000);
 		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
 	} else if (timeoutms == 0) { // just poll
 		tv.tv_sec = 0, tv.tv_usec = 0;
