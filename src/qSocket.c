@@ -39,7 +39,7 @@
 #include <sys/stat.h>
 #include "qDecoder.h"
 
-#ifdef LINUX
+#ifdef __linux__
 #include <sys/sendfile.h>
 #endif
 
@@ -223,7 +223,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 **********************************************/
 #define MAX_SENDFILE_CHUNK_SIZE		(1024 * 1024)
 ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset) {
-#ifdef LINUX
+#ifdef __linux__
 	struct stat filestat;
 	int filefd;
 
@@ -243,7 +243,6 @@ ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset) {
 		sent += ret;
 	}
 	close(filefd);
-
 	return sent;
 #else
 	struct stat filestat;

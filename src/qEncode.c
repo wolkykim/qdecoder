@@ -36,7 +36,7 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-#ifdef LINUX
+#ifdef __linux__
 #include <iconv.h>
 #endif
 
@@ -108,7 +108,7 @@ char *qUrlDecode(char *str) {
  *
  * @return malloced string pointer.
  */
-#ifdef LINUX
+#ifdef __linux__
 char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
 	char *tostr, *tp;
 	size_t fromsize, tosize;
