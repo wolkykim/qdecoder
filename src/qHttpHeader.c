@@ -82,8 +82,7 @@ void qJavaScript(char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(jscode, sizeof(jscode)-1, format, arglist);
-	jscode[sizeof(jscode)-1] = '\0';
+	vsnprintf(jscode, sizeof(jscode), format, arglist);
 	va_end(arglist);
 
 	qContentType("text/html");

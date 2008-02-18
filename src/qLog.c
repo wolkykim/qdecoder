@@ -117,8 +117,7 @@ bool qLog(Q_LOG *log, char *format, ...) {
 	if (log == NULL || log->fp == NULL) return false;
 
 	va_start(arglist, format);
-	vsnprintf(buf, sizeof(buf)-1, format, arglist);
-	buf[sizeof(buf)-1] = '\0';
+	vsnprintf(buf, sizeof(buf), format, arglist);
 	va_end(arglist);
 
 	/* console out */

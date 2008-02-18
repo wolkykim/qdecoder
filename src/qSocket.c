@@ -146,7 +146,7 @@ int qSocketGets(int sockfd, char *str, int size, int timeoutms) {
 	char *ptr;
 	int sockstatus, readcnt = 0;
 
-	for (ptr = str; size > 1; size--, ptr++) {
+	for (ptr = str; readcnt < (size - 1); ptr++) {
 		sockstatus = qSocketWaitReadable(sockfd, timeoutms);
 		if (sockstatus <= 0) {
 			*ptr = '\0';
@@ -208,8 +208,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(buf, sizeof(buf)-1, format, arglist);
-	buf[sizeof(buf)-1] = '\0';
+	vsnprintf(buf, sizeof(buf), format, arglist);
 	va_end(arglist);
 
 	return write(sockfd, buf, strlen(buf));

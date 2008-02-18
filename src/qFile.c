@@ -57,11 +57,11 @@ int qFileClose(FILE *stream) {
 }
 
 /*********************************************
-** Usage : qFileReadString(file pointer);
+** Usage : qfReadFile(file pointer);
 ** Return: Success string pointer, End of file NULL.
 ** Do    : Read text stream.
 **********************************************/
-char *qFileReadString(FILE *fp) {
+char *qfReadFile(FILE *fp) {
 	int memsize;
 	int c, c_count;
 	char *string = NULL;
@@ -154,8 +154,7 @@ bool qCheckFile(char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(filename, sizeof(filename)-1, format, arglist);
-	filename[sizeof(filename)-1] = '\0';
+	vsnprintf(filename, sizeof(filename), format, arglist);
 	va_end(arglist);
 
 	if (stat(filename, &finfo) < 0) return false;
@@ -175,8 +174,7 @@ int qCatFile(char *format, ...) {
 	int c, counter;
 
 	va_start(arglist, format);
-	vsnprintf(filename, sizeof(filename)-1, format, arglist);
-	filename[sizeof(filename)-1] = '\0';
+	vsnprintf(filename, sizeof(filename), format, arglist);
 	va_end(arglist);
 
 #ifdef _WIN32
@@ -259,7 +257,7 @@ char *qCmd(char *cmd) {
 
 	fp = popen(cmd, "r");
 	if (fp == NULL) return NULL;
-	str = qFileReadString(fp);
+	str = qfReadFile(fp);
 	pclose(fp);
 
 	return str;

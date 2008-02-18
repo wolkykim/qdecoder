@@ -44,8 +44,7 @@ bool qPrintf(int mode, char *format, ...) {
 	int status;
 
 	va_start(arglist, format);
-	status = vsnprintf(buf, sizeof(buf)-1, format, arglist);
-	buf[sizeof(buf)-1] = '\0';
+	status = vsnprintf(buf, sizeof(buf), format, arglist);
 	va_end(arglist);
 
 	return qPuts(mode, buf);
@@ -585,8 +584,7 @@ char *qStrcat(char *str, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(buf, sizeof(buf)-1, format, arglist);
-	buf[sizeof(buf)-1] = '\0';
+	vsnprintf(buf, sizeof(buf), format, arglist);
 	va_end(arglist);
 
 	return strcat(str, buf);

@@ -175,8 +175,7 @@ bool qObstackGrowStrf(Q_OBSTACK *obstack, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(str, sizeof(str)-1, format, arglist);
-	str[sizeof(str)-1] = '\0';
+	vsnprintf(str, sizeof(str), format, arglist);
 	va_end(arglist);
 
 	return qObstackGrow(obstack, (void *)str, strlen(str));

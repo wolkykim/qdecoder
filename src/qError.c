@@ -52,8 +52,7 @@ void qError(char *format, ...) {
 	cnt++;
 
 	va_start(arglist, format);
-	vsnprintf(buf, sizeof(buf)-1, format, arglist);
-	buf[sizeof(buf)-1] = '\0';
+	vsnprintf(buf, sizeof(buf), format, arglist);
 	va_end(arglist);
 
 	logstatus = 0;

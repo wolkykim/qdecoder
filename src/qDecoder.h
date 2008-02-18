@@ -436,8 +436,8 @@ char	*qUniqId(void);
  */
 FILE	*qFileOpen(char *path, char *mode);
 int	qFileClose(FILE *stream);
-char	*qFileReadString(FILE *fp);
-char	*qFileReadLine(FILE *fp);
+char	*qfReadFile(FILE *fp);
+char	*qfGetLine(FILE *fp);
 bool	qCheckFile(char *format, ...);
 int	qCatFile(char *format, ...);
 char	*qReadFile(char *filename, int *size);

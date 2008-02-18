@@ -198,8 +198,7 @@ char *qSessionAdd(char *name, char *format, ...) {
 	if (!strncmp(name, INTER_PREFIX, strlen(INTER_PREFIX))) qError("qSessionAdd(): Name can not start with %s. It's reserved for internal uses.", INTER_PREFIX);
 
 	va_start(arglist, format);
-	vsnprintf(value, sizeof(value)-1, format, arglist);
-	value[sizeof(value)-1] = '\0';
+	vsnprintf(value, sizeof(value), format, arglist);
 	va_end(arglist);
 
 	new_entry = qEntryAdd(_session_first_entry, name, value, 1);
@@ -252,8 +251,7 @@ void qSessionRemove(char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	if (!strcmp(name, "")) qError("qAddRemove(): can not remove empty name.");
@@ -282,8 +280,7 @@ char *qSessionGetValue(char *format, ...) {
 	if (_session_started == false) qError("qSessionGetValue(): qSession() must be called before.");
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	value = qEntryGetValue(_session_first_entry, name);
@@ -307,8 +304,7 @@ int qSessionGetInt(char *format, ...) {
 	if (_session_started == false) qError("qSessionGetInt(): qSession() must be called before.");
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	value = qEntryGetInt(_session_first_entry, name);

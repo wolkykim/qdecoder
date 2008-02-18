@@ -89,7 +89,7 @@ int qAwkNext(FILE *fp, char array[][1024], char delim) {
 		DEBUG("There is no opened handle.");
 		return -1;
 	}
-	if ((buf = qRemoveSpace(qFileReadLine(fp))) == NULL) return -1;
+	if ((buf = qRemoveSpace(qfGetLine(fp))) == NULL) return -1;
 	num = qAwkStr(array, buf, delim);
 	free(buf);
 

@@ -292,8 +292,7 @@ int qDbExecuteUpdatef(Q_DB *db, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(query, sizeof(query)-1, format, arglist);
-	query[sizeof(query)-1] = '\0';
+	vsnprintf(query, sizeof(query), format, arglist);
 	va_end(arglist);
 
 	return qDbExecuteUpdate(db, query);
@@ -344,8 +343,7 @@ Q_DBRESULT *qDbExecuteQueryf(Q_DB *db, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(query, sizeof(query)-1, format, arglist);
-	query[sizeof(query)-1] = '\0';
+	vsnprintf(query, sizeof(query), format, arglist);
 	va_end(arglist);
 
 	return qDbExecuteQuery(db, query);

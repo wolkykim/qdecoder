@@ -961,8 +961,7 @@ char *qGetValue(char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -988,8 +987,7 @@ int qGetInt(char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1016,8 +1014,7 @@ char *qGetValueDefault(char *defstr, char *format, ...) {
 	char *value;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1047,8 +1044,7 @@ char *qGetValueNotEmpty(char *errmsg, char *format, ...) {
 	char *value;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1157,8 +1153,7 @@ char *qGetValueFirst(char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(_multi_last_key, sizeof(_multi_last_key)-1, format, arglist);
-	_multi_last_key[sizeof(_multi_last_key)-1] = '\0';
+	vsnprintf(_multi_last_key, sizeof(_multi_last_key), format, arglist);
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1212,8 +1207,7 @@ char *qAdd(char *name, char *format, ...) {
 	if (!strcmp(name, "")) return NULL;
 
 	va_start(arglist, format);
-	vsnprintf(value, sizeof(value)-1, format, arglist);
-	value[sizeof(value)-1] = '\0';
+	vsnprintf(value, sizeof(value), format, arglist);
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1242,8 +1236,7 @@ void qRemove(char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	if (!strcmp(name, "")) qError("qRemove(): can not remove empty name.");
@@ -1293,8 +1286,7 @@ char qGetType(char *format, ...) {
 	int v_no;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1491,8 +1483,7 @@ char *qCookieGetValue(char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();
@@ -1523,8 +1514,7 @@ int qCookieGetInt(char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	if (_first_entry == NULL) qDecoder();

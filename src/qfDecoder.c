@@ -137,8 +137,7 @@ char *qfGetValue(Q_ENTRY *first, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	return qEntryGetValueLast(first, name);
@@ -149,8 +148,7 @@ int qfGetInt(Q_ENTRY *first, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(name, sizeof(name)-1, format, arglist);
-	name[sizeof(name)-1] = '\0';
+	vsnprintf(name, sizeof(name), format, arglist);
 	va_end(arglist);
 
 	return qEntryGetIntLast(first, name);
@@ -161,8 +159,7 @@ char *qfGetValueFirst(Q_ENTRY *first, char *format, ...) {
 	va_list arglist;
 
 	va_start(arglist, format);
-	vsnprintf(_multi_last_key, sizeof(_multi_last_key)-1, format, arglist);
-	_multi_last_key[sizeof(_multi_last_key)-1] = '\0';
+	vsnprintf(_multi_last_key, sizeof(_multi_last_key), format, arglist);
 	va_end(arglist);
 
 	if (first == NULL) return NULL;

@@ -52,8 +52,7 @@ Q_ENTRY *qSedAdd(Q_ENTRY *first, char *name, char *format, ...) {
 	}
 
 	va_start(arglist, format);
-	vsnprintf(value, sizeof(value)-1, format, arglist);
-	value[sizeof(value)-1] = '\0';
+	vsnprintf(value, sizeof(value), format, arglist);
 	va_end(arglist);
 
 	new_entry = qEntryAdd(first, name, value, 1);
