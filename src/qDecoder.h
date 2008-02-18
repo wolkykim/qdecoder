@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
+#include <sys/types.h>
 
 /**
  * Structure for linked-list data structure.

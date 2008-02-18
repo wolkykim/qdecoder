@@ -37,9 +37,11 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/sendfile.h>
-
 #include "qDecoder.h"
+
+#ifdef LINUX
+#include <sys/sendfile.h>
+#endif
 
 /**********************************************
 ** Internal Functions Definition
@@ -221,6 +223,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 **********************************************/
 #define MAX_SENDFILE_CHUNK_SIZE		(1024 * 1024)
 ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset) {
+#ifdef LINUX
 	struct stat filestat;
 	int filefd;
 
@@ -242,6 +245,38 @@ ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset) {
 	close(filefd);
 
 	return sent;
+#else
+	struct stat filestat;
+	FILE *fp;
+
+	if (stat(filepath, &filestat) < 0) return -1;
+	if((fp = fopen(filepath, "r")) == NULL) return -1;
+
+	ssize_t rangesize = filestat.st_size - offset;
+	ssize_t sent = 0;		// total size sent
+
+	char buf[MAX_SENDFILE_CHUNK_SIZE];
+
+	if (offset > 0) fseeko(fp, offset, SEEK_SET);
+	while(sent < rangesize) {
+		size_t sendsize;	// this time sending size
+		if(rangesize - sent > MAX_SENDFILE_CHUNK_SIZE) sendsize = MAX_SENDFILE_CHUNK_SIZE;
+		else sendsize = rangesize - sent;
+
+		// read
+		size_t retr = fread(buf, 1, sizeof(buf), fp);
+		if (retr == 0) break;
+
+		// write
+		ssize_t retw = write(sockfd, buf, retr);
+		if(retw <= 0) break; // Connection closed by peer
+
+		sent += retw;
+	}
+	fclose(fp);
+
+	return sent;
+#endif
 }
 
 /**********************************************

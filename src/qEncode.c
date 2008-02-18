@@ -30,12 +30,15 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
-#include <iconv.h>
 #include <errno.h>
 #include "md5/md5_global.h"
 #include "md5/md5.h"
 #include "qDecoder.h"
 #include "qInternal.h"
+
+#ifdef LINUX
+#include <iconv.h>
+#endif
 
 /**********************************************
 ** Usage : qUrlEncode(string to encode);
@@ -105,6 +108,7 @@ char *qUrlDecode(char *str) {
  *
  * @return malloced string pointer.
  */
+#ifdef LINUX
 char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
 	char *tostr, *tp;
 	size_t fromsize, tosize;
@@ -131,6 +135,7 @@ char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
 
 	return tp;
 }
+#endif
 
 /**********************************************
 ** Usage : qMd5Digest(string);

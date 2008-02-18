@@ -149,7 +149,7 @@ int qSession(char *repository) {
 		qAdd(SESSION_ID, sessionkey); /* force to add session_in to query list */
 
 		/* save session informations */
-		snprintf(created_sec, sizeof(created_sec), "%ld", time(NULL));
+		snprintf(created_sec, sizeof(created_sec), "%ld", (long int)time(NULL));
 
 		_session_first_entry = qEntryAdd(_session_first_entry, INTER_SESSIONID, sessionkey, 1);
 		qEntryAdd(_session_first_entry, INTER_CREATED_GMT, qGetGmtimeStr(0), 1);
