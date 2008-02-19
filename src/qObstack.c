@@ -18,7 +18,7 @@
  *************************************************************************/
 
 /**
- * @file qObstack.c Another simple implementation of GNU obstack
+ * @file qObstack.c qDecoder implementation of GNU obstack
  *
  * @note
  * This API can be disabled(excluded in the library) with compile option
