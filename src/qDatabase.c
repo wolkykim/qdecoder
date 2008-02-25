@@ -43,7 +43,7 @@
  *   }
  *
  *   // try to connect
- *   if (qDbOpen(db) == FALSE) {
+ *   if (qDbOpen(db) == false) {
  *     printf("WARNING: Can't connect to database.\n");
  *     return -1;
  *   }
