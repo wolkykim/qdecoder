@@ -279,6 +279,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 	return write(sockfd, buf, strlen(buf));
 }
 
+#define MAX_SENDFILE_CHUNK_SIZE		(1024 * 1024)
 /**
  * Send file to socket.
  *
@@ -293,7 +294,6 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  * @code
  * @endcode
  */
-#define MAX_SENDFILE_CHUNK_SIZE		(1024 * 1024)
 ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset) {
 #ifdef __linux__
 	struct stat filestat;
