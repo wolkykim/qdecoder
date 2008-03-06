@@ -296,7 +296,6 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  * @endcode
  */
 ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset, ssize_t size) {
-#ifdef __linux__
 	struct stat filestat;
 	int filefd;
 
@@ -306,51 +305,34 @@ ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset, ssize_t size) 
 	ssize_t sent = 0;				// total size sent
 	ssize_t rangesize = filestat.st_size - offset;	// total size to send
 	if(size > 0 && size < rangesize) rangesize = size;
+
+#ifndef __linux__
+	char buf[MAX_SENDFILE_CHUNK_SIZE];
+	if (offset > 0) lseek(filefd, offset, SEEK_SET);
+#endif
+
 	while(sent < rangesize) {
 		size_t sendsize;	// this time sending size
 		if(rangesize - sent > MAX_SENDFILE_CHUNK_SIZE) sendsize = MAX_SENDFILE_CHUNK_SIZE;
 		else sendsize = rangesize - sent;
 
+#ifdef __linux__
 		ssize_t ret = sendfile(sockfd, filefd, &offset, sendsize);
 		if(ret <= 0) break; // Connection closed by peer
-
-		sent += ret;
-	}
-	close(filefd);
-	return sent;
 #else
-	struct stat filestat;
-	FILE *fp;
-
-	if (stat(filepath, &filestat) < 0) return -1;
-	if((fp = fopen(filepath, "r")) == NULL) return -1;
-
-	ssize_t sent = 0;				// total size sent
-	ssize_t rangesize = filestat.st_size - offset;	// total size to send
-	if(size > 0 && size < rangesize) rangesize = size;
-
-	char buf[MAX_SENDFILE_CHUNK_SIZE];
-
-	if (offset > 0) fseeko(fp, offset, SEEK_SET);
-	while(sent < rangesize) {
-		size_t sendsize;	// this time sending size
-		if(rangesize - sent > MAX_SENDFILE_CHUNK_SIZE) sendsize = MAX_SENDFILE_CHUNK_SIZE;
-		else sendsize = rangesize - sent;
-
 		// read
-		size_t retr = fread(buf, 1, sizeof(buf), fp);
+		size_t retr = read(filefd, buf, sizeof(buf));
 		if (retr == 0) break;
 
 		// write
-		ssize_t retw = write(sockfd, buf, retr);
+		ssize_t ret = write(sockfd, buf, retr);
 		if(retw <= 0) break; // Connection closed by peer
-
-		sent += retw;
-	}
-	fclose(fp);
-
-	return sent;
 #endif
+		sent += ret;
+	}
+
+	close(filefd);
+	return sent;
 }
 
 /**
@@ -359,10 +341,10 @@ ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset, ssize_t size) 
  * @param	sockfd		socket descriptor returned by qSocketOpen()
  * @param	size		length of bytes to read from socket
  * @param	filepath	save file path
- * @param	mode		file open mode. this argument is same as fopen()
+ * @param	oflag		constructed by a bitwise-inclusive OR of flags defined in <fcntl.h>.
  * @param	timeoutms	wait timeout micro-seconds
  *
- * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
+ * @return	the number of bytes sent on success, -1 if an error(ex:socket closed, file open failed) occurred.
  *
  * @since	8.1R
  *
@@ -370,10 +352,11 @@ ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset, ssize_t size) 
  *		only affected if no data reached to socket until timeoutms reached.
  *		if some data are received, it will wait until timeoutms reached again.
  * @code
+ *   qSocketSaveIntoFile(sockfd, 100, "/tmp/file.tmp", O_CREAT|O_TRUNC|O_WRONLY, 5000);
  * @endcode
  */
-int qSocketSaveIntoFile(int sockfd, int size, char *filepath, char *mode, int timeoutms) {
-	FILE *fp;
+int qSocketSaveIntoFile(int sockfd, int size, char *filepath, int oflag, int timeoutms) {
+	int filefd;
 	char buf[1024*32]; // read buffer size
 
 	int sockstatus, readbytes, readed, readsize;
@@ -383,7 +366,7 @@ int qSocketSaveIntoFile(int sockfd, int size, char *filepath, char *mode, int ti
 	if (sockstatus <= 0) return sockstatus;
 
 	// file open
-	if ((fp = fopen(filepath, mode)) == NULL) return 0;
+	if ((filefd = open(filepath, oflag)) < 0) return -1;
 
 	for (readbytes = 0; readbytes < size; readbytes += readed) {
 
@@ -394,24 +377,30 @@ int qSocketSaveIntoFile(int sockfd, int size, char *filepath, char *mode, int ti
 		// read data
 		sockstatus = qSocketWaitReadable(sockfd, timeoutms);
 		if (sockstatus <= 0) {
-			fclose(fp);
-			unlink(filepath);
-			return sockstatus;
+			if(readbytes == 0) {
+				close(filefd);
+				unlink(filepath);
+				return -1;
+			}
+			break;
+
 		}
 
 		readed = read(sockfd, buf, readsize);
 		if (readed == 0) break; // eof
 		else if (readed < 0 ) {
-			fclose(fp);
-			unlink(filepath);
-			return -1; // error
+			if(readbytes == 0) {
+				close(filefd);
+				unlink(filepath);
+				return -1;
+			}
+			break;
 		}
 
-		fwrite(buf, readed, 1, fp);
+		write(filefd, buf, readed);
 	}
 
-	fclose(fp);
-
+	close(filefd);
 	return readbytes;
 }
 
@@ -443,12 +432,18 @@ int qSocketSaveIntoMemory(int sockfd, int size, char *mem, int timeoutms) {
 
 		// wait data
 		sockstatus = qSocketWaitReadable(sockfd, timeoutms);
-		if (sockstatus <= 0) return sockstatus;
+		if (sockstatus <= 0) {
+			if(readbytes == 0) return -1;
+			break;
+		}
 
 		// read data
 		readed = read(sockfd, mp, readsize);
 		if (readed == 0) break; // eof
-		else if (readed < 0) return -1; // error
+		else if (readed < 0) {
+			if(readbytes == 0) return -1;
+			break;
+		}
 	}
 
 	return readbytes;
