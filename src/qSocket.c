@@ -286,6 +286,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  * @param	sockfd		socket descriptor returned by qSocketOpen()
  * @param	filepath	variable argument lists
  * @param	offset		file offset to send
+ * @param	size		total bytes to send. 0 means send data until EOF.
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
  *
@@ -294,7 +295,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  * @code
  * @endcode
  */
-ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset) {
+ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset, ssize_t size) {
 #ifdef __linux__
 	struct stat filestat;
 	int filefd;
@@ -302,8 +303,9 @@ ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset) {
 	if((filefd = open(filepath, O_RDONLY , 0))  < 0) return -1;
 	if (fstat(filefd, &filestat) < 0) return -1;
 
-	ssize_t rangesize = filestat.st_size - offset;
-	ssize_t sent = 0;		// total size sent
+	ssize_t sent = 0;				// total size sent
+	ssize_t rangesize = filestat.st_size - offset;	// total size to send
+	if(size > 0 && size < rangesize) rangesize = size;
 	while(sent < rangesize) {
 		size_t sendsize;	// this time sending size
 		if(rangesize - sent > MAX_SENDFILE_CHUNK_SIZE) sendsize = MAX_SENDFILE_CHUNK_SIZE;
@@ -323,8 +325,9 @@ ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset) {
 	if (stat(filepath, &filestat) < 0) return -1;
 	if((fp = fopen(filepath, "r")) == NULL) return -1;
 
-	ssize_t rangesize = filestat.st_size - offset;
-	ssize_t sent = 0;		// total size sent
+	ssize_t sent = 0;				// total size sent
+	ssize_t rangesize = filestat.st_size - offset;	// total size to send
+	if(size > 0 && size < rangesize) rangesize = size;
 
 	char buf[MAX_SENDFILE_CHUNK_SIZE];
 
