@@ -326,7 +326,7 @@ ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset, ssize_t size) 
 
 		// write
 		ssize_t ret = write(sockfd, buf, retr);
-		if(retw <= 0) break; // Connection closed by peer
+		if(ret <= 0) break; // Connection closed by peer
 #endif
 		sent += ret;
 	}
