@@ -340,7 +340,7 @@ int	qEntryGetIntNoCase(Q_ENTRY *first, char *name);
 int	qEntryGetNo(Q_ENTRY *first, char *name);
 Q_ENTRY	*qEntryReverse(Q_ENTRY *first);
 int	qEntryPrint(Q_ENTRY *first, FILE *out);
-void	qEntryFree(Q_ENTRY *first);
+int	qEntryFree(Q_ENTRY *first);
 int	qEntrySave(Q_ENTRY *first, char *filename, bool encodevalue);
 Q_ENTRY	*qEntryLoad(char *filename, bool decodevalue);
 

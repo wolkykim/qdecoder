@@ -247,15 +247,18 @@ int qEntryPrint(Q_ENTRY *first, FILE *out) {
 ** Usage : qEntryFree(pointer of the first entry);
 ** Do    : Make free of linked list memory.
 **********************************************/
-void qEntryFree(Q_ENTRY *first) {
+int qEntryFree(Q_ENTRY *first) {
 	Q_ENTRY *entries;
+	int i;
 
-	for (; first; first = entries) {
+	for (i = 0; first; first = entries, i++) {
 		entries = first->next; /* copy next to tmp */
 		free(first->name);
 		free(first->value);
 		free(first);
 	}
+
+	return i;
 }
 
 /**********************************************
