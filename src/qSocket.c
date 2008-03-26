@@ -41,6 +41,9 @@
 
 #ifdef __linux__
 #include <sys/sendfile.h>
+#define MAX_SENDFILE_CHUNK_SIZE		(1024 * 1024)
+#else
+#define MAX_SENDFILE_CHUNK_SIZE		(512)
 #endif
 
 /**********************************************
@@ -106,7 +109,7 @@ bool qSocketClose(int sockfd) {
  * Wait until the socket has some readable data.
  *
  * @param	sockfd		socket descriptor returned by qSocketOpen()
- * @param	timeoutms	wait timeout micro-seconds
+ * @param	timeoutms	wait timeout micro-seconds. if set to negative value, wait indefinitely.
  *
  * @return	1 on readable, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
  *
@@ -134,6 +137,42 @@ int qSocketWaitReadable(int sockfd, int timeoutms) {
 	}
 
 	if (!FD_ISSET(sockfd, &readfds)) return 0; // timeout
+
+	return 1;
+}
+
+/**
+ * Wait until the socket is writable.
+ *
+ * @param	sockfd		socket descriptor returned by qSocketOpen()
+ * @param	timeoutms	wait timeout micro-seconds. if set to negative value, wait indefinitely.
+ *
+ * @return	1 on writable, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
+ *
+ * @since	8.1R
+ *
+ * @note	does not need to set the socket as non-block mode.
+ * @code
+ * @endcode
+ */
+int qSocketWaitWritable(int sockfd, int timeoutms) {
+	struct timeval tv;
+	fd_set writefds;
+
+	// time to wait
+	FD_ZERO(&writefds);
+	FD_SET(sockfd, &writefds);
+	if (timeoutms > 0) {
+		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = ((timeoutms % 1000) * 1000);
+		if (select(FD_SETSIZE, NULL, &writefds, NULL, &tv) < 0) return -1;
+	} else if (timeoutms == 0) { // just poll
+		tv.tv_sec = 0, tv.tv_usec = 0;
+		if (select(FD_SETSIZE, NULL, &writefds, NULL, &tv) < 0) return -1;
+	} else { //  blocks indefinitely
+		if (select(FD_SETSIZE, NULL, &writefds, NULL, NULL) < 0) return -1;
+	}
+
+	if (!FD_ISSET(sockfd, &writefds)) return 0; // timeout
 
 	return 1;
 }
@@ -279,7 +318,6 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 	return write(sockfd, buf, strlen(buf));
 }
 
-#define MAX_SENDFILE_CHUNK_SIZE		(1024 * 1024)
 /**
  * Send file to socket.
  *
@@ -322,9 +360,10 @@ ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset, ssize_t size) 
 #else
 		// read
 		size_t retr = read(filefd, buf, sizeof(buf));
-		if (retr == 0) break;
+		if (retr <= 0) break;
 
 		// write
+		qSocketWaitWritable(sockfd, -1);
 		ssize_t ret = write(sockfd, buf, retr);
 		if(ret <= 0) break; // Connection closed by peer
 #endif

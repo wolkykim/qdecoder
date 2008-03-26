@@ -281,6 +281,7 @@ bool	qShmFree(int shmid);
 int	qSocketOpen(char *hostname, int port);
 bool	qSocketClose(int sockfd);
 int	qSocketWaitReadable(int sockfd, int timeoutms);
+int	qSocketWaitWritable(int sockfd, int timeoutms);
 int	qSocketRead(int sockfd, char *binary, int size, int timeoutms);
 int	qSocketGets(int sockfd, char *str, int size, int timeoutms);
 int	qSocketWrite(int sockfd, char *binary, int size);
