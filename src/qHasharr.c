@@ -311,6 +311,14 @@ int qHasharrGetInt(Q_HASHARR *tbl, char *key) {
  * Under-development
  *
  * @return
+ *
+ * @code
+ *   char *key;
+ *   int idx;
+ *   for(key = qHasharrGetFirstKey(tbl, &idx); key != NULL; key = qHasharrGetNextKey(tbl, &idx) {
+ *     char *value = qHasharrGetStr(tbl, key);
+ *   }
+ * @endcode
  */
 char *qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx) {
 	if(idx != NULL) *idx = 0;
