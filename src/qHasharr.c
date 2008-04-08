@@ -312,6 +312,33 @@ int qHasharrGetInt(Q_HASHARR *tbl, char *key) {
  *
  * @return
  */
+char *qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx) {
+	if(idx != NULL) *idx = 0;
+	return qHasharrGetNextKey(tbl, idx);
+}
+
+/**
+ * Under-development
+ *
+ * @return
+ */
+char *qHasharrGetNextKey(Q_HASHARR *tbl, int *idx) {
+	if(tbl == NULL || idx == NULL) return NULL;
+
+	for (*idx += 1; *idx < tbl[0].keylen; (*idx)++) {
+		if (tbl[*idx].count == 0 || tbl[*idx].count == -2) continue;
+		return tbl[*idx].key;
+	}
+
+	*idx = tbl[0].keylen;
+	return NULL;
+}
+
+/**
+ * Under-development
+ *
+ * @return
+ */
 bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
 	// get hash integer
 	int hash = ((int)qFnv32Hash(key, tbl[0].keylen)) + 1; // 0번은 안쓰므로
@@ -379,6 +406,11 @@ void qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
 	}
 }
 
+/**
+ * Under-development
+ *
+ * @return
+ */
 void qHasharrStatus(Q_HASHARR *tbl, int *used, int *max) {
 	if(used != NULL) *used = tbl[0].count;
 	if(max != NULL) *max = tbl[0].keylen;

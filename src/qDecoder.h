@@ -47,7 +47,7 @@ typedef struct {
 	int	max;			/*!< maximum hashtable size  */
 	int	num;			/*!< used slot counter */
 
-	int	*count;			/*!< hash collision counter. 0 indicate empty slot, -1 is used for temporary move slot dut to hash collision */
+	int	*count;			/*!< hash collision counter. 0 indicate empty slot, -1 is used for moved slot due to hash collision */
 	int	*hash;			/*!< key hash. we use qFnv32Hash() to generate hash integer */
 	char	**key;			/*!< key string */
 	char	**value;		/*!< value */
@@ -60,7 +60,7 @@ typedef struct {
  * Structure for hash-table data structure based on array.
  */
 typedef struct {
-	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for temporary move slot dut to hash collision, -2 is used for indicating linked block */
+	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for moved slot due to hash collision, -2 is used for indicating linked block */
 	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
 
 	char	key[_Q_HASHARR_MAX_KEYLEN+1];		/*!< key string which can be size truncated */
@@ -78,8 +78,8 @@ typedef struct {
 typedef struct {
 	int	size;			/*!< total object size */
 	int	num;			/*!< number of objects */
-	Q_ENTRY *first;		/*!< first object pointer */
-	Q_ENTRY	*last;		/*!< last object pointer */
+	Q_ENTRY *first;			/*!< first object pointer */
+	Q_ENTRY	*last;			/*!< last object pointer */
 	void	*final;			/*!< final object pointer */
 } Q_OBSTACK;
 
@@ -355,6 +355,8 @@ bool	qHashtblPutInt(Q_HASHTBL *tbl, char *key, int value);
 char	*qHashtblGet(Q_HASHTBL *tbl, char *key, int *size);
 char	*qHashtblGetStr(Q_HASHTBL *tbl, char *key);
 int	qHashtblGetInt(Q_HASHTBL *tbl, char *key);
+char	*qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx);
+char	*qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx);
 bool	qHashtblRemove(Q_HASHTBL *tbl, char *key);
 void	qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
 bool	qHashtblFree(Q_HASHTBL *tbl);
@@ -372,6 +374,8 @@ bool	qHasharrPutInt(Q_HASHARR *tbl, char *key, int value);
 char	*qHasharrGet(Q_HASHARR *tbl, char *key, int *size);
 char	*qHasharrGetStr(Q_HASHARR *tbl, char *key);
 int	qHasharrGetInt(Q_HASHARR *tbl, char *key);
+char	*qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx);
+char	*qHasharrGetNextKey(Q_HASHARR *tbl, int *idx);
 bool	qHasharrRemove(Q_HASHARR *tbl, char *key);
 void	qHasharrPrint(Q_HASHARR *tbl, FILE *out);
 void	qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);

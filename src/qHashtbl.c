@@ -219,6 +219,33 @@ int qHashtblGetInt(Q_HASHTBL *tbl, char *key) {
  *
  * @return
  */
+char *qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx) {
+	if(idx != NULL) *idx = -1;
+	return qHashtblGetNextKey(tbl, idx);
+}
+
+/**
+ * Under-development
+ *
+ * @return
+ */
+char *qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx) {
+	if(tbl == NULL || idx == NULL) return NULL;
+
+	for (*idx += 1; *idx < tbl->max; (*idx)++) {
+		if (tbl->count[*idx] == 0) continue;
+		return tbl->key[*idx];
+	}
+
+	*idx = tbl->max;
+	return NULL;
+}
+
+/**
+ * Under-development
+ *
+ * @return
+ */
 bool qHashtblRemove(Q_HASHTBL *tbl, char *key) {
 	int hash = (int)qFnv32Hash(key, tbl->max);
 	int idx = _getIdx(tbl, key, hash);
