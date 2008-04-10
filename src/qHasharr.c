@@ -408,7 +408,9 @@ bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
  *
  * @return
  */
-void qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
+bool qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
+	if(tbl == NULL || out == NULL) return false;
+
 	int idx, num;
 	for (idx = 1, num = 0; idx <= tbl[0].keylen && num < tbl[0].count; idx++) {
 		if (tbl[idx].count == 0) continue;
@@ -416,6 +418,8 @@ void qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
 			idx, tbl[idx].count, tbl[idx].hash, tbl[idx].key, tbl[idx].keylen, tbl[idx].size, tbl[idx].link);
 		num++;
 	}
+
+	return true;
 }
 
 /**
@@ -423,9 +427,13 @@ void qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
  *
  * @return
  */
-void qHasharrStatus(Q_HASHARR *tbl, int *used, int *max) {
+bool qHasharrStatus(Q_HASHARR *tbl, int *used, int *max) {
+	if(tbl == NULL) return false;
+
 	if(used != NULL) *used = tbl[0].count;
 	if(max != NULL) *max = tbl[0].keylen;
+
+	return true;
 }
 
 /////////////////////////////////////////////////////////////////////////

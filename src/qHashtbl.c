@@ -41,26 +41,26 @@ static bool _removeData(Q_HASHTBL *tbl, int idx);
  * @return
  */
 Q_HASHTBL *qHashtblInit(int max) {
-	Q_HASHTBL *tbl;
+	if(max <= 0) return NULL;
 
-	tbl = (Q_HASHTBL *)malloc(sizeof(Q_HASHTBL));
+	Q_HASHTBL *tbl = (Q_HASHTBL *)malloc(sizeof(Q_HASHTBL));
 	if(tbl == NULL) return NULL;
 
 	memset((void *)tbl, 0, sizeof(Q_HASHTBL));
 
 	tbl->count = (int *)malloc(sizeof(int) * max);
-	if(tbl->count != NULL) memset((void *)(tbl->count), 0, sizeof(sizeof(int) * max));
+	if(tbl->count != NULL) memset((void *)(tbl->count), 0, (sizeof(int) * max));
 	tbl->hash = (int *)malloc(sizeof(int) * max);
-	if(tbl->hash != NULL) memset((void *)(tbl->hash), 0, sizeof(sizeof(int) * max));
+	if(tbl->hash != NULL) memset((void *)(tbl->hash), 0, (sizeof(int) * max));
 
 	tbl->key = (char **)malloc(sizeof(char *) * max);
-	if(tbl->key != NULL) memset((void *)(tbl->key), 0, sizeof(sizeof(char *) * max));
+	if(tbl->key != NULL) memset((void *)(tbl->key), 0, (sizeof(char *) * max));
 	tbl->value = (char **)malloc(sizeof(char *) * max);
-	if(tbl->value != NULL) memset((void *)(tbl->value), 0, sizeof(sizeof(char *) * max));
+	if(tbl->value != NULL) memset((void *)(tbl->value), 0, (sizeof(char *) * max));
 	tbl->size = (int *)malloc(sizeof(int) * max);
-	if(tbl->size != NULL) memset((void *)(tbl->size), 0, sizeof(sizeof(int) * max));
+	if(tbl->size != NULL) memset((void *)(tbl->size), 0, (sizeof(int) * max));
 
-	if(tbl->key == NULL || tbl->value == NULL || tbl->size == NULL || tbl->count == NULL) {
+	if(tbl->count == NULL || tbl->hash == NULL || tbl->key == NULL || tbl->value == NULL || tbl->size == NULL) {
 		qHashtblFree(tbl);
 		return NULL;
 	}
@@ -236,7 +236,7 @@ char *qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx) {
 char *qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx) {
 	if(tbl == NULL || idx == NULL) return NULL;
 
-	for (*idx += 1; *idx < tbl->max; (*idx)++) {
+	for ((*idx)++; *idx < tbl->max; (*idx)++) {
 		if (tbl->count[*idx] == 0) continue;
 		return tbl->key[*idx];
 	}
@@ -301,18 +301,26 @@ bool qHashtblRemove(Q_HASHTBL *tbl, char *key) {
  *
  * @return
  */
-void qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
+bool qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
+	if(tbl == NULL || out == NULL) return false;
+
 	int idx, num;
 	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
 		if (tbl->count[idx] == 0) continue;
-		fprintf(out, "%s=%s (idx=%d,hash=%d,size=%d)", tbl->key[idx], (showvalue)?tbl->value[idx]:"_binary_", idx, tbl->hash[idx], tbl->size[idx]);
+		fprintf(out, "%s=%s (idx=%d,hash=%d,size=%d)\n", tbl->key[idx], (showvalue)?tbl->value[idx]:"_binary_", idx, tbl->hash[idx], tbl->size[idx]);
 		num++;
 	}
+
+	return true;
 }
 
-void qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max) {
+bool qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max) {
+	if(tbl == NULL) return false;
+
 	if(used != NULL) *used = tbl->num;
 	if(max != NULL) *max = tbl->max;
+
+	return true;
 }
 
 /**

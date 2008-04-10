@@ -349,6 +349,7 @@ Q_ENTRY	*qEntryLoad(char *filename, bool decodevalue);
  * qHashtbl.c
  */
 Q_HASHTBL *qHashtblInit(int max);
+bool	qHashtblFree(Q_HASHTBL *tbl);
 bool	qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size);
 bool	qHashtblPutStr(Q_HASHTBL *tbl, char *key, char *value);
 bool	qHashtblPutInt(Q_HASHTBL *tbl, char *key, int value);
@@ -358,9 +359,8 @@ int	qHashtblGetInt(Q_HASHTBL *tbl, char *key);
 char	*qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx);
 char	*qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx);
 bool	qHashtblRemove(Q_HASHTBL *tbl, char *key);
-void	qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
-bool	qHashtblFree(Q_HASHTBL *tbl);
-void	qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
+bool	qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
+bool	qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
 
 /*
  * qHasharr.c
@@ -377,8 +377,8 @@ int	qHasharrGetInt(Q_HASHARR *tbl, char *key);
 char	*qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx);
 char	*qHasharrGetNextKey(Q_HASHARR *tbl, int *idx);
 bool	qHasharrRemove(Q_HASHARR *tbl, char *key);
-void	qHasharrPrint(Q_HASHARR *tbl, FILE *out);
-void	qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
+bool	qHasharrPrint(Q_HASHARR *tbl, FILE *out);
+bool	qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
 
 /*
  * qObstack.c
