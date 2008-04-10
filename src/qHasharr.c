@@ -163,6 +163,8 @@ bool qHasharrClear(Q_HASHARR *tbl) {
  * @return true when successful, otherwise(table full) false
  */
 bool qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size) {
+	if(tbl == NULL || key == NULL || value == NULL) return false;
+
 	// check full
 	//if (tbl[0].count >= tbl[0].keylen) return false;
 
@@ -256,6 +258,8 @@ bool qHasharrPutInt(Q_HASHARR *tbl, char *key, int value) {
  * @return value data which is malloced
  */
 char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
+	if(tbl == NULL || key == NULL) return NULL;
+
 	// get hash integer
 	int hash = ((int)qFnv32Hash(key, tbl[0].keylen)) + 1; // 0번은 안쓰므로
 

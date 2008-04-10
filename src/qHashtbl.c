@@ -103,6 +103,8 @@ bool qHashtblFree(Q_HASHTBL *tbl) {
  * @return
  */
 bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size) {
+	if(tbl == NULL || key == NULL || value == NULL) return false;
+
 	// get hash integer
 	int hash = (int)qFnv32Hash(key, tbl->max);
 
@@ -179,6 +181,8 @@ bool qHashtblPutInt(Q_HASHTBL *tbl, char *key, int value) {
  * @return
  */
 char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size) {
+	if(tbl == NULL || key == NULL) return NULL;
+
 	int hash = (int)qFnv32Hash(key, tbl->max);
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) return NULL;
