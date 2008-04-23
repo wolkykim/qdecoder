@@ -267,7 +267,7 @@ int qDbExecuteUpdate(Q_DB *db, char *query) {
 	if (db == NULL || db->connected == false) return -1;
 
 #ifdef _Q_ENABLE_MYSQL
-	int affected;
+	int affected = -1;
 
 	// query
 	DEBUG("%s", query);
