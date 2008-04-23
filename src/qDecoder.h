@@ -412,7 +412,7 @@ char	*qGetenvDefault(char *nullstr, char *envname);
  */
 char	*qUrlEncode(char *str);
 char	*qUrlDecode(char *str);
-int	qQueryDecode(char *query, char equalchar, char sepchar, int *keycnt) {
+Q_ENTRY	*qQueryDecode(char *query, char equalchar, char sepchar, int *keycnt);
 char	*qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag);
 unsigned char *qMd5Hash(char *data, int len);
 char	*qMd5Str(char *data, int len);

@@ -106,22 +106,19 @@ char *qUrlDecode(char *str) {
 /**
  * Parse url query string
  */
-int qQueryDecode(char *query, char equalchar, char sepchar, int *keycnt) {
+Q_ENTRY *qQueryDecode(char *query, char equalchar, char sepchar, int *keycnt) {
 	Q_ENTRY *entries = NULL;
 	char *newquery = NULL;
 	int cnt = 0;
 
 	if(query != NULL) newquery = strdup(query);
 	for (cnt = 0; newquery && *newquery; cnt++) {
-		Q_ENTRY *entry;
-		char *name, *value;
-
-		value = _makeword(newquery, sepchar);
-		name = qRemoveSpace(_makeword(value, equalchar));
+		char *value = _makeword(newquery, sepchar);
+		char *name = qRemoveSpace(_makeword(value, equalchar));
 		qUrlDecode(name);
 		qUrlDecode(value);
 
-		Q_ENTRY entry = qEntryAdd(entries, name, value, 2);
+		Q_ENTRY *entry = qEntryAdd(entries, name, value, 2);
 		if (entries == NULL) entries = entry;
 	}
 	if(newquery != NULL) free(newquery);
