@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <time.h>
 #include "qDecoder.h"
 
@@ -113,12 +114,13 @@ char *qGetGmtimeStr(time_t univtime) {
 }
 
 /**
- * This parses GMT formatted time sting like 'Wed, 11-Nov-2007 23:19:25 GMT',
+ * This parses GMT/Timezone(+/-) formatted time sting like
+ * 'Sun, 04 May 2008 18:50:39 GMT', 'Mon, 05 May 2008 03:50:39 +0900'
  * and returns as universal time.
  *
- * @param gmtstr	GMT formatted time string
+ * @param gmtstr	GMT/Timezone(+/-) formatted time string
  *
- * @return	universal time. in case of conversion error, returns 0.
+ * @return	universal time(UTC). in case of conversion error, returns -1.
  *
  * @code
  *   time_t t = time(NULL);
@@ -130,8 +132,19 @@ char *qGetGmtimeStr(time_t univtime) {
  */
 time_t qParseGmtimeStr(char *gmtstr) {
 	struct tm gmtm;
+	if(strptime(gmtstr, "%a, %d %b %Y %H:%M:%S", &gmtm) == NULL) return 0;
+	time_t utc = timegm(&gmtm);
+	if(utc < 0) return -1;
 
-	if(strptime(gmtstr, "%a, %d %b %Y %H:%M:%S GMT", &gmtm) == NULL) return 0;
+	// parse timezone
+	char *p;
+	if((p = strstr(gmtstr, "+")) != NULL) {
+		utc -= ((atoi(p + 1) / 100) * 60 * 60);
+		if(utc < 0) return -1;
+	} else if((p = strstr(gmtstr, "-")) != NULL) {
+		utc += ((atoi(p + 1) / 100) * 60 * 60);
+	}
 
-	return timegm(&gmtm);
+	return utc;
 }
+
