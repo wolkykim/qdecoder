@@ -106,7 +106,7 @@ char *qGetGmtimeStr(time_t univtime) {
 	static char timestr[29+1];
 
 	if(univtime == 0) univtime = time(NULL);
-	gmtm = localtime(&univtime);
+	gmtm = gmtime(&univtime);
 
 	strftime(timestr, sizeof(timestr), "%a, %d %b %Y %H:%M:%S GMT", gmtm);
 	return timestr;
@@ -133,5 +133,5 @@ time_t qParseGmtimeStr(char *gmtstr) {
 
 	if(strptime(gmtstr, "%a, %d %b %Y %H:%M:%S GMT", &gmtm) == NULL) return 0;
 
-	return timelocal(&gmtm);
+	return timegm(&gmtm);
 }
