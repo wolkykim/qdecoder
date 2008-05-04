@@ -460,13 +460,13 @@ bool qStr09AZaz(char *str) {
 }
 
 /*
- * Copies at most len characters from src into dst including '\0'.
- * The dst string will be always terminated by '\0'. That's the
- * defference between this and strncpy().
+ * Copies at most len characters from src into dst then append '\0'.
+ * The dst string will be always terminated by '\0'. And the maximul
+ * n size is sizeof(dst)-1.
  */
-char *qStrncpy(char *dst, char *src, size_t sizeofdst) {
-	strncpy(dst, src, sizeofdst - 1);
-	dst[sizeofdst - 1] = '\0';
+char *qStrncpy(char *dst, char *src, size_t n) {
+	strncpy(dst, src, n);
+	dst[n] = '\0';
 	return dst;
 }
 

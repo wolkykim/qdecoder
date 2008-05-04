@@ -54,7 +54,7 @@ typedef struct {
 	int	*size;			/*!< value size */
 } Q_HASHTBL;
 
-#define _Q_HASHARR_MAX_KEYLEN		(31)
+#define _Q_HASHARR_MAX_KEYSIZE		(31+1)
 #define _Q_HASHARR_DEF_VALUESIZE	(32)
 /**
  * Structure for hash-table data structure based on array.
@@ -63,7 +63,7 @@ typedef struct {
 	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for moved slot due to hash collision, -2 is used for indicating linked block */
 	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
 
-	char	key[_Q_HASHARR_MAX_KEYLEN+1];		/*!< key string which can be size truncated */
+	char	key[_Q_HASHARR_MAX_KEYSIZE];		/*!< key string which can be size truncated */
 	int	keylen;					/*!< original key length */
 	char	keymd5[16];				/*!< md5 hash of the key */
 
@@ -428,7 +428,7 @@ char	*qRemoveSpace(char *str);
 char	*qRemoveTailSpace(char *str);
 char	*qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
 bool	qStr09AZaz(char *str);
-char	*qStrncpy(char *dst, char *src, size_t sizeofdst);
+char	*qStrncpy(char *dst, char *src, size_t n);
 char	*qStrupr(char *str);
 char	*qStrlwr(char *str);
 char	*qStristr(char *big, char *small);

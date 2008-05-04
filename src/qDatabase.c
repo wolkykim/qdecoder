@@ -113,12 +113,12 @@ Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password
 	db->connected = false;
 
 	// set info
-	qStrncpy(db->info.dbtype, dbtype, sizeof(db->info.dbtype));
-	qStrncpy(db->info.addr, addr, sizeof(db->info.addr));
+	qStrncpy(db->info.dbtype, dbtype, sizeof(db->info.dbtype)-1);
+	qStrncpy(db->info.addr, addr, sizeof(db->info.addr)-1);
 	db->info.port = port;
-	qStrncpy(db->info.username, username, sizeof(db->info.username));
-	qStrncpy(db->info.password, password, sizeof(db->info.password));
-	qStrncpy(db->info.database, database, sizeof(db->info.database));
+	qStrncpy(db->info.username, username, sizeof(db->info.username)-1);
+	qStrncpy(db->info.password, password, sizeof(db->info.password)-1);
+	qStrncpy(db->info.database, database, sizeof(db->info.database)-1);
 	db->info.autocommit = autocommit;
 
 	return db;
@@ -207,7 +207,7 @@ char *qDbGetErrMsg(Q_DB *db) {
 
 #ifdef _Q_ENABLE_MYSQL
 	if(mysql_errno(&db->mysql) == 0 ) strcpy(msg, "NO ERROR");
-	else qStrncpy(msg, (char *)mysql_error(&db->mysql), sizeof(msg));
+	else qStrncpy(msg, (char *)mysql_error(&db->mysql), sizeof(msg)-1);
 #else
 	strcpy(msg, "");
 #endif

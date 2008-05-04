@@ -152,7 +152,7 @@ static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, cha
 
 static char *_upload_getsavedir(char *upload_id, char *upload_savedir);
 static void _upload_progressbar(char *upload_id);
-static bool _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csize, char *upload_cname);
+static bool _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csize, char *upload_cname, int upload_cname_size);
 static bool _upload_clear_savedir(char *dir);
 static int _upload_clear_base();
 
@@ -203,7 +203,7 @@ bool qDecoderInit(bool filemode, char *upload_base, int clear_olderthan) {
 		_upload_base_init = false;
 	} else {
 		if (qCheckFile(upload_base) == false) return false;
-		qStrncpy(_upload_base, upload_base, sizeof(_upload_base));
+		qStrncpy(_upload_base, upload_base, sizeof(_upload_base)-1);
 		_upload_clear_olderthan = clear_olderthan;
 		_upload_base_init = true;
 	}
@@ -795,7 +795,7 @@ static void _upload_progressbar(char *upload_id) {
 	while(1) {
 		upload_tsize = upload_csize = 0;
 
-		_upload_getstatus(upload_id, &upload_tsize, &upload_csize, upload_cname);
+		_upload_getstatus(upload_id, &upload_tsize, &upload_csize, upload_cname, sizeof(upload_cname));
 
 		if(upload_tsize == 0 && upload_csize > 0) break; /* tsize file is removed. upload ended */
 
@@ -835,7 +835,7 @@ static void _upload_progressbar(char *upload_id) {
 	fflush(stdout);
 }
 
-static bool _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csize, char *upload_cname) {
+static bool _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_csize, char *upload_cname, int upload_cname_size) {
 #ifdef _WIN32
 	return false;
 #else
@@ -862,7 +862,7 @@ static bool _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_cs
 		if (dirp->d_name[0] - '0' <= 0 || dirp->d_name[0] - '0' > 9) continue; /* first char must be a number */
 
 		/* sort last filename */
-		if (strcmp(upload_cname, dirp->d_name) < 0) qStrncpy(upload_cname, dirp->d_name, sizeof(upload_cname));
+		if (strcmp(upload_cname, dirp->d_name) < 0) qStrncpy(upload_cname, dirp->d_name, upload_cname_size-1);
 
 		snprintf(upload_filepath, sizeof(upload_filepath), "%s/%s", upload_savedir, dirp->d_name);
 		*upload_csize += qFileSize(upload_filepath);
@@ -870,7 +870,7 @@ static bool _upload_getstatus(char *upload_id, int *upload_tsize, int *upload_cs
 	closedir(dp);
 
 	if (strstr(upload_cname, "-") != NULL) {
-		qStrncpy(upload_cname, strstr(upload_cname, "-") + 1, sizeof(upload_cname));
+		qStrncpy(upload_cname, strstr(upload_cname, "-") + 1, upload_cname_size-1);
 	}
 
 	return true;

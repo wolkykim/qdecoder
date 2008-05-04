@@ -120,8 +120,8 @@ int qSession(char *repository) {
 	}
 
 	/* make storage path for session */
-	if (repository != NULL) qStrncpy(_session_repository_path, repository, sizeof(_session_repository_path));
-	else qStrncpy(_session_repository_path, SESSION_DEFAULT_REPOSITORY, sizeof(_session_repository_path));
+	if (repository != NULL) qStrncpy(_session_repository_path, repository, sizeof(_session_repository_path)-1);
+	else qStrncpy(_session_repository_path, SESSION_DEFAULT_REPOSITORY, sizeof(_session_repository_path)-1);
 	snprintf(_session_storage_path, sizeof(_session_storage_path), "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 	snprintf(_session_timeout_path, sizeof(_session_timeout_path), "%s/%s%s%s", _session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 

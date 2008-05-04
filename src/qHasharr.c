@@ -22,8 +22,8 @@
  *
  * @note
  * In this array hash-table, we use some technics to effectively use memory. To verify key we use two way,
- * if the key is smaller than _Q_HASHARR_MAX_KEYLEN, we compare key itself. But if the key is bigger than
- * _Q_HASHARR_MAX_KEYLEN, we compare md5 of key and key length. If the key length and md5 of key are same
+ * if the key is smaller than (_Q_HASHARR_MAX_KEYSIZE - 1), we compare key itself. But if the key is bigger than
+ * (_Q_HASHARR_MAX_KEYSIZE - 1), we compare md5 of key and key length. If the key length and md5 of key are same
  * we consider it's same key. So we don't need to store full key string. Actually it's not necessary to keep
  * original key string, but we keep this because of two reasons. 1) if the length of the key is smaller than 16,
  * it will be little bit quicker to compare key. 2) debugging reason.
@@ -482,7 +482,7 @@ static int _getIdx(Q_HASHARR *tbl, char *key, int hash) {
 
 			// is same key?
 			if (keylen == tbl[idx].keylen) {	// first check fast way
-				if (keylen <= _Q_HASHARR_MAX_KEYLEN) {	// key is not truncated, use original key
+				if (keylen <= (_Q_HASHARR_MAX_KEYSIZE - 1)) {	// key is not truncated, use original key
 					if (!strcmp(key, tbl[idx].key)) return idx;
 				} else {				// key is truncated, use keymd5 instead.
 					if (!strncmp(keymd5, tbl[idx].keymd5, 16)) return idx;
@@ -514,7 +514,7 @@ static bool _putData(Q_HASHARR *tbl, int idx, int hash, char *key, char *value, 
 	// store key
 	tbl[idx].count = count;
 	tbl[idx].hash = hash;
-	qStrncpy(tbl[idx].key, key, _Q_HASHARR_MAX_KEYLEN+1);
+	qStrncpy(tbl[idx].key, key, _Q_HASHARR_MAX_KEYSIZE - 1);
 	strncpy(tbl[idx].keymd5, keymd5, 16);
 	tbl[idx].keylen = keylen;
 	tbl[idx].link = 0;
