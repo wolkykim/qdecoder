@@ -527,7 +527,7 @@ char *qStristr(char *big, char *small) {
  *
  * @return malloced string
  */
-char *qStrRev(char *str) {
+char *qStrrev(char *str) {
 	if (str == NULL) return str;
 
 	char *rev = strdup(str);
