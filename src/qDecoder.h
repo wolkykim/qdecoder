@@ -432,6 +432,7 @@ char	*qStrncpy(char *dst, char *src, size_t sizeofdst);
 char	*qStrupr(char *str);
 char	*qStrlwr(char *str);
 char	*qStristr(char *big, char *small);
+char	*qStrRev(char *str);
 char	*qStrtok(char *str, char *token, char *retstop);
 char	*qitocomma(int value);
 char    *qStrcat(char *str, char *format, ...);

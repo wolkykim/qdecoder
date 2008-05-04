@@ -522,6 +522,25 @@ char *qStristr(char *big, char *small) {
 	return retp;
 }
 
+/**
+ * Reverse null-terminated string
+ *
+ * @return malloced string
+ */
+char *qStrRev(char *str) {
+	if (str == NULL) return str;
+
+	char *rev = strdup(str);
+	char *p1, *p2;
+	for (p1 = rev, p2 = rev + (strlen(rev) - 1); p2 > p1; p1++, p2--) {
+		char t = *p1;
+		*p1 = *p2;
+		*p2 = t;
+	}
+
+	return rev;
+}
+
 /*********************************************
 ** Usage : qStrtok(string, token stop string, return stop character);
 ** Do    : Find token string. (usage like strtok())
