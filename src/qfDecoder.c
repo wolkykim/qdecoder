@@ -45,7 +45,7 @@ static Q_ENTRY *_multi_last_entry = NULL;
 static char _multi_last_key[1024];
 
 /**********************************************
-** Usage : qfDecoder(file);
+** Usage : qfDecoder(filepath, '=');
 ** Return: Success pointer of the first entry, Fail NULL.
 ** Do    : Save file into linked list.
 **         Starting # is used for comments.
@@ -57,11 +57,11 @@ static char _multi_last_key[1024];
 **         path = ${%PATH}              => path = /usr/bin:/usr/sbin
 **         #hmm = this is comments      => (skip comment)
 **********************************************/
-Q_ENTRY *qfDecoder(char *file) {
+Q_ENTRY *qfDecoder(char *filepath, char sepchar) {
 	Q_ENTRY *first, *entries;
 	char *str, *p;
 
-	p = str = qReadFile(file, NULL);
+	p = str = qReadFile(filepath, NULL);
 	if (str == NULL) return NULL;
 
 	/* processing include directive */
@@ -86,7 +86,7 @@ Q_ENTRY *qfDecoder(char *file) {
 			/* adjust file path */
 			if (!(buf[0] == '/' || buf[0] == '\\')) {
 				char tmp[1024], *dir, *newfile;
-				newfile = strdup(file);
+				newfile = strdup(filepath);
 				dir = dirname(newfile);
 				if (strlen(dir) + 1 + strlen(buf) >= sizeof(buf)) {
 					DEBUG("Can't process %s directive.", _INCLUDE_DIRECTIVE);
@@ -118,7 +118,7 @@ Q_ENTRY *qfDecoder(char *file) {
 	}
 
 	/* decode */
-	first = qsDecoder(str);
+	first = qsDecoder(str, sepchar);
 	free(str);
 
 	/* processing ${} directive */

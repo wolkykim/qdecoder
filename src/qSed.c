@@ -127,15 +127,15 @@ int qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout) {
 }
 
 /**********************************************
-** Usage : qSedFile(filename, fpout, arg);
+** Usage : qSedFile(filepath, fpout, arg);
 ** Return: Success 1, Fail open fail 0.
 ** Do    : Stream Editor.
 **********************************************/
-int qSedFile(Q_ENTRY *first, char *filename, FILE *fpout) {
+int qSedFile(Q_ENTRY *first, char *filepath, FILE *fpout) {
 	char *sp;
 	int flag;
 
-	if ((sp = qReadFile(filename, NULL)) == NULL) return 0;
+	if ((sp = qReadFile(filepath, NULL)) == NULL) return 0;
 	flag = qSedStr(first, sp, fpout);
 	free(sp);
 

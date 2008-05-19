@@ -37,7 +37,7 @@
 /**
  * Read counter(integer) from file with advisory file locking.
  *
- * @param filename file path
+ * @param filepath file path
  *
  * @return	counter value readed from file. in case of failure, returns 0.
  *
@@ -47,11 +47,11 @@
  *   count = qCountRead("number.dat");
  * @endcode
  */
-int qCountRead(char *filename) {
+int qCountRead(char *filepath) {
 	FILE *fp;
 	int  counter;
 
-	if ((fp = qFileOpen(filename, "r")) == NULL) return 0;
+	if ((fp = qFileOpen(filepath, "r")) == NULL) return 0;
 	fscanf(fp, "%d", &counter);
 	qFileClose(fp);
 	return counter;
@@ -60,7 +60,7 @@ int qCountRead(char *filename) {
 /**
  * Save counter(integer) to file with advisory file locking.
  *
- * @param filename	file path
+ * @param filepath	file path
  * @param number	counter integer value
  *
  * @return	in case of success, returns true. otherwise false.
@@ -70,10 +70,10 @@ int qCountRead(char *filename) {
  *   qCountSave("number.dat", 75);
  * @endcode
  */
-bool qCountSave(char *filename, int number) {
+bool qCountSave(char *filepath, int number) {
 	FILE *fp;
 
-	if ((fp = qFileOpen(filename, "w")) == NULL) return false;
+	if ((fp = qFileOpen(filepath, "w")) == NULL) return false;
 	fprintf(fp, "%d\n", number);
 	qFileClose(fp);
 
@@ -84,7 +84,7 @@ bool qCountSave(char *filename, int number) {
  * Increases(or decrease) the counter value as much as specified number
  * with advisory file locking.
  *
- * @param filename	file path
+ * @param filepath	file path
  * @param number	how much increase or decrease
  *
  * @return	updated counter value. in case of failure, returns 0.
@@ -95,14 +95,17 @@ bool qCountSave(char *filename, int number) {
  *   count = qCountUpdate("number.dat", -3);
  * @endcode
  */
-int qCountUpdate(char *filename, int number) {
+int qCountUpdate(char *filepath, int number) {
 	FILE *fp;
 	int counter = 0;
 
-	if ((fp = qFileOpen(filename, "r+")) != NULL) {
+	if ((fp = qFileOpen(filepath, "r+")) != NULL) {
 		fscanf(fp, "%d", &counter);
 		fseek(fp, 0, SEEK_SET);
-	} else if ((fp = fopen(filename, "w")) == NULL) return 0;
+	} else if ((fp = qFileOpen(filepath, "w")) == NULL) {
+		return 0;
+	}
+
 	counter += number;
 	fprintf(fp, "%d\n", counter);
 	qFileClose(fp);

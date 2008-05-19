@@ -144,45 +144,32 @@ char *qfGetLine(FILE *fp) {
 }
 
 /**********************************************
-**Usage : qCheckFile(filename);
+**Usage : qCheckFile(filepath);
 ** Return: If file exist returns true. Or returns false.
 ** Do    : Check filethat file is existGet environment of CGI.
 **********************************************/
-bool qCheckFile(char *format, ...) {
+bool qCheckFile(char *filepath) {
 	struct stat finfo;
-	char filename[1024];
-	va_list arglist;
-
-	va_start(arglist, format);
-	vsnprintf(filename, sizeof(filename), format, arglist);
-	va_end(arglist);
-
-	if (stat(filename, &finfo) < 0) return false;
-
+	if (stat(filepath, &finfo) < 0) return false;
 	return true;
 }
 
 /**********************************************
-** Usage : qCatFile(filename);
+** Usage : qCatFile(filepath);
 ** Return: Success number of characters, Fail -1.
 ** Do    : Stream out file.
 **********************************************/
-int qCatFile(char *format, ...) {
+int qCatFile(char *filepath) {
 	FILE *fp;
-	char filename[1024];
-	va_list arglist;
 	int c, counter;
 
-	va_start(arglist, format);
-	vsnprintf(filename, sizeof(filename), format, arglist);
-	va_end(arglist);
+	if ((fp = fopen(filepath, "rb")) == NULL) return -1;
 
 #ifdef _WIN32
 	setmode(fileno(stdin), _O_BINARY);
 	setmode(fileno(stdout), _O_BINARY);
 #endif
 
-	if ((fp = fopen(filename, "rb")) == NULL) return -1;
 	for (counter = 0; (c = fgetc(fp)) != EOF; counter++) {
 		putc(c, stdout);
 	}
@@ -192,19 +179,19 @@ int qCatFile(char *format, ...) {
 }
 
 /**********************************************
-** Usage : qReadFile(filename, integer pointer to store file size);
+** Usage : qReadFile(filepath, integer pointer to store file size);
 ** Return: Success stream pointer, Fail NULL.
 ** Do    : Read file to malloced memory.
 **********************************************/
-char *qReadFile(char *filename, int *size) {
+char *qReadFile(char *filepath, int *size) {
 	FILE *fp;
 	struct stat filestat;
 	char *sp, *tmp;
 	int c, i;
 
 	if (size != NULL) *size = 0;
-	if (stat(filename, &filestat) < 0) return NULL;
-	if ((fp = fopen(filename, "rb")) == NULL) return NULL;
+	if (stat(filepath, &filestat) < 0) return NULL;
+	if ((fp = fopen(filepath, "rb")) == NULL) return NULL;
 
 	sp = (char *)malloc(filestat.st_size + 1);
 	for (tmp = sp, i = 0; (c = fgetc(fp)) != EOF; tmp++, i++) *tmp = (char)c;
@@ -221,14 +208,14 @@ char *qReadFile(char *filename, int *size) {
 }
 
 /**********************************************
-** Usage : qSaveStr(string pointer, string size, filename, mode)
+** Usage : qSaveStr(string pointer, string size, filepath, mode)
 ** Return: Success number bytes stored, File open fail -1.
 ** Do    : Store string to file.
 **********************************************/
-int qSaveStr(char *sp, int spsize, char *filename, char *mode) {
+int qSaveStr(char *sp, int spsize, char *filepath, char *mode) {
 	FILE *fp;
 	int i;
-	if ((fp = fopen(filename, mode)) == NULL) return -1;
+	if ((fp = fopen(filepath, mode)) == NULL) return -1;
 	for (i = 0; i < spsize; i++) fputc(*sp++, fp);
 	fclose(fp);
 
@@ -236,13 +223,13 @@ int qSaveStr(char *sp, int spsize, char *filename, char *mode) {
 }
 
 /**********************************************
-** Usage : qFileSize(filename);
+** Usage : qFileSize(filepath);
 ** Return: Size of file in byte, File not found -1.
 **********************************************/
-long qFileSize(char *filename) {
+long qFileSize(char *filepath) {
 	struct stat finfo;
 
-	if (stat(filename, &finfo) < 0) return -1;
+	if (stat(filepath, &finfo) < 0) return -1;
 
 	return finfo.st_size;
 }

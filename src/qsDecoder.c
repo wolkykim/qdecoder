@@ -39,12 +39,12 @@ static Q_ENTRY *_multi_last_entry = NULL;
 static char _multi_last_key[1024];
 
 /**********************************************
-** Usage : qsDecoder(string);
+** Usage : qsDecoder(string, '=');
 ** Return: Success pointer of the first entry, Fail NULL.
 ** Do    : Save string into linked list.
            # is used for comments.
 **********************************************/
-Q_ENTRY *qsDecoder(char *str) {
+Q_ENTRY *qsDecoder(char *str, char sepchar) {
 	Q_ENTRY *first = NULL, *entry;
 	char  *org, *buf, *offset;
 
@@ -66,7 +66,7 @@ Q_ENTRY *qsDecoder(char *str) {
 
 		/* parse & store */
 		value = strdup(buf);
-		name  = _makeword(value, '=');
+		name  = _makeword(value, sepchar);
 		qRemoveSpace(value);
 		qRemoveSpace(name);
 

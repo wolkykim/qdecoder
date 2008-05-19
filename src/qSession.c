@@ -165,7 +165,7 @@ int qSession(char *repository) {
 		char connstr[16];
 
 		/* read exist session informations */
-		_session_first_entry = qEntryLoad(_session_storage_path, true);
+		_session_first_entry = qEntryLoad(_session_storage_path, '=', true);
 
 		/* update session informations */
 		conns = qSessionGetInt(INTER_CONNECTIONS);
@@ -386,7 +386,7 @@ void qSessionSave(void) {
 	if (_session_started == false || _session_first_entry == NULL) return;
 	if (_session_new == true && _session_modified == false) return;
 
-	if (qEntrySave(_session_first_entry, _session_storage_path, true) == false) {
+	if (qEntrySave(_session_first_entry, _session_storage_path, '=', true) == false) {
 		qError("qSessionSave(): Can not access session repository(%s).", _session_storage_path);
 	}
 	if (_updateTimeout(_session_timeout_path, _session_timeout_interval) == 0) {

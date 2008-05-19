@@ -198,11 +198,11 @@ char *qMd5Str(char *data, int len) {
 }
 
 /**********************************************
-** Usage : qMd5File(filename);
+** Usage : qMd5File(filepath);
 ** Return: MD5 digested static string pointer.
 ** Do    : Strng converted digest string through MD5 algorithm.
 **********************************************/
-char *qMd5File(char *filename) {
+char *qMd5File(char *filepath) {
 	static char md5hex[16 * 2 + 1];
 	int f, i;
 	off_t n;
@@ -211,7 +211,7 @@ char *qMd5File(char *filename) {
 	MD5_CTX context;
 
 	MD5Init(&context);
-	if ((f = open(filename, O_RDONLY)) < 0)
+	if ((f = open(filepath, O_RDONLY)) < 0)
 		return NULL;
 	if (fstat(f, &stbuf) < 0)
 		return NULL;

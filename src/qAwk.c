@@ -60,14 +60,14 @@
 /**
  * Open file for tokenizing
  *
- * @param filename file path to open
+ * @param filepath file path to open
  *
  * @return	file pointer. in case of failure, returns NULL.
  */
-FILE *qAwkOpen(char *filename) {
+FILE *qAwkOpen(char *filepath) {
 	FILE *fp;
 
-	if ((fp = fopen(filename, "r")) == NULL) return NULL;
+	if ((fp = fopen(filepath, "r")) == NULL) return NULL;
 	return fp;
 }
 

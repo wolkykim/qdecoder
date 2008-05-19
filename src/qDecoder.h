@@ -204,13 +204,13 @@ void	qJavaScript(char *format, ...);
 /*
  * qDownload.c
  */
-int	qDownload(char *filename);
-int	qDownloadMime(char *filename, char *mime);
+int	qDownload(char *filepath);
+int	qDownloadMime(char *filepath, char *mime);
 
 /*
  * qfDecoder.c
  */
-Q_ENTRY	*qfDecoder(char *filename);
+Q_ENTRY	*qfDecoder(char *filepath, char sepchar);
 char	*qfGetValue(Q_ENTRY *first, char *format, ...);
 int	qfGetInt(Q_ENTRY *first, char *format, ...);
 char	*qfGetValueFirst(Q_ENTRY *first, char *format, ...);
@@ -221,7 +221,7 @@ void	qfFree(Q_ENTRY *first);
 /*
  * qsDecoder.c
  */
-Q_ENTRY	*qsDecoder(char *str);
+Q_ENTRY	*qsDecoder(char *str, char sepchar);
 char	*qsGetValue(Q_ENTRY *first, char *format, ...);
 int	qsGetInt(Q_ENTRY *first, char *format, ...);
 char	*qsGetValueFirst(Q_ENTRY *first, char *format, ...);
@@ -241,7 +241,7 @@ void	qArgFree(char **qlist);
 /*
  * qAwk.c
  */
-FILE	*qAwkOpen(char *filename);
+FILE	*qAwkOpen(char *filepath);
 int	qAwkNext(FILE *fp, char array[][1024], char delim);
 bool	qAwkClose(FILE *fp);
 int	qAwkStr(char array[][1024], char *str, char delim);
@@ -252,7 +252,7 @@ int	qAwkStr(char array[][1024], char *str, char delim);
 Q_ENTRY	*qSedAdd(Q_ENTRY *first, char *name, char *format, ...);
 Q_ENTRY *qSedAddDirect(Q_ENTRY *first, char *name, char *value);
 int	qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout);
-int	qSedFile(Q_ENTRY *first, char *filename, FILE *fpout);
+int	qSedFile(Q_ENTRY *first, char *filepath, FILE *fpout);
 int	qSedPrint(Q_ENTRY *first, FILE *out);
 void	qSedFree(Q_ENTRY *first);
 
@@ -342,8 +342,8 @@ int	qEntryGetNo(Q_ENTRY *first, char *name);
 Q_ENTRY	*qEntryReverse(Q_ENTRY *first);
 int	qEntryPrint(Q_ENTRY *first, FILE *out);
 int	qEntryFree(Q_ENTRY *first);
-int	qEntrySave(Q_ENTRY *first, char *filename, bool encodevalue);
-Q_ENTRY	*qEntryLoad(char *filename, bool decodevalue);
+int	qEntrySave(Q_ENTRY *first, char *filepath, char sepchar, bool encodevalue);
+Q_ENTRY	*qEntryLoad(char *filepath, char sepchar, bool decodevalue);
 
 /*
  * qHashtbl.c
@@ -416,7 +416,7 @@ Q_ENTRY	*qQueryDecode(char *query, char equalchar, char sepchar, int *keycnt);
 char	*qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag);
 unsigned char *qMd5Hash(char *data, int len);
 char	*qMd5Str(char *data, int len);
-char	*qMd5File(char *filename);
+char	*qMd5File(char *filepath);
 unsigned int qFnv32Hash(char *str, unsigned int max);
 
 /*
@@ -446,11 +446,11 @@ FILE	*qFileOpen(char *path, char *mode);
 int	qFileClose(FILE *stream);
 char	*qfReadFile(FILE *fp);
 char	*qfGetLine(FILE *fp);
-bool	qCheckFile(char *format, ...);
-int	qCatFile(char *format, ...);
-char	*qReadFile(char *filename, int *size);
-int	qSaveStr(char *sp, int spsize, char *filename, char *mode);
-long	qFileSize(char *filename);
+bool	qCheckFile(char *filepath);
+int	qCatFile(char *filepath);
+char	*qReadFile(char *filepath, int *size);
+int	qSaveStr(char *sp, int spsize, char *filepath, char *mode);
+long	qFileSize(char *filepath);
 char	*qCmd(char *cmd);
 
 /*
@@ -462,9 +462,9 @@ bool	qCheckURL(char *url);
 /*
  * qCount.c
  */
-int	qCountRead(char *filename);
-bool	qCountSave(char *filename, int number);
-int	qCountUpdate(char *filename, int number);
+int	qCountRead(char *filepath);
+bool	qCountSave(char *filepath, int number);
+int	qCountUpdate(char *filepath, int number);
 
 /*
  * qTime.c

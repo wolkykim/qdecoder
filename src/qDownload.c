@@ -35,12 +35,12 @@
  * Do not call qContentType() before. This will force to set mime-type to application/octet-stream.
  * So user can see downloading dialogue box even though you send text file.
  *
- * @param filename	file to send
+ * @param filepath	file to send
  *
  * @return	 the number of bytes sent. otherwise(file not found) returns -1.
  */
-int qDownload(char *filename) {
-	return qDownloadMime(filename, "application/octet-stream");
+int qDownload(char *filepath) {
+	return qDownloadMime(filepath, "application/octet-stream");
 }
 
 /**
@@ -61,12 +61,12 @@ int qDownload(char *filename) {
  * When it is to be used as preprocessing for the downloading count,
  * it is better to utilize qRedirect().
  *
- * @param filename	file to send
+ * @param filepath	file to send
  * @param mime		mimefile to send
  *
  * @return	 the number of bytes sent. otherwise(file not found) returns -1.
  */
-int qDownloadMime(char *filename, char *mime) {
+int qDownloadMime(char *filepath, char *mime) {
 	char *file, *c, *disposition;
 	int sent;
 
@@ -74,10 +74,10 @@ int qDownloadMime(char *filename, char *mime) {
 
 	if (mime == NULL) mime = "application/octet-stream";
 
-	if (filename == NULL) qError("qDownload(): Null pointer can not be used.");
-	if (qCheckFile(filename) == false) return -1;
+	if (filepath == NULL) qError("qDownload(): Null pointer can not be used.");
+	if (qCheckFile(filepath) == false) return -1;
 
-	file = strdup(filename);
+	file = strdup(filepath);
 
 	/* Fetch filename in string which include directory name */
 	for (c = file + strlen(file) - 1; c >= file && !(*c == '/' || *c == '\\'); c--);
@@ -89,13 +89,13 @@ int qDownloadMime(char *filename, char *mime) {
 	printf("Content-Disposition: %s;filename=\"%s\"\n", disposition, file);
 	printf("Content-Transfer-Encoding: binary\n");
 	printf("Accept-Ranges: bytes\n");
-	printf("Content-Length: %ld\n", qFileSize(filename));
+	printf("Content-Length: %ld\n", qFileSize(filepath));
 	printf("Connection: close\n");
 	printf("Content-Type: %s\n", mime);
 	printf("\n");
 	free(file);
 
-	sent = qCatFile(filename);
+	sent = qCatFile(filepath);
 	return sent;
 }
 
