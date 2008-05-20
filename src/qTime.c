@@ -130,6 +130,7 @@ char *qGetGmtimeStr(time_t univtime) {
  *   printf("%d\n", qParseGmtimeStr(s)); // this must be same as t
  * @endcode
  */
+extern char *strptime(const char *, const char *r, struct tm *);
 time_t qParseGmtimeStr(char *gmtstr) {
 	struct tm gmtm;
 	if(strptime(gmtstr, "%a, %d %b %Y %H:%M:%S", &gmtm) == NULL) return 0;
