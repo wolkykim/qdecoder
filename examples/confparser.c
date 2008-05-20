@@ -30,7 +30,7 @@ int main(void) {
 	int port;
 
 	/* Open configuration file */
-	if (!(conf = qfDecoder(CONF_FILE))) qError("Configuration file(%s) not found.", CONF_FILE);
+	if (!(conf = qfDecoder(CONF_FILE, '='))) qError("Configuration file(%s) not found.", CONF_FILE);
 
 	/* Get variable */
 	protocol = qfGetValue(conf, "PROTOCOL");
