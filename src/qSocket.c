@@ -333,7 +333,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  * @code
  * @endcode
  */
-ssize_t qSocketSendFile(int sockfd, char *filepath, off_t offset, ssize_t size) {
+ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t size) {
 	struct stat filestat;
 	int filefd;
 
