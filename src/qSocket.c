@@ -323,7 +323,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  *
  * @param	sockfd		socket descriptor returned by qSocketOpen()
  * @param	filepath	variable argument lists
- * @param	offset		file offset to send
+ * @param	start		file start to send
  * @param	size		total bytes to send. 0 means send data until EOF.
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
@@ -333,7 +333,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  * @code
  * @endcode
  */
-ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t size) {
+ssize_t qSocketSendfile(int sockfd, char *filepath, off_t start, ssize_t size) {
 	struct stat filestat;
 	int filefd;
 
@@ -341,12 +341,12 @@ ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t size) 
 	if (fstat(filefd, &filestat) < 0) return -1;
 
 	ssize_t sent = 0;				// total size sent
-	ssize_t rangesize = filestat.st_size - offset;	// total size to send
+	ssize_t rangesize = filestat.st_size - start;	// total size to send
 	if(size > 0 && size < rangesize) rangesize = size;
 
 #ifndef __linux__
 	char buf[MAX_SENDFILE_CHUNK_SIZE];
-	if (offset > 0) lseek(filefd, offset, SEEK_SET);
+	if (start > 0) lseek(filefd, start, SEEK_SET);
 #endif
 
 	while(sent < rangesize) {
@@ -355,7 +355,7 @@ ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t size) 
 		else sendsize = rangesize - sent;
 
 #ifdef __linux__
-		ssize_t ret = sendfile(sockfd, filefd, &offset, sendsize);
+		ssize_t ret = sendfile(sockfd, filefd, &start, sendsize);
 		if(ret <= 0) break; // Connection closed by peer
 #else
 		// read
