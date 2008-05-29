@@ -104,6 +104,7 @@ opt_incs=""
 
 Q_ARG_ENABLE([debug], [enable debugging print out], [-DBUILD_DEBUG])
 Q_ARG_ENABLE([64bit], [enable 64 bit supports], [-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
+Q_ARG_ENABLE([sendfile], [enable sendfile if possible], [-DENABLE_SENDFILE])
 
 AC_ARG_ENABLE([mysql],[AS_HELP_STRING([--enable-mysql=/MYSQL_INCLUDE_DIR_PATH/], [enable MySQL database supports])],[enableval=yes],[enableval=no])
 if test "$enableval" = yes; then

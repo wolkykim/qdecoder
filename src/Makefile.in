@@ -17,65 +17,8 @@
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
 
-##########################################################################
-## Compile time options
-##########################################################################
-##
-## Please use configure script instead modifing Makefile to enable/disable
-## feature.
-##
-## enable MySQL database supports
-#ENABLE_MYSQL	= -DENABLE_MYSQL
-#MYSQL_INCLUDE	= -I/usr/local/include/mysql -I /usr/local/mysql/include
-
-## disable CGI(web application) related APIs
-#DISABLE_CGISUPPORT	= -DDISABLE_CGISUPPORT
-
-## disable configuration file parser & string parser APIs
-#DISABLE_CONFIGPARSER	= -DDISABLE_CONFIGPARSER
-
-## disable pattern matching & string search APIs
-#DISABLE_ARG	= -DDISABLE_ARG
-
-## disable file & string tokenizing APIs
-#DISABLE_AWK	= -DDISABLE_AWK
-
-## disable server side include and variable replacement APIs
-#DISABLE_SED	= -DDISABLE_SED
-
-## disable ipc(semaphore, shared-memory) APIs
-#DISABLE_IPC	= -DDISABLE_IPC
-
-## disable socket APIs (influence on: qSocket.c)
-#DISABLE_SOCKET	= -DDISABLE_SOCKET
-
-## disable hash-table data structure APIs
-#DISABLE_HASHTBL	= -DDISABLE_HASHTBL
-
-## disable obstack APIs
-#DISABLE_OBSTACK	= -DDISABLE_OBSTACK
-
-## disable file logging APIs
-#DISABLE_LOG	= -DDISABLE_LOG
-
-##########################################################################
-## YOU DON'T NEED TO MODIFY BELOW BEFORE YOU GOT COMPILE TIME TROUBLES
-##########################################################################
 prefix		= @prefix@
 exec_prefix	= ${prefix}
-
-CUS_DEFS	= ${DISABLE_CGISUPPORT}		\
-		 ${DISABLE_CONFIGPARSER}	\
-		 ${DISABLE_ARG}			\
-		 ${DISABLE_AWK}			\
-		 ${DISABLE_SED}			\
-		 ${DISABLE_IPC}			\
-		 ${DISABLE_SOCKET}		\
-		 ${ENABLE_MYSQL}		\
-		 ${DISABLE_HASHTBL}		\
-		 ${DISABLE_LOG}
-
-CUS_INCS	=  ${MYSQL_INCLUDE}
 
 ## Name
 PRGNAME		= qDecoder
@@ -95,8 +38,8 @@ HEADERDIR	= @includedir@
 ## Which compiler & options for release
 CC		= @CC@
 CFLAGS		= @CFLAGS@
-DEFS		= @DEFS@ @OPT_DEFS@ ${CUS_DEFS}
-INCLUDE		= -I./ @OPT_INCS@  ${CUS_INCS}
+DEFS		= @DEFS@ @OPT_DEFS@
+INCLUDE		= -I./ @OPT_INCS@
 
 ## Utilities
 AR		= @AR@

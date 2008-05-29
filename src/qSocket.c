@@ -39,11 +39,11 @@
 #include <sys/stat.h>
 #include "qDecoder.h"
 
-#ifdef __linux__
+#if defined(ENABLE_SENDFILE) && defined(__linux__)
 #include <sys/sendfile.h>
-#define MAX_SENDFILE_CHUNK_SIZE		(2 * 1024 * 1024 * 1024)
+#define MAX_SENDFILE_CHUNK_SIZE		(1 * 1024 * 1024 * 1024)
 #else
-#define MAX_SENDFILE_CHUNK_SIZE		(512)
+#define MAX_SENDFILE_CHUNK_SIZE		(64 * 1024)
 #endif
 
 /**********************************************
@@ -344,7 +344,7 @@ ssize_t qSocketSendfile(int sockfd, char *filepath, off_t start, ssize_t size) {
 	ssize_t rangesize = filestat.st_size - start;	// total size to send
 	if(size > 0 && size < rangesize) rangesize = size;
 
-#ifndef __linux__
+#if !(defined(ENABLE_SENDFILE) && defined(__linux__))
 	char buf[MAX_SENDFILE_CHUNK_SIZE];
 	if (start > 0) lseek(filefd, start, SEEK_SET);
 #endif
@@ -354,12 +354,12 @@ ssize_t qSocketSendfile(int sockfd, char *filepath, off_t start, ssize_t size) {
 		if(rangesize - sent > MAX_SENDFILE_CHUNK_SIZE) sendsize = MAX_SENDFILE_CHUNK_SIZE;
 		else sendsize = rangesize - sent;
 
-#ifdef __linux__
+#if defined(ENABLE_SENDFILE) && defined(__linux__)
 		ssize_t ret = sendfile(sockfd, filefd, &start, sendsize);
 		if(ret <= 0) break; // Connection closed by peer
 #else
 		// read
-		size_t retr = read(filefd, buf, sizeof(buf));
+		size_t retr = read(filefd, buf, sendsize);
 		if (retr <= 0) break;
 
 		// write

@@ -866,6 +866,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-debug          enable debugging print out
   --enable-64bit          enable 64 bit supports
+  --enable-sendfile       enable sendfile if possible
   --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
                           enable MySQL database supports
   --disable-cgisupport    disable CGI(web application) related APIs (influence
@@ -3979,6 +3980,20 @@ fi;
 		{ echo "$as_me:$LINENO: '64bit' feature is enabled" >&5
 echo "$as_me: '64bit' feature is enabled" >&6;}
 		opt_defs="$opt_defs -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+	fi
+
+
+	# Check whether --enable-sendfile or --disable-sendfile was given.
+if test "${enable_sendfile+set}" = set; then
+  enableval="$enable_sendfile"
+
+else
+  enableval=no
+fi;
+	if test "$enableval" = yes; then
+		{ echo "$as_me:$LINENO: 'sendfile' feature is enabled" >&5
+echo "$as_me: 'sendfile' feature is enabled" >&6;}
+		opt_defs="$opt_defs -DENABLE_SENDFILE"
 	fi
 
 
