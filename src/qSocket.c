@@ -41,7 +41,7 @@
 
 #ifdef __linux__
 #include <sys/sendfile.h>
-#define MAX_SENDFILE_CHUNK_SIZE		(1024 * 1024)
+#define MAX_SENDFILE_CHUNK_SIZE		(2 * 1024 * 1024 * 1024)
 #else
 #define MAX_SENDFILE_CHUNK_SIZE		(512)
 #endif
