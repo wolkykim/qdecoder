@@ -236,7 +236,7 @@ long qFileSize(char *filepath) {
 
 /**********************************************
 ** Usage : qCmd(external command);
-** Return: Size of file in byte, File not found -1.
+** Return: Execution output, File not found NULL.
 **********************************************/
 char *qCmd(char *cmd) {
 	FILE *fp;
@@ -247,5 +247,6 @@ char *qCmd(char *cmd) {
 	str = qfReadFile(fp);
 	pclose(fp);
 
+	if(str == NULL) str = strdup("");
 	return str;
 }
