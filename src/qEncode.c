@@ -207,7 +207,7 @@ char *qMd5File(char *filepath) {
 	int f, i;
 	off_t n;
 	struct stat stbuf;
-	unsigned char szBuffer[BUFSIZ], szDigest[16];
+	unsigned char szBuffer[256*1024], szDigest[16];
 	MD5_CTX context;
 
 	MD5Init(&context);

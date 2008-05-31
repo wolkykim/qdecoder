@@ -102,7 +102,12 @@ typedef struct {
 
 /* Database Support*/
 #ifdef _mysql_h
-#define _Q_ENABLE_MYSQL		(1)
+#define _Q_ENABLE_MYSQL				(1)
+// mysql specific connector option
+#define _Q_MYSQL_OPT_RECONNECT			(1)
+#define _Q_MYSQL_OPT_CONNECT_TIMEOUT		(10)
+#define _Q_MYSQL_OPT_READ_TIMEOUT		(30)
+#define _Q_MYSQL_OPT_WRITE_TIMEOUT		(30)
 #endif
 
 /**
@@ -123,7 +128,7 @@ typedef struct {
 
 	// for mysql database
 #ifdef _Q_ENABLE_MYSQL
-	MYSQL		mysql;
+	MYSQL		*mysql;
 #endif
 } Q_DB;
 

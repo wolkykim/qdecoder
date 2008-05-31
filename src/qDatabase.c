@@ -96,23 +96,20 @@
  * @endcode
  */
 Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, bool autocommit) {
-	Q_DB *db;
-	char *support_db;
-
+	// check db type
 #ifdef _Q_ENABLE_MYSQL
-	support_db = "MYSQL";
+	if (strcmp(dbtype, "MYSQL")) return NULL;
 #else
-	support_db = "";
+	return NULL;
 #endif
 
-	// check db type
-	if (strcmp(dbtype, support_db)) return NULL;
-
+	// initialize
+	Q_DB *db;
 	if ((db = (Q_DB *)malloc(sizeof(Q_DB))) == NULL) return NULL;
 	memset((void *)db, 0, sizeof(Q_DB));
 	db->connected = false;
 
-	// set info
+	// set common structure
 	qStrncpy(db->info.dbtype, dbtype, sizeof(db->info.dbtype)-1);
 	qStrncpy(db->info.addr, addr, sizeof(db->info.addr)-1);
 	db->info.port = port;
@@ -120,6 +117,11 @@ Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password
 	qStrncpy(db->info.password, password, sizeof(db->info.password)-1);
 	qStrncpy(db->info.database, database, sizeof(db->info.database)-1);
 	db->info.autocommit = autocommit;
+
+	// set db handler
+#ifdef _Q_ENABLE_MYSQL
+	db->mysql = NULL;
+#endif
 
 	return db;
 }
@@ -138,23 +140,32 @@ bool qDbOpen(Q_DB *db) {
 	}
 
 #ifdef _Q_ENABLE_MYSQL
-	// initialize mysql structure
-	if (!mysql_init(&db->mysql)) {
-		return false;
-	}
+	// initialize handler
+	if(db->mysql != NULL) qDbClose(db);
+
+	db->mysql = mysql_init(NULL);
+	if(db->mysql == NULL) return false;
 
 	// set options
-	//my_bool reconnect = 1;
-	//mysql_options(&db->mysql, MYSQL_OPT_RECONNECT, &reconnect);
+	my_bool reconnect = _Q_MYSQL_OPT_RECONNECT;
+	unsigned int connect_timeout = _Q_MYSQL_OPT_CONNECT_TIMEOUT;
+	unsigned int read_timeout = _Q_MYSQL_OPT_READ_TIMEOUT;
+	unsigned int write_timeout = _Q_MYSQL_OPT_WRITE_TIMEOUT;
+
+	if(reconnect != false) mysql_options(db->mysql, MYSQL_OPT_RECONNECT, (char *)&reconnect);
+	if(connect_timeout > 0) mysql_options(db->mysql, MYSQL_OPT_CONNECT_TIMEOUT, (char *)&connect_timeout);
+	if(read_timeout > 0) mysql_options(db->mysql, MYSQL_OPT_READ_TIMEOUT, (char *)&read_timeout);
+	if(write_timeout > 0) mysql_options(db->mysql, MYSQL_OPT_WRITE_TIMEOUT, (char *)&write_timeout);
 
 	// try to connect
-	if (!mysql_real_connect(&db->mysql, db->info.addr, db->info.username, db->info.password, db->info.database, db->info.port, NULL, 0)) {
+	if(mysql_real_connect(db->mysql, db->info.addr, db->info.username, db->info.password, db->info.database, db->info.port, NULL, 0) == NULL) {
+		qDbClose(db); // free mysql handler
 		return false;
 	}
 
 	// set auto-commit
-	if (mysql_autocommit(&db->mysql, db->info.autocommit) != 0) {
-		qDbClose(db);
+	if (mysql_autocommit(db->mysql, db->info.autocommit) != 0) {
+		qDbClose(db); // free mysql handler
 		return false;
 	}
 
@@ -173,10 +184,13 @@ bool qDbOpen(Q_DB *db) {
  * @since not released yet
  */
 bool qDbClose(Q_DB *db) {
-	if (db == NULL || db->connected == false) return false;
+	if (db == NULL) return false;
 
 #ifdef _Q_ENABLE_MYSQL
-	mysql_close(&db->mysql);
+	if(db->mysql != NULL) {
+		mysql_close(db->mysql);
+		db->mysql = NULL;
+	}
 	db->connected = false;
 	return true;
 #else
@@ -206,8 +220,8 @@ char *qDbGetErrMsg(Q_DB *db) {
 	if (db == NULL || db->connected == false) return "(no opened db)";
 
 #ifdef _Q_ENABLE_MYSQL
-	if(mysql_errno(&db->mysql) == 0 ) strcpy(msg, "NO ERROR");
-	else qStrncpy(msg, (char *)mysql_error(&db->mysql), sizeof(msg)-1);
+	if(mysql_errno(db->mysql) == 0 ) strcpy(msg, "NO ERROR");
+	else qStrncpy(msg, (char *)mysql_error(db->mysql), sizeof(msg)-1);
 #else
 	strcpy(msg, "");
 #endif
@@ -224,7 +238,7 @@ bool qDbPing(Q_DB *db) {
 	if (db == NULL) return false;
 
 #ifdef _Q_ENABLE_MYSQL
-	if (db->connected == true && mysql_ping(&db->mysql) == 0) {
+	if (db->connected == true && mysql_ping(db->mysql) == 0) {
 		return true;
 	} else { // ping test failed
 		if (db->connected == true) {
@@ -271,10 +285,10 @@ int qDbExecuteUpdate(Q_DB *db, char *query) {
 
 	// query
 	DEBUG("%s", query);
-	if (mysql_query(&db->mysql, query)) return -1;
+	if (mysql_query(db->mysql, query)) return -1;
 
 	/* get affected rows */
-	if ((affected = mysql_affected_rows(&db->mysql)) < 0) return -1;
+	if ((affected = mysql_affected_rows(db->mysql)) < 0) return -1;
 
 	return affected;
 #else
@@ -309,13 +323,13 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
 #ifdef _Q_ENABLE_MYSQL
 	// query
 	DEBUG("%s", query);
-	if (mysql_query(&db->mysql, query)) return NULL;
+	if (mysql_query(db->mysql, query)) return NULL;
 
 	// store
 	Q_DBRESULT *result = (Q_DBRESULT *)malloc(sizeof(Q_DBRESULT));
 	if (result == NULL) return NULL;
 
-	if ((result->rs = mysql_store_result(&db->mysql)) == NULL) {
+	if ((result->rs = mysql_store_result(db->mysql)) == NULL) {
 		free(result);
 		return NULL;
 	}
@@ -524,7 +538,7 @@ bool qDbCommit(Q_DB *db) {
 	if (db == NULL) return false;
 
 #ifdef _Q_ENABLE_MYSQL
-	if (mysql_commit(&db->mysql) != 0) return false;
+	if (mysql_commit(db->mysql) != 0) return false;
 	return true;
 #else
 	return false;
@@ -540,7 +554,7 @@ bool qDbRollback(Q_DB *db) {
 	if (db == NULL) return false;
 
 #ifdef _Q_ENABLE_MYSQL
-	if (mysql_rollback(&db->mysql) != 0) {
+	if (mysql_rollback(db->mysql) != 0) {
 		return false;
 	}
 	return true;
