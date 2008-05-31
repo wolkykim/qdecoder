@@ -221,7 +221,7 @@ char *qDbGetErrMsg(Q_DB *db) {
 
 #ifdef _Q_ENABLE_MYSQL
 	if(mysql_errno(db->mysql) == 0 ) strcpy(msg, "NO ERROR");
-	else qStrncpy(msg, (char *)mysql_error(db->mysql), sizeof(msg)-1);
+	else snprintf(msg, sizeof(msg), "%u:%s", mysql_errno(db->mysql), mysql_error(db->mysql));
 #else
 	strcpy(msg, "");
 #endif
