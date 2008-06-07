@@ -20,21 +20,33 @@
 #ifndef _QINTERNAL_H
 #define _QINTERNAL_H
 
-char    _x2c(char hex_up, char hex_low);
-char    *_makeword(char *str, char stop);
-char    *_fgets(char *str, int size, FILE *stream);
-int     _flockopen(FILE *fp);
-int     _flockclose(FILE *fp);
-
-/**********************************************
-** Internal Definition
-**********************************************/
-#define QDECODER_PRIVATEKEY	"qDecoder-by-Seung_young_Kim"
+#define QDECODER_PRIVATEKEY	"qDecoder-by-Seungyoung_Kim"
 
 #ifdef BUILD_DEBUG
 #define DEBUG(fmt, args...)	fprintf(stderr, "[DEBUG] " fmt " (%s:%d)\n", ##args, __FILE__, __LINE__);
 #else
 #define DEBUG(fms, args...)
 #endif
+
+/*
+ * Internal Macros
+ */
+#define	MAX_PATHLEN		(1023+1)
+#define	MAX_LINEBUF		(1023+1)
+#define	CONST_STRLEN(x)		(sizeof(x) - 1)
+
+/*
+ * Internal Definitions
+ */
+#define	DEF_FILE_MODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
+
+/*
+ * qInternalCommon.c
+ */
+char    _x2c(char hex_up, char hex_low);
+char    *_makeword(char *str, char stop);
+char    *_fgets(char *str, int size, FILE *stream);
+int	_writef(int fd, char *format, ...);
+
 
 #endif	/* _QINTERNAL_H */

@@ -123,6 +123,12 @@ Q_OBSTACK *qObstackInit(void) {
 	if(obstack == NULL) return NULL;
 
 	memset((void *)obstack, 0, sizeof(Q_OBSTACK));
+	obstack->stack = qEntryInit();
+	if(obstack->stack == NULL) {
+		free(obstack);
+		return NULL;
+	}
+
 	return obstack;
 }
 
@@ -131,27 +137,9 @@ Q_OBSTACK *qObstackInit(void) {
  *
  * @since not released yet
  */
-bool qObstackGrow(Q_OBSTACK *obstack, void *data, int size) {
-	if(obstack == NULL || data == NULL || size <= 0) return false;
-
-	char *name;
-	void *value;
-
-	name = (char *)malloc(10+1);
-	if(name == NULL) return false;
-	sprintf(name, "%d", size);
-
-	value = (void *)malloc(size);
-	if(value == NULL) { free(name); return false; }
-	memcpy(value, data, size);
-
-	obstack->last = qEntryAdd(obstack->last, name, (char *)value, 2);
-	if(obstack->first == NULL) obstack->first = obstack->last;
-
-	obstack->size += size;
-	obstack->num++;
-
-	return true;
+bool qObstackGrow(Q_OBSTACK *obstack, const void *object, int size) {
+	if(obstack == NULL || object == NULL || size <= 0) return false;
+	return qEntryPut(obstack->stack, "", object, size, false);
 }
 
 /**
@@ -159,7 +147,7 @@ bool qObstackGrow(Q_OBSTACK *obstack, void *data, int size) {
  *
  * @since not released yet
  */
-bool qObstackGrowStr(Q_OBSTACK *obstack, char *str) {
+bool qObstackGrowStr(Q_OBSTACK *obstack, const char *str) {
 	return qObstackGrow(obstack, (void *)str, strlen(str));
 }
 
@@ -168,7 +156,7 @@ bool qObstackGrowStr(Q_OBSTACK *obstack, char *str) {
  *
  * @since not released yet
  */
-bool qObstackGrowStrf(Q_OBSTACK *obstack, char *format, ...) {
+bool qObstackGrowStrf(Q_OBSTACK *obstack, const char *format, ...) {
 	if(obstack == NULL) return false;
 
 	char str[1024];
@@ -189,18 +177,15 @@ bool qObstackGrowStrf(Q_OBSTACK *obstack, char *format, ...) {
 void *qObstackFinish(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return NULL;
 
-	Q_ENTRY *entries;
 	void *dp;
-
 	if(obstack->final != NULL) free(obstack->final);
-
-	obstack->final = dp = (void *)malloc(obstack->size + 1);
+	obstack->final = dp = (void *)malloc(obstack->stack->size + 1);
 	if(obstack->final == NULL) return NULL;
 
-	for (entries = obstack->first; entries; entries = entries->next) {
-		int size = atoi(entries->name);
-		memcpy(dp, (void *)entries->value, size);
-		dp += size;
+	const Q_NLOBJ *obj;
+	for(obj = qEntryFirst(obstack->stack); obj; obj = qEntryNext(obstack->stack)) {
+		memcpy(dp, obj->object, obj->size);
+		dp += obj->size;
 	}
 	*((char *)dp) = '\0';
 
@@ -214,6 +199,7 @@ void *qObstackFinish(Q_OBSTACK *obstack) {
  */
 void *qObstackGetFinal(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return NULL;
+	if(obstack->final == NULL) qObstackFinish(obstack);
 	return obstack->final;
 }
 
@@ -224,7 +210,7 @@ void *qObstackGetFinal(Q_OBSTACK *obstack) {
  */
 int qObstackGetSize(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return 0;
-	return obstack->size;
+	return obstack->stack->size;
 }
 
 /**
@@ -234,7 +220,7 @@ int qObstackGetSize(Q_OBSTACK *obstack) {
  */
 int qObstackGetNum(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return 0;
-	return obstack->num;
+	return obstack->stack->num;
 }
 
 /**
@@ -244,7 +230,7 @@ int qObstackGetNum(Q_OBSTACK *obstack) {
  */
 bool qObstackFree(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return false;
-	qEntryFree(obstack->first);
+	qEntryFree(obstack->stack);
 	if(obstack->final != NULL) free(obstack->final);
 	free(obstack);
 	return true;

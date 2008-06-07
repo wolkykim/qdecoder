@@ -20,7 +20,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/file.h>
 #include "qDecoder.h"
 #include "qInternal.h"
@@ -83,32 +85,13 @@ char *_fgets(char *str, int size, FILE *stream) {
 	return str;
 }
 
-/*********************************************
-** Usage : apply an advisory lock on an open file.
-**********************************************/
-int _flockopen(FILE *fp) {
-#ifdef _WIN32
-	return 0;
-#else
-#ifdef HAVE_FLOCK
-	return flock(fileno(fp), LOCK_EX);
-#else
-	return 0;
-#endif
-#endif
-}
+int _writef(int fd, char *format, ...) {
+	char buf[MAX_LINEBUF];
+	va_list arglist;
 
-/*********************************************
-** Usage : remove an advisory lock on an open file.
-**********************************************/
-int _flockclose(FILE *fp) {
-#ifdef _WIN32
-	return 0;
-#else
-#ifdef HAVE_FLOCK
-	return flock(fileno(fp), LOCK_UN);
-#else
-	return 0;
-#endif
-#endif
+	va_start(arglist, format);
+	vsnprintf(buf, sizeof(buf), format, arglist);
+	va_end(arglist);
+
+	return write(fd, buf, strlen(buf));
 }

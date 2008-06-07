@@ -32,19 +32,36 @@
 #include <sys/types.h>
 
 /**
+ * Base Structures used for Internal
+ */
+typedef struct Q_NLOBJ {
+	char *name;			/*!< key name */
+	void *object;			/*!< object data */
+	int  size;			/*!< object size */
+	struct Q_NLOBJ *next;		/*!< link pointer */
+} Q_NLOBJ;
+
+typedef struct {
+	void *object;			/*!< object data */
+	int  size;			/*!< object size */
+} Q_OBJ;
+
+/**
  * Structure for linked-list data structure.
  */
-typedef struct Q_ENTRY {
-	char *name;		/*!< variable name */
-	char *value;		/*!< value */
-	struct Q_ENTRY *next;	/*!< next pointer */
+typedef struct {
+	int num;			/*!< number of objects */
+	int size;			/*!< total size of objects */
+	Q_NLOBJ *first;			/*!< first object pointer */
+	Q_NLOBJ *last;			/*!< last object pointer */
+	Q_NLOBJ *next;			/*!< next object pointer */
 } Q_ENTRY;
 
 /**
  * Structure for hash-table data structure.
  */
 typedef struct {
-	int	max;			/*!< maximum hashtable size  */
+	int	max;			/*!< maximum hashtable size */
 	int	num;			/*!< used slot counter */
 
 	int	*count;			/*!< hash collision counter. 0 indicate empty slot, -1 is used for moved slot due to hash collision */
@@ -54,11 +71,12 @@ typedef struct {
 	int	*size;			/*!< value size */
 } Q_HASHTBL;
 
-#define _Q_HASHARR_MAX_KEYSIZE		(31+1)
-#define _Q_HASHARR_DEF_VALUESIZE	(32)
 /**
  * Structure for hash-table data structure based on array.
  */
+#define _Q_HASHARR_MAX_KEYSIZE		(31+1)
+#define _Q_HASHARR_DEF_VALUESIZE	(32)
+
 typedef struct {
 	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for moved slot due to hash collision, -2 is used for indicating linked block */
 	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
@@ -76,10 +94,7 @@ typedef struct {
  * Structure for obstack data structure.
  */
 typedef struct {
-	int	size;			/*!< total object size */
-	int	num;			/*!< number of objects */
-	Q_ENTRY *first;			/*!< first object pointer */
-	Q_ENTRY	*last;			/*!< last object pointer */
+	Q_ENTRY *stack;			/*!< first object pointer */
 	void	*final;			/*!< final object pointer */
 } Q_OBSTACK;
 
@@ -154,85 +169,40 @@ extern "C" {
 #endif
 
 /*
- * qDecoder.c
+ * qCgiRequest.c
  */
-bool	qDecoderInit(bool filemode, char *upload_base, int clear_olderthan);
-int	qDecoder(void);
-char	*qGetValue(char *format, ...);
-int	qGetInt(char *format, ...);
-char	*qGetValueDefault(char *defstr, char *format, ...);
-char	*qGetValueNotEmpty(char *errmsg, char *format, ...);
-char	*qGetValueReplace(char *mode, char *name, char *tokstr, char *word);
-Q_ENTRY	*qGetFirstEntry(void);
-char	*qGetValueFirst(char *format, ...);
-char	*qGetValueNext(void);
-char	*qAdd(char *name, char *format, ...);
-void	qRemove(char *format, ...);
-char	qGetType(char *format, ...);
-int	qPrint(FILE *out);
-void	qFree(void);
+extern	Q_ENTRY*	qCgiRequestParseOption(Q_ENTRY *request, bool filemode, const char *basepath, int clearold);
+extern	Q_ENTRY*	qCgiRequestParse(Q_ENTRY *request);
+extern	Q_ENTRY*	qCgiRequestParseQueries(Q_ENTRY *request, const char *method);
+extern	Q_ENTRY*	qCgiRequestParseCookies(Q_ENTRY *request);
+extern	char*		qCgiRequestGetQueryString(const char *query_type);
 
-bool	qCookieSet(char *name, char *value, int exp_days, char *path, char *domain, char *secure);
-bool	qCookieRemove(char *name, char *path, char *domain, char *secure);
-char	*qCookieGetValue(char *format, ...);
-int	qCookieGetInt(char *format, ...);
+/*
+ * qCgiResponse.c
+ */
+extern	bool		qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value, int exp_days, const char *path, const char *domain, bool secure);
+extern	bool		qCgiResponseRemoveCookie(Q_ENTRY *request, const char *name, const char *path, const char *domain, bool secure);
 
-void	qReset(void);
+extern	bool		qCgiResponseSetContentType(Q_ENTRY *request, const char *mimetype);
+extern	const char*	qCgiResponseGetContentType(Q_ENTRY *request);
+extern	bool		qCgiResponseRedirect(Q_ENTRY *request, const char *uri);
+extern	int		qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mimetype);
 
 /*
  * qSession.c
  */
-int	qSession(char *repository);
-char	*qSessionAdd(char *name, char *format, ...);
-int	qSessionAddInt(char *name, int valueint);
-int	qSessionUpdateInt(char *name, int plusint);
-void	qSessionRemove(char *format, ...);
-char	*qSessionGetValue(char *format, ...);
-int	qSessionGetInt(char *format, ...);
-time_t	qSessionSetTimeout(time_t seconds);
-char	*qSessionGetID(void);
-time_t	qSessionGetCreated(void);
-int	qSessionPrint(FILE *out);
-void	qSessionSave(void);
-void	qSessionFree(void);
-void	qSessionDestroy(void);
+extern	Q_ENTRY*	qSessionInit(Q_ENTRY *request, const char *dirpath);
+extern	bool		qSessionSetTimeout(Q_ENTRY *session, time_t seconds);
+extern	const char*	qSessionGetID(Q_ENTRY *session);
+extern	time_t		qSessionGetCreated(Q_ENTRY *session);
+extern	bool		qSessionSave(Q_ENTRY *session);
+extern	bool		qSessionDestroy(Q_ENTRY *session);
 
 /*
- * qHttpHeader.c
+ * qConfig.c
  */
-void	qContentType(char *mimetype);
-int	qGetContentFlag(void);
-void	qResetContentFlag(void);
-void	qRedirect(char *url);
-void	qJavaScript(char *format, ...);
-
-/*
- * qDownload.c
- */
-int	qDownload(char *filepath);
-int	qDownloadMime(char *filepath, char *mime);
-
-/*
- * qfDecoder.c
- */
-Q_ENTRY	*qfDecoder(char *filepath, char sepchar);
-char	*qfGetValue(Q_ENTRY *first, char *format, ...);
-int	qfGetInt(Q_ENTRY *first, char *format, ...);
-char	*qfGetValueFirst(Q_ENTRY *first, char *format, ...);
-char	*qfGetValueNext(void);
-int	qfPrint(Q_ENTRY *first, FILE *out);
-void	qfFree(Q_ENTRY *first);
-
-/*
- * qsDecoder.c
- */
-Q_ENTRY	*qsDecoder(char *str, char sepchar);
-char	*qsGetValue(Q_ENTRY *first, char *format, ...);
-int	qsGetInt(Q_ENTRY *first, char *format, ...);
-char	*qsGetValueFirst(Q_ENTRY *first, char *format, ...);
-char	*qsGetValueNext(void);
-int	qsPrint(Q_ENTRY *first, FILE *out);
-void	qsFree(Q_ENTRY *first);
+extern	Q_ENTRY*	qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar);
+extern	Q_ENTRY*	qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar);
 
 /*
  * qArg.c
@@ -254,12 +224,8 @@ int	qAwkStr(char array[][1024], char *str, char delim);
 /*
  * qSed.c
  */
-Q_ENTRY	*qSedAdd(Q_ENTRY *first, char *name, char *format, ...);
-Q_ENTRY *qSedAddDirect(Q_ENTRY *first, char *name, char *value);
-int	qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout);
-int	qSedFile(Q_ENTRY *first, char *filepath, FILE *fpout);
-int	qSedPrint(Q_ENTRY *first, FILE *out);
-void	qSedFree(Q_ENTRY *first);
+extern	bool		qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout);
+extern	bool		qSedFile(Q_ENTRY *entry, const char *filepath, FILE *fpout);
 
 /*
  * qSem.c
@@ -283,19 +249,18 @@ bool	qShmFree(int shmid);
 /*
  * qSocket.c
  */
-int	qSocketOpen(char *hostname, int port);
-bool	qSocketClose(int sockfd);
-int	qSocketWaitReadable(int sockfd, int timeoutms);
-int	qSocketWaitWritable(int sockfd, int timeoutms);
-int	qSocketRead(int sockfd, char *binary, int size, int timeoutms);
-int	qSocketGets(int sockfd, char *str, int size, int timeoutms);
-int	qSocketWrite(int sockfd, char *binary, int size);
-int	qSocketPuts(int sockfd, char *str);
-int	qSocketPrintf(int sockfd, char *format, ...);
-ssize_t qSocketSendfile(int sockfd, char *filepath, off_t start, ssize_t size);
-int	qSocketSaveIntoFile(int sockfd, int size, char *filepath, int oflag, int timeoutms);
-int	qSocketSaveIntoMemory(int sockfd, int size, char *mem, int timeoutms);
-FILE	*qSocketConv2file(int sockfd);
+extern	int		qSocketOpen(const char *hostname, int port);
+extern	bool		qSocketClose(int sockfd);
+extern	int		qSocketWaitReadable(int sockfd, int timeoutms);
+extern	int		qSocketWaitWritable(int sockfd, int timeoutms);
+extern	int		qSocketRead(char *binary, int sockfd, int size, int timeoutms);
+extern	int		qSocketGets(char *str, int sockfd, int size, int timeoutms);
+extern	int		qSocketWrite(int sockfd, char *binary, int size);
+extern	int		qSocketPuts(int sockfd, char *str);
+extern	int		qSocketPrintf(int sockfd, char *format, ...);
+extern	ssize_t		qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t size);
+extern	int		qSocketSaveIntoFile(int outfd, int sockfd, int size, int timeoutms);
+extern	int		qSocketSaveIntoMemory(char *mem, int sockfd, int size, int timeoutms);
 
 /*
  * qDatabase.c
@@ -333,22 +298,33 @@ bool	qDbRollback(Q_DB *db);
 /*
  * qEntry.c
  */
-
-Q_ENTRY	*qEntryAdd(Q_ENTRY *first, char *name, char *value, int flag);
-Q_ENTRY	*qEntryAddInt(Q_ENTRY *first, char *name, int value, int flag);
-Q_ENTRY	*qEntryRemove(Q_ENTRY *first, char *name);
-char	*qEntryGetValue(Q_ENTRY *first, char *name);
-char	*qEntryGetValueLast(Q_ENTRY *first, char *name);
-char	*qEntryGetValueNoCase(Q_ENTRY *first, char *name);
-int	qEntryGetInt(Q_ENTRY *first, char *name);
-int	qEntryGetIntLast(Q_ENTRY *first, char *name);
-int	qEntryGetIntNoCase(Q_ENTRY *first, char *name);
-int	qEntryGetNo(Q_ENTRY *first, char *name);
-Q_ENTRY	*qEntryReverse(Q_ENTRY *first);
-int	qEntryPrint(Q_ENTRY *first, FILE *out);
-int	qEntryFree(Q_ENTRY *first);
-int	qEntrySave(Q_ENTRY *first, char *filepath, char sepchar, bool encodevalue);
-Q_ENTRY	*qEntryLoad(char *filepath, char sepchar, bool decodevalue);
+extern	Q_ENTRY*	qEntryInit(void);
+extern	const Q_NLOBJ*	qEntryFirst(Q_ENTRY *entry);
+extern	const Q_NLOBJ*	qEntryNext(Q_ENTRY *entry);
+extern	int		qEntryRemove(Q_ENTRY *entry, const char *name);
+extern	bool		qEntryPut(Q_ENTRY *entry, const char *name, const void *object, int size, bool update);
+extern	bool		qEntryPutStr(Q_ENTRY *entry, const char *name, const char *str, bool update);
+extern	bool		qEntryPutStrf(Q_ENTRY *entry,  const char *name, bool update, char *format, ...);
+extern	bool		qEntryPutInt(Q_ENTRY *entry, const char *name, int num, bool update);
+extern	const void*	qEntryGet(Q_ENTRY *entry, const char *name, int *size);
+extern	const void*	qEntryGetNext(Q_ENTRY *entry, const char *name, int *size);
+extern	const void*	qEntryGetNoCase(Q_ENTRY *entry, const char *name, int *size);
+extern	const void*	qEntryGetLast(Q_ENTRY *entry, const char *name, int *size);
+extern	const char*	qEntryGetStr(Q_ENTRY *entry, const char *name);
+extern	const char*	qEntryGetStrNext(Q_ENTRY *entry, const char *name);
+extern	const char*	qEntryGetStrNoCase(Q_ENTRY *entry, const char *name);
+extern	const char*	qEntryGetStrLast(Q_ENTRY *entry, const char *name);
+extern	int		qEntryGetInt(Q_ENTRY *entry, const char *name);
+extern	int		qEntryGetIntNext(Q_ENTRY *entry, const char *name);
+extern	int		qEntryGetIntNoCase(Q_ENTRY *entry, const char *name);
+extern	int 		qEntryGetIntLast(Q_ENTRY *entry, const char *name);
+extern	int 		qEntryGetNum(Q_ENTRY *entry);
+extern	int		qEntryGetNo(Q_ENTRY *entry, const char *name);
+extern	bool		qEntryReverse(Q_ENTRY *entry);
+extern	bool		qEntryPrint(Q_ENTRY *entry, FILE *out, bool print_object);
+extern	bool		qEntryFree(Q_ENTRY *entry);
+extern	bool		qEntrySave(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode);
+extern	int		qEntryLoad(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode);
 
 /*
  * qHashtbl.c
@@ -389,9 +365,9 @@ bool	qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
  * qObstack.c
  */
 Q_OBSTACK *qObstackInit(void);
-bool	qObstackGrow(Q_OBSTACK *obstack, void *data, int size);
-bool	qObstackGrowStr(Q_OBSTACK *obstack, char *str);
-bool	qObstackGrowStrf(Q_OBSTACK *obstack, char *format, ...);
+bool	qObstackGrow(Q_OBSTACK *obstack, const void *data, int size);
+bool	qObstackGrowStr(Q_OBSTACK *obstack, const char *str);
+bool	qObstackGrowStrf(Q_OBSTACK *obstack, const char *format, ...);
 void	*qObstackFinish(Q_OBSTACK *obstack);
 void	*qObstackGetFinal(Q_OBSTACK *obstack);
 int	qObstackGetSize(Q_OBSTACK *obstack);
@@ -415,9 +391,9 @@ char	*qGetenvDefault(char *nullstr, char *envname);
 /*
  * qEncode.c
  */
-char	*qUrlEncode(char *str);
-char	*qUrlDecode(char *str);
-Q_ENTRY	*qQueryDecode(char *query, char equalchar, char sepchar, int *keycnt);
+extern	Q_ENTRY*	qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, char sepchar, int *count);
+extern	char*		qEncodeUrl(const char *str);
+extern	char*		qDecodeUrl(char *str);
 char	*qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag);
 unsigned char *qMd5Hash(char *data, int len);
 char	*qMd5Str(char *data, int len);
@@ -429,11 +405,11 @@ unsigned int qFnv32Hash(char *str, unsigned int max);
  */
 bool	qPrintf(int mode, char *format, ...);
 bool	qPuts(int mode, char *buf);
-char	*qRemoveSpace(char *str);
-char	*qRemoveTailSpace(char *str);
+extern	char*	qStrTrim(char *str);
+extern	char*	qStrTrimTail(char *str);
 char	*qStrReplace(char *mode, char *srcstr, char *tokstr, char *word);
 bool	qStr09AZaz(char *str);
-char	*qStrncpy(char *dst, char *src, size_t n);
+extern	char*		qStrncpy(char *dst, const char *src, size_t n);
 char	*qStrupr(char *str);
 char	*qStrlwr(char *str);
 char	*qStristr(char *big, char *small);
@@ -447,15 +423,16 @@ char	*qUniqId(void);
 /*
  * qFile.c
  */
-FILE	*qFileOpen(char *path, char *mode);
-int	qFileClose(FILE *stream);
+extern	bool		qFileLock(int fd);
+extern	bool		qFileUnlock(int fd);
+extern	bool		qFileExist(const char *filepath);
+extern	off_t		qFileGetSize(const char *filepath);
+extern	size_t		qFileSend(int outfd, int infd, size_t size);
+extern	char*		qFileLoad(const char *filepath, int *size);
+int	qSaveStr(char *sp, int spsize, char *filepath, char *mode);
 char	*qfReadFile(FILE *fp);
 char	*qfGetLine(FILE *fp);
-bool	qCheckFile(char *filepath);
-int	qCatFile(char *filepath);
-char	*qReadFile(char *filepath, int *size);
-int	qSaveStr(char *sp, int spsize, char *filepath, char *mode);
-long	qFileSize(char *filepath);
+
 char	*qCmd(char *cmd);
 
 /*
@@ -467,9 +444,9 @@ bool	qCheckURL(char *url);
 /*
  * qCount.c
  */
-int	qCountRead(char *filepath);
-bool	qCountSave(char *filepath, int number);
-int	qCountUpdate(char *filepath, int number);
+extern	int		qCountRead(const char *filepath);
+extern	bool		qCountSave(const char *filepath, int number);
+extern	int		qCountUpdate(const char *filepath, int number);
 
 /*
  * qTime.c

@@ -27,7 +27,7 @@ PRGNAME		= qDecoder
 LIBNAME		= lib${PRGNAME}.a
 
 ## Shared Library Name
-SLIBVERSION	= 4
+SLIBVERSION	= 5
 SLIBNAME	= lib${PRGNAME}.so
 SLIBREALNAME	= ${SLIBNAME}.${SLIBVERSION}
 
@@ -54,13 +54,11 @@ RANLIB		= @RANLIB@
 RM		= @RM@
 
 ## Objects List
-OBJ		= qDecoder.o		\
+OBJ		= qCgiRequest.o		\
+		qCgiResponse.o		\
 		qSession.o		\
-		qHttpHeader.o		\
-		qDownload.o		\
 					\
-		qfDecoder.o		\
-		qsDecoder.o		\
+		qConfig.o		\
 		qArg.o			\
 		qAwk.o			\
 		qSed.o			\

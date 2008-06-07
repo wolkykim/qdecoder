@@ -100,7 +100,7 @@ int qArgMake(char *str, char **qlist) {
 	char *query, *sp, *qp;
 	int argc;
 
-	query = sp = qRemoveSpace(strdup(str));
+	query = sp = qStrTrim(strdup(str));
 
 	for (argc = 0; *sp != '\0';) {
 		switch (*sp) {
@@ -261,10 +261,8 @@ int qArgPrint(char **qlist) {
 	char **qp;
 	int amount;
 
-	qContentType("text/html");
-
 	for (amount = 0, qp = qlist; *qp; amount++, qp++) {
-		printf("'%s' (%d bytes)<br>\n" , *qp, strlen(*qp));
+		printf("'%s' (%d bytes)\n" , *qp, strlen(*qp));
 	}
 
 	return amount;

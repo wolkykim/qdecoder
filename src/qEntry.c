@@ -19,289 +19,601 @@
 
 /**
  * @file qEntry.c Linked-list Data Structure API
+ *
+ * @code
+ *   [Code sample - String]
+*
+ *   // sample data
+ *   struct MY_OBJ *my_obj = getNewMyOjb();;
+ *   char *my_str = "hello";
+ *   int my_int = 1;
+ *
+ *   // store into linked-list
+ *   Q_ENTRY *entries = NULL;
+ *   entries = qEntryPut(entries, "obj", (void*)my_obj, sizeof(struct MY_OBJ), true);
+ *   entries = qEntryPutStr(entries, "obj", my_str, true);
+ *   entries = qEntryPutInt(entries, "obj", my_int, true);
+ *
+ *   // print out
+ *
+ *   // free object
+ *   qEntryFree(entries);
+ *
+ *   [Result]
+ * @endcode
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "qDecoder.h"
 #include "qInternal.h"
 
-/**********************************************
-** Usage : qEntryAdd(first entry, name, value, replace);
-** Return: New entry pointer.
-** Do    : Add entry at last.
-**         flag = 0 : just append.
-**         flag = 1 : if same name exists, replace it.
-**         flag = 2 : same as flag 0 but the name and value are binary pointer.
-**                    so the pointer will be used instead strdup().
-**********************************************/
-Q_ENTRY *qEntryAdd(Q_ENTRY *first, char *name, char *value, int flag) {
-	Q_ENTRY *entries;
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
+Q_ENTRY *qEntryInit(void) {
+	Q_ENTRY *entry = (Q_ENTRY *)malloc(sizeof(Q_ENTRY));
+	if(entry == NULL) return NULL;
 
-	if (!strcmp(name, "")) return NULL;
-
-	/* check same name */
-	if (flag == 1) {
-		for (entries = first; entries; entries = entries->next) {
-			if (!strcmp(entries->name, name)) {
-				free(entries->value);
-				entries->value = strdup(value);
-				return entries;
-			}
-		}
-	}
-
-	/* new entry */
-	entries = (Q_ENTRY *)malloc(sizeof(Q_ENTRY));
-	if (flag == 2) {
-		entries->name  = name;
-		entries->value = value;
-	} else {
-		entries->name  = strdup(name);
-		entries->value = strdup(value);
-	}
-	entries->next  = NULL;
-
-	/* If first is not NULL, find last entry then make a link*/
-	if (first != NULL) {
-		for (; first->next; first = first->next);
-		first->next = entries;
-	}
-
-	return entries;
+	memset((void *)entry, 0, sizeof(Q_ENTRY));
+	return entry;
 }
 
-/**********************************************
-** Usage : qEntryAddInt(first entry, name, value, replace);
-** Return: New entry pointer.
-** Do    : Add entry at last.
-**         flag = 0 : just append.
-**         flag = 1 : if same name exists, replace it.
-**********************************************/
-Q_ENTRY *qEntryAddInt(Q_ENTRY *first, char *name, int value, int flag) {
-	char buf[10+1];
+/**
+ * Get first object structure.
+ *
+ * @param entry		Q_ENTRY pointer
+ *
+ * @return		a pointer to internal Q_NLOBJ object structure if successful, otherwise returns NULL
+ */
+const Q_NLOBJ *qEntryFirst(Q_ENTRY *entry) {
+	if(entry == NULL) return NULL;
 
-	sprintf(buf, "%d", value);
-	return qEntryAdd(first, name, buf, flag);
+	entry->next = entry->first;
+	return qEntryNext(entry);
 }
 
-/**********************************************
-** Usage : qEntryRemove(first entry, name to remove);
-** Return: first entry pointer.
-** Do    : Remove entry if same name exists, remove all.
-**********************************************/
-Q_ENTRY *qEntryRemove(Q_ENTRY *first, char *name) {
-	Q_ENTRY *entries, *prev_entry;
+/**
+ * Get next object structure.
+ *
+ * @param entry		Q_ENTRY pointer
+ *
+ * @return		a pointer to internal Q_NLOBJ object structure if successful, otherwise returns NULL
+ */
+const Q_NLOBJ *qEntryNext(Q_ENTRY *entry) {
+	if(entry == NULL) return NULL;
 
-	if (!strcmp(name, "")) return first;
+	Q_NLOBJ *obj = entry->next;
+	if(obj != NULL) {
+		entry->next = obj->next;
+	}
+	return obj;
+}
 
-	for (prev_entry = NULL, entries = first; entries;) {
-		if (!strcmp(entries->name, name)) { /* found */
-			Q_ENTRY *next;
+/**
+ * Remove matched objects as given name.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a number of removed object.
+ */
+int qEntryRemove(Q_ENTRY *entry, const char *name) {
+	if(entry == NULL || name == NULL) return 0;
 
-			next = entries->next;
+	int entrynum = entry->num;
+	Q_NLOBJ *prev, *obj;
+	for (prev = NULL, obj = entry->first; obj;) {
+		if (!strcmp(obj->name, name)) { /* found */
+			/* copy next chain */
+			Q_NLOBJ *next = obj->next;
+
+			/* adjust counter */
+			entry->size -= obj->size;
+			entry->num--;
 
 			/* remove entry itself*/
-			free(entries->name);
-			free(entries->value);
-			free(entries);
+			free(obj->name);
+			free(obj->object);
+			free(obj);
 
-			/* remove entry link from linked-list */
-			if (prev_entry == NULL) first = next;
-			else prev_entry->next = next;
-			entries = next;
-		} else { /* next */
-			prev_entry = entries;
-			entries = entries->next;
+			/* make a chain then set next entry */
+			if(next == NULL) entry->last = prev;	/* if the object is last one */
+			if(prev == NULL) entry->first = next;	/* if the object is first one */
+			else prev->next = next;			/* if the object is middle or last one */
+
+			/* set next entry */
+			obj = next;
+		} else {
+			/* set next entry */
+			prev = obj;
+			obj = obj->next;
 		}
 	}
 
-	return first;
+	return (entrynum - entry->num);
 }
 
-/**********************************************
-** Usage : qEntryValue(pointer of the first entry, name);
-** Return: Success pointer of value string, Fail NULL.
-** Do    : Find the value string pointer in linked list.
-**********************************************/
-char *qEntryGetValue(Q_ENTRY *first, char *name) {
-	Q_ENTRY *entries;
+/**
+ * Store object into linked-list structure.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name.
+ * @param object	object pointer
+ * @param update	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ *
+ * @return		true if successful, otherwise returns false.
+ */
+bool qEntryPut(Q_ENTRY *entry, const char *name, const void *object, int size, bool update) {
+	/* check arguments */
+	if(entry == NULL || name == NULL || object == NULL || size <= 0) return false;
 
-	for (entries = first; entries; entries = entries->next) {
-		if (!strcmp(name, entries->name)) return entries->value;
+	/* duplicate name */
+	char *dup_name = strdup(name);
+	if(dup_name == NULL) return false;
+
+	/* duplicate object */
+	void *dup_object = malloc(size);
+	if(dup_object == NULL) {
+		free(dup_name);
+		return false;
 	}
+	memcpy(dup_object, object, size);
+
+	/* check same name */
+	if (update == true) qEntryRemove(entry, dup_name);
+
+	/* new entry */
+	Q_NLOBJ *obj = (Q_NLOBJ*)malloc(sizeof(Q_NLOBJ));
+	if(obj == NULL) {
+		free(dup_name);
+		free(dup_object);
+		return false;
+	}
+	obj->name  = dup_name;
+	obj->object = dup_object;
+	obj->size  = size;
+	obj->next  = NULL;
+
+	/* make chain link */
+	if(entry->first == NULL) entry->first = entry->last = obj;
+	else {
+		entry->last->next = obj;
+		entry->last = obj;
+	}
+
+	entry->size += size;
+	entry->num++;
+	return true;
+}
+
+/**
+ * Add string object into linked-list structure.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name.
+ * @param str		string value
+ * @param update	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ *
+ * @return		true if successful, otherwise returns false.
+ */
+bool qEntryPutStr(Q_ENTRY *entry, const char *name, const char *str, bool update) {
+	int size = (str!=NULL) ? (strlen(str) + 1) : 0;
+	return qEntryPut(entry, name, (void *)str, size, update);
+}
+
+/**
+ * Add formatted string object into linked-list structure.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name.
+ * @param update	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param format	formatted string value
+ *
+ * @return		true if successful, otherwise returns false.
+ */
+bool qEntryPutStrf(Q_ENTRY *entry,  const char *name, bool update, char *format, ...) {
+	char str[MAX_LINEBUF];
+	va_list arglist;
+
+	va_start(arglist, format);
+	vsnprintf(str, sizeof(str), format, arglist);
+	va_end(arglist);
+
+	return qEntryPutStr(entry, name, str, update);
+}
+
+/**
+ * Add integer object into linked-list structure.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name.
+ * @param num		number value
+ * @param update	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ *
+ * @return		true if successful, otherwise returns false.
+ */
+bool qEntryPutInt(Q_ENTRY *entry, const char *name, int num, bool update) {
+	char str[10+1];
+	sprintf(str, "%d", num);
+	return qEntryPut(entry, name, (void *)str, strlen(str) + 1, update);
+}
+
+/**
+ * Find object with given name
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ * @param size		if size is not NULL, object size will be stored.
+ *
+ * @return		a pointer of the stored object.
+ *
+ * @note
+ * Because of qEntryGet() returns internal object pointer, you do not
+ * modify it directly and do not free it. So if you would like to modify
+ * that object, use it after duplicating.
+ */
+const void *qEntryGet(Q_ENTRY *entry, const char *name, int *size) {
+	if(entry == NULL || name == NULL) return NULL;
+
+	const Q_NLOBJ *obj;
+	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
+		if(!strcmp(obj->name, name)) {
+			if(size != NULL) *size = obj->size;
+			return obj->object;
+		}
+	}
+
 	return NULL;
 }
 
-/**********************************************
-** Usage : qEntryValue(pointer of the first entry, name);
-** Return: Success pointer of value string, Fail NULL.
-** Do    : Find the last value string pointer in linked list.
-**********************************************/
-char *qEntryGetValueLast(Q_ENTRY *first, char *name) {
-	Q_ENTRY *entries;
-	char *value = NULL;
+/**
+ * Find next object with given name
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ * @param size		if size is not NULL, object size will be stored.
+ *
+ * @return		a pointer of the stored object.
+ *
+ * @note
+ * qEntryGet() should be called before.
+ */
+const void *qEntryGetNext(Q_ENTRY *entry, const char *name, int *size) {
+	if(entry == NULL || name == NULL) return NULL;
 
-	for (entries = first; entries; entries = entries->next) {
-		if (!strcmp(name, entries->name)) value = entries->value;
+	const Q_NLOBJ *obj;
+	for(obj = qEntryNext(entry); obj; obj = qEntryNext(entry)) {
+		if(!strcmp(obj->name, name)) {
+			entry->next = obj->next;
+			if(size != NULL) *size = obj->size;
+			return obj->object;
+		}
 	}
-	return value;
-}
 
-char *qEntryGetValueNoCase(Q_ENTRY *first, char *name) {
-	Q_ENTRY *entries;
-
-	for (entries = first; entries; entries = entries->next) {
-		if (!strcasecmp(name, entries->name)) return entries->value;
-	}
 	return NULL;
 }
 
-/**********************************************
-** Usage : qEntryiValue(pointer of the first entry, name);
-** Return: Success integer of value string, Fail 0.
-** Do    : Find the value string pointer and convert to integer.
-**********************************************/
-int qEntryGetInt(Q_ENTRY *first, char *name) {
-	char *str;
+/**
+ * Find object with given name. (case-insensitive)
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ * @param size		if size is not NULL, object size will be stored.
+ *
+ * @return		a pointer of the stored object.
+ */
+const void *qEntryGetNoCase(Q_ENTRY *entry, const char *name, int *size) {
+	if(entry == NULL || name == NULL) return NULL;
 
-	str = qEntryGetValue(first, name);
-	if (str == NULL) return 0;
-	return atoi(str);
+	const Q_NLOBJ *obj;
+	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
+		if(!strcasecmp(name, obj->name)) {
+			if(size != NULL) *size = obj->size;
+			return obj->object;
+		}
+	}
+
+	return NULL;
 }
 
-/**********************************************
-** Usage : qEntryiValue(pointer of the first entry, name);
-** Return: Success integer of value string, Fail 0.
-** Do    : Find the last value string pointer and convert to integer.
-**********************************************/
-int qEntryGetIntLast(Q_ENTRY *first, char *name) {
-	char *str;
+/**
+ * Find lastest matched object with given name.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ * @param size		if size is not NULL, object size will be stored.
+ *
+ * @return		a pointer of the stored object.
+ *
+ * @note
+ * If you have objects which have same name. this method can be used to
+ * find out lastest matched object.
+ */
+const void *qEntryGetLast(Q_ENTRY *entry, const char *name, int *size) {
+	if(entry == NULL || name == NULL) return NULL;
 
-	str = qEntryGetValueLast(first, name);
-	if (str == NULL) return 0;
-	return atoi(str);
+	void *object = NULL;
+	const Q_NLOBJ *obj;
+	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
+		if (!strcmp(name, obj->name)) {
+			object = obj->object;
+			if(size != NULL) *size = obj->size;
+		}
+	}
+
+	return object;
 }
 
-int qEntryGetIntNoCase(Q_ENTRY *first, char *name) {
-	char *str;
-
-	str = qEntryGetValueNoCase(first, name);
-	if (str == NULL) return 0;
-	return atoi(str);
+/**
+ * Find string object with given name.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a pointer of the stored string object.
+ */
+const char *qEntryGetStr(Q_ENTRY *entry, const char *name) {
+	return (char *)qEntryGet(entry, name, NULL);
 }
 
-/**********************************************
-** Usage : qEntryNo(pointer of the first entry, name);
-** Return: Success no. Fail 0;
-** Do    : Find sequence number of value string pointer.
-**********************************************/
-int qEntryGetNo(Q_ENTRY *first, char *name) {
-	Q_ENTRY *entries;
+/**
+ * Find next string object with given name.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a pointer of the stored string object.
+ */
+const char *qEntryGetStrNext(Q_ENTRY *entry, const char *name) {
+	return (char *)qEntryGetNext(entry, name, NULL);
+}
+
+/**
+ * Find string object with given name. (case-insensitive)
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a pointer of the stored string object.
+ */
+const char *qEntryGetStrNoCase(Q_ENTRY *entry, const char *name) {
+	return (char *)qEntryGetNoCase(entry, name, NULL);
+}
+
+/**
+ * Find lastest matched string object with given name.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a pointer of the stored string object.
+ */
+const char *qEntryGetStrLast(Q_ENTRY *entry, const char *name) {
+	return (char *)qEntryGetLast(entry, name, NULL);
+}
+
+/**
+ * Find integer object with given name.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a integer value of the object.
+ */
+int qEntryGetInt(Q_ENTRY *entry, const char *name) {
+	const char *str =qEntryGet(entry, name, NULL);
+	if(str != NULL) return atoi((char *)str);
+	return 0;
+}
+
+/**
+ * Find next integer object with given name.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a integer value of the object.
+ */
+int qEntryGetIntNext(Q_ENTRY *entry, const char *name) {
+	const char *str =qEntryGet(entry, name, NULL);
+	if(str != NULL) return atoi((char *)str);
+	return 0;
+}
+
+/**
+ * Find integer object with given name. (case-insensitive)
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a integer value of the object.
+ */
+int qEntryGetIntNoCase(Q_ENTRY *entry, const char *name) {
+	const char *str =qEntryGetNoCase(entry, name, NULL);
+	if(str != NULL) return atoi((char *)str);
+	return 0;
+}
+
+/**
+ * Find lastest matched integer object with given name.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a integer value of the object.
+ */
+int qEntryGetIntLast(Q_ENTRY *entry, const char *name) {
+	const char *str =qEntryGetLast(entry, name, NULL);
+	if(str != NULL) return atoi(str);
+	return 0;
+}
+
+/**
+ * Get total number of stored objects
+ *
+ * @param entry		Q_ENTRY pointer
+ *
+ * @return		total number of stored objects.
+ */
+int qEntryGetNum(Q_ENTRY *entry) {
+	if(entry == NULL) return 0;
+
+	return entry->num;
+}
+
+/**
+ * Get the stored sequence number of the object.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		stored sequence number of the object if found, otherwise 0 will be returned.
+ */
+int qEntryGetNo(Q_ENTRY *entry, const char *name) {
+	if(entry == NULL || name == NULL) return 0;
+
 	int no;
-
-	for (no = 1, entries = first; entries; no++, entries = entries->next) {
-		if (!strcmp(name, entries->name)) return no;
+	const Q_NLOBJ *obj;
+	for(obj = qEntryFirst(entry), no = 1; obj; obj = qEntryNext(entry), no++) {
+		if (!strcmp(name, obj->name)) return no;
 	}
 	return 0;
 }
 
-/**********************************************
-** Usage : qEntryReverse(pointer of the first entry);
-** Return: first entry pointer
-** Do    : Reverse the entries
-**********************************************/
-Q_ENTRY *qEntryReverse(Q_ENTRY *first) {
-	Q_ENTRY *entries, *last, *next;
+/**
+ * Reverse-sort internal stored object.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @note
+ * This method can be used to improve look up performance.
+ * if your application offen looking for last stored object.
+ */
+bool qEntryReverse(Q_ENTRY *entry) {
+	if(entry == NULL) return false;
 
-	last = NULL;
-	for (entries = first; entries;) {
-		next = entries->next;
-		entries->next = last;
-		last = entries;
-		entries = next;
+	Q_NLOBJ *prev, *obj;
+	for (prev = NULL, obj = entry->first; obj;) {
+		Q_NLOBJ *next = obj->next;
+		obj->next = prev;
+		prev = obj;
+		obj = next;
 	}
-	return last;
+
+	entry->last = entry->first;
+	entry->first = prev;
+
+	return true;
 }
 
-/**********************************************
-** Usage : qEntryPrint(pointer of the first entry);
-** Return: Amount of entries.
-** Do    : Print all parsed value & name for debugging.
-**********************************************/
-int qEntryPrint(Q_ENTRY *first, FILE *out) {
-	Q_ENTRY *entries;
-	int amount;
+/**
+ * Print out stored objects for debugging purpose.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param out		output stream FILE descriptor such like stdout, stderr.
+ * @param print_object	true for printing out object value, false for disable printing out object value.
+ */
+bool qEntryPrint(Q_ENTRY *entry, FILE *out, bool print_object) {
+	if(entry == NULL || out == NULL) return false;
 
-	if(out == NULL) out = stdout;
-	for (amount = 0, entries = first; entries; amount++, entries = entries->next) {
-		fprintf(out, "%s=%s\n" , entries->name, entries->value);
+	const Q_NLOBJ *obj;
+	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
+		fprintf(out, "%s=%s (%d)" , obj->name, (print_object?(char*)obj->object:"(object)"), obj->size);
 	}
 
-	return amount;
+	return true;
 }
 
-/**********************************************
-** Usage : qEntryFree(pointer of the first entry);
-** Do    : Make free of linked list memory.
-**********************************************/
-int qEntryFree(Q_ENTRY *first) {
-	Q_ENTRY *entries;
-	int i;
+/**
+ * Free Q_ENTRY
+ *
+ * @param entry		Q_ENTRY pointer
+ *
+ * @return		always returns true.
+ */
+bool qEntryFree(Q_ENTRY *entry) {
+	if(entry == NULL) return false;
 
-	for (i = 0; first; first = entries, i++) {
-		entries = first->next; /* copy next to tmp */
-		free(first->name);
-		free(first->value);
-		free(first);
+	Q_NLOBJ *obj;
+	for(obj = (Q_NLOBJ*)qEntryFirst(entry); obj; obj = (Q_NLOBJ*)qEntryNext(entry)) {
+		free(obj->name);
+		free(obj->object);
+		free(obj);
 	}
+	free(entry);
 
-	return i;
+	return true;
 }
 
-/**********************************************
-** Usage : qEntrySave(pointer of the first entry, filepath, '=', false);
-** Return: Number of saved entries.
-** Do    : Save entries into file.
-**********************************************/
-int qEntrySave(Q_ENTRY *first, char *filepath, char sepchar, bool encodevalue) {
-	FILE *fp;
-	int amount;
+/**
+ * Save Q_ENTRY as plain text format
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param filepath	save file path
+ * @param sepchar	separator character between name and value. normally '=' is used.
+ * @param encode	flag for encoding value object. false can be used if the value object
+ *			is string or integer and has no new line. otherwise true must be set.
+ *
+ * @return		true if successful, otherwise returns false.
+ */
+bool qEntrySave(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode) {
+	if(entry == NULL) return false;
 
-	if ((fp = qFileOpen(filepath, "w")) == NULL) return -1;
+	int fd;
+	if ((fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE)) < 0) return false;
 
-	fprintf(fp, "# automatically generated by qDecoder at %s.\n", qGetGmtimeStr(0));
-	fprintf(fp, "# %s\n", filepath);
-	for (amount = 0; first; first = first->next, amount++) {
-		char *encvalue;
+	_writef(fd, "# automatically generated by qDecoder at %s.\n", qGetGmtimeStr(0));
+	_writef(fd, "# %s\n", filepath);
 
-		if(encodevalue == true) encvalue = qUrlEncode(first->value);
-		else encvalue = first->value;
-		fprintf(fp, "%s%c%s\n", first->name, sepchar, encvalue);
-		if(encodevalue == true) free(encvalue);
+	const Q_NLOBJ *obj;
+	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
+		char *encval;
+		if(encode == true) encval = qEncodeUrl(obj->object);
+		else encval = obj->object;
+		_writef(fd, "%s%c%s\n", obj->name, sepchar, encval);
+		if(encode == true) free(encval);
 	}
 
-	qFileClose(fp);
-	return amount;
+	close(fd);
+	return true;
 }
 
-/**********************************************
-** Usage : qEntryLoad(filepath, '=', false);
-** Return: Success pointer of first entry, Fail NULL.
-** Do    : Load entries from given filepath.
-**********************************************/
-Q_ENTRY *qEntryLoad(char *filepath, char sepchar, bool decodevalue) {
-	Q_ENTRY *first, *entries;
+/**
+ * Load and append entries from given filepath
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param filepath	save file path
+ * @param sepchar	separator character between name and value. normally '=' is used
+ * @param decode	flag for decoding value object
+ *
+ * @return		a number of loaded entries.
+ */
+int qEntryLoad(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode) {
+	if(entry == NULL) return 0;
 
-	if ((first = qfDecoder(filepath, sepchar)) == NULL) return NULL;
+	Q_ENTRY *loaded;
+	if ((loaded = qConfigParseFile(NULL, filepath, sepchar)) == NULL) return false;
 
-	if(decodevalue == true) {
-		for (entries = first; entries; entries = entries->next) {
-			qUrlDecode(entries->value);
-		}
+	int cnt = 0;
+	Q_NLOBJ *obj;
+	for(obj = (Q_NLOBJ*)qEntryFirst(loaded); obj; obj = (Q_NLOBJ*)qEntryNext(loaded)) {
+		if(decode == true) qDecodeUrl(obj->object);
+		qEntryPut(entry, obj->name, obj->object, obj->size, false);
+		cnt++;
 	}
 
-	return first;
+	qEntryFree(loaded);
+
+	return cnt;
 }

@@ -32,7 +32,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "qDecoder.h"
+#include "qInternal.h"
 
 /**
  * Read counter(integer) from file with advisory file locking.
@@ -47,14 +52,17 @@
  *   count = qCountRead("number.dat");
  * @endcode
  */
-int qCountRead(char *filepath) {
-	FILE *fp;
-	int  counter;
+int qCountRead(const char *filepath) {
+	int fd = open(filepath, O_RDONLY, 0);
+	if(fd < 0) return 0;
 
-	if ((fp = qFileOpen(filepath, "r")) == NULL) return 0;
-	fscanf(fp, "%d", &counter);
-	qFileClose(fp);
-	return counter;
+	char buf[10+1];
+	if(read(fd, buf, sizeof(buf)) <= 0) {
+		close(fd);
+		return 0;
+	}
+
+	return atoi(buf);
 }
 
 /**
@@ -70,13 +78,16 @@ int qCountRead(char *filepath) {
  *   qCountSave("number.dat", 75);
  * @endcode
  */
-bool qCountSave(char *filepath, int number) {
-	FILE *fp;
+bool qCountSave(const char *filepath, int number) {
+	int fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
+	if(fd < 0) return false;
 
-	if ((fp = qFileOpen(filepath, "w")) == NULL) return false;
-	fprintf(fp, "%d\n", number);
-	qFileClose(fp);
+	if(_writef(fd, "%d", number) <= 0) {
+		close(fd);
+		return false;
+	}
 
+	close(fd);
 	return true;
 }
 
@@ -95,19 +106,8 @@ bool qCountSave(char *filepath, int number) {
  *   count = qCountUpdate("number.dat", -3);
  * @endcode
  */
-int qCountUpdate(char *filepath, int number) {
-	FILE *fp;
-	int counter = 0;
-
-	if ((fp = qFileOpen(filepath, "r+")) != NULL) {
-		fscanf(fp, "%d", &counter);
-		fseek(fp, 0, SEEK_SET);
-	} else if ((fp = qFileOpen(filepath, "w")) == NULL) {
-		return 0;
-	}
-
+int qCountUpdate(const char *filepath, int number) {
+	int counter = qCountRead(filepath);
 	counter += number;
-	fprintf(fp, "%d\n", counter);
-	qFileClose(fp);
-	return counter;
+	return qCountSave(filepath, counter);
 }

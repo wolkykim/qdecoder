@@ -38,6 +38,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include "qDecoder.h"
+#include "qInternal.h"
 
 #if defined(ENABLE_SENDFILE) && defined(__linux__)
 #include <sys/sendfile.h>
@@ -46,11 +47,7 @@
 #define MAX_SENDFILE_CHUNK_SIZE		(64 * 1024)
 #endif
 
-/**********************************************
-** Internal Functions Definition
-**********************************************/
-
-int _StrToAddr(struct sockaddr_in *addr, unsigned char family, char *hostname, int port);
+static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port);
 
 /**
  * Create a TCP socket for the remote host and port.
@@ -58,7 +55,7 @@ int _StrToAddr(struct sockaddr_in *addr, unsigned char family, char *hostname, i
  * @param	hostname	remote hostname
  * @param	port		remote port
  *
- * @return	the new socket descriptor, or -1 in case of invalid hostname, -2 in case of socket creation failure.
+ * @return	the new socket descriptor, or -1 in case of invalid hostname, -2 in case of socket creation failure, -3 in case of connection failure.
  *
  * @since	8.1R
  *
@@ -67,20 +64,18 @@ int _StrToAddr(struct sockaddr_in *addr, unsigned char family, char *hostname, i
  * @endcode
  */
 
-int qSocketOpen(char *hostname, int port) {
-	int sockfd;
-	struct sockaddr_in addr;
-
+int qSocketOpen(const char *hostname, int port) {
 	/* host conversion */
-	bzero((char*)&addr, sizeof(addr));
-	if (_StrToAddr(&addr, AF_INET, hostname, port) != 1) return -1; /* invalid hostname */
+	struct sockaddr_in addr;
+	if (_getAddr(&addr, hostname, port) == false) return -1; /* invalid hostname */
 
 	/* make sockfd */
+	int sockfd;
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) return -2; /* sockfd creation fail */
 
 	/* connect */
 	if (connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		close(sockfd);
+		qSocketClose(sockfd);
 		return -3; /* connection fail */
 	}
 
@@ -90,7 +85,7 @@ int qSocketOpen(char *hostname, int port) {
 /**
  * Close socket.
  *
- * @param	sockfd	socket descriptor returned by qSocketOpen()
+ * @param	sockfd	socket descriptor
  *
  * @return	true on success, or false if an error occurred.
  *
@@ -108,7 +103,7 @@ bool qSocketClose(int sockfd) {
 /**
  * Wait until the socket has some readable data.
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
+ * @param	sockfd		socket descriptor
  * @param	timeoutms	wait timeout micro-seconds. if set to negative value, wait indefinitely.
  *
  * @return	1 on readable, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
@@ -144,7 +139,7 @@ int qSocketWaitReadable(int sockfd, int timeoutms) {
 /**
  * Wait until the socket is writable.
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
+ * @param	sockfd		socket descriptor
  * @param	timeoutms	wait timeout micro-seconds. if set to negative value, wait indefinitely.
  *
  * @return	1 on writable, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
@@ -180,9 +175,9 @@ int qSocketWaitWritable(int sockfd, int timeoutms) {
 /**
  * Read data from socket.
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
  * @param	binary		data buffer pointer
- * @param	size		data buffer size
+ * @param	sockfd		socket descriptor
+ * @param	size		read size
  * @param	timeoutms	wait timeout micro-seconds
  *
  * @return	the length of data readed on success, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
@@ -193,7 +188,7 @@ int qSocketWaitWritable(int sockfd, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketRead(int sockfd, char *binary, int size, int timeoutms) {
+int qSocketRead(char *binary, int sockfd, int size, int timeoutms) {
 	int sockstatus, readcnt;
 
 	sockstatus = qSocketWaitReadable(sockfd, timeoutms);
@@ -208,9 +203,9 @@ int qSocketRead(int sockfd, char *binary, int size, int timeoutms) {
  * Read line from the stream.
  * New-line characters '\r', '\n' will not be stored into buffer.
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
  * @param	str		data buffer pointer
- * @param	size		data buffer size
+ * @param	sockfd		socket descriptor
+ * @param	size		read size
  * @param	timeoutms	wait timeout micro-seconds
  *
  * @return	the length of data readed on success, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
@@ -223,7 +218,7 @@ int qSocketRead(int sockfd, char *binary, int size, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketGets(int sockfd, char *str, int size, int timeoutms) {
+int qSocketGets(char *str, int sockfd, int size, int timeoutms) {
 	char *ptr;
 	int sockstatus, readcnt = 0;
 
@@ -251,7 +246,7 @@ int qSocketGets(int sockfd, char *str, int size, int timeoutms) {
 /**
  * Send string or binary data to socket.
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
+ * @param	sockfd		socket descriptor
  * @param	binary		data pointer
  * @param	size		sending size
  *
@@ -269,7 +264,7 @@ int qSocketWrite(int sockfd, char *binary, int size) {
 /**
  * Send string with newline characters(\r\n) to socket.
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
+ * @param	sockfd		socket descriptor
  * @param	str		string pointer
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
@@ -295,7 +290,7 @@ int qSocketPuts(int sockfd, char *str) {
 /**
  * Send formatted string to socket.
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
+ * @param	sockfd		socket descriptor
  * @param	format		variable argument lists
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
@@ -308,7 +303,7 @@ int qSocketPuts(int sockfd, char *str) {
  * @endcode
  */
 int qSocketPrintf(int sockfd, char *format, ...) {
-	char buf[1024];
+	char buf[MAX_LINEBUF];
 	va_list arglist;
 
 	va_start(arglist, format);
@@ -321,9 +316,9 @@ int qSocketPrintf(int sockfd, char *format, ...) {
 /**
  * Send file to socket.
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
+ * @param	sockfd		socket descriptor
  * @param	filepath	variable argument lists
- * @param	start		file start to send
+ * @param	offset		file start to send
  * @param	size		total bytes to send. 0 means send data until EOF.
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
@@ -333,7 +328,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  * @code
  * @endcode
  */
-ssize_t qSocketSendfile(int sockfd, char *filepath, off_t start, ssize_t size) {
+ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t size) {
 	struct stat filestat;
 	int filefd;
 
@@ -341,32 +336,25 @@ ssize_t qSocketSendfile(int sockfd, char *filepath, off_t start, ssize_t size) {
 	if (fstat(filefd, &filestat) < 0) return -1;
 
 	ssize_t sent = 0;				// total size sent
-	ssize_t rangesize = filestat.st_size - start;	// total size to send
-	if(size > 0 && size < rangesize) rangesize = size;
+	ssize_t rangesize = filestat.st_size - offset;	// maximum available size can be sent
+	if(size > 0 && size < rangesize) rangesize = size; // set rangesize to requested size
 
 #if !(defined(ENABLE_SENDFILE) && defined(__linux__))
-	char buf[MAX_SENDFILE_CHUNK_SIZE];
-	if (start > 0) lseek(filefd, start, SEEK_SET);
+	if (offset > 0) lseek(filefd, offset, SEEK_SET);
 #endif
 
 	while(sent < rangesize) {
 		size_t sendsize;	// this time sending size
-		if(rangesize - sent > MAX_SENDFILE_CHUNK_SIZE) sendsize = MAX_SENDFILE_CHUNK_SIZE;
-		else sendsize = rangesize - sent;
+		if(rangesize - sent <= MAX_SENDFILE_CHUNK_SIZE) sendsize = rangesize - sent;
+		else sendsize = MAX_SENDFILE_CHUNK_SIZE;
 
+		ssize_t ret = 0;
 #if defined(ENABLE_SENDFILE) && defined(__linux__)
-		ssize_t ret = sendfile(sockfd, filefd, &start, sendsize);
-		if(ret <= 0) break; // Connection closed by peer
+		ret = sendfile(sockfd, filefd, &offset, sendsize);
 #else
-		// read
-		size_t retr = read(filefd, buf, sendsize);
-		if (retr <= 0) break;
-
-		// write
-		qSocketWaitWritable(sockfd, -1);
-		ssize_t ret = write(sockfd, buf, retr);
-		if(ret <= 0) break; // Connection closed by peer
+		ret = qFileSend(sockfd, filefd, sendsize);
 #endif
+		if(ret <= 0) break; // Connection closed by peer
 		sent += ret;
 	}
 
@@ -377,9 +365,9 @@ ssize_t qSocketSendfile(int sockfd, char *filepath, off_t start, ssize_t size) {
 /**
  * Store socket data into file directly.
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
+ * @param	filefd		save file descriptor
+ * @param	sockfd		socket descriptor
  * @param	size		length of bytes to read from socket
- * @param	filepath	save file path
  * @param	oflag		constructed by a bitwise-inclusive OR of flags defined in <fcntl.h>.
  * @param	timeoutms	wait timeout micro-seconds
  *
@@ -391,64 +379,38 @@ ssize_t qSocketSendfile(int sockfd, char *filepath, off_t start, ssize_t size) {
  *		only affected if no data reached to socket until timeoutms reached.
  *		if some data are received, it will wait until timeoutms reached again.
  * @code
- *   qSocketSaveIntoFile(sockfd, 100, "/tmp/file.tmp", O_CREAT|O_TRUNC|O_WRONLY, 5000);
+ *   qSocketSaveIntoFile(filefd, sockfd, 100, 5000);
  * @endcode
  */
-int qSocketSaveIntoFile(int sockfd, int size, char *filepath, int oflag, int timeoutms) {
-	int filefd;
-	char buf[1024*32]; // read buffer size
-
-	int sockstatus, readbytes, readed, readsize;
-
+int qSocketSaveIntoFile(int filefd, int sockfd, int size, int timeoutms) {
+#define _Q_SAVEINTOFILE_CHUNK_SIZE	(4*1024)
 	// stream readable?
-	sockstatus = qSocketWaitReadable(sockfd, timeoutms);
+	int sockstatus = qSocketWaitReadable(sockfd, timeoutms);
 	if (sockstatus <= 0) return sockstatus;
 
-	// file open
-	if ((filefd = open(filepath, oflag)) < 0) return -1;
-
+	int readbytes, readed;
 	for (readbytes = 0; readbytes < size; readbytes += readed) {
-
 		// calculate reading size
-		if (size - readbytes < sizeof(buf)) readsize = size - readbytes;
-		else readsize = sizeof(buf);
+		int readsize;
+		if (size - readbytes < _Q_SAVEINTOFILE_CHUNK_SIZE) readsize = size - readbytes;
+		else readsize =_Q_SAVEINTOFILE_CHUNK_SIZE;
 
 		// read data
 		sockstatus = qSocketWaitReadable(sockfd, timeoutms);
-		if (sockstatus <= 0) {
-			if(readbytes == 0) {
-				close(filefd);
-				unlink(filepath);
-				return -1;
-			}
-			break;
+		if (sockstatus <= 0) break;
 
-		}
-
-		readed = read(sockfd, buf, readsize);
-		if (readed == 0) break; // eof
-		else if (readed < 0 ) {
-			if(readbytes == 0) {
-				close(filefd);
-				unlink(filepath);
-				return -1;
-			}
-			break;
-		}
-
-		write(filefd, buf, readed);
+		readed = qFileSend(filefd, sockfd, readsize);
+		if (readed <= 0) break; // eof
 	}
-
-	close(filefd);
 	return readbytes;
 }
 
 /**
  * Store socket data into memory directly.
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
- * @param	size		length of bytes to read from socket
  * @param	mem		memory buffer pointer
+ * @param	sockfd		socket descriptor
+ * @param	size		length of bytes to read from socket
  * @param	timeoutms	wait timeout micro-seconds
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
@@ -461,7 +423,7 @@ int qSocketSaveIntoFile(int sockfd, int size, char *filepath, int oflag, int tim
  * @code
  * @endcode
  */
-int qSocketSaveIntoMemory(int sockfd, int size, char *mem, int timeoutms) {
+int qSocketSaveIntoMemory(char *mem, int sockfd, int size, int timeoutms) {
 	char *mp;
 	int sockstatus, readbytes, readed, readsize;
 
@@ -489,47 +451,28 @@ int qSocketSaveIntoMemory(int sockfd, int size, char *mem, int timeoutms) {
 }
 
 /**
- * Convert the socket descriptor to FILE descriptor.
+ * Convert hostname to sockaddr_in structure.
  *
- * So you can use the socket easily by using fprintf(), fscanf()...
+ * @param	addr		sockaddr_in structure pointer
+ * @param	hostname	IP string address or hostname
+ * @param	port		port number
  *
- * @param	sockfd		socket descriptor returned by qSocketOpen()
- *
- * @return	file descriptor on success, or NULL if an error occurred.
+ * @return	true if successful, otherwise returns false.
  *
  * @since	8.1R
- *
- * @code
- * @endcode
  */
-FILE *qSocketConv2file(int sockfd) {
-	FILE *fp;
-
-#ifdef _WIN32
-	fp = fsdopen(sockfd);
-#else
-	fp = fdopen(sockfd, "r+");
-#endif
-
-	return fp;
-}
-
-/**********************************************
-** Internal Functions
-**********************************************/
-
-int _StrToAddr(struct sockaddr_in *addr, unsigned char family, char *hostname, int port) {
-
+static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port) {
 	/* here we assume that the hostname argument contains ip address */
+	memset((void*)&addr, 0, sizeof(struct sockaddr_in));
 	if (!inet_aton(hostname, &addr->sin_addr)) { /* fail then try another way */
 		struct hostent *hp;
-		if ((hp = gethostbyname (hostname)) == 0) return 0; /* fail return 0 */
+		if ((hp = gethostbyname (hostname)) == 0) return false;
 		memcpy (&addr->sin_addr, hp->h_addr, sizeof(struct in_addr));
 	}
-	addr->sin_family = family;
+	addr->sin_family = AF_INET;
 	addr->sin_port = htons(port);
 
-	return 1;
+	return true;
 }
 
 #endif /* _WIN32 */

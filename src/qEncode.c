@@ -40,12 +40,41 @@
 #include <iconv.h>
 #endif
 
+/**
+ * Parse url query string
+ */
+Q_ENTRY *qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, char sepchar, int *count) {
+	if(entry == NULL) {
+		entry = qEntryInit();
+		if(entry == NULL) return NULL;
+	}
+
+	char *newquery = NULL;
+	int cnt = 0;
+
+	if(query != NULL) newquery = strdup(query);
+	while (newquery && *newquery) {
+		char *value = _makeword(newquery, sepchar);
+		char *name = qStrTrim(_makeword(value, equalchar));
+		qDecodeUrl(name);
+		qDecodeUrl(value);
+
+		if(qEntryPutStr(entry, name, value, false) == true) cnt++;
+		free(name);
+		free(value);
+	}
+	if(newquery != NULL) free(newquery);
+	if(count != NULL) *count = cnt;
+
+	return entry;
+}
+
 /**********************************************
-** Usage : qUrlEncode(string to encode);
+** Usage : qEncodeUrl(string to encode);
 ** Return: Pointer of encoded str which is memory allocated.
 ** Do    : Encode string.
 **********************************************/
-char *qUrlEncode(char *str) {
+char *qEncodeUrl(const char *str) {
 	char *encstr, buf[2+1];
 	unsigned char c;
 	int i, j;
@@ -73,11 +102,11 @@ char *qUrlEncode(char *str) {
 }
 
 /**********************************************
-** Usage : qUrlDecode(query pointer);
+** Usage : qDecodeUrl(query pointer);
 ** Return: Pointer of query string.
 ** Do    : Decode query string.
 **********************************************/
-char *qUrlDecode(char *str) {
+char *qDecodeUrl(char *str) {
 	int i, j;
 
 	if (!str) return NULL;
@@ -103,29 +132,6 @@ char *qUrlDecode(char *str) {
 	return str;
 }
 
-/**
- * Parse url query string
- */
-Q_ENTRY *qQueryDecode(char *query, char equalchar, char sepchar, int *keycnt) {
-	Q_ENTRY *entries = NULL;
-	char *newquery = NULL;
-	int cnt = 0;
-
-	if(query != NULL) newquery = strdup(query);
-	for (cnt = 0; newquery && *newquery; cnt++) {
-		char *value = _makeword(newquery, sepchar);
-		char *name = qRemoveSpace(_makeword(value, equalchar));
-		qUrlDecode(name);
-		qUrlDecode(value);
-
-		Q_ENTRY *entry = qEntryAdd(entries, name, value, 2);
-		if (entries == NULL) entries = entry;
-	}
-	if(newquery != NULL) free(newquery);
-	if(keycnt != NULL) *keycnt = cnt;
-
-	return entries;
-}
 
 /**
  * qCharEncode("ÇÑ±Û", "EUC-KR", "UTF-8", 2);

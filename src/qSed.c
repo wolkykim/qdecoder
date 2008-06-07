@@ -35,68 +35,16 @@
 #define SSI_INCLUDE_END		"\"-->"
 
 /**********************************************
-** Usage : qSedAdd(entry pointer, name, value);
-** Do    : Add given name and value to linked list.
-**         If same name exists, it'll be replaced.
-**
-** ex) qValueAdd("NAME", "Seung-young Kim");
-**********************************************/
-Q_ENTRY *qSedAdd(Q_ENTRY *first, char *name, char *format, ...) {
-	Q_ENTRY *new_entry;
-	char value[1024];
-	va_list arglist;
-
-	if (!strcmp(name, "")) {
-		DEBUG("Can't add empty name.");
-		return first;
-	}
-
-	va_start(arglist, format);
-	vsnprintf(value, sizeof(value), format, arglist);
-	va_end(arglist);
-
-	new_entry = qEntryAdd(first, name, value, 1);
-	if (!first) first = new_entry;
-
-	return first;
-}
-
-/**********************************************
-** Usage : qSedAddDirect(entry pointer, value);
-** Do    : Add given name and value to linked list.
-**         If same name exists, it'll be replaced.
-**
-** ex) qSedAddDirect(entries, "NAME", value);
-**********************************************/
-Q_ENTRY *qSedAddDirect(Q_ENTRY *first, char *name, char *value) {
-	Q_ENTRY *new_entry;
-
-	if (!strcmp(name, "")) {
-		DEBUG("Can't add empty name.");
-		return first;
-	}
-
-	new_entry = qEntryAdd(first, name, value, 1);
-	if (!first) first = new_entry;
-
-	return first;
-}
-
-/**********************************************
 ** Usage : qSedStr(Entry pointer, fpout, arg);
 ** Return: Success 1
 ** Do    : Stream Editor.
 **********************************************/
-int qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout) {
-	Q_ENTRY *entries;
-	char *sp;
-
-	if (srcstr == NULL) return 0;
+bool qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout) {
+	if (srcstr == NULL) return false;
 
 	/* Parsing */
-	for (sp = srcstr; *sp != '\0'; sp++) {
-		int flag;
-
+	char *sp = (char *)srcstr;
+	while (*sp != '\0') {
 		/* SSI invocation */
 		if (!strncmp(sp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
 			char ssi_inc_file[1024], *endp;
@@ -106,24 +54,30 @@ int qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout) {
 				ssi_inc_file[endp-sp] = '\0';
 				sp = (endp + strlen(SSI_INCLUDE_END)) - 1;
 
-				if (qCheckFile(ssi_inc_file) == true) qSedFile(first, ssi_inc_file, fpout);
+				if (qFileExist(ssi_inc_file) == true) qSedFile(entry, ssi_inc_file, fpout);
 				else printf("[qSedStr: an error occurred while processing 'include' directive - file(%s) open fail]", ssi_inc_file);
 			} else printf("[qSedStr: an error occurred while processing 'include' directive - ending tag not found]");
 			continue;
 		}
 
 		/* Pattern Matching */
-		for (entries = first, flag = 0; entries && flag == 0; entries = entries->next) {
-			if (!strncmp(sp, entries->name, strlen(entries->name))) {
-				fprintf(fpout, "%s", entries->value);
-				sp += strlen(entries->name) - 1;
+		int flag;
+		const Q_NLOBJ *obj;
+		for (obj = (Q_NLOBJ*)qEntryFirst(entry), flag = 0; obj && flag == 0; obj = (Q_NLOBJ*)qEntryNext(entry)) {
+			if (!strncmp(sp, obj->name, strlen(obj->name))) {
+				fprintf(fpout, "%s", (char *)obj->object);
+				sp += strlen(obj->name);
 				flag = 1;
+				break;
 			}
 		}
-		if (flag == 0) fprintf(fpout, "%c", *sp);
+		if (flag == 0) {
+			fprintf(fpout, "%c", *sp);
+			sp++;
+		}
 	}
 
-	return 1;
+	return true;
 }
 
 /**********************************************
@@ -131,32 +85,15 @@ int qSedStr(Q_ENTRY *first, char *srcstr, FILE *fpout) {
 ** Return: Success 1, Fail open fail 0.
 ** Do    : Stream Editor.
 **********************************************/
-int qSedFile(Q_ENTRY *first, char *filepath, FILE *fpout) {
+bool qSedFile(Q_ENTRY *entry, const char *filepath, FILE *fpout) {
 	char *sp;
 	int flag;
 
-	if ((sp = qReadFile(filepath, NULL)) == NULL) return 0;
-	flag = qSedStr(first, sp, fpout);
+	if ((sp = qFileLoad(filepath, NULL)) == NULL) return false;
+	flag = qSedStr(entry, sp, fpout);
 	free(sp);
 
 	return flag;
-}
-
-/**********************************************
-** Usage : qPrint(pointer of the first Entry);
-** Return: Amount of entries.
-** Do    : Print all parsed values & names for debugging.
-**********************************************/
-int qSedPrint(Q_ENTRY *first, FILE *out) {
-	return qEntryPrint(first, out);
-}
-
-/**********************************************
-** Usage : qFree(pointer of the first Entry);
-** Do    : Make free of linked list memory.
-**********************************************/
-void qSedFree(Q_ENTRY *first) {
-	qEntryFree(first);
 }
 
 #endif /* DISABLE_SED */

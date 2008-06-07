@@ -285,7 +285,7 @@ bool qPuts(int mode, char *buf) {
 ** Return: Pointer of string.
 ** Do    : Remove space(including CR, LF) from head & tail.
 **********************************************/
-char *qRemoveSpace(char *str) {
+char *qStrTrim(char *str) {
 	int i, j;
 
 	if (str == NULL) return NULL;
@@ -302,7 +302,7 @@ char *qRemoveSpace(char *str) {
 ** Return: Pointer of string.
 ** Do    : Remove tailing space(including CR, LF)
 **********************************************/
-char *qRemoveTailSpace(char *str) {
+char *qStrTrimTail(char *str) {
 	int i;
 
 	if (str == NULL)return NULL;
@@ -464,7 +464,7 @@ bool qStr09AZaz(char *str) {
  * The dst string will be always terminated by '\0'. And the maximul
  * n size is sizeof(dst)-1.
  */
-char *qStrncpy(char *dst, char *src, size_t n) {
+char *qStrncpy(char *dst, const char *src, size_t n) {
 	strncpy(dst, src, n);
 	dst[n] = '\0';
 	return dst;
