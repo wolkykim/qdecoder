@@ -54,22 +54,21 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 	if (str == NULL) return NULL;
 
 	/* processing include directive */
-	char *p = NULL;
+	char *p = str;;
 	while ((p = strstr(p, _INCLUDE_DIRECTIVE)) != NULL) {
-
 		if (p == str || p[-1] == '\n') {
 			char buf[1024], *e, *t = NULL;
 			int len;
 
 			/* parse filename */
-			for (e = p + strlen(_INCLUDE_DIRECTIVE); *e != '\n' && *e != '\0'; e++);
-			len = e - (p + strlen(_INCLUDE_DIRECTIVE));
+			for (e = p + CONST_STRLEN(_INCLUDE_DIRECTIVE); *e != '\n' && *e != '\0'; e++);
+			len = e - (p + CONST_STRLEN(_INCLUDE_DIRECTIVE));
 			if (len >= sizeof(buf)) {
 				DEBUG("Can't process %s directive.", _INCLUDE_DIRECTIVE);
 				free(str);
 				return NULL;
 			}
-			strncpy(buf, p + strlen(_INCLUDE_DIRECTIVE), len);
+			strncpy(buf, p + CONST_STRLEN(_INCLUDE_DIRECTIVE), len);
 			buf[len] = '\0';
 			qStrTrim(buf);
 
@@ -96,14 +95,14 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 			}
 
 			/* replace */
-			strncpy(buf, p, strlen(_INCLUDE_DIRECTIVE) + len);
-			buf[strlen(_INCLUDE_DIRECTIVE) + len] = '\0';
+			strncpy(buf, p, CONST_STRLEN(_INCLUDE_DIRECTIVE) + len);
+			buf[CONST_STRLEN(_INCLUDE_DIRECTIVE) + len] = '\0';
 			p = qStrReplace("sn", str, buf, t);
 			free(t);
 			free(str);
 			str = p;
 		} else {
-			p += strlen(_INCLUDE_DIRECTIVE);
+			p += CONST_STRLEN(_INCLUDE_DIRECTIVE);
 		}
 	}
 

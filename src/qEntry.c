@@ -529,7 +529,7 @@ bool qEntryPrint(Q_ENTRY *entry, FILE *out, bool print_object) {
 
 	const Q_NLOBJ *obj;
 	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
-		fprintf(out, "%s=%s (%d)" , obj->name, (print_object?(char*)obj->object:"(object)"), obj->size);
+		fprintf(out, "%s=%s (%d)\n" , obj->name, (print_object?(char*)obj->object:"(object)"), obj->size);
 	}
 
 	return true;

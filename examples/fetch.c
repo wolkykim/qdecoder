@@ -23,24 +23,19 @@
 #include "qDecoder.h"
 
 int main(void) {
-	char *value;
+	/* Parse (GET/COOKIE/POST) queries. */
+	Q_ENTRY *req = qCgiRequestParse(NULL);
 
-	/* Parse (GET/COOKIE/POST) queries. This call is not necessary because
-	   it will be called automatically when it is needed. */
-	qDecoder();
+	/* Get query */
+	char *value = (char *)qEntryGetStr(req, "query");
+	if(value == NULL) value = "(nothing)";
 
 	/* Print out context type */
-	qContentType("text/html");
-
-	/* If the query is not found, the variable will be set default string.
-	   Also, you can use qValueDefault() or qValueNotEmpty() instead. */
-	if (!(value = qGetValue("query"))) value = "";
-
+	qCgiResponseSetContentType(req, "text/html");
 	printf("You entered: <b>%s</b>\n", value);
 
-	/* Do not free variables directly using free() function such like free(value)
-	   You must use qFree() or qFreeAll() to deallocate memories */
-	qFree();
+	/* De-allocate memories */
+	qEntryFree(req);
 	return 0;
 }
 

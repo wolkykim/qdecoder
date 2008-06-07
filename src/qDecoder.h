@@ -187,6 +187,7 @@ extern	bool		qCgiResponseSetContentType(Q_ENTRY *request, const char *mimetype);
 extern	const char*	qCgiResponseGetContentType(Q_ENTRY *request);
 extern	bool		qCgiResponseRedirect(Q_ENTRY *request, const char *uri);
 extern	int		qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mimetype);
+extern	void		qCgiResponseError(Q_ENTRY *request, char *format, ...);
 
 /*
  * qSession.c

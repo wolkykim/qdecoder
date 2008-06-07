@@ -82,7 +82,6 @@ OBJ		= qCgiRequest.o		\
 		qValid.o		\
 		qCount.o		\
 		qTime.o			\
-		qError.o		\
 					\
 		qInternalCommon.o	\
 		md5/md5c.o

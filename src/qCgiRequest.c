@@ -287,7 +287,7 @@ Q_ENTRY *qCgiRequestParseQueries(Q_ENTRY *request, const char *method) {
 	}
 
 	if(method == NULL || !strcmp(method, "POST")) { /* parse POST method */
-		char *content_type = getenv("CONTENT_TYPE");
+		char *content_type = qGetenvDefault("", "CONTENT_TYPE");
 		if (!strncmp(content_type, "application/x-www-form-urlencoded", CONST_STRLEN("application/x-www-form-urlencoded"))) {
 			char *query = qCgiRequestGetQueryString("POST");
 			if(query != NULL) {
@@ -350,7 +350,7 @@ Q_ENTRY *qCgiRequestParseCookies(Q_ENTRY *request) {
 char *qCgiRequestGetQueryString(const char *query_type) {
 	if (!strcmp(query_type, "GET")) {
 		if (getenv("QUERY_STRING") == NULL) return NULL;
-		char * query = strdup(getenv("QUERY_STRING"));
+		char *query = strdup(getenv("QUERY_STRING"));
 		/* SSI query handling */
 		if (!strcmp(query, "") && getenv("REQUEST_URI") != NULL) {
 			char *cp;

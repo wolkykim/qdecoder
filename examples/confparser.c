@@ -25,29 +25,30 @@
 #define CONF_FILE		"confparser.conf"
 
 int main(void) {
-	Q_ENTRY *conf;
-	char *protocol, *host;
-	int port;
+	/* Parse queries. */
+	Q_ENTRY *req = qCgiRequestParse(NULL);
 
-	/* Open configuration file */
-	if (!(conf = qfDecoder(CONF_FILE, '='))) qError("Configuration file(%s) not found.", CONF_FILE);
+	/* Parse configuration file */
+	Q_ENTRY *conf = qConfigParseFile(NULL, CONF_FILE, '=');
+	if(conf == NULL) qCgiResponseError(req, "Configuration file(%s) not found.", CONF_FILE);
 
 	/* Get variable */
-	protocol = qfGetValue(conf, "PROTOCOL");
-	host     = qfGetValue(conf, "HOST");
-	port     = qfGetInt(conf, "PORT");
+	const char *protocol = qEntryGetStr(conf, "PROTOCOL");
+	const char *host     = qEntryGetStr(conf, "HOST");
+	int port       = qEntryGetInt(conf, "PORT");
 
 	/* Print out */
-	qContentType("text/plain");
+	qCgiResponseSetContentType(req, "text/plain");
 	printf("Protocol : %s\n", protocol);
 	printf("Host     : %s\n", host);
 	printf("Port     : %d\n", port);
 
 	printf("\n--[CONFIGURATION DUMP]--\n");
-	qfPrint(conf, stdout);
+	qEntryPrint(conf, stdout, true);
 
 	/* Deallocate parsed entries */
-	qfFree(conf);
+	qEntryFree(conf);
+	qEntryFree(req);
 
 	return 0;
 }

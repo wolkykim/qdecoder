@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -222,6 +223,36 @@ int qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mim
 
 	close(fd);
 	return sent;
+}
+
+/**
+ */
+void qCgiResponseError(Q_ENTRY *request, char *format, ...) {
+	char buf[MAX_LINEBUF];
+	va_list arglist;
+
+	va_start(arglist, format);
+	vsnprintf(buf, sizeof(buf), format, arglist);
+	va_end(arglist);
+
+	if (getenv("REMOTE_ADDR") == NULL)  {
+		printf("Error: %s\n", buf);
+	} else {
+		qCgiResponseSetContentType(request, "text/html");
+
+		printf("<html>\n");
+		printf("<head>\n");
+		printf("<title>Error: %s</title>\n", buf);
+		printf("<script language='JavaScript'>\n");
+		printf("  alert(\"%s\");\n", buf);
+		printf("  history.back();\n");
+		printf("</script>\n");
+		printf("</head>\n");
+		printf("</html>\n");
+	}
+
+	qEntryFree(request);
+	exit(EXIT_FAILURE);
 }
 
 #endif /* DISABLE_CGISUPPORT */
