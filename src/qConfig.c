@@ -33,16 +33,8 @@
 #include "qInternal.h"
 
 #define _INCLUDE_DIRECTIVE	"@INCLUDE "
-#define _VAR			'$'
-#define _VAR_OPEN		'{'
-#define _VAR_CLOSE		'}'
-#define _VAR_CMD		'!'
-#define _VAR_ENV		'%'
 
-static char *parseValue(Q_ENTRY *first, char *value);
-
-static Q_ENTRY *_multi_last_entry = NULL;
-static char _multi_last_key[1024];
+static char *_parseVariable(Q_ENTRY *config, char *value);
 
 /**********************************************
 ** Usage : qfDecoder(filepath, '=');
@@ -57,14 +49,12 @@ static char _multi_last_key[1024];
 **         path = ${%PATH}              => path = /usr/bin:/usr/sbin
 **         #hmm = this is comments      => (skip comment)
 **********************************************/
-Q_ENTRY *qfDecoder(char *filepath, char sepchar) {
-	Q_ENTRY *first, *entries;
-	char *str, *p;
-
-	p = str = qReadFile(filepath, NULL);
+Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
+	char *str = qFileLoad(filepath, NULL);
 	if (str == NULL) return NULL;
 
 	/* processing include directive */
+	char *p = NULL;
 	while ((p = strstr(p, _INCLUDE_DIRECTIVE)) != NULL) {
 
 		if (p == str || p[-1] == '\n') {
@@ -81,7 +71,7 @@ Q_ENTRY *qfDecoder(char *filepath, char sepchar) {
 			}
 			strncpy(buf, p + strlen(_INCLUDE_DIRECTIVE), len);
 			buf[len] = '\0';
-			qRemoveSpace(buf);
+			qStrTrim(buf);
 
 			/* adjust file path */
 			if (!(buf[0] == '/' || buf[0] == '\\')) {
@@ -99,7 +89,7 @@ Q_ENTRY *qfDecoder(char *filepath, char sepchar) {
 			}
 
 			/* read file */
-			if (strlen(buf) == 0 || (t = qReadFile(buf, NULL)) == NULL) {
+			if (strlen(buf) == 0 || (t = qFileLoad(buf, NULL)) == NULL) {
 				DEBUG("Can't process '%s%s' directive.", _INCLUDE_DIRECTIVE, buf);
 				free(str);
 				return NULL;
@@ -118,80 +108,61 @@ Q_ENTRY *qfDecoder(char *filepath, char sepchar) {
 	}
 
 	/* decode */
-	first = qsDecoder(str, sepchar);
+	config = qConfigParseStr(config, str, sepchar);
 	free(str);
 
+	return config;
+}
+
+Q_ENTRY *qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar) {
+	if (str == NULL) return NULL;
+
+	if(config == NULL) {
+		config = qEntryInit();
+		if(config == NULL) return NULL;
+	}
+
+	char *org, *buf, *offset;
+	for (org = buf = offset = strdup(str); *offset != '\0'; ) {
+		/* get one line into buf */
+		for (buf = offset; *offset != '\n' && *offset != '\0'; offset++);
+		if (*offset != '\0') {
+			*offset = '\0';
+			offset++;
+		}
+		qStrTrim(buf);
+
+		/* skip blank or comment line */
+		if ((buf[0] == '#') || (buf[0] == '\0')) continue;
+
+		/* parse & store */
+		char *value = strdup(buf);
+		char *name  = _makeword(value, sepchar);
+		qStrTrim(value);
+		qStrTrim(name);
+
+		qEntryPutStr(config, name, value, true);
+
+		free(name);
+		free(value);
+	}
+	free(org);
+
 	/* processing ${} directive */
-	for (entries = first; entries; entries = entries->next) {
-		str = parseValue(first, entries->value);
-		if(str != NULL) {
-			entries->value = str; /* do not need to free entries->value */
-		}
+	Q_NLOBJ *obj;
+	for(obj = (Q_NLOBJ*)qEntryFirst(config); obj; obj = (Q_NLOBJ*)qEntryNext(config)) {
+		obj->object = _parseVariable(config, obj->object);
 	}
 
-	return first;
+	return config;
 }
 
-char *qfGetValue(Q_ENTRY *first, char *format, ...) {
-	char name[1024];
-	va_list arglist;
-
-	va_start(arglist, format);
-	vsnprintf(name, sizeof(name), format, arglist);
-	va_end(arglist);
-
-	return qEntryGetValueLast(first, name);
-}
-
-int qfGetInt(Q_ENTRY *first, char *format, ...) {
-	char name[1024];
-	va_list arglist;
-
-	va_start(arglist, format);
-	vsnprintf(name, sizeof(name), format, arglist);
-	va_end(arglist);
-
-	return qEntryGetIntLast(first, name);
-}
-
-
-char *qfGetValueFirst(Q_ENTRY *first, char *format, ...) {
-	va_list arglist;
-
-	va_start(arglist, format);
-	vsnprintf(_multi_last_key, sizeof(_multi_last_key), format, arglist);
-	va_end(arglist);
-
-	if (first == NULL) return NULL;
-	_multi_last_entry = first;
-
-	return qfGetValueNext();
-}
-
-char *qfGetValueNext(void) {
-	Q_ENTRY *entries;
-
-	for (entries = _multi_last_entry; entries; entries = entries->next) {
-		if (!strcmp(_multi_last_key, entries->name)) {
-			_multi_last_entry = entries->next;
-			return (entries->value);
-		}
-	}
-	_multi_last_entry = NULL;
-	strcpy(_multi_last_key, "");
-
-	return NULL;
-}
-
-int qfPrint(Q_ENTRY *first, FILE *out) {
-	return qEntryPrint(first, out);
-}
-
-void qfFree(Q_ENTRY *first) {
-	qEntryFree(first);
-}
-
-static char *parseValue(Q_ENTRY *first, char *value) {
+#define _VAR			'$'
+#define _VAR_OPEN		'{'
+#define _VAR_CLOSE		'}'
+#define _VAR_CMD		'!'
+#define _VAR_ENV		'%'
+static char *_parseVariable(Q_ENTRY *config, char *value) {
 	int loop;
 
 	do {
@@ -228,14 +199,14 @@ static char *parseValue(Q_ENTRY *first, char *value) {
 			if (len >= (sizeof(buf) - 1)) continue; /* too long */
 			strncpy(buf, s + 2, len);
 			buf[len] = '\0';
-			qRemoveSpace(buf);
+			qStrTrim(buf);
 
 			/* get the string to replace*/
 			char *t;
 			int freet = 0;
 			switch (buf[0]) {
 				case _VAR_CMD : {
-					if ((t = qRemoveSpace(qCmd(buf + 1))) == NULL) t = "";
+					if ((t = qStrTrim(qCmd(buf + 1))) == NULL) t = "";
 					else freet = 1;
 					break;
 				}
@@ -244,7 +215,7 @@ static char *parseValue(Q_ENTRY *first, char *value) {
 					break;
 				}
 				default : {
-					if ((t = qEntryGetValueLast(first, buf)) == NULL) {
+					if ((t = (char *)qEntryGetStr(config, buf)) == NULL) {
 						s = e; /* not found */
 						continue;
 					}
@@ -259,7 +230,7 @@ static char *parseValue(Q_ENTRY *first, char *value) {
 			s = qStrReplace("sn", value, buf, t);
 			if (freet == 1) free(t);
 			free(value);
-			value = qRemoveSpace(s);
+			value = qStrTrim(s);
 			/* printf("%s\n", value); */
 
 			loop = 1;
