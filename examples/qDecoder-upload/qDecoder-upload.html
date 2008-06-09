@@ -11,19 +11,18 @@
   <style type="text/css">
     td {font-size: 9pt}
     .ellips {overflow:hidden; text-overflow:ellipsis; }
-    .
   </style>
   <script language="JavaScript">
     var iMaxBarWidth = 300;
 
     var iStartTime = new Date().getTime();
     var iLastCsize = 0;
-    function Q_setProgress(iTsize, iCsize, sCname) {
+    function qSetProgress(iTsize, iCsize, sCname) {
       var iPercent, iBarWidth, iKbPerSec, iEstablishedSec, iTimeleftSec;
 
       // connection closed by user
       if(iTsize == 0 && iCsize == 0) {
-        alert('d');
+        alert('connection closed.');
         window.close();
         return;
       }
@@ -84,15 +83,17 @@
       </td></tr></table>
 
       <table border="0" width="360" cellpadding="2" cellspacing="0" style="table-layout: fixed">
+        <tr height="0">
+        	<td width="230"></td>
+        	<td width="90"></td>
+        	<td width="40"></td>
+        </td>
         <tr>
-          <td width="220">
+          <td>
             <font id="oTxtTitle"><b>Connecting...</b></font>
           </td>
-          <td width="80" align="right">
-            Time Left :
-          </td>
-          <td width="60">
-            <font id="oTxtTimeleft"></font>
+          <td colspan="2" align="right">
+            Time Left : <font id="oTxtTimeleft"></font>
           </td>
         </tr>
         <tr>
@@ -113,11 +114,8 @@
           <td class="ellips">
             <nobr>File:&nbsp;<font id="oTxtFilename"></font></nobr>
           </td>
-          <td align="right">
-            Avg Speed :
-          </td>
-          <td>
-            <font id="oTxtKbpersec">0</font> KB/s
+          <td colspan="2" align="right">
+            Avg Speed : <font id="oTxtKbpersec">0</font> KB/s
           </td>
         </tr>
         <tr>

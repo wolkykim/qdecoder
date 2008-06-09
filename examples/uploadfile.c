@@ -49,10 +49,9 @@ int main(void) {
 
 			char newpath[1024];
 			sprintf(newpath, "%s/%s", BASEPATH, filename);
-			/*
-			if (rename(savepath, newpath) == -1) qCgiResponseError(req, "Can not move uploaded file %s to %s", savepath, newpath);
-			printf("<br><a href=\"%s\">%s</a> (%d bytes, %s) saved.", newpath, filename, length, contenttype);
-			*/
+
+			if (rename(savepath, newpath) == -1) qCgiResponseError(req, "Can't move uploaded file %s to %s", savepath, newpath);
+			printf("<br>File %d : <a href=\"%s\">%s</a> (%d bytes, %s) saved.", i, newpath, filename, length, contenttype);
 		}
 	}
 
