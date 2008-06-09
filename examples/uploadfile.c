@@ -27,34 +27,41 @@
 int main(void) {
 	int i;
 
-	qDecoderInit(true, TMPPATH, (1 * 60 * 60));	// MUST BE called at the first line of main()
-	qDecoder();					// CAN NOT BE OMITTED in case of progress uploading.
+	/* parse queries. */
+	Q_ENTRY *req = qCgiRequestParseOption(NULL, true, TMPPATH, (1 * 60 * 60));
+	if(req == NULL) qCgiResponseError(req, "Can't set option.");
+	req = qCgiRequestParse(req);
 
-	qContentType("text/html");
+	/* get queries */
+	const char *text = qEntryGetStr(req, "text");
+	if (text == NULL) qCgiResponseError(req, "Invalid usages.");
 
-	printf("You entered: <b>%s</b>\n", qGetValueDefault("", "text"));
+	/* result out */
+	qCgiResponseSetContentType(req, "text/html");
+	printf("You entered: <b>%s</b>\n", text);
 
 	for (i = 1; i <= 3; i++) {
-		char *filename, *contenttype, *savepath;
-		int length;
+		int length =  qEntryGetIntf(req, "binary%d.length", i);
+		if (length > 0) {
+			const char *filename = qEntryGetStrf(req, "binary%d.filename", i);
+			const char *contenttype = qEntryGetStrf(req, "binary%d.contenttype", i);
+			const char *savepath = qEntryGetStrf(req, "binary%d.savepath", i);
 
-		char newpath[1024];
-
-		if ((length = qGetInt("binary%d.length", i)) > 0) {
-			filename = qGetValue("binary%d.filename", i);
-			contenttype = qGetValue("binary%d.contenttype", i);
-			savepath = qGetValue("binary%d.savepath", i);
-
+			char newpath[1024];
 			sprintf(newpath, "%s/%s", BASEPATH, filename);
-			if (rename(savepath, newpath) == -1) qError("Can not move uploaded file. %s-%s", savepath, newpath);
-
+			/*
+			if (rename(savepath, newpath) == -1) qCgiResponseError(req, "Can not move uploaded file %s to %s", savepath, newpath);
 			printf("<br><a href=\"%s\">%s</a> (%d bytes, %s) saved.", newpath, filename, length, contenttype);
+			*/
 		}
 	}
 
+	/* dump */
 	printf("\n<p><hr>--[ DUMP INTERNAL DATA STRUCTURE ]--\n<pre>");
-	qPrint(stdout);
+	qEntryPrint(req, stdout, true);
 	printf("\n</pre>\n");
-	qFree();
+
+	/* de-allocate */
+	qEntryFree(req);
 	return 0;
 }

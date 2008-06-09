@@ -25,20 +25,20 @@ qDecoder is developed according to the <a href="http://www.gnu.org/philosophy/fr
 </blockquote>
 </i>
 
-<!-- ex) fetch.cgi -->
+<!-- ex) query.cgi -->
 <p><hr noshade>
-<h3>Example: <a href="fetch.c">fetch.c</a></h3>
-<form method="get" action="fetch.cgi">
+<h3>Example: <a href="query.c">query.c</a></h3>
+<form method="get" action="query.cgi">
   GET method: application/x-www-form-urlencoded<br>
   Type anything: <input type="text" name="query" value="">
   <input type="submit" value="SUBMIT">
 </form>
-<form method="post" action="fetch.cgi">
+<form method="post" action="query.cgi">
 POST method: application/x-www-form-urlencoded<br>
   Type anything: <input type="text" name="query" value="">
   <input type="submit" value="SUBMIT">
 </form>
-<form method="post" enctype="multipart/form-data" action="fetch.cgi">
+<form method="post" enctype="multipart/form-data" action="query.cgi">
   POST method: multipart/form-data<br>
   Type anything: <input type="text" name="query" value="">
   <input type="submit" value="SUBMIT">
@@ -64,8 +64,8 @@ POST method: application/x-www-form-urlencoded<br>
 <hr size="1" noshade>
 <h3>Example: <a href="multivalue.c">multivalue.c</a></h3>
 <form method="post" action="multivalue.cgi">
-  <input name="checklist" type=checkbox value="Hamburger"> Hamburger
-  <input name="checklist" type=checkbox value="Chicken"> Chicken
+  <input name="checklist" type=checkbox value="Hamburger" checked> Hamburger
+  <input name="checklist" type=checkbox value="Chicken" checked> Chicken
   <input name="checklist" type=checkbox value="Photato"> Photato
   <input name="checklist" type=checkbox value="Coke"> Coke
   <input name="checklist" type=checkbox value="Orange Juice"> Orange Juice

@@ -24,34 +24,35 @@
 #include "qDecoder.h"
 
 int main(void) {
-	char *mode, *name, *value;
+	/* Parse (GET/COOKIE/POST) queries. */
+	Q_ENTRY *req = qCgiRequestParse(NULL);
 
-	mode = qGetValue("mode");
-	name = qGetValue("cname");
-	value = qGetValue("cvalue");
+	const char *mode = qEntryGetStr(req, "mode");
+	const char *name = qEntryGetStr(req, "cname");
+	const char *value = qEntryGetStr(req, "cvalue");
 
 	if (mode == NULL) { /* View Cookie */
-		int amount;
-		qContentType("text/html");
-		amount = qPrint(stdout);
-		printf("<p>Total %d entries\n", amount);
+		qCgiResponseSetContentType(req, "text/plain");
+		printf("Total %d entries\n", qEntryGetNum(req));
+		qEntryPrint(req, stdout, true);
 	} else if (!strcmp(mode, "set")) { /* Set Cookie */
-		if (name == NULL || value == NULL) qError("Query not found");
-		if (!strcmp(name, "")) qError("Empty cookie name can not be stored.");
+		if (name == NULL || value == NULL) qCgiResponseError(req, "Query not found");
+		if (strlen(name) == 0) qCgiResponseError(req, "Empty cookie name can not be stored.");
 
-		qCookieSet(name, value, 0, NULL, NULL, NULL);
-		qContentType("text/html");
+		qCgiResponseSetCookie(req, name, value, 0, NULL, NULL, false);
+		qCgiResponseSetContentType(req, "text/html");
 		printf("Cookie('%s'='%s') entry is stored.<br>Click <a href='cookie.cgi'>here</a> to view your cookies\n", name, value);
 	} else if (!strcmp(mode, "remove")) { /* Remove Cookie */
-		if (name == NULL) qError("Query not found");
-		if (!strcmp(name, "")) qError("Empty cookie name can not be removed.");
+		if (name == NULL) qCgiResponseError(req, "Query not found");
+		if (!strcmp(name, "")) qCgiResponseError(req, "Empty cookie name can not be removed.");
 
-		qCookieRemove(name, NULL, NULL, NULL);
-		qContentType("text/html");
+		qCgiResponseRemoveCookie(req, name, NULL, NULL, false);
+		qCgiResponseSetContentType(req, "text/html");
 		printf("Cookie('%s') entry is removed.<br>Click <a href='cookie.cgi'>here</a> to view your cookies\n", name);
-	} else qError("Unknown mode.");
+	} else {
+		qCgiResponseError(req, "Unknown mode.");
+	}
 
-	qFree();
+	qEntryFree(req);
 	return 0;
 }
-

@@ -23,7 +23,7 @@
 #include "qDecoder.h"
 
 int main(void) {
-	/* Parse (GET/COOKIE/POST) queries. */
+	/* Parse queries. */
 	Q_ENTRY *req = qCgiRequestParse(NULL);
 
 	/* Get query */

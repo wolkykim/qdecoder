@@ -23,17 +23,17 @@
 #include "qDecoder.h"
 
 int main(void) {
+	/* Parse (GET/COOKIE/POST) queries. */
+	Q_ENTRY *req = qCgiRequestParse(NULL);
+
+	qCgiResponseSetContentType(req, "text/html");
+
+	printf("Your order : ");
 	char *list;
-
-	qDecoder();
-
-	qContentType("text/html");
-	if ((list = qGetValueFirst("checklist")) == NULL) qError("Check what you want to order please.");
-	printf("You ordered ");
-	for (; list; list = qGetValueNext()) {
+	for(list = (char*)qEntryGetStr(req, "checklist"); list; list = (char*)qEntryGetStrNext(req, "checklist")) {
 		printf("<b>%s</b> \n", list);
 	}
 
-	qFree();
+	qEntryFree(req);
 	return 0;
 }
