@@ -28,10 +28,10 @@ QLIB	= ../src/libqDecoder.a
 #QLIB	= ../src/libqDecoder.so
 
 ## Main
-all:	fetch.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi arglist.cgi session.cgi confparser.cgi socket.cgi
+all:	query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi arglist.cgi session.cgi config.cgi socket.cgi
 
-fetch.cgi: ${QLIB} fetch.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o fetch.cgi fetch.o ${QLIB}
+query.cgi: ${QLIB} query.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o query.cgi query.o ${QLIB}
 
 cookie.cgi: ${QLIB} cookie.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o cookie.cgi cookie.o ${QLIB}
@@ -60,8 +60,8 @@ session.cgi: ${QLIB} session.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o session.cgi session.o ${QLIB}
 	chmod 6755 session.cgi
 
-confparser.cgi: ${QLIB} confparser.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o confparser.cgi confparser.o ${QLIB}
+config.cgi: ${QLIB} config.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o config.cgi config.o ${QLIB}
 
 socket.cgi: ${QLIB} socket.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o socket.cgi socket.o ${QLIB}
