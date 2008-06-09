@@ -142,49 +142,92 @@ size_t qFileSend(int outfd, int infd, size_t size) {
 	return sent;
 }
 
-/**********************************************
-** Usage : qReadFile(filepath, integer pointer to store file size);
-** Return: Success stream pointer, Fail NULL.
-** Do    : Read file to malloced memory.
-**********************************************/
-char *qFileLoad(const char *filepath, int *size) {
-	FILE *fp;
-	struct stat filestat;
-	char *sp, *tmp;
-	int c, i;
+/**
+ * Load file into memory.
+ *
+ * @param filepath	file path
+ * @param size		the number loaded bytes will be stored. can be NULL.
+ *
+ * @return		allocated memory pointer if successful, otherwise returns NULL.
+ *
+ * @code
+ *   // loading text file
+ *   char *text = (char *)qFileLoad("/tmp/text.txt", NULL);
+ *
+ *   // loading binary file
+ *   int binlen;
+ *   char *bin = (char *)qFileLoad("/tmp/binary.bin", &binlen);
+ * @endcode
+ *
+ * @note
+ * This method actually allocates memory more than 1 bytes than filesize then append
+ * '\0' character at the end. For example, when the file size is 10 bytes long, 10+1
+ * bytes will allocated and the last byte is always '\0' character. So you can load
+ * text file and use without appending '\0' character. By the way, *size still will
+ * be returned the actual file size of 10.
+ */
+void *qFileLoad(const char *filepath, size_t *size) {
+	int fd;
+	if((fd = open(filepath, O_RDONLY, 0)) < 0) return NULL;
 
-	if (stat(filepath, &filestat) < 0) return NULL;
-	if ((fp = fopen(filepath, "r")) == NULL) return NULL;
-
-	sp = (char *)malloc(filestat.st_size + 1);
-	for (tmp = sp, i = 0; (c = fgetc(fp)) != EOF; tmp++, i++) *tmp = (char)c;
-	*tmp = '\0';
-
-	if (filestat.st_size != i) {
-		DEBUG("Size(File:%d, Readed:%d) mismatch.", (int)filestat.st_size, i);
-		free(sp);
+	struct stat fs;
+	if (fstat(fd, &fs) < 0) {
+		close(fd);
 		return NULL;
 	}
-	fclose(fp);
-	if (size != NULL) *size = i;
-	return sp;
+
+	void *buf = malloc(fs.st_size + 1);
+	if(buf == NULL) {
+		close(fd);
+		return NULL;
+	}
+
+	ssize_t count = read(fd, buf, fs.st_size);
+	close(fd);
+
+	if (count != fs.st_size) {
+		free(buf);
+		return NULL;
+	}
+
+	((char*)buf)[count] = '\0';
+
+	if(size != NULL) *size = count;
+	return buf;
 }
 
-/**********************************************
-** Usage : qSaveStr(string pointer, string size, filepath, mode)
-** Return: Success number bytes stored, File open fail -1.
-** Do    : Store string to file.
-**********************************************/
-int qSaveStr(char *sp, int spsize, char *filepath, char *mode) {
-	FILE *fp;
-	int i;
-	if ((fp = fopen(filepath, mode)) == NULL) return -1;
-	for (i = 0; i < spsize; i++) fputc(*sp++, fp);
-	fclose(fp);
+/**
+ * Save to file.
+ *
+ * @param filepath	file path
+ * @param buf		data
+ * @param size		the number of bytes to save
+ * @param append	false for new(if exists truncate), true for appending
+ *
+ * @return		the number of bytes written if successful, otherwise returns -1.
+ *
+ * @code
+ *   // save text
+ *   char *text = "hello";
+ *   qFileSave("/tmp/text.txt", (void*)text, strlen(text), false);
+ *
+ *   // save binary
+ *   int integer1 = 75;
+ *   qFileSave("/tmp/integer.bin, (void*)&integer, sizeof(int));
+ * @endcode
+ */
+ssize_t qFileSave(const char *filepath, const void *buf, size_t size, bool append) {
+	int fd;
 
-	return i;
+	if(append == false) fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
+	else fd = open(filepath, O_CREAT|O_WRONLY|O_APPEND, DEF_FILE_MODE);
+	if(fd < 0) return -1;
+
+	ssize_t count = write(fd, buf, size);
+	close(fd);
+
+	return count;
 }
-
 
 /*********************************************
 ** Usage : qfReadFile(file pointer);

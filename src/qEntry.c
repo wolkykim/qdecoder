@@ -155,14 +155,14 @@ int qEntryRemove(Q_ENTRY *entry, const char *name) {
  */
 bool qEntryPut(Q_ENTRY *entry, const char *name, const void *object, int size, bool update) {
 	/* check arguments */
-	if(entry == NULL || name == NULL || object == NULL || size <= 0) return false;
+	if(entry == NULL || name == NULL || object == NULL || size < 0) return false;
 
 	/* duplicate name */
 	char *dup_name = strdup(name);
 	if(dup_name == NULL) return false;
 
 	/* duplicate object */
-	void *dup_object = malloc(size);
+	void *dup_object = (size>0?malloc(size):strdup(""));
 	if(dup_object == NULL) {
 		free(dup_name);
 		return false;
@@ -208,7 +208,7 @@ bool qEntryPut(Q_ENTRY *entry, const char *name, const void *object, int size, b
  */
 bool qEntryPutStr(Q_ENTRY *entry, const char *name, const char *str, bool update) {
 	int size = (str!=NULL) ? (strlen(str) + 1) : 0;
-	return qEntryPut(entry, name, (void *)str, size, update);
+	return qEntryPut(entry, name, (const void *)str, size, update);
 }
 
 /**
@@ -221,7 +221,7 @@ bool qEntryPutStr(Q_ENTRY *entry, const char *name, const char *str, bool update
  *
  * @return		true if successful, otherwise returns false.
  */
-bool qEntryPutStrf(Q_ENTRY *entry,  const char *name, bool update, char *format, ...) {
+bool qEntryPutStrf(Q_ENTRY *entry, const char *name, bool update, char *format, ...) {
 	char str[MAX_LINEBUF];
 	va_list arglist;
 
@@ -361,8 +361,30 @@ const void *qEntryGetLast(Q_ENTRY *entry, const char *name, int *size) {
  * @param name		key name
  *
  * @return		a pointer of the stored string object.
+ *
+ * @note
+ * String object should be stored by qEntryPutStr().
  */
 const char *qEntryGetStr(Q_ENTRY *entry, const char *name) {
+	return (char *)qEntryGet(entry, name, NULL);
+}
+
+/**
+ * Find string object with formatted name.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param format	name format
+ *
+ * @return		a pointer of the stored string object.
+ */
+const char *qEntryGetStrf(Q_ENTRY *entry, char *format, ...) {
+	char name[MAX_LINEBUF];
+	va_list arglist;
+
+	va_start(arglist, format);
+	vsnprintf(name, sizeof(name), format, arglist);
+	va_end(arglist);
+
 	return (char *)qEntryGet(entry, name, NULL);
 }
 
@@ -409,11 +431,33 @@ const char *qEntryGetStrLast(Q_ENTRY *entry, const char *name) {
  * @param name		key name
  *
  * @return		a integer value of the object.
+ *
+ * @note
+ * Integer object should be stored by qEntryPutInt().
  */
 int qEntryGetInt(Q_ENTRY *entry, const char *name) {
 	const char *str =qEntryGet(entry, name, NULL);
 	if(str != NULL) return atoi((char *)str);
 	return 0;
+}
+
+/**
+ * Find integer object with formatted name.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param format	name format
+ *
+ * @return		a integer value of the object.
+ */
+int qEntryGetIntf(Q_ENTRY *entry, char *format, ...) {
+	char name[MAX_LINEBUF];
+	va_list arglist;
+
+	va_start(arglist, format);
+	vsnprintf(name, sizeof(name), format, arglist);
+	va_end(arglist);
+
+	return qEntryGetInt(entry, name);
 }
 
 /**

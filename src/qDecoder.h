@@ -305,17 +305,19 @@ extern	const Q_NLOBJ*	qEntryNext(Q_ENTRY *entry);
 extern	int		qEntryRemove(Q_ENTRY *entry, const char *name);
 extern	bool		qEntryPut(Q_ENTRY *entry, const char *name, const void *object, int size, bool update);
 extern	bool		qEntryPutStr(Q_ENTRY *entry, const char *name, const char *str, bool update);
-extern	bool		qEntryPutStrf(Q_ENTRY *entry,  const char *name, bool update, char *format, ...);
+extern	bool		qEntryPutStrf(Q_ENTRY *entry, const char *name, bool update, char *format, ...);
 extern	bool		qEntryPutInt(Q_ENTRY *entry, const char *name, int num, bool update);
 extern	const void*	qEntryGet(Q_ENTRY *entry, const char *name, int *size);
 extern	const void*	qEntryGetNext(Q_ENTRY *entry, const char *name, int *size);
 extern	const void*	qEntryGetNoCase(Q_ENTRY *entry, const char *name, int *size);
 extern	const void*	qEntryGetLast(Q_ENTRY *entry, const char *name, int *size);
 extern	const char*	qEntryGetStr(Q_ENTRY *entry, const char *name);
+extern	const char*	qEntryGetStrf(Q_ENTRY *entry, char *format, ...);
 extern	const char*	qEntryGetStrNext(Q_ENTRY *entry, const char *name);
 extern	const char*	qEntryGetStrNoCase(Q_ENTRY *entry, const char *name);
 extern	const char*	qEntryGetStrLast(Q_ENTRY *entry, const char *name);
 extern	int		qEntryGetInt(Q_ENTRY *entry, const char *name);
+extern	int		qEntryGetIntf(Q_ENTRY *entry, char *format, ...);
 extern	int		qEntryGetIntNext(Q_ENTRY *entry, const char *name);
 extern	int		qEntryGetIntNoCase(Q_ENTRY *entry, const char *name);
 extern	int 		qEntryGetIntLast(Q_ENTRY *entry, const char *name);
@@ -429,11 +431,10 @@ extern	bool		qFileUnlock(int fd);
 extern	bool		qFileExist(const char *filepath);
 extern	off_t		qFileGetSize(const char *filepath);
 extern	size_t		qFileSend(int outfd, int infd, size_t size);
-extern	char*		qFileLoad(const char *filepath, int *size);
-int	qSaveStr(char *sp, int spsize, char *filepath, char *mode);
+extern	void*		qFileLoad(const char *filepath, size_t *size);
+extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bool append);
 char	*qfReadFile(FILE *fp);
 char	*qfGetLine(FILE *fp);
-
 char	*qCmd(char *cmd);
 
 /*

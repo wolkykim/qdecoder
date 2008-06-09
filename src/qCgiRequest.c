@@ -163,9 +163,9 @@
  */
 static int  _parse_multipart(Q_ENTRY *request);
 static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, bool *finish);
-static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, char *filename, int *filelen, bool *finish);
+static char *_parse_multipart_value_into_disk(const char *boundary, const char *savedir, const char *filename, int *filelen, bool *finish);
 
-static char *_upload_getsavedir(char *upload_savedir, const char *upload_id, const char *upload_basepath);
+static char *_upload_getsavedir(char *upload_savedir, int size, const char *upload_id, const char *upload_basepath);
 static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const char *upload_basepath);
 static bool _upload_getstatus(const char *upload_id, const char *upload_basepath, int *upload_tsize, int *upload_csize, char *upload_cname, int upload_cname_size);
 static bool _upload_clear_savedir(char *dirpath);
@@ -274,11 +274,11 @@ Q_ENTRY *qCgiRequestParseQueries(Q_ENTRY *request, const char *method) {
 		}
 
 		/* check uploading progress dialog */
-		const char *q_upload_id = qEntryGetStr(request, "Q_UPLOAD_ID");
-		if (q_upload_id != NULL) {
+		const char *upload_id = qEntryGetStr(request, "Q_UPLOAD_ID");
+		if (upload_id != NULL) {
 			const char *upload_basepath = qEntryGetStr(request, "_Q_UPLOAD_BASEPATH");
 			if (upload_basepath != NULL) {
-				_upload_progressbar(request, q_upload_id, upload_basepath);
+				_upload_progressbar(request, upload_id, upload_basepath);
 				exit(EXIT_SUCCESS);
 			} else {
 				DEBUG("Force to switch to memory operation mode.");
@@ -349,36 +349,43 @@ Q_ENTRY *qCgiRequestParseCookies(Q_ENTRY *request) {
  */
 char *qCgiRequestGetQueryString(const char *query_type) {
 	if (!strcmp(query_type, "GET")) {
-		if (getenv("QUERY_STRING") == NULL) return NULL;
-		char *query = strdup(getenv("QUERY_STRING"));
+		char *request_method = getenv("REQUEST_METHOD");
+		if (request_method != NULL && strcmp(request_method, "GET")) return NULL;
+
+		char *query_string = getenv("QUERY_STRING");
+		char *req_uri = getenv("REQUEST_URI");
+		if (query_string == NULL) return NULL;
+
+		char *query = NULL;
 		/* SSI query handling */
-		if (!strcmp(query, "") && getenv("REQUEST_URI") != NULL) {
+		if (strlen(query_string) == 0 && req_uri != NULL) {
 			char *cp;
-			for (cp = getenv("REQUEST_URI"); *cp != '\0'; cp++) {
+			for (cp = req_uri; *cp != '\0'; cp++) {
 				if (*cp == '?') {
 					cp++;
 					break;
 				}
 			}
-			free(query);
 			query = strdup(cp);
+		} else {
+			query = strdup(query_string);
 		}
 
 		return query;
 	} else if (!strcmp(query_type, "POST")) {
-		if (getenv("CONTENT_LENGTH") == NULL
-		|| getenv("REQUEST_METHOD") == NULL
-		|| strcmp(getenv("REQUEST_METHOD"), "POST") == 0) return NULL;
+		char *request_method = getenv("REQUEST_METHOD");
+		char *content_length = getenv("CONTENT_LENGTH");
+		if (request_method == NULL || strcmp(request_method, "POST") || content_length == NULL) return NULL;
 
-		int cl = atoi(getenv("CONTENT_LENGTH"));
+		int i, cl = atoi(content_length);
 		char *query = (char *)malloc(sizeof(char) * (cl + 1));
-		int i;
 		for (i = 0; i < cl; i++)query[i] = fgetc(stdin);
 		query[i] = '\0';
 		return query;
 	} else if (!strcmp(query_type, "COOKIE")) {
-		if (getenv("HTTP_COOKIE") == NULL) return NULL;
-		char *query = strdup(getenv("HTTP_COOKIE"));
+		char *http_cookie = getenv("HTTP_COOKIE");
+		if (http_cookie == NULL) return NULL;
+		char *query = strdup(http_cookie);
 		return query;
 	}
 
@@ -394,19 +401,6 @@ static int _parse_multipart(Q_ENTRY *request) {
 
 	char buf[MAX_LINEBUF];
 	int  amount = 0;
-
-	/*
-	 * For parse GET method
-	 */
-
-	/* parse GET method */
-	char *query = qCgiRequestGetQueryString("GET");
-	if(query != NULL) {
-		qDecodeQueryString(request, query, '=', '&', &amount);
-		free(query);
-	}
-
-	/* parse GET method */
 
 	/*
 	 * For parse multipart/form-data method
@@ -441,10 +435,10 @@ static int _parse_multipart(Q_ENTRY *request) {
 
 		for (j = 1; _fgets(buf, sizeof(buf), stdin) != NULL; j++) {
 			printf("Line %d, len %d : %s<br>\n", j, strlen(buf), buf);
-			for (i = 0; buf[i] != '\0'; i++) printf("%02X ", buf[i]);
-			printf("<p>\n");
+			//for (i = 0; buf[i] != '\0'; i++) printf("%02X ", buf[i]);
+			printf("<br>\n");
 		}
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
 
 	/* check boundary */
@@ -461,59 +455,69 @@ static int _parse_multipart(Q_ENTRY *request) {
 		return amount;
 	}
 
-	/* check file save mode */
 	bool upload_filesave = false; /* false: save into memory, true: save into file */
 	const char *upload_basepath = qEntryGetStr(request, "_Q_UPLOAD_BASEPATH");
 	char upload_savedir[MAX_PATHLEN];
-	while(upload_basepath != NULL && getenv("CONTENT_LENGTH") != NULL) {
-		const char *upload_id = qEntryGetStr(request, "Q_UPLOAD_ID");
-		if (upload_id == NULL || strlen(upload_id) == 0)  upload_id = qUniqId(); /* not progress, just file mode */
-
-		/* generate temporary uploading directory path */
-		if (_upload_getsavedir(upload_savedir, upload_id, upload_basepath) == NULL) {
-			DEBUG("Invalid base path %s", upload_basepath);
-			break;
-		}
-
-		/* first, we clear old temporary files */
-		int upload_clearold = qEntryGetInt(request, "_Q_UPLOAD_CLEAROLD");
-		if (_upload_clear_base(upload_basepath, upload_clearold) == false) {
-			DEBUG("Can't remove old temporary files at %s", upload_basepath);
-		}
-
-		/* if exists, remove whole directory */
-		if (qFileExist(upload_savedir) == true && _upload_clear_savedir(upload_savedir) == false) {
-			DEBUG("Can not remove temporary uploading directory %s", upload_savedir);
-			break;
-		}
-
-		/* make temporary uploading directory */
-		if (mkdir(upload_savedir, 0755) != 0) {
-			DEBUG("Can not make temporary uploading directory %s", upload_savedir);
-			break;
-		}
-
-		/* save total contents length */
-		char upload_tmppath[MAX_PATHLEN];
-		snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_TSIZE", upload_savedir);
-		if (qCountSave(upload_tmppath, atoi(getenv("CONTENT_LENGTH"))) == false) {
-			DEBUG("Can not save uploading information at %s", upload_tmppath);
-			break;
-		}
-
-		/* save start time */
-		snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_START", upload_savedir);
-		if (qCountSave(upload_tmppath, time(NULL)) == false) {
-			DEBUG("Can't save uploading information at %s", upload_tmppath);
-			break;
-		}
-
-		/* turn on the flag - save into file directly */
-		upload_filesave = true;
-	}
-
 	bool  finish;
 	for (finish = false; finish == false; amount++) {
+		/* check file save mode */
+		while(upload_filesave == false && upload_basepath != NULL && qEntryGetNum(request) > 2) {
+			char *content_length = getenv("CONTENT_LENGTH");
+			if(content_length == NULL) {
+				break;
+			}
+
+			const char *upload_id = qEntryGetStr(request, "Q_UPLOAD_ID");
+			if (upload_id == NULL || strlen(upload_id) == 0) {
+				upload_id = qUniqId(); /* not progress, just file mode */
+			}
+
+			/* generate temporary uploading directory path */
+			if (_upload_getsavedir(upload_savedir, sizeof(upload_savedir), upload_id, upload_basepath) == NULL) {
+				DEBUG("Invalid base path %s", upload_basepath);
+				break;
+			}
+
+			/* first, we clear old temporary files */
+			int upload_clearold = qEntryGetInt(request, "_Q_UPLOAD_CLEAROLD");
+			if (_upload_clear_base(upload_basepath, upload_clearold) == false) {
+				DEBUG("Can't remove old temporary files at %s", upload_basepath);
+			}
+
+			/* if exists, remove whole directory */
+			if (qFileExist(upload_savedir) == true && _upload_clear_savedir(upload_savedir) == false) {
+				DEBUG("Can not remove temporary uploading directory %s", upload_savedir);
+				break;
+			}
+
+			/* make temporary uploading directory */
+			if (mkdir(upload_savedir, DEF_DIR_MODE) != 0) {
+				DEBUG("Can not make temporary uploading directory %s", upload_savedir);
+				break;
+			}
+
+			/* save total contents length */
+			char upload_tmppath[MAX_PATHLEN];
+			snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_TSIZE", upload_savedir);
+			if (qCountSave(upload_tmppath, atoi(content_length)) == false) {
+				DEBUG("Can not save uploading information at %s", upload_tmppath);
+				break;
+			}
+
+			/* save start time */
+			snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_START", upload_savedir);
+			if (qCountSave(upload_tmppath, time(NULL)) == false) {
+				DEBUG("Can't save uploading information at %s", upload_tmppath);
+				break;
+			}
+
+			/* turn on the flag - save into file directly */
+			upload_filesave = true;
+			break;
+		}
+
+
+
 		char *name = NULL, *value = NULL, *filename = NULL, *contenttype = NULL;
 		int valuelen = 0;
 
@@ -545,6 +549,11 @@ static int _parse_multipart(Q_ENTRY *request) {
 						}
 					}
 					qStrTrim(filename);
+
+					if(strlen(filename) == 0) { /* empty attachment */
+						free(filename);
+						filename = NULL;
+					}
 				}
 			} else if (!strncasecmp(buf, "Content-Type: ", CONST_STRLEN("Content-Type: "))) {
 				contenttype = strdup(buf + CONST_STRLEN("Content-Type: "));
@@ -552,38 +561,46 @@ static int _parse_multipart(Q_ENTRY *request) {
 			}
 		}
 
+		/* check */
+		if(name == NULL) {
+			DEBUG("bug or invalid format.");
+			continue;
+		}
+
 		/* get value field */
 		if (filename != NULL && upload_filesave == true) {
 			char *savename = qStrReplace("tn", filename, " ", "_");
 			value = _parse_multipart_value_into_disk(boundary, upload_savedir, savename, &valuelen, &finish);
 			free(savename);
+
+			if(value != NULL) qEntryPutStr(request, name, value, false);
+			else qEntryPutStr(request, name, "(parsing failure)", false);
 		} else {
 			value = _parse_multipart_value_into_memory(boundary, &valuelen, &finish);
+
+			if(value != NULL) qEntryPut(request, name, value, valuelen+1, false);
+			else qEntryPutStr(request, name, "(parsing failure)", false);
 		}
 
-		if(value != NULL) {
-			qEntryPutStr(request, name, value, false);
+		/* store some additional info */
+		if (value != NULL && filename != NULL) {
+			char ename[255+10+1];
 
-			/* store some additional info */
-			if (filename != NULL) {
-				char ename[255+10+1];
+			/* store data length, 'NAME.length'*/
+			snprintf(ename, sizeof(ename), "%s.length", name);
+			qEntryPutInt(request, ename, valuelen, false);
 
-				/* store data length, 'NAME.length'*/
-				snprintf(ename, sizeof(ename), "%s.length", name);
-				qEntryPutInt(request, ename, valuelen, false);
+			/* store filename, 'NAME.filename'*/
+			snprintf(ename, sizeof(ename), "%s.filename", name);
+			qEntryPutStr(request, ename, filename, false);
 
-				/* store filename, 'NAME.filename'*/
-				snprintf(ename, sizeof(ename), "%s.filename", name);
-				qEntryPutStr(request, ename, filename, false);
+			/* store contenttype, 'NAME.contenttype'*/
+			snprintf(ename, sizeof(ename), "%s.contenttype", name);
+			qEntryPutStr(request, ename, ((contenttype!=NULL)?contenttype:""), false);
 
-				/* store contenttype, 'NAME.contenttype'*/
-				snprintf(ename, sizeof(ename), "%s.contenttype", name);
-				qEntryPutStr(request, ename, ((contenttype!=NULL)?contenttype:""), false);
-
-				if (upload_filesave == true) {
-					snprintf(ename, sizeof(ename), "%s.savepath", name);
-					qEntryPutStr(request, ename, value, false);
-				}
+			if (upload_filesave == true) {
+				snprintf(ename, sizeof(ename), "%s.savepath", name);
+				qEntryPutStr(request, ename, value, false);
 			}
 		}
 
@@ -592,6 +609,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 		if(value != NULL) free(value);
 		if(filename != NULL) free(filename);
 		if(contenttype != NULL) free(contenttype);
+
 	}
 
 	if (upload_filesave == true) { /* save end time */
@@ -701,7 +719,7 @@ static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, b
 	return value;
 }
 
-static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, char *filename, int *filelen, bool *finish) {
+static char *_parse_multipart_value_into_disk(const char *boundary, const char *savedir, const char *filename, int *filelen, bool *finish) {
 	char boundaryEOF[256], rnboundaryEOF[256];
 	char boundaryrn[256], rnboundaryrn[256];
 	int  boundarylen, boundaryEOFlen;
@@ -710,9 +728,6 @@ static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, cha
 	char buffer[_Q_MULTIPART_CHUNK_SIZE];
 	int  bufc;
 	int  c;
-
-	/* output */
-	static int upload_cnt = 0; /* saved file counter */
 
 	/* set boundary strings */
 	snprintf(boundaryEOF, sizeof(boundaryEOF), "%s--", boundary);
@@ -723,18 +738,24 @@ static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, cha
 	boundarylen    = strlen(boundary);
 	boundaryEOFlen = strlen(boundaryEOF);
 
-	/* initialize */
-	upload_cnt++;
-	char upload_path[MAX_PATHLEN];
-	snprintf(upload_path, sizeof(upload_path), "%s/%d-%s", savedir, upload_cnt, filename);
+	/* save current upload file */
+	char upload_file[MAX_PATHLEN];
+	snprintf(upload_file, sizeof(upload_file), "%s/Q_UPLOAD_FILE", savedir);
+	qFileSave(upload_file, filename, strlen(filename), false);
 
-	/* open file */
-	int upload_fd = open(upload_path, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
+	/* open temp file */
+	char upload_path[MAX_PATHLEN];
+	snprintf(upload_path, sizeof(upload_path), "%s/Q_FILE_XXXXXX", savedir);
+
+	int upload_fd = mkstemp(upload_path);
 	if (upload_fd < 0) {
 		DEBUG("Can't open file %s", upload_path);
 		*finish = true;
 		return NULL;
 	}
+
+	/* change permission */
+	fchmod(upload_fd, DEF_FILE_MODE);
 
 	/* read stream */
 	int  upload_length;
@@ -806,14 +827,14 @@ static char *_parse_multipart_value_into_disk(char *boundary, char *savedir, cha
 	return strdup(upload_path);
 }
 
-static char *_upload_getsavedir(char *upload_savedir, const char *upload_id, const char *upload_basepath) {
+static char *_upload_getsavedir(char *upload_savedir, int size, const char *upload_id, const char *upload_basepath) {
 	if(upload_savedir == NULL || upload_id == NULL || upload_basepath == NULL || strlen(upload_basepath) == 0) return NULL;
 
-	char md5seed[255+1];
-	snprintf(md5seed, sizeof(md5seed), "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
-	snprintf(upload_savedir, sizeof(upload_savedir), "%s/Q_%s", upload_basepath, qMd5Str(md5seed, strlen(md5seed)));
+        char md5seed[1024];
+        snprintf(md5seed, sizeof(md5seed), "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
+        snprintf(upload_savedir, size, "%s/Q_%s", upload_basepath, qMd5Str(md5seed, strlen(md5seed)));
 
-	return upload_savedir;
+        return upload_savedir;
 }
 
 static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const char *upload_basepath) {
@@ -831,11 +852,11 @@ static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const c
 
 	/* check arguments */
 	if (!strcmp(upload_id, "")) {
-		printf("_print_progressbar(): Q_UPLOAD_ID is invalid.");
+		DEBUG("Q_UPLOAD_ID is invalid.");
 		return;
 	}
 	if (template == NULL) {
-		printf("_print_progressbar(): Q_UPLOAD_TEMPLATE query not found.");
+		DEBUG("Q_UPLOAD_TEMPLATE query not found.");
 		return;
 	}
 
@@ -844,17 +865,19 @@ static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const c
 
 	/* print template */
 	if(qSedFile(NULL, template, stdout) == 0) {
-		printf("_print_progressbar(): Can't open %s", template);
+		DEBUG("Can't open %s", template);
 		return;
 	}
 	if(fflush(stdout) != 0) return;
 
 	/* draw progress bar */
-	while(true) {
+	int failcnt = 0;
+	while(failcnt < 10) {
 		upload_tsize = upload_csize = 0;
 
 		if(_upload_getstatus(upload_id, upload_basepath, &upload_tsize, &upload_csize, upload_cname, sizeof(upload_cname)) == false) {
-			break;
+			sleep(1);
+			continue;
 		}
 
 		if(upload_tsize == 0 && upload_csize > 0) break; /* tsize file is removed. upload ended */
@@ -863,7 +886,7 @@ static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const c
 			qStrReplace("tr", upload_cname, "'", "`");
 
 			printf("<script language='JavaScript'>");
-			printf("if(Q_setProgress)Q_setProgress(%d,%d,'%s');", upload_tsize, upload_csize, upload_cname);
+			printf("if(qSetProgress)qSetProgress(%d,%d,'%s');", upload_tsize, upload_csize, upload_cname);
 			printf("</script>\n");
 
 			last_csize = upload_csize;
@@ -877,7 +900,7 @@ static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const c
 
 			if (upload_csize > 0) {
 				printf("<script language='JavaScript'>");
-				printf("if(Q_setProgress)Q_setProgress(%d,%d,'%s');", upload_tsize, upload_csize, upload_cname);
+				printf("if(qSetProgress)qSetProgress(%d,%d,'%s');", upload_tsize, upload_csize, upload_cname);
 				printf("</script>\n");
 			}
 
@@ -902,42 +925,44 @@ static bool _upload_getstatus(const char *upload_id, const char *upload_basepath
 	DIR     *dp;
 	struct  dirent *dirp;
 
-	char upload_savedir[MAX_PATHLEN], upload_filepath[MAX_PATHLEN];
-
-	/* initialize */
-	*upload_tsize = *upload_csize = 0;
-	strcpy(upload_cname, "");
+	char upload_savedir[MAX_PATHLEN], tmppath[MAX_PATHLEN];
 
 	/* get basepath */
-	if (_upload_getsavedir(upload_savedir, upload_id, upload_basepath) == NULL) {
+	if (_upload_getsavedir(upload_savedir, sizeof(upload_savedir), upload_id, upload_basepath) == NULL) {
 		DEBUG("Q_UPLOAD_ID is not set.");
 		return false;
 	}
 
 	/* open upload folder */
-	if ((dp = opendir(upload_savedir)) == NULL) {
+	dp = opendir(upload_savedir);
+	if (dp == NULL) {
 		DEBUG("Can't open %s", upload_savedir);
 		return false;
 	}
 
 	/* read tsize */
-	snprintf(upload_filepath, sizeof(upload_filepath), "%s/Q_UPLOAD_TSIZE", upload_savedir);
-	*upload_tsize = qCountRead(upload_filepath);
+	snprintf(tmppath, sizeof(tmppath), "%s/Q_UPLOAD_TSIZE", upload_savedir);
+	*upload_tsize = qCountRead(tmppath);
 
+	/* read currnet upload filename */
+	snprintf(tmppath, sizeof(tmppath), "%s/Q_UPLOAD_FILE", upload_savedir);
+	char *upload_file = qFileLoad(tmppath, NULL);
+	if(upload_file != NULL) {
+		strcpy(upload_cname, upload_file);
+		free(upload_file);
+	} else {
+		strcpy(upload_cname, "-");
+	}
+
+	/* get csize */
+	*upload_csize = 0;
 	while ((dirp = readdir(dp)) != NULL) {
-		if (dirp->d_name[0] - '0' <= 0 || dirp->d_name[0] - '0' > 9) continue; /* first char must be a number */
+		if (strncmp(dirp->d_name, "Q_FILE_", CONST_STRLEN("Q_FILE_"))) continue;
 
-		/* sort last filename */
-		if (strcmp(upload_cname, dirp->d_name) < 0) qStrncpy(upload_cname, dirp->d_name, upload_cname_size-1);
-
-		snprintf(upload_filepath, sizeof(upload_filepath), "%s/%s", upload_savedir, dirp->d_name);
-		*upload_csize += qFileGetSize(upload_filepath);
+		snprintf(tmppath, sizeof(tmppath), "%s/%s", upload_savedir, dirp->d_name);
+		*upload_csize += qFileGetSize(tmppath);
 	}
 	closedir(dp);
-
-	if (strstr(upload_cname, "-") != NULL) {
-		qStrncpy(upload_cname, strstr(upload_cname, "-") + 1, upload_cname_size-1);
-	}
 
 	return true;
 #endif
@@ -953,7 +978,7 @@ static bool _upload_clear_savedir(char *dirpath) {
 
 	struct  dirent *dirp;
 	while ((dirp = readdir(dp)) != NULL) {
-		if (!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..")) continue;
+		if (strncmp(dirp->d_name, "Q_", CONST_STRLEN("Q_"))) continue;
 
 		char filepath[MAX_PATHLEN];
 		snprintf(filepath, sizeof(filepath), "%s/%s", dirpath, dirp->d_name);

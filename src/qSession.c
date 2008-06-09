@@ -222,11 +222,11 @@ bool qSessionSave(Q_ENTRY *session) {
 	snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
 	if (qEntrySave(session, session_storage_path, '=', true) == false) {
-		DEBUG("Can't save session file %s", _session_storage_path);
+		DEBUG("Can't save session file %s", session_storage_path);
 		return false;
 	}
 	if (_updateTimeout(session_timeout_path, session_timeout_interval) == 0) {
-		DEBUG("Can't update file %s", _session_timeout_path);
+		DEBUG("Can't update file %s", session_timeout_path);
 		return false;
 	}
 
@@ -270,7 +270,7 @@ static bool _clearRepository(const char *session_repository_path) {
 	/* clear old session data */
 	DIR *dp;
 	if ((dp = opendir(session_repository_path)) == NULL) {
-		DEBUG("Can't open session repository %s", _session_repository_path);
+		DEBUG("Can't open session repository %s", session_repository_path);
 		return false;
 	}
 
