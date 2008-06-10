@@ -26,6 +26,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "md5/md5_global.h"
 #include "md5/md5.h"
 #include "qDecoder.h"
@@ -37,7 +40,7 @@
 ** Return: MD5 digested static string pointer.
 ** Do    : 16 bytes digest binary data through MD5 algorithm.
 **********************************************/
-unsigned char *qHashMd5(void *data, size_t nbytes) {
+unsigned char *qHashMd5(const void *data, size_t nbytes) {
 	if(data == NULL) return NULL;
 
 	unsigned char *digest = (unsigned char*)malloc(sizeof(char) * (16 + 1));
@@ -66,8 +69,9 @@ char *qHashMd5Str(const char *str, size_t *nbytes) {
 		else size = *nbytes;
 	}
 
-	unsigned char *digest = qMd5Hash(data, nbytes);
+	unsigned char *digest = qHashMd5(str, size);
 	if (digest == NULL) return NULL;
+
 	char *md5hex = (char*)malloc(sizeof(char) * (16 * 2 + 1));
 	if (md5hex == NULL) return NULL;
 
@@ -75,6 +79,7 @@ char *qHashMd5Str(const char *str, size_t *nbytes) {
 	for (i = 0; i < 16; i++) {
 		sprintf(md5hex + (i * 2), "%02x", digest[i]);
 	}
+	free(digest);
 
 	return md5hex;
 }
@@ -85,11 +90,11 @@ char *qHashMd5Str(const char *str, size_t *nbytes) {
 ** Do    : Strng converted digest string through MD5 algorithm.
 **********************************************/
 char *qHashMd5File(const char *filepath, size_t *nbytes) {
-	fd = open(filepath, O_RDONLY, 0);
-	if (fd) < 0) return NULL;
+	int fd = open(filepath, O_RDONLY, 0);
+	if (fd < 0) return NULL;
 
 	struct stat st;
-	if (fstat(f, &st) < 0) return NULL;
+	if (fstat(fd, &st) < 0) return NULL;
 
 	size_t size = st.st_size;
 	if(nbytes != NULL) {
@@ -102,10 +107,10 @@ char *qHashMd5File(const char *filepath, size_t *nbytes) {
 	ssize_t retr = 0;
 	unsigned char buf[256*1024], szDigest[16];
 	while (size > 0) {
-		if (size > sizeof(buf)) retr = read(f, buf, sizeof(buf));
-		else retr = read(f, buf, size);
+		if (size > sizeof(buf)) retr = read(fd, buf, sizeof(buf));
+		else retr = read(fd, buf, size);
 		if (retr < 0) break;
-		MD5Update(&context, buf, i);
+		MD5Update(&context, buf, retr);
 		size -= retr;
 	}
 	close(fd);
@@ -116,6 +121,7 @@ char *qHashMd5File(const char *filepath, size_t *nbytes) {
 	char *md5hex = (char*)malloc(sizeof(char) * (16 * 2 + 1));
 	if (md5hex == NULL) return NULL;
 
+	int i;
 	for (i = 0; i < 16; i++) {
 		sprintf(md5hex + (i * 2), "%02x", szDigest[i]);
 	}
@@ -130,7 +136,7 @@ char *qHashMd5File(const char *filepath, size_t *nbytes) {
 **         if set max to 0, disable maximum limit
 **********************************************/
 unsigned int qHashFnv32(unsigned int max, const void *data, size_t *nbytes) {
-	if(data == NULL) return NULL;
+	if(data == NULL) return 0;
 
 	size_t size = strlen(data);
 	if(nbytes != NULL) {

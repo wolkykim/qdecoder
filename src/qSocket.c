@@ -257,7 +257,7 @@ int qSocketGets(char *str, int sockfd, int nbytes, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketWrite(int sockfd, char *binary, int nbytes) {
+int qSocketWrite(int sockfd, const char *binary, int nbytes) {
 	return write(sockfd, binary, nbytes);
 }
 
@@ -274,7 +274,7 @@ int qSocketWrite(int sockfd, char *binary, int nbytes) {
  * @code
  * @endcode
  */
-int qSocketPuts(int sockfd, char *str) {
+int qSocketPuts(int sockfd, const char *str) {
 	char *buf;
 
 	buf = (char *)malloc(strlen(str) + 2 + 1);
@@ -302,7 +302,7 @@ int qSocketPuts(int sockfd, char *str) {
  * @code
  * @endcode
  */
-int qSocketPrintf(int sockfd, char *format, ...) {
+int qSocketPrintf(int sockfd, const char *format, ...) {
 	char buf[MAX_LINEBUF];
 	va_list arglist;
 
@@ -328,7 +328,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  * @code
  * @endcode
  */
-ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t nbytes) {
+ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, ssize_t nbytes) {
 	struct stat filestat;
 	int filefd;
 

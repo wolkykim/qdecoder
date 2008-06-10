@@ -47,10 +47,8 @@
  * @endcode
  */
 char *qTimeGetLocalStrf(char *buf, int size, time_t utctime, const char *format) {
-	struct tm *localtm;
-
 	if(utctime == 0) utctime = time(NULL);
-	localtm = localtime(&utctime);
+	struct tm *localtm = localtime(&utctime);
 
 	strftime(buf, size, format, localtm);
 
@@ -82,6 +80,29 @@ char *qTimeGetLocalStr(time_t utctime) {
 }
 
 /**
+ * Get custom formmatted GMT time string.
+ *
+ * @param buf		save buffer
+ * @param size		buffer size
+ * @param utctime	0 for current time, universal time for specific time
+ * @param format	format for strftime()
+ *
+ * @return		string pointer of buf
+ *
+ * @code
+ *   char timestr[8+1];
+ *   qTimeGetGmtStrf(buf, sizeof(buf), 0, "%H:%M:%S"); // HH:MM:SS
+ * @endcode
+ */
+char *qTimeGetGmtStrf(char *buf, int size, time_t utctime, const char *format) {
+	if(utctime == 0) utctime = time(NULL);
+	struct tm *gmtm = gmtime(&utctime);
+
+	strftime(buf, size, format, gmtm);
+	return buf;
+}
+
+/**
  * Get GMT time string formatted like 'Wed, 11-Nov-2007 23:19:25 GMT'.
  *
  * @param utctime	0 for current time, universal time for specific time
@@ -94,12 +115,9 @@ char *qTimeGetLocalStr(time_t utctime) {
  * @endcode
  */
 char *qTimeGetGmtStr(time_t utctime) {
-	if(utctime == 0) utctime = time(NULL);
-	struct tm *gmtm = gmtime(&utctime);
-
 	int size = sizeof(char) * (CONST_STRLEN("Mon, 00-Jan-0000 00:00:00 GMT") + 1);
 	char *timestr = (char*)malloc(size);
-	strftime(timestr, size, "%a, %d %b %Y %H:%M:%S GMT", gmtm);
+	qTimeGetGmtStrf(timestr, size, utctime, "%a, %d %b %Y %H:%M:%S GMT");
 	return timestr;
 }
 

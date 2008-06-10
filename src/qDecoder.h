@@ -256,10 +256,10 @@ extern	int		qSocketWaitReadable(int sockfd, int timeoutms);
 extern	int		qSocketWaitWritable(int sockfd, int timeoutms);
 extern	int		qSocketRead(char *binary, int sockfd, int nbytes, int timeoutms);
 extern	int		qSocketGets(char *str, int sockfd, int nbytes, int timeoutms);
-extern	int		qSocketWrite(int sockfd, char *binary, int nbytes);
-extern	int		qSocketPuts(int sockfd, char *str);
-extern	int		qSocketPrintf(int sockfd, char *format, ...);
-extern	ssize_t		qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t nbytes);
+extern	int		qSocketWrite(int sockfd, const char *binary, int nbytes);
+extern	int		qSocketPuts(int sockfd, const char *str);
+extern	int		qSocketPrintf(int sockfd, const char *format, ...);
+extern	ssize_t		qSocketSendfile(int sockfd, const char *filepath, off_t offset, ssize_t nbytes);
 extern	int		qSocketSaveIntoFile(int outfd, int sockfd, int nbytes, int timeoutms);
 extern	int		qSocketSaveIntoMemory(char *mem, int sockfd, int nbytes, int timeoutms);
 
@@ -402,7 +402,7 @@ extern	char*		qConvCharEncoding(const char *fromstr, const char *fromcode, const
 /*
  * qHash.c
  */
-extern	unsigned char*	qHashMd5(void *data, size_t nbytes);
+extern	unsigned char*	qHashMd5(const void *data, size_t nbytes);
 extern	char*		qHashMd5Str(const char *str, size_t *nbytes);
 extern	char*		qHashMd5File(const char *filepath, size_t *nbytes);
 extern	unsigned int	qHashFnv32(unsigned int max, const void *data, size_t *nbytes);
@@ -425,6 +425,7 @@ extern	char*		qStrCommaNumber(int number);
 extern	char*		qStrCatf(char *str, const char *format, ...);
 extern	char*		qStrDupBetween(const char *str, const char *start, const char *end);
 extern	char*		qStrUnique(const char *seed);
+extern	bool		qStrIsAlnum(const char *str);
 
 /*
  * qFile.c
@@ -458,6 +459,7 @@ extern	int		qCountUpdate(const char *filepath, int number);
  */
 extern	char*		qTimeGetLocalStrf(char *buf, int size, time_t utctime, const char *format);
 extern	char*		qTimeGetLocalStr(time_t utctime);
+extern	char*		qTimeGetGmtStrf(char *buf, int size, time_t utctime, const char *format);
 extern	char*		qTimeGetGmtStr(time_t utctime);
 extern	time_t		qTimeParseGmtStr(const char *gmtstr);
 

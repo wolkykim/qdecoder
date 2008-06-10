@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include "qDecoder.h"
@@ -640,4 +641,11 @@ char *qStrUnique(const char *seed) {
 	char szSeed[128];
 	snprintf(szSeed, sizeof(szSeed), "%u%d%ld%ld%ld%s", getpid(), count, random(), time(NULL), usec, (seed!=NULL?seed:""));
 	return qHashMd5Str(szSeed, NULL);
+}
+
+bool qStrIsAlnum(const char *str) {
+        for (; *str; str++) {
+                if(isalnum(*str) == 0) return false;
+        }
+        return true;
 }
