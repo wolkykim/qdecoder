@@ -171,7 +171,7 @@ int qArgMatch(char *str, char **qlist) {
 	int i;
 
 	if (!*qlist) return 0;
-	for (qp = qlist, i = 0; *qp != NULL; qp++) if (qStristr(str, *qp)) i++;
+	for (qp = qlist, i = 0; *qp != NULL; qp++) if (qStrCaseStr(str, *qp)) i++;
 
 	return i;
 }
@@ -207,7 +207,7 @@ int qArgEmprint(int mode, char *str, char **qlist) {
 	/* Set character pointer */
 	op = str;
 	sp = freestr = strdup(str);
-	qStrupr(sp);
+	qStrUpper(sp);
 
 	if ((bp = buf = (char *)malloc(strlen(str) + 1)) == NULL) {
 		DEBUG("Memory allocation failed.");

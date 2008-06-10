@@ -31,8 +31,8 @@
 #include "qInternal.h"
 
 static int _findEmpty(Q_HASHTBL *tbl, int startidx);
-static int _getIdx(Q_HASHTBL *tbl, char *key, int hash);
-static bool _putData(Q_HASHTBL *tbl, int idx, int hash, char *key, char *value, int size, int count);
+static int _getIdx(Q_HASHTBL *tbl, const char *key, int hash);
+static bool _putData(Q_HASHTBL *tbl, int idx, int hash, const char *key, const char *value, int size, int count);
 static bool _removeData(Q_HASHTBL *tbl, int idx);
 
 /**
@@ -102,14 +102,11 @@ bool qHashtblFree(Q_HASHTBL *tbl) {
  *
  * @return
  */
-bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size) {
+bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const char *value, int size) {
 	if(tbl == NULL || key == NULL || value == NULL) return false;
 
 	// get hash integer
-	int hash = (int)qFnv32Hash(key, tbl->max);
-
-	// if size is less than 0, we assume that the value is null terminated string.
-	if(size < 0) size = strlen(value) + 1;
+	int hash = (int)qHashFnv32(tbl->max, key, NULL);
 
 	// check, is slot empty
 	if (tbl->count[hash] == 0) { // empty slot
@@ -160,8 +157,9 @@ bool qHashtblPut(Q_HASHTBL *tbl, char *key, char *value, int size) {
  *
  * @return
  */
-bool qHashtblPutStr(Q_HASHTBL *tbl, char *key, char *value) {
-	return qHashtblPut(tbl, key, value, -1);
+bool qHashtblPutStr(Q_HASHTBL *tbl, const char *key, const char *str) {
+	int size = (str!=NULL) ? (strlen(str) + 1) : 0;
+	return qHashtblPut(tbl, key, str, size);
 }
 
 /**
@@ -169,10 +167,10 @@ bool qHashtblPutStr(Q_HASHTBL *tbl, char *key, char *value) {
  *
  * @return
  */
-bool qHashtblPutInt(Q_HASHTBL *tbl, char *key, int value) {
+bool qHashtblPutInt(Q_HASHTBL *tbl, const char *key, const int number) {
 	char data[10+1];
-	sprintf(data, "%d", value);
-	return qHashtblPut(tbl, key, data, -1);
+	sprintf(data, "%d", number);
+	return qHashtblPut(tbl, key, data, strlen(data) + 1);
 }
 
 /**
@@ -180,10 +178,10 @@ bool qHashtblPutInt(Q_HASHTBL *tbl, char *key, int value) {
  *
  * @return
  */
-char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size) {
+char *qHashtblGet(Q_HASHTBL *tbl, const char *key, int *size) {
 	if(tbl == NULL || key == NULL) return NULL;
 
-	int hash = (int)qFnv32Hash(key, tbl->max);
+	int hash = (int)qHashFnv32(tbl->max, key, NULL);
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) return NULL;
 
@@ -199,7 +197,7 @@ char *qHashtblGet(Q_HASHTBL *tbl, char *key, int *size) {
  *
  * @return
  */
-char *qHashtblGetStr(Q_HASHTBL *tbl, char *key) {
+char *qHashtblGetStr(Q_HASHTBL *tbl, const char *key) {
 	return qHashtblGet(tbl, key, NULL);
 }
 
@@ -208,7 +206,7 @@ char *qHashtblGetStr(Q_HASHTBL *tbl, char *key) {
  *
  * @return
  */
-int qHashtblGetInt(Q_HASHTBL *tbl, char *key) {
+int qHashtblGetInt(Q_HASHTBL *tbl, const char *key) {
 	char *data = qHashtblGet(tbl, key, NULL);
 	if(data == NULL) return 0;
 
@@ -250,8 +248,10 @@ char *qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx) {
  *
  * @return
  */
-bool qHashtblRemove(Q_HASHTBL *tbl, char *key) {
-	int hash = (int)qFnv32Hash(key, tbl->max);
+bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
+	if(tbl == NULL || key == NULL) return false;
+
+	int hash = (int)qHashFnv32(tbl->max, key, NULL);
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) return false;
 
@@ -342,7 +342,7 @@ static int _findEmpty(Q_HASHTBL *tbl, int startidx) {
 	return -1;
 }
 
-static int _getIdx(Q_HASHTBL *tbl, char *key, int hash) {
+static int _getIdx(Q_HASHTBL *tbl, const char *key, int hash) {
 	if (tbl->count[hash] > 0) {
 		int count, idx;
 		for (count = 0, idx = hash; count < tbl->count[hash]; ) {
@@ -372,7 +372,7 @@ static int _getIdx(Q_HASHTBL *tbl, char *key, int hash) {
 	return -1;
 }
 
-static bool _putData(Q_HASHTBL *tbl, int idx, int hash, char *key, char *value, int size, int count) {
+static bool _putData(Q_HASHTBL *tbl, int idx, int hash, const char *key, const char *value, int size, int count) {
 	// check if used
 	if(tbl->count[idx] != 0) return false;
 

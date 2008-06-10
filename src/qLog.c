@@ -41,7 +41,7 @@ static int _realOpen(Q_LOG *log);
  *
  * @since 8.1R
  */
-Q_LOG *qLogOpen(char *logbase, char *filenameformat, int rotateinterval, bool flush) {
+Q_LOG *qLogOpen(const char *logbase, const char *filenameformat, int rotateinterval, bool flush) {
 	Q_LOG *log;
 
 	/* malloc Q_LOG structure */
@@ -109,7 +109,7 @@ bool qLogFlush(Q_LOG *log) {
  *
  * @since 8.1R
  */
-bool qLog(Q_LOG *log, char *format, ...) {
+bool qLog(Q_LOG *log, const char *format, ...) {
 	char buf[1024];
 	va_list arglist;
 	time_t nowTime = time(NULL);

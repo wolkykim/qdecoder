@@ -81,9 +81,10 @@ bool qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value
 
 	if (exp_days != 0) {
 		time_t plus_sec = (time_t)(exp_days * 24 * 60 * 60);
-		char *gmt = qGetGmtimeStr(time(NULL) + plus_sec);
+		char *gmtstr = qTimeGetGmtStr(time(NULL) + plus_sec);
 		strcat(cookie, "; expires=");
-		strcat(cookie, gmt);
+		strcat(cookie, gmtstr);
+		free(gmtstr);
 	}
 
 	if (path != NULL) {

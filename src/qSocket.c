@@ -177,7 +177,7 @@ int qSocketWaitWritable(int sockfd, int timeoutms) {
  *
  * @param	binary		data buffer pointer
  * @param	sockfd		socket descriptor
- * @param	size		read size
+ * @param	nbytes		read size
  * @param	timeoutms	wait timeout micro-seconds
  *
  * @return	the length of data readed on success, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
@@ -188,12 +188,12 @@ int qSocketWaitWritable(int sockfd, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketRead(char *binary, int sockfd, int size, int timeoutms) {
+int qSocketRead(char *binary, int sockfd, int nbytes, int timeoutms) {
 	int sockstatus, readcnt;
 
 	sockstatus = qSocketWaitReadable(sockfd, timeoutms);
 	if (sockstatus <= 0) return sockstatus;
-	readcnt = read(sockfd, binary, size);
+	readcnt = read(sockfd, binary, nbytes);
 	if (readcnt <= 0) return -1;
 
 	return readcnt;
@@ -205,7 +205,7 @@ int qSocketRead(char *binary, int sockfd, int size, int timeoutms) {
  *
  * @param	str		data buffer pointer
  * @param	sockfd		socket descriptor
- * @param	size		read size
+ * @param	nbytes		read size
  * @param	timeoutms	wait timeout micro-seconds
  *
  * @return	the length of data readed on success, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
@@ -218,11 +218,11 @@ int qSocketRead(char *binary, int sockfd, int size, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketGets(char *str, int sockfd, int size, int timeoutms) {
+int qSocketGets(char *str, int sockfd, int nbytes, int timeoutms) {
 	char *ptr;
 	int sockstatus, readcnt = 0;
 
-	for (ptr = str; readcnt < (size - 1); ptr++) {
+	for (ptr = str; readcnt < (nbytes - 1); ptr++) {
 		sockstatus = qSocketWaitReadable(sockfd, timeoutms);
 		if (sockstatus <= 0) {
 			*ptr = '\0';
@@ -248,7 +248,7 @@ int qSocketGets(char *str, int sockfd, int size, int timeoutms) {
  *
  * @param	sockfd		socket descriptor
  * @param	binary		data pointer
- * @param	size		sending size
+ * @param	nbytes		sending size
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
  *
@@ -257,8 +257,8 @@ int qSocketGets(char *str, int sockfd, int size, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketWrite(int sockfd, char *binary, int size) {
-	return write(sockfd, binary, size);
+int qSocketWrite(int sockfd, char *binary, int nbytes) {
+	return write(sockfd, binary, nbytes);
 }
 
 /**
@@ -319,7 +319,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  * @param	sockfd		socket descriptor
  * @param	filepath	variable argument lists
  * @param	offset		file start to send
- * @param	size		total bytes to send. 0 means send data until EOF.
+ * @param	nbytes		total bytes to send. 0 means send data until EOF.
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
  *
@@ -328,7 +328,7 @@ int qSocketPrintf(int sockfd, char *format, ...) {
  * @code
  * @endcode
  */
-ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t size) {
+ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t nbytes) {
 	struct stat filestat;
 	int filefd;
 
@@ -337,7 +337,7 @@ ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t size) 
 
 	ssize_t sent = 0;				// total size sent
 	ssize_t rangesize = filestat.st_size - offset;	// maximum available size can be sent
-	if(size > 0 && size < rangesize) rangesize = size; // set rangesize to requested size
+	if(nbytes > 0 && nbytes < rangesize) rangesize = nbytes; // set rangesize to requested size
 
 #if !(defined(ENABLE_SENDFILE) && defined(__linux__))
 	if (offset > 0) lseek(filefd, offset, SEEK_SET);
@@ -367,7 +367,7 @@ ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t size) 
  *
  * @param	filefd		save file descriptor
  * @param	sockfd		socket descriptor
- * @param	size		length of bytes to read from socket
+ * @param	nbytes		length of bytes to read from socket
  * @param	oflag		constructed by a bitwise-inclusive OR of flags defined in <fcntl.h>.
  * @param	timeoutms	wait timeout micro-seconds
  *
@@ -382,17 +382,17 @@ ssize_t qSocketSendfile(int sockfd, char *filepath, off_t offset, ssize_t size) 
  *   qSocketSaveIntoFile(filefd, sockfd, 100, 5000);
  * @endcode
  */
-int qSocketSaveIntoFile(int filefd, int sockfd, int size, int timeoutms) {
+int qSocketSaveIntoFile(int filefd, int sockfd, int nbytes, int timeoutms) {
 #define _Q_SAVEINTOFILE_CHUNK_SIZE	(4*1024)
 	// stream readable?
 	int sockstatus = qSocketWaitReadable(sockfd, timeoutms);
 	if (sockstatus <= 0) return sockstatus;
 
 	int readbytes, readed;
-	for (readbytes = 0; readbytes < size; readbytes += readed) {
+	for (readbytes = 0; readbytes < nbytes; readbytes += readed) {
 		// calculate reading size
 		int readsize;
-		if (size - readbytes < _Q_SAVEINTOFILE_CHUNK_SIZE) readsize = size - readbytes;
+		if (nbytes - readbytes < _Q_SAVEINTOFILE_CHUNK_SIZE) readsize = nbytes - readbytes;
 		else readsize =_Q_SAVEINTOFILE_CHUNK_SIZE;
 
 		// read data
@@ -410,7 +410,7 @@ int qSocketSaveIntoFile(int filefd, int sockfd, int size, int timeoutms) {
  *
  * @param	mem		memory buffer pointer
  * @param	sockfd		socket descriptor
- * @param	size		length of bytes to read from socket
+ * @param	nbytes		length of bytes to read from socket
  * @param	timeoutms	wait timeout micro-seconds
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
@@ -423,13 +423,13 @@ int qSocketSaveIntoFile(int filefd, int sockfd, int size, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketSaveIntoMemory(char *mem, int sockfd, int size, int timeoutms) {
+int qSocketSaveIntoMemory(char *mem, int sockfd, int nbytes, int timeoutms) {
 	char *mp;
 	int sockstatus, readbytes, readed, readsize;
 
-	for (readbytes = 0, mp = mem; readbytes < size; readbytes += readed, mp += readed) {
+	for (readbytes = 0, mp = mem; readbytes < nbytes; readbytes += readed, mp += readed) {
 		// calculate reading size
-		readsize = size - readbytes;
+		readsize = nbytes - readbytes;
 
 		// wait data
 		sockstatus = qSocketWaitReadable(sockfd, timeoutms);

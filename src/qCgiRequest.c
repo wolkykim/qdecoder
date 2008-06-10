@@ -467,9 +467,14 @@ static int _parse_multipart(Q_ENTRY *request) {
 				break;
 			}
 
-			const char *upload_id = qEntryGetStr(request, "Q_UPLOAD_ID");
+			char upload_id_new[32+1];
+			char *upload_id = (char *)qEntryGetStr(request, "Q_UPLOAD_ID");
 			if (upload_id == NULL || strlen(upload_id) == 0) {
-				upload_id = qUniqId(); /* not progress, just file mode */
+				/* not progress, just file mode */
+				char *uniq = qStrUnique(getenv("REMOTE_ADDR"));
+				qStrncpy(upload_id_new, uniq, sizeof(upload_id_new)-1);
+				free(uniq);
+				upload_id = upload_id_new;
 			}
 
 			/* generate temporary uploading directory path */
@@ -515,8 +520,6 @@ static int _parse_multipart(Q_ENTRY *request) {
 			upload_filesave = true;
 			break;
 		}
-
-
 
 		char *name = NULL, *value = NULL, *filename = NULL, *contenttype = NULL;
 		int valuelen = 0;
@@ -832,7 +835,9 @@ static char *_upload_getsavedir(char *upload_savedir, int size, const char *uplo
 
         char md5seed[1024];
         snprintf(md5seed, sizeof(md5seed), "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
-        snprintf(upload_savedir, size, "%s/Q_%s", upload_basepath, qMd5Str(md5seed, strlen(md5seed)));
+        char *md5str = qHashMd5Str(md5seed, NULL);
+        snprintf(upload_savedir, size, "%s/Q_%s", upload_basepath, md5str);
+        free(md5str);
 
         return upload_savedir;
 }

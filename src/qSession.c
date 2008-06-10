@@ -55,7 +55,6 @@
 #define INTER_PREFIX			"_Q_"
 #define INTER_SESSIONID			INTER_PREFIX "SESSIONID"
 #define INTER_SESSION_REPO		INTER_PREFIX "REPOSITORY"
-#define INTER_CREATED_GMT		INTER_PREFIX "CREATED-GMT"
 #define INTER_CREATED_SEC		INTER_PREFIX "CREATED"
 #define INTER_INTERVAL_SEC		INTER_PREFIX "INTERVAL"
 #define INTER_CONNECTIONS		INTER_PREFIX "CONNECTIONS"
@@ -88,14 +87,17 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 		return NULL;
 	}
 
+	Q_ENTRY *session = qEntryInit();
+	if(session == NULL) return NULL;
+
 	/* check session status & get session id */
 	bool new_session;
-	const char *sessionkey;
+	char *sessionkey;
 	if(request != NULL && qEntryGetStr(request, SESSION_ID) != NULL) {
-		sessionkey = qEntryGetStr(request, SESSION_ID);
+		sessionkey = strdup(qEntryGetStr(request, SESSION_ID));
 		new_session = false;
 	} else { /* new session */
-		sessionkey = qUniqId();
+		sessionkey = qStrUnique(getenv("REMOTE_ADDR"));
 		new_session = true;
 	}
 
@@ -120,7 +122,8 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 			}
 
 			/* remake storage path */
-			sessionkey = qUniqId();
+			free(sessionkey);
+			sessionkey = qStrUnique(getenv("REMOTE_ADDR"));
 			snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 			snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
@@ -128,9 +131,6 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 			new_session = true;
 		}
 	}
-
-	Q_ENTRY *session = qEntryInit();
-	if(session == NULL) return NULL;
 
 	/* if new session, set session id */
 	if (new_session == true) {
@@ -142,7 +142,6 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 		snprintf(created_sec, sizeof(created_sec), "%ld", time(NULL));
 		qEntryPutStr(session, INTER_SESSIONID, sessionkey, false);
 		qEntryPutStr(session, INTER_SESSION_REPO, session_repository_path, false);
-		qEntryPutStr(session, INTER_CREATED_GMT, qGetGmtimeStr(0), false);
 		qEntryPutStr(session, INTER_CREATED_SEC, created_sec, false);
 		qEntryPutInt(session, INTER_CONNECTIONS, 1, false);
 
@@ -160,6 +159,8 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 		/* set timeout interval */
 		qSessionSetTimeout(session, qEntryGetInt(session, INTER_INTERVAL_SEC));
 	}
+
+	free(sessionkey);
 
 	/* set globals */
 	return session;

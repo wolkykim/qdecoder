@@ -73,7 +73,7 @@
  *
  * @since not released yet
  */
-int qShmInit(char *keyfile, int keyid, size_t size, bool autodestroy) {
+int qShmInit(const char *keyfile, int keyid, size_t size, bool autodestroy) {
 	key_t semkey;
 	int shmid;
 
@@ -102,7 +102,7 @@ int qShmInit(char *keyfile, int keyid, size_t size, bool autodestroy) {
  *
  * @since not released yet
  */
-int qShmGetId(char *keyfile, int keyid) {
+int qShmGetId(const char *keyfile, int keyid) {
 	int shmid;
 
 	/* generate unique key using ftok() */

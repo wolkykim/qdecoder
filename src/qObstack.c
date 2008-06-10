@@ -137,7 +137,7 @@ Q_OBSTACK *qObstackInit(void) {
  *
  * @since not released yet
  */
-bool qObstackGrow(Q_OBSTACK *obstack, const void *object, int size) {
+bool qObstackGrow(Q_OBSTACK *obstack, const void *object, size_t size) {
 	if(obstack == NULL || object == NULL || size <= 0) return false;
 	return qEntryPut(obstack->stack, "", object, size, false);
 }

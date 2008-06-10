@@ -21,10 +21,7 @@
  * @file qEncode.c Encoding/decoding API
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/uio.h>
-#include <fcntl.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -139,15 +136,12 @@ char *qDecodeUrl(char *str) {
  * @return malloced string pointer.
  */
 #ifdef __linux__
-char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
-	char *tostr, *tp;
-	size_t fromsize, tosize;
+char *qConvCharEncoding(const char *str, const char *fromcode, const char *tocode, float mag) {
+	if(str == NULL) return NULL;
 
-	if(fromstr == NULL) return NULL;
-
-	fromsize = strlen(fromstr) + 1;
-	tosize = (int)(mag * fromsize) + 1;
-	tostr = tp = (char *)malloc(tosize);
+	size_t fromsize = sizeof(char) * (strlen(str) + 1);
+	size_t tosize = sizeof(char) * ((mag * fromsize) + 1);
+	char *tostr = (char *)malloc(tosize);
 	if(tostr == NULL) return NULL;
 
 	iconv_t it = iconv_open(tocode, fromcode);
@@ -155,115 +149,19 @@ char *qCharEncode(char *fromstr, char *fromcode, char *tocode, float mag) {
 		DEBUG("iconv_open() failed. errno=%d", errno);
 		return NULL;
 	}
+
+	char *fromstr = strdup(str);
 	int ret = iconv(it, &fromstr, &fromsize, &tostr, &tosize);
+	free(fromstr);
+
+	iconv_close(it);
+
 	if(ret < 0) {
 		DEBUG("iconv() failed. errno=%d", errno);
 		free(tostr);
 		return NULL;
 	}
-	iconv_close(it);
 
-	return tp;
+	return tostr;
 }
 #endif
-
-/**********************************************
-** Usage : qMd5Digest(string);
-** Return: MD5 digested static string pointer.
-** Do    : 16 bytes digest binary data through MD5 algorithm.
-**********************************************/
-unsigned char *qMd5Hash(char *data, int len) {
-	static unsigned char digest[16 + 1];
-	MD5_CTX context;
-
-	MD5Init(&context);
-	MD5Update(&context, data, len);
-	MD5Final(digest, &context);
-
-	// for safety
-	digest[16] = '\0';
-	return digest;
-}
-
-/**********************************************
-** Usage : qMd5Str(string);
-** Return: MD5 digested static string pointer.
-** Do    : Strng converted digest string through MD5 algorithm.
-**********************************************/
-char *qMd5Str(char *data, int len) {
-	static char md5hex[16 * 2 + 1];
-	unsigned char *digest;
-	int i;
-
-	digest = qMd5Hash(data, len);
-	for (i = 0; i < 16; i++) {
-		sprintf(md5hex + (i * 2), "%02x", digest[i]);
-	}
-
-	return md5hex;
-}
-
-/**********************************************
-** Usage : qMd5File(filepath);
-** Return: MD5 digested static string pointer.
-** Do    : Strng converted digest string through MD5 algorithm.
-**********************************************/
-char *qMd5File(char *filepath) {
-	static char md5hex[16 * 2 + 1];
-	int f, i;
-	off_t n;
-	struct stat stbuf;
-	unsigned char szBuffer[256*1024], szDigest[16];
-	MD5_CTX context;
-
-	MD5Init(&context);
-	if ((f = open(filepath, O_RDONLY)) < 0)
-		return NULL;
-	if (fstat(f, &stbuf) < 0)
-		return NULL;
-	n = stbuf.st_size;
-	i = 0;
-	while (n > 0) {
-		if (n > sizeof(szBuffer))
-			i = read(f, szBuffer, sizeof(szBuffer));
-		else
-			i = read(f, szBuffer, n);
-		if (i < 0)
-			break;
-		MD5Update(&context, szBuffer, i);
-		n -= i;
-	}
-	close(f);
-	if (i < 0)
-		return NULL;
-
-	(void)MD5Final(szDigest, &context);
-
-	if (md5hex == NULL)
-		return NULL;
-
-	for (i = 0; i < 16; i++) {
-		sprintf(md5hex + (i * 2), "%02x", szDigest[i]);
-	}
-
-	return md5hex;
-}
-
-/**********************************************
-** Usage : qFnv32Hash(string, max);
-** Return: unsigned 32 integer of FNV hash algorithm.
-** Do    : FNV hash algorithm
-**         if set max to 0, disable maximum limit
-**********************************************/
-unsigned int qFnv32Hash(char *str, unsigned int max) {
-	unsigned char *s = (unsigned char *)str;
-	unsigned int hval = (unsigned int)0x811c9dc5;
-
-	while (*s) {
-		hval *=  (unsigned int)0x01000193;
-		hval ^= (unsigned int) * s++;
-	}
-	if (max > 0) hval %= max;
-
-	return hval;
-}

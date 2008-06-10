@@ -95,13 +95,14 @@
  *   }
  * @endcode
  */
-Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password, char *database, bool autocommit) {
+Q_DB *qDbInit(const char *dbtype, const char *addr, int port, const char *username, const char *password, const char *database, bool autocommit) {
 	// check db type
 #ifdef _Q_ENABLE_MYSQL
 	if (strcmp(dbtype, "MYSQL")) return NULL;
 #else
 	return NULL;
 #endif
+	if(dbtype == NULL || addr == NULL || username == NULL || password == NULL || database == NULL) return NULL;
 
 	// initialize
 	Q_DB *db;
@@ -110,12 +111,12 @@ Q_DB *qDbInit(char *dbtype, char *addr, int port, char *username, char *password
 	db->connected = false;
 
 	// set common structure
-	qStrncpy(db->info.dbtype, dbtype, sizeof(db->info.dbtype)-1);
-	qStrncpy(db->info.addr, addr, sizeof(db->info.addr)-1);
+	db->info.dbtype = strdup(dbtype);
+	db->info.addr = strdup(addr);
 	db->info.port = port;
-	qStrncpy(db->info.username, username, sizeof(db->info.username)-1);
-	qStrncpy(db->info.password, password, sizeof(db->info.password)-1);
-	qStrncpy(db->info.database, database, sizeof(db->info.database)-1);
+	db->info.username = strdup(username);
+	db->info.password = strdup(password);
+	db->info.database = strdup(database);
 	db->info.autocommit = autocommit;
 
 	// set db handler
@@ -206,7 +207,14 @@ bool qDbClose(Q_DB *db) {
 bool qDbFree(Q_DB *db)  {
 	if (db == NULL) return false;
 	qDbClose(db);
+
+	free(db->info.dbtype);
+	free(db->info.addr);
+	free(db->info.username);
+	free(db->info.password);
+	free(db->info.database);
 	free(db);
+
 	return true;
 }
 
@@ -215,18 +223,21 @@ bool qDbFree(Q_DB *db)  {
  *
  * @since not released yet
  */
-char *qDbGetErrMsg(Q_DB *db) {
-	static char msg[1024];
+const char *qDbGetError(Q_DB *db, unsigned int *errorno) {
 	if (db == NULL || db->connected == false) return "(no opened db)";
 
+	unsigned int eno = 0;
+	const char *emsg;
 #ifdef _Q_ENABLE_MYSQL
-	if(mysql_errno(db->mysql) == 0 ) strcpy(msg, "NO ERROR");
-	else snprintf(msg, sizeof(msg), "%u:%s", mysql_errno(db->mysql), mysql_error(db->mysql));
+	eno = mysql_errno(db->mysql);
+	if(eno == 0) emsg = "(no error)";
+	else emsg = mysql_error(db->mysql);
 #else
-	strcpy(msg, "");
+	emsg = "(not implemented)";
 #endif
 
-	return msg;
+	if(errorno != NULL) *errorno = eno;
+	return emsg;
 }
 
 /**
@@ -277,7 +288,7 @@ bool qDbGetLastConnStatus(Q_DB *db) {
  *
  * @since not released yet
  */
-int qDbExecuteUpdate(Q_DB *db, char *query) {
+int qDbExecuteUpdate(Q_DB *db, const char *query) {
 	if (db == NULL || db->connected == false) return -1;
 
 #ifdef _Q_ENABLE_MYSQL
@@ -301,7 +312,7 @@ int qDbExecuteUpdate(Q_DB *db, char *query) {
  *
  * @since not released yet
  */
-int qDbExecuteUpdatef(Q_DB *db, char *format, ...) {
+int qDbExecuteUpdatef(Q_DB *db, const char *format, ...) {
 	char query[1024];
 	va_list arglist;
 
@@ -317,7 +328,7 @@ int qDbExecuteUpdatef(Q_DB *db, char *format, ...) {
  *
  * @since not released yet
  */
-Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
+Q_DBRESULT *qDbExecuteQuery(Q_DB *db, const char *query) {
 	if (db == NULL || db->connected == false) return NULL;
 
 #ifdef _Q_ENABLE_MYSQL
@@ -352,7 +363,7 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, char *query) {
  *
  * @since not released yet
  */
-Q_DBRESULT *qDbExecuteQueryf(Q_DB *db, char *format, ...) {
+Q_DBRESULT *qDbExecuteQueryf(Q_DB *db, const char *format, ...) {
 	char query[1024];
 	va_list arglist;
 
@@ -447,7 +458,7 @@ int qDbGetRow(Q_DBRESULT *result) {
  *
  * @since not released yet
  */
-char *qDbGetValue(Q_DBRESULT *result, char *field) {
+const char *qDbGetStr(Q_DBRESULT *result, const char *field) {
 #ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL || result->cols <= 0) return NULL;
 
@@ -455,7 +466,7 @@ char *qDbGetValue(Q_DBRESULT *result, char *field) {
 
 	int i;
 	for (i = 0; i < result->cols; i++) {
-		if (!strcasecmp(result->fields[i].name, field)) return qDbGetValueAt(result, i + 1);
+		if (!strcasecmp(result->fields[i].name, field)) return qDbGetStrAt(result, i + 1);
 	}
 
 	return NULL;
@@ -469,18 +480,7 @@ char *qDbGetValue(Q_DBRESULT *result, char *field) {
  *
  * @since not released yet
  */
-int qDbGetInt(Q_DBRESULT *result, char *field) {
-	char *val = qDbGetValue(result, field);
-	if(val == NULL) return 0;
-	return atoi(val);
-}
-
-/**
- * Under-development
- *
- * @since not released yet
- */
-char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
+const char *qDbGetStrAt(Q_DBRESULT *result, int idx) {
 #ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL || result->cursor == 0 || idx <= 0 || idx > result->cols ) return NULL;
 	return result->row[idx-1];
@@ -494,8 +494,21 @@ char *qDbGetValueAt(Q_DBRESULT *result, int idx) {
  *
  * @since not released yet
  */
+int qDbGetInt(Q_DBRESULT *result, const char *field) {
+	const char *val = qDbGetStr(result, field);
+	if(val == NULL) return 0;
+	return atoi(val);
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
 int qDbGetIntAt(Q_DBRESULT *result, int idx) {
-	return atoi(qDbGetValueAt(result, idx));
+	const char *val = qDbGetStrAt(result, idx);
+	if(val == NULL) return 0;
+	return atoi(val);
 }
 
 /**

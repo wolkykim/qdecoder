@@ -221,7 +221,7 @@ bool qPuts(int mode, char *buf) {
 
 		token = " `(){}[]<>\"',\r\n";
 		lastretstop = '0'; /* any character except space */
-		ptr = qStrtok(buf, token, &retstop);
+		ptr = qStrTok(buf, token, &retstop);
 
 		for (linkflag = ignoreflag = 0; ptr != NULL;) {
 			/* auto link */
@@ -273,7 +273,7 @@ bool qPuts(int mode, char *buf) {
 			}
 
 			lastretstop = retstop;
-			ptr = qStrtok(NULL, token, &retstop);
+			ptr = qStrTok(NULL, token, &retstop);
 		}
 	}
 
@@ -376,30 +376,28 @@ char *qStrTrimTail(char *str) {
 **     after  sr : srcstr = Welcome to _ qDecoder project.
 **                 retstr = Welcome to _ qDecoder project.
 **********************************************/
-char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
-	char method, memuse;
-	int maxstrlen, tokstrlen;
-	char *newstr, *newp, *srcp, *tokenp, *retp;
-
-	/* initialize pointers to avoid compile warnings */
-	newstr = newp = srcp = tokenp = retp = NULL;
-
-	if (strlen(mode) != 2) {
+char *qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char *word) {
+	if (mode == NULL || strlen(mode) != 2 || srcstr == NULL || tokstr == NULL || word == NULL) {
 		DEBUG("Unknown mode \"%s\".", mode);
 		return NULL;
 	}
-	method = mode[0], memuse = mode[1];
+
+	char *newstr, *newp, *srcp, *tokenp, *retp;
+	newstr = newp = srcp = tokenp = retp = NULL;
+
+	char method = mode[0], memuse = mode[1];
+	int maxstrlen, tokstrlen;
 
 	/* Put replaced string into malloced 'newstr' */
 	if (method == 't') { /* Token replace */
 		maxstrlen = strlen(srcstr) * ( (strlen(word) > 0) ? strlen(word) : 1 );
-		newstr = (char *)malloc(maxstrlen + 1);
+		newstr = (char*)malloc(maxstrlen + 1);
 
-		for (srcp = srcstr, newp = newstr; *srcp; srcp++) {
-			for (tokenp = tokstr; *tokenp; tokenp++) {
+		for (srcp = (char*)srcstr, newp = newstr; *srcp; srcp++) {
+			for (tokenp = (char*)tokstr; *tokenp; tokenp++) {
 				if (*srcp == *tokenp) {
 					char *wordp;
-					for (wordp = word; *wordp; wordp++) *newp++ = *wordp;
+					for (wordp = (char*)word; *wordp; wordp++) *newp++ = *wordp;
 					break;
 				}
 			}
@@ -407,19 +405,15 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
 		}
 		*newp = '\0';
 	} else if (method == 's') { /* String replace */
-		if (strlen(word) > strlen(tokstr))
-			maxstrlen
-			= ((strlen(srcstr) / strlen(tokstr)) * strlen(word))
-			  + (strlen(srcstr)
-			     % strlen(tokstr));
+		if (strlen(word) > strlen(tokstr)) maxstrlen = ((strlen(srcstr) / strlen(tokstr)) * strlen(word)) + (strlen(srcstr) % strlen(tokstr));
 		else maxstrlen = strlen(srcstr);
-		newstr = (char *)malloc(maxstrlen + 1);
+		newstr = (char*)malloc(maxstrlen + 1);
 		tokstrlen = strlen(tokstr);
 
 		for (srcp = srcstr, newp = newstr; *srcp; srcp++) {
 			if (!strncmp(srcp, tokstr, tokstrlen)) {
 				char *wordp;
-				for (wordp = word; *wordp; wordp++) *newp++ = *wordp;
+				for (wordp = (char*)word; *wordp; wordp++) *newp++ = *wordp;
 				srcp += tokstrlen - 1;
 			} else *newp++ = *srcp;
 		}
@@ -429,7 +423,7 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
 		return NULL;
 	}
 
-	/* Decide whether newing the memory or replacing into exist one */
+	/* decide whether newing the memory or replacing into exist one */
 	if (memuse == 'n') retp = newstr;
 	else if (memuse == 'r') {
 		strcpy(srcstr, newstr);
@@ -442,21 +436,6 @@ char *qStrReplace(char *mode, char *srcstr, char *tokstr, char *word) {
 	}
 
 	return retp;
-}
-
-/**********************************************
-** Usage : qStr09AZaz(string);
-** Return: Valid 1, Invalid 0.
-** Do    : Check characters of string is in 0-9, A-Z, a-z.
-**********************************************/
-bool qStr09AZaz(char *str) {
-	for (; *str; str++) {
-		if ((*str >= '0') && (*str <= '9')) continue;
-		else if ((*str >= 'A') && (*str <= 'Z')) continue;
-		else if ((*str >= 'a') && (*str <= 'z')) continue;
-		else return false;
-	}
-	return true;
 }
 
 /*
@@ -475,7 +454,7 @@ char *qStrncpy(char *dst, const char *src, size_t n) {
 ** Return: Pointer of converted string.
 ** Do    : Convert small character to big character.
 **********************************************/
-char *qStrupr(char *str) {
+char *qStrUpper(char *str) {
 	char *cp;
 
 	if (!str) return NULL;
@@ -488,7 +467,7 @@ char *qStrupr(char *str) {
 ** Return: Pointer of converted string.
 ** Do    : Convert big character to small character.
 **********************************************/
-char *qStrlwr(char *str) {
+char *qStrLower(char *str) {
 	char *cp;
 
 	if (!str) return NULL;
@@ -502,24 +481,26 @@ char *qStrlwr(char *str) {
 ** Return: Pointer of token string located in original string, Fail NULL.
 ** Do    : Find token with no case-censitive.
 **********************************************/
-char *qStristr(char *big, char *small) {
-	char *bigp, *smallp, *retp;
+char *qStrCaseStr(const char *s1, const char *s2) {
+	if (s1 == NULL || s2 == NULL) return NULL;
 
-	if (big == NULL || small == NULL) return 0;
-
-	if ((bigp = strdup(big)) == NULL) return 0;
-	if ((smallp = strdup(small)) == NULL) {
-		free(bigp);
-		return 0;
+	char *s1p = strdup(s1);
+	char *s2p = strdup(s2);
+	if (s1p == NULL || s2p == NULL) {
+		if(s1p != NULL) free(s1p);
+		if(s2p != NULL) free(s2p);
+		return NULL;
 	}
 
-	qStrupr(bigp), qStrupr(smallp);
+	qStrUpper(s1p);
+	qStrUpper(s2p);
 
-	retp = strstr(bigp, smallp);
-	if (retp != NULL) retp = big + (retp - bigp);
-	free(bigp), free(smallp);
+	char *sp = strstr(s1p, s2p);
+	if (sp != NULL) sp = (char*)s1 + (sp - s1p);
+	free(s1p);
+	free(s2p);
 
-	return retp;
+	return sp;
 }
 
 /**
@@ -527,7 +508,7 @@ char *qStristr(char *big, char *small) {
  *
  * @return string pointer
  */
-char *qStrrev(char *str) {
+char *qStrRev(char *str) {
 	if (str == NULL) return str;
 
 	char *p1, *p2;
@@ -541,11 +522,11 @@ char *qStrrev(char *str) {
 }
 
 /*********************************************
-** Usage : qStrtok(string, token stop string, return stop character);
+** Usage : qStrTok(string, token stop string, return stop character);
 ** Do    : Find token string. (usage like strtok())
 ** Return: Pointer of token & character of stop.
 **********************************************/
-char *qStrtok(char *str, char *token, char *retstop) {
+char *qStrTok(char *str, const char *token, char *retstop) {
 	static char *tokenep;
 	char *tokensp;
 	int i, j;
@@ -573,16 +554,17 @@ char *qStrtok(char *str, char *token, char *retstop) {
 ** Usage : qitocomma(value);
 ** Return: String pointer.
 ** Do    : Convert integer to comma string.
-**
-** ex) printf("Output: %s", qitocomma(1234567));
-**     Output: -1,234,567,000
 **********************************************/
-char *qitocomma(int value) {
-	static char str[14+1];
-	char buf[10+1], *strp = str, *bufp;
+char *qStrCommaNumber(int number) {
+	char *str, *strp;
 
-	if (value < 0) *strp++ = '-';
-	snprintf(buf, sizeof(buf), "%d", abs(value));
+	str = strp = (char*)malloc(sizeof(char) * (14+1));
+	if(str == NULL) return NULL;
+
+	char buf[10+1], *bufp;
+	snprintf(buf, sizeof(buf), "%d", abs(number));
+
+	if (number < 0) *strp++ = '-';
 	for (bufp = buf; *bufp != '\0'; strp++, bufp++) {
 		*strp = *bufp;
 		if ((strlen(bufp)) % 3 == 1 && *(bufp + 1) != '\0') *(++strp) = ',';
@@ -597,8 +579,8 @@ char *qitocomma(int value) {
 ** Return: same as strcat on success, NULL if failed.
 ** Do    :  append formatted string to the end of the source str
 **********************************************/
-char *qStrcat(char *str, char *format, ...) {
-	char buf[1024];
+char *qStrCatf(char *str, const char *format, ...) {
+	char buf[MAX_LINEBUF];
 	va_list arglist;
 
 	va_start(arglist, format);
@@ -609,23 +591,24 @@ char *qStrcat(char *str, char *format, ...) {
 }
 
 /**********************************************
-** Usage : qStrdupBetween(str, start, end);
+** Usage : qStrDupBetween(str, start, end);
 ** Return: new char pointer on success, otherwise returns NULL
 ** Do    : Pick a string which is started with *start and ended with *end from *str,
 **         then copy it to new mallocked string buffer to return.
 **         Be sure, the returned string does not contain *str and *end string.
 ** Note  : That's is your job to free the return char pointer.
 **********************************************/
-char *qStrdupBetween(char *str, char *start, char *end) {
-	char *buf, *s, *e;
-	int len;
-
+char *qStrDupBetween(const char *str, const char *start, const char *end) {
+	char *s;
 	if ((s = strstr(str, start)) == NULL) return NULL;
 	s += strlen(start);
-	if ((e = strstr(s, end)) == NULL) return NULL;
-	len = e - s;
 
-	buf = (char *)malloc(len + 1);
+	char *e;
+	if ((e = strstr(s, end)) == NULL) return NULL;
+
+	int len = e - s;
+
+	char *buf = (char*)malloc(sizeof(char) * (len + 1));
 	strncpy(buf, s, len);
 	buf[len] = '\0';
 
@@ -633,31 +616,28 @@ char *qStrdupBetween(char *str, char *start, char *end) {
 }
 
 /**********************************************
-** Usage : qUniqueID();
+** Usage : qUniqueId();
 ** Return: Unique string depend on client.
 ** Do    : Generate unique id for each connection.
 **********************************************/
-char *qUniqId(void) {
-	static int nInit = 0;
-	static char szUniqId[16 * 2 + 1];
-	char szSeed[256];
-	long int nUsec;
+char *qStrUnique(const char *seed) {
+	static int count = 0;
 
-	if(nInit == 0) {
-        	srandom((unsigned)time(NULL) + (unsigned)getpid());
-        	nInit = 1;
+	if(count == 0) {
+        	srandom(time(NULL));
         }
+	count++;
 
+	long int usec;
 #ifdef _WIN32
-	nUsec = 0;
+	usec = 0;
 #else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	nUsec = tv.tv_usec;
+	usec = tv.tv_usec;
 #endif
 
-	snprintf(szSeed, sizeof(szSeed), "%ld-%ld.%ld-%s:%s", random(), (long int)time(NULL), nUsec, qGetenvDefault("", "REMOTE_ADDR"), qGetenvDefault("", "REMOTE_PORT"));
-	strcpy(szUniqId, qMd5Str(szSeed, strlen(szSeed)));
-
-	return szUniqId;
+	char szSeed[128];
+	snprintf(szSeed, sizeof(szSeed), "%u%d%ld%ld%ld%s", getpid(), count, random(), time(NULL), usec, (seed!=NULL?seed:""));
+	return qHashMd5Str(szSeed, NULL);
 }

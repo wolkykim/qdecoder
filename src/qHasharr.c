@@ -169,7 +169,7 @@ bool qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size) {
 	//if (tbl[0].count >= tbl[0].keylen) return false;
 
 	// get hash integer
-	int hash = ((int)qFnv32Hash(key, tbl[0].keylen)) + 1; // 0번은 안쓰므로
+	int hash = ((int)qHashFnv32(tbl[0].keylen, key, NULL)) + 1; // 0번은 안쓰므로
 
 	// if size is less than 0, we assume that the value is null terminated string.
 	if(size < 0) size = strlen(value) + 1;
@@ -261,7 +261,7 @@ char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
 	if(tbl == NULL || key == NULL) return NULL;
 
 	// get hash integer
-	int hash = ((int)qFnv32Hash(key, tbl[0].keylen)) + 1; // 0번은 안쓰므로
+	int hash = ((int)qHashFnv32(tbl[0].keylen, key, NULL)) + 1; // 0번은 안쓰므로
 
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) return NULL;
@@ -352,8 +352,10 @@ char *qHasharrGetNextKey(Q_HASHARR *tbl, int *idx) {
  * @return
  */
 bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
+	if(tbl == NULL || key == NULL) return false;
+
 	// get hash integer
-	int hash = ((int)qFnv32Hash(key, tbl[0].keylen)) + 1; // 0번은 안쓰므로
+	int hash = ((int)qHashFnv32(tbl[0].keylen, key, NULL)) + 1; // 0번은 안쓰므로
 
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) {
@@ -462,7 +464,11 @@ static int _findEmpty(Q_HASHARR *tbl, int startidx) {
 static int _getIdx(Q_HASHARR *tbl, char *key, int hash) {
 	if (tbl[hash].count > 0) {
 		int keylen = strlen(key);
-		char *keymd5 = qMd5Hash(key, keylen);
+		char keymd5[16+1];
+
+		char *tmpmd5 = qHashMd5(key, keylen);
+		qStrncpy(keymd5, tmpmd5, sizeof(keymd5) - 1);
+		free(tmpmd5);
 
 		int count, idx;
 		for (count = 0, idx = hash; count < tbl[hash].count; ) {
@@ -484,8 +490,8 @@ static int _getIdx(Q_HASHARR *tbl, char *key, int hash) {
 			if (keylen == tbl[idx].keylen) {	// first check fast way
 				if (keylen <= (_Q_HASHARR_MAX_KEYSIZE - 1)) {	// key is not truncated, use original key
 					if (!strcmp(key, tbl[idx].key)) return idx;
-				} else {				// key is truncated, use keymd5 instead.
-					if (!strncmp(keymd5, tbl[idx].keymd5, 16)) return idx;
+				} else {					// key is truncated, use keymd5 instead.
+					if (!memcmp(keymd5, tbl[idx].keymd5, 16)) return idx;
 				}
 			}
 
@@ -509,7 +515,7 @@ static bool _putData(Q_HASHARR *tbl, int idx, int hash, char *key, char *value, 
 	}
 
 	int keylen = strlen(key);
-	char *keymd5 = qMd5Hash(key, keylen);
+	char *keymd5 = qHashMd5(key, keylen);
 
 	// store key
 	tbl[idx].count = count;
@@ -518,6 +524,8 @@ static bool _putData(Q_HASHARR *tbl, int idx, int hash, char *key, char *value, 
 	strncpy(tbl[idx].keymd5, keymd5, 16);
 	tbl[idx].keylen = keylen;
 	tbl[idx].link = 0;
+
+	free(keymd5);
 
 	// store value
 	int newidx, savesize, copysize;
