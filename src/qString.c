@@ -649,3 +649,41 @@ bool qStrIsAlnum(const char *str) {
         }
         return true;
 }
+
+
+
+/**
+ * qCharEncode("ÇÑ±Û", "EUC-KR", "UTF-8", 2);
+ *
+ * @return malloced string pointer.
+ */
+#ifdef __linux__
+char *qStrConvEncoding(const char *str, const char *fromcode, const char *tocode, float mag) {
+	if(str == NULL) return NULL;
+
+	size_t fromsize = sizeof(char) * (strlen(str) + 1);
+	size_t tosize = sizeof(char) * ((mag * fromsize) + 1);
+	char *tostr = (char *)malloc(tosize);
+	if(tostr == NULL) return NULL;
+
+	iconv_t it = iconv_open(tocode, fromcode);
+	if(it < 0) {
+		DEBUG("iconv_open() failed. errno=%d", errno);
+		return NULL;
+	}
+
+	char *fromstr = strdup(str);
+	int ret = iconv(it, &fromstr, &fromsize, &tostr, &tosize);
+	free(fromstr);
+
+	iconv_close(it);
+
+	if(ret < 0) {
+		DEBUG("iconv() failed. errno=%d", errno);
+		free(tostr);
+		return NULL;
+	}
+
+	return tostr;
+}
+#endif

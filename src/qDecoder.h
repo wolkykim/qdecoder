@@ -254,14 +254,14 @@ extern	int		qSocketOpen(const char *hostname, int port);
 extern	bool		qSocketClose(int sockfd);
 extern	int		qSocketWaitReadable(int sockfd, int timeoutms);
 extern	int		qSocketWaitWritable(int sockfd, int timeoutms);
-extern	int		qSocketRead(char *binary, int sockfd, int nbytes, int timeoutms);
-extern	int		qSocketGets(char *str, int sockfd, int nbytes, int timeoutms);
-extern	int		qSocketWrite(int sockfd, const char *binary, int nbytes);
-extern	int		qSocketPuts(int sockfd, const char *str);
-extern	int		qSocketPrintf(int sockfd, const char *format, ...);
-extern	ssize_t		qSocketSendfile(int sockfd, const char *filepath, off_t offset, ssize_t nbytes);
-extern	int		qSocketSaveIntoFile(int outfd, int sockfd, int nbytes, int timeoutms);
-extern	int		qSocketSaveIntoMemory(char *mem, int sockfd, int nbytes, int timeoutms);
+extern	ssize_t		qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms);
+extern	ssize_t		qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms);
+extern	ssize_t		qSocketWrite(int sockfd, const void *binary, size_t nbytes);
+extern	ssize_t		qSocketPuts(int sockfd, const char *str);
+extern	ssize_t		qSocketPrintf(int sockfd, const char *format, ...);
+extern	ssize_t		qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t nbytes);
+extern	ssize_t		qSocketSaveIntoFile(int outfd, int sockfd, size_t nbytes, int timeoutms);
+extern	ssize_t		qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutms);
 
 /*
  * qDatabase.c
@@ -332,19 +332,19 @@ extern	int		qEntryLoad(Q_ENTRY *entry, const char *filepath, char sepchar, bool 
 /*
  * qHashtbl.c
  */
-Q_HASHTBL *qHashtblInit(int max);
-bool	qHashtblFree(Q_HASHTBL *tbl);
-bool	qHashtblPut(Q_HASHTBL *tbl, const char *key, const char *value, int size);
-bool	qHashtblPutStr(Q_HASHTBL *tbl, const char *key, const char *str);
-bool	qHashtblPutInt(Q_HASHTBL *tbl, const char *key, int number);
-char	*qHashtblGet(Q_HASHTBL *tbl, const char *key, int *size);
-char	*qHashtblGetStr(Q_HASHTBL *tbl, const char *key);
-int	qHashtblGetInt(Q_HASHTBL *tbl, const char *key);
-char	*qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx);
-char	*qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx);
-bool	qHashtblRemove(Q_HASHTBL *tbl, const char *key);
-bool	qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
-bool	qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
+extern	Q_HASHTBL*	qHashtblInit(int max);
+extern	bool		qHashtblFree(Q_HASHTBL *tbl);
+extern	bool		qHashtblPut(Q_HASHTBL *tbl, const char *key, const char *value, int size);
+extern	bool		qHashtblPutStr(Q_HASHTBL *tbl, const char *key, const char *str);
+extern	bool		qHashtblPutInt(Q_HASHTBL *tbl, const char *key, int number);
+extern	char*		qHashtblGet(Q_HASHTBL *tbl, const char *key, int *size);
+extern	char*		qHashtblGetStr(Q_HASHTBL *tbl, const char *key);
+extern	int		qHashtblGetInt(Q_HASHTBL *tbl, const char *key);
+extern	char*		qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx);
+extern	char*		qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx);
+extern	bool		qHashtblRemove(Q_HASHTBL *tbl, const char *key);
+extern	bool		qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
+extern	bool		qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
 
 /*
  * qHasharr.c
@@ -397,7 +397,6 @@ char	*qGetenvDefault(char *nullstr, char *envname);
 extern	Q_ENTRY*	qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, char sepchar, int *count);
 extern	char*		qEncodeUrl(const char *str);
 extern	char*		qDecodeUrl(char *str);
-extern	char*		qConvCharEncoding(const char *fromstr, const char *fromcode, const char *tocode, float mag);
 
 /*
  * qHash.c
@@ -426,6 +425,7 @@ extern	char*		qStrCatf(char *str, const char *format, ...);
 extern	char*		qStrDupBetween(const char *str, const char *start, const char *end);
 extern	char*		qStrUnique(const char *seed);
 extern	bool		qStrIsAlnum(const char *str);
+extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const char *tocode, float mag);
 
 /*
  * qFile.c
@@ -434,7 +434,7 @@ extern	bool		qFileLock(int fd);
 extern	bool		qFileUnlock(int fd);
 extern	bool		qFileExist(const char *filepath);
 extern	off_t		qFileGetSize(const char *filepath);
-extern	size_t		qFileSend(int outfd, int infd, size_t size);
+extern	ssize_t		qFileSend(int outfd, int infd, size_t size);
 extern	void*		qFileLoad(const char *filepath, size_t *size);
 extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bool append);
 char	*qfReadFile(FILE *fp);
@@ -459,8 +459,10 @@ extern	int		qCountUpdate(const char *filepath, int number);
  */
 extern	char*		qTimeGetLocalStrf(char *buf, int size, time_t utctime, const char *format);
 extern	char*		qTimeGetLocalStr(time_t utctime);
+extern	const char*	qTimeGetLocalStaticStr(time_t utctime);
 extern	char*		qTimeGetGmtStrf(char *buf, int size, time_t utctime, const char *format);
 extern	char*		qTimeGetGmtStr(time_t utctime);
+extern	const char*	qTimeGetGmtStaticStr(time_t utctime);
 extern	time_t		qTimeParseGmtStr(const char *gmtstr);
 
 #ifdef __cplusplus

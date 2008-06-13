@@ -31,6 +31,8 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
+#define MAX_FILESEND_CHUNK_SIZE		(64 * 1024)
+
 /**
  * Lock opened file.
  *
@@ -117,23 +119,30 @@ off_t qFileGetSize(const char *filepath) {
  *
  * @return		the number of bytes written to outfd.
  */
-size_t qFileSend(int outfd, int infd, size_t size) {
-#define _Q_FILESEND_CHUNK_SIZE		(256 * 1024)
-	char buf[_Q_FILESEND_CHUNK_SIZE];
+ssize_t qFileSend(int outfd, int infd, size_t size) {
+	if(size == 0) return 0;
 
-	size_t sent = 0; // total size sent
-	while(size == 0 || sent < size) {
+	char buf[MAX_FILESEND_CHUNK_SIZE];
+
+	ssize_t sent = 0; // total size sent
+	while(sent < size) {
 		size_t sendsize;	// this time sending size
 		if(size - sent <= sizeof(buf)) sendsize = size - sent;
 		else sendsize = sizeof(buf);
 
 		// read
 		ssize_t retr = read(infd, buf, sendsize);
-		if (retr <= 0) break;
+		if (retr <= 0) {
+			if(sent == 0) return -1;
+			break;
+		}
 
 		// write
 		ssize_t retw = write(outfd, buf, retr);
-		if(retw <= 0) break;
+		if(retw <= 0) {
+			if(sent == 0) return -1;
+			break;
+		}
 
 		sent += retw;
 		if(retr != retw) break;

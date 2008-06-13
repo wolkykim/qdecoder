@@ -46,6 +46,7 @@
 #else
 #define MAX_SENDFILE_CHUNK_SIZE		(64 * 1024)
 #endif
+#define MAX_SAVEINTOFILE_CHUNK_SIZE	(64 * 1024)
 
 static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port);
 
@@ -188,12 +189,10 @@ int qSocketWaitWritable(int sockfd, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketRead(char *binary, int sockfd, int nbytes, int timeoutms) {
-	int sockstatus, readcnt;
-
-	sockstatus = qSocketWaitReadable(sockfd, timeoutms);
+ssize_t qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms) {
+	int sockstatus = qSocketWaitReadable(sockfd, timeoutms);
 	if (sockstatus <= 0) return sockstatus;
-	readcnt = read(sockfd, binary, nbytes);
+	ssize_t readcnt = read(sockfd, binary, nbytes);
 	if (readcnt <= 0) return -1;
 
 	return readcnt;
@@ -218,12 +217,11 @@ int qSocketRead(char *binary, int sockfd, int nbytes, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketGets(char *str, int sockfd, int nbytes, int timeoutms) {
+ssize_t qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms) {
 	char *ptr;
-	int sockstatus, readcnt = 0;
-
+	ssize_t readcnt = 0;
 	for (ptr = str; readcnt < (nbytes - 1); ptr++) {
-		sockstatus = qSocketWaitReadable(sockfd, timeoutms);
+		int sockstatus = qSocketWaitReadable(sockfd, timeoutms);
 		if (sockstatus <= 0) {
 			*ptr = '\0';
 			return sockstatus;
@@ -257,7 +255,7 @@ int qSocketGets(char *str, int sockfd, int nbytes, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketWrite(int sockfd, const char *binary, int nbytes) {
+ssize_t qSocketWrite(int sockfd, const void *binary, size_t nbytes) {
 	return write(sockfd, binary, nbytes);
 }
 
@@ -274,14 +272,12 @@ int qSocketWrite(int sockfd, const char *binary, int nbytes) {
  * @code
  * @endcode
  */
-int qSocketPuts(int sockfd, const char *str) {
-	char *buf;
-
-	buf = (char *)malloc(strlen(str) + 2 + 1);
+ssize_t qSocketPuts(int sockfd, const char *str) {
+	char *buf = (char *)malloc(strlen(str) + 2 + 1);
 	if(buf == NULL) return -1;
 	sprintf(buf, "%s\r\n", str);
 
-	int sent = write(sockfd, buf, strlen(buf));
+	ssize_t sent = write(sockfd, buf, strlen(buf));
 	free(buf);
 
 	return sent;
@@ -302,7 +298,7 @@ int qSocketPuts(int sockfd, const char *str) {
  * @code
  * @endcode
  */
-int qSocketPrintf(int sockfd, const char *format, ...) {
+ssize_t qSocketPrintf(int sockfd, const char *format, ...) {
 	char buf[MAX_LINEBUF];
 	va_list arglist;
 
@@ -328,7 +324,7 @@ int qSocketPrintf(int sockfd, const char *format, ...) {
  * @code
  * @endcode
  */
-ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, ssize_t nbytes) {
+ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t nbytes) {
 	struct stat filestat;
 	int filefd;
 
@@ -371,7 +367,7 @@ ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, ssize_t 
  * @param	oflag		constructed by a bitwise-inclusive OR of flags defined in <fcntl.h>.
  * @param	timeoutms	wait timeout micro-seconds
  *
- * @return	the number of bytes sent on success, -1 if an error(ex:socket closed, file open failed) occurred.
+ * @return	the number of bytes wrote on success, -1 if an error(ex:socket closed, file open failed) occurred.
  *
  * @since	8.1R
  *
@@ -382,25 +378,27 @@ ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, ssize_t 
  *   qSocketSaveIntoFile(filefd, sockfd, 100, 5000);
  * @endcode
  */
-int qSocketSaveIntoFile(int filefd, int sockfd, int nbytes, int timeoutms) {
-#define _Q_SAVEINTOFILE_CHUNK_SIZE	(4*1024)
-	// stream readable?
-	int sockstatus = qSocketWaitReadable(sockfd, timeoutms);
-	if (sockstatus <= 0) return sockstatus;
+ssize_t qSocketSaveIntoFile(int filefd, int sockfd, size_t nbytes, int timeoutms) {
+	if(nbytes <= 0) return 0;
 
-	int readbytes, readed;
+	ssize_t readbytes, readed;
 	for (readbytes = 0; readbytes < nbytes; readbytes += readed) {
 		// calculate reading size
 		int readsize;
-		if (nbytes - readbytes < _Q_SAVEINTOFILE_CHUNK_SIZE) readsize = nbytes - readbytes;
-		else readsize =_Q_SAVEINTOFILE_CHUNK_SIZE;
+		if (nbytes - readbytes < MAX_SAVEINTOFILE_CHUNK_SIZE) readsize = nbytes - readbytes;
+		else readsize = MAX_SAVEINTOFILE_CHUNK_SIZE;
 
 		// read data
-		sockstatus = qSocketWaitReadable(sockfd, timeoutms);
-		if (sockstatus <= 0) break;
+		if (qSocketWaitReadable(sockfd, timeoutms) <= 0) {
+			if(readbytes == 0) return -1;
+			break;
+		}
 
 		readed = qFileSend(filefd, sockfd, readsize);
-		if (readed <= 0) break; // eof
+		if (readed <= 0) {
+			if(readbytes == 0) return -1;
+			break;
+		}
 	}
 	return readbytes;
 }
@@ -423,25 +421,24 @@ int qSocketSaveIntoFile(int filefd, int sockfd, int nbytes, int timeoutms) {
  * @code
  * @endcode
  */
-int qSocketSaveIntoMemory(char *mem, int sockfd, int nbytes, int timeoutms) {
-	char *mp;
-	int sockstatus, readbytes, readed, readsize;
+ssize_t qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutms) {
+	if(nbytes <= 0) return 0;
 
+	char *mp;
+	ssize_t readbytes, readed;
 	for (readbytes = 0, mp = mem; readbytes < nbytes; readbytes += readed, mp += readed) {
 		// calculate reading size
-		readsize = nbytes - readbytes;
+		size_t readsize = nbytes - readbytes;
 
 		// wait data
-		sockstatus = qSocketWaitReadable(sockfd, timeoutms);
-		if (sockstatus <= 0) {
+		if (qSocketWaitReadable(sockfd, timeoutms) <= 0) {
 			if(readbytes == 0) return -1;
 			break;
 		}
 
 		// read data
 		readed = read(sockfd, mp, readsize);
-		if (readed == 0) break; // eof
-		else if (readed < 0) {
+		if (readed <= 0) {
 			if(readbytes == 0) return -1;
 			break;
 		}
