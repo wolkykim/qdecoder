@@ -835,7 +835,7 @@ static char *_upload_getsavedir(char *upload_savedir, int size, const char *uplo
 
         char md5seed[1024];
         snprintf(md5seed, sizeof(md5seed), "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
-        char *md5str = qHashMd5Str(md5seed, NULL);
+        char *md5str = qHashMd5Str(md5seed, strlen(md5seed));
         snprintf(upload_savedir, size, "%s/Q_%s", upload_basepath, md5str);
         free(md5str);
 

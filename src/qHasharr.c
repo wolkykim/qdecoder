@@ -169,7 +169,7 @@ bool qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size) {
 	//if (tbl[0].count >= tbl[0].keylen) return false;
 
 	// get hash integer
-	int hash = ((int)qHashFnv32(tbl[0].keylen, key, NULL)) + 1; // 0번은 안쓰므로
+	int hash = ((int)qHashFnv32(tbl[0].keylen, key, strlen(key))) + 1; // 0번은 안쓰므로
 
 	// if size is less than 0, we assume that the value is null terminated string.
 	if(size < 0) size = strlen(value) + 1;
@@ -261,7 +261,7 @@ char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
 	if(tbl == NULL || key == NULL) return NULL;
 
 	// get hash integer
-	int hash = ((int)qHashFnv32(tbl[0].keylen, key, NULL)) + 1; // 0번은 안쓰므로
+	int hash = ((int)qHashFnv32(tbl[0].keylen, key, strlen(key))) + 1; // 0번은 안쓰므로
 
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) return NULL;
@@ -355,7 +355,7 @@ bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
 	if(tbl == NULL || key == NULL) return false;
 
 	// get hash integer
-	int hash = ((int)qHashFnv32(tbl[0].keylen, key, NULL)) + 1; // 0번은 안쓰므로
+	int hash = ((int)qHashFnv32(tbl[0].keylen, key, strlen(key))) + 1; // 0번은 안쓰므로
 
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) {

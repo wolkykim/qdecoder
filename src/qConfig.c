@@ -57,7 +57,7 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 	char *p = str;;
 	while ((p = strstr(p, _INCLUDE_DIRECTIVE)) != NULL) {
 		if (p == str || p[-1] == '\n') {
-			char buf[1024], *e, *t = NULL;
+			char buf[MAX_PATHLEN], *e, *t = NULL;
 			int len;
 
 			/* parse filename */
@@ -74,9 +74,8 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 
 			/* adjust file path */
 			if (!(buf[0] == '/' || buf[0] == '\\')) {
-				char tmp[1024], *dir, *newfile;
-				newfile = strdup(filepath);
-				dir = dirname(newfile);
+				char tmp[MAX_PATHLEN];
+				char *dir = qFileGetDir(filepath);
 				if (strlen(dir) + 1 + strlen(buf) >= sizeof(buf)) {
 					DEBUG("Can't process %s directive.", _INCLUDE_DIRECTIVE);
 					free(str);
@@ -84,7 +83,6 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 				}
 				snprintf(tmp, sizeof(tmp), "%s/%s", dir, buf);
 				strcpy(buf, tmp);
-				free(newfile);
 			}
 
 			/* read file */

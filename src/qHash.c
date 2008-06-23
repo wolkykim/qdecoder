@@ -60,16 +60,10 @@ unsigned char *qHashMd5(const void *data, size_t nbytes) {
 ** Return: MD5 digested static string pointer.
 ** Do    : Strng converted digest string through MD5 algorithm.
 **********************************************/
-char *qHashMd5Str(const char *str, size_t *nbytes) {
+char *qHashMd5Str(const char *str, size_t nbytes) {
 	if(str == NULL) return NULL;
 
-	size_t size = strlen(str);
-	if(nbytes != NULL) {
-		if(*nbytes > size) *nbytes = size;
-		else size = *nbytes;
-	}
-
-	unsigned char *digest = qHashMd5(str, size);
+	unsigned char *digest = qHashMd5(str, nbytes);
 	if (digest == NULL) return NULL;
 
 	char *md5hex = (char*)malloc(sizeof(char) * (16 * 2 + 1));
@@ -135,19 +129,13 @@ char *qHashMd5File(const char *filepath, size_t *nbytes) {
 ** Do    : FNV hash algorithm
 **         if set max to 0, disable maximum limit
 **********************************************/
-unsigned int qHashFnv32(unsigned int max, const void *data, size_t *nbytes) {
+unsigned int qHashFnv32(unsigned int max, const void *data, size_t nbytes) {
 	if(data == NULL) return 0;
-
-	size_t size = strlen(data);
-	if(nbytes != NULL) {
-		if(*nbytes > size) *nbytes = size;
-		else size = *nbytes;
-	}
 
 	unsigned char *dp;
 	unsigned int hval = (unsigned int)0x811c9dc5;
 
-	for (dp = (unsigned char *)data; *dp && size > 0; dp++, size--) {
+	for (dp = (unsigned char *)data; *dp && nbytes > 0; dp++, nbytes--) {
 		hval *= (unsigned int)0x01000193;
 		hval ^= (unsigned int)*dp;
 	}

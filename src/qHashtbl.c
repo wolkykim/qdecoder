@@ -106,7 +106,7 @@ bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const char *value, int size) {
 	if(tbl == NULL || key == NULL || value == NULL) return false;
 
 	// get hash integer
-	int hash = (int)qHashFnv32(tbl->max, key, NULL);
+	int hash = (int)qHashFnv32(tbl->max, key, strlen(key));
 
 	// check, is slot empty
 	if (tbl->count[hash] == 0) { // empty slot
@@ -181,7 +181,7 @@ bool qHashtblPutInt(Q_HASHTBL *tbl, const char *key, const int number) {
 char *qHashtblGet(Q_HASHTBL *tbl, const char *key, int *size) {
 	if(tbl == NULL || key == NULL) return NULL;
 
-	int hash = (int)qHashFnv32(tbl->max, key, NULL);
+	int hash = (int)qHashFnv32(tbl->max, key, strlen(key));
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) return NULL;
 
@@ -251,7 +251,7 @@ char *qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx) {
 bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
 	if(tbl == NULL || key == NULL) return false;
 
-	int hash = (int)qHashFnv32(tbl->max, key, NULL);
+	int hash = (int)qHashFnv32(tbl->max, key, strlen(key));
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) return false;
 

@@ -402,9 +402,9 @@ extern	char*		qDecodeUrl(char *str);
  * qHash.c
  */
 extern	unsigned char*	qHashMd5(const void *data, size_t nbytes);
-extern	char*		qHashMd5Str(const char *str, size_t *nbytes);
+extern	char*		qHashMd5Str(const char *str, size_t nbytes);
 extern	char*		qHashMd5File(const char *filepath, size_t *nbytes);
-extern	unsigned int	qHashFnv32(unsigned int max, const void *data, size_t *nbytes);
+extern	unsigned int	qHashFnv32(unsigned int max, const void *data, size_t nbytes);
 
 /*
  * qString.c
@@ -433,12 +433,15 @@ extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const 
 extern	bool		qFileLock(int fd);
 extern	bool		qFileUnlock(int fd);
 extern	bool		qFileExist(const char *filepath);
+extern	char*		qFileGetName(const char *filepath);
+extern	char*		qFileGetDir(const char *filepath);
+extern	char*		qFileGetExt(const char *filepath);
 extern	off_t		qFileGetSize(const char *filepath);
-extern	ssize_t		qFileSend(int outfd, int infd, size_t size);
-extern	void*		qFileLoad(const char *filepath, size_t *size);
+extern	ssize_t		qFileSend(int outfd, int infd, size_t nbytes);
+extern	void*		qFileLoad(const char *filepath, size_t *nbytes);
+extern	void*		qFileRead(FILE *fp, size_t *nbytes);
 extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bool append);
-char	*qfReadFile(FILE *fp);
-char	*qfGetLine(FILE *fp);
+extern	char*		qFileReadLine(FILE *fp);
 char	*qCmd(char *cmd);
 
 /*

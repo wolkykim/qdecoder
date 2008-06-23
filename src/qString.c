@@ -640,7 +640,7 @@ char *qStrUnique(const char *seed) {
 
 	char szSeed[128];
 	snprintf(szSeed, sizeof(szSeed), "%u%d%ld%ld%ld%s", getpid(), count, random(), time(NULL), usec, (seed!=NULL?seed:""));
-	return qHashMd5Str(szSeed, NULL);
+	return qHashMd5Str(szSeed, strlen(szSeed));
 }
 
 bool qStrIsAlnum(const char *str) {
@@ -658,6 +658,8 @@ bool qStrIsAlnum(const char *str) {
  * @return malloced string pointer.
  */
 #ifdef __linux__
+#include <iconv.h>
+#include <errno.h>
 char *qStrConvEncoding(const char *str, const char *fromcode, const char *tocode, float mag) {
 	if(str == NULL) return NULL;
 
