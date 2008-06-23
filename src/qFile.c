@@ -288,7 +288,9 @@ void *qFileRead(FILE *fp, size_t *nbytes) {
 	if(nbytes != NULL && *nbytes > 0) size = *nbytes;
 
 	int c;
-	for (memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF && (size > 0 && c_count < size);) {
+	for (memsize = 1024, c_count = 0; (c = fgetc(fp)) != EOF;) {
+		if(size > 0 && c_count == size) break;
+
 		if (c_count == 0) {
 			data = (char*)malloc(sizeof(char) * memsize);
 			if (data == NULL) {
