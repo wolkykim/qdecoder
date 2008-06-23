@@ -659,33 +659,35 @@ bool qStrIsAlnum(const char *str) {
  */
 #ifdef __linux__
 #include <iconv.h>
-#include <errno.h>
 char *qStrConvEncoding(const char *str, const char *fromcode, const char *tocode, float mag) {
 	if(str == NULL) return NULL;
 
-	size_t fromsize = sizeof(char) * (strlen(str) + 1);
-	size_t tosize = sizeof(char) * ((mag * fromsize) + 1);
+	char *fromstr = (char*)str;
+	size_t fromsize = strlen(fromstr) + 1;
+
+	size_t tosize = sizeof(char) * ((mag * (fromsize - 1)) + 1);
 	char *tostr = (char *)malloc(tosize);
 	if(tostr == NULL) return NULL;
+	char *tostr1 = tostr;
 
 	iconv_t it = iconv_open(tocode, fromcode);
 	if(it < 0) {
-		DEBUG("iconv_open() failed. errno=%d", errno);
+		DEBUG("iconv_open() failed.");
 		return NULL;
 	}
 
-	char *fromstr = strdup(str);
+	printf("%d %d\n", fromsize, tosize);
 	int ret = iconv(it, &fromstr, &fromsize, &tostr, &tosize);
-	free(fromstr);
 
 	iconv_close(it);
 
+	printf("%d %d\n", fromsize, tosize);
 	if(ret < 0) {
-		DEBUG("iconv() failed. errno=%d", errno);
-		free(tostr);
+		DEBUG("iconv() failed.");
+		free(tostr1);
 		return NULL;
 	}
 
-	return tostr;
+	return tostr1;
 }
 #endif
