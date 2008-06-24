@@ -467,7 +467,7 @@ static int _getIdx(Q_HASHARR *tbl, char *key, int hash) {
 		char keymd5[16+1];
 
 		char *tmpmd5 = qHashMd5(key, keylen);
-		qStrncpy(keymd5, tmpmd5, sizeof(keymd5) - 1);
+		qStrCpy(keymd5, sizeof(keymd5), tmpmd5, sizeof(keymd5));
 		free(tmpmd5);
 
 		int count, idx;
@@ -520,7 +520,7 @@ static bool _putData(Q_HASHARR *tbl, int idx, int hash, char *key, char *value, 
 	// store key
 	tbl[idx].count = count;
 	tbl[idx].hash = hash;
-	qStrncpy(tbl[idx].key, key, _Q_HASHARR_MAX_KEYSIZE - 1);
+	qStrCpy(tbl[idx].key, _Q_HASHARR_MAX_KEYSIZE, key, _Q_HASHARR_MAX_KEYSIZE);
 	strncpy(tbl[idx].keymd5, keymd5, 16);
 	tbl[idx].keylen = keylen;
 	tbl[idx].link = 0;

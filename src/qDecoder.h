@@ -194,7 +194,7 @@ extern	void		qCgiResponseError(Q_ENTRY *request, char *format, ...);
  */
 extern	Q_ENTRY*	qSessionInit(Q_ENTRY *request, const char *dirpath);
 extern	bool		qSessionSetTimeout(Q_ENTRY *session, time_t seconds);
-extern	const char*	qSessionGetID(Q_ENTRY *session);
+extern	const char*	qSessionGetId(Q_ENTRY *session);
 extern	time_t		qSessionGetCreated(Q_ENTRY *session);
 extern	bool		qSessionSave(Q_ENTRY *session);
 extern	bool		qSessionDestroy(Q_ENTRY *session);
@@ -414,7 +414,7 @@ bool	qPuts(int mode, char *buf);
 extern	char*		qStrTrim(char *str);
 extern	char*		qStrTrimTail(char *str);
 extern	char*		qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char *word);
-extern	char*		qStrncpy(char *dst, const char *src, size_t n);
+extern	char*		qStrCpy(char *dst, size_t dstsize, const char *src, size_t nbytes);
 extern	char*		qStrUpper(char *str);
 extern	char*		qStrLower(char *str);
 extern	char*		qStrCaseStr(const char *s1, const char *s2);

@@ -472,7 +472,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 			if (upload_id == NULL || strlen(upload_id) == 0) {
 				/* not progress, just file mode */
 				char *uniq = qStrUnique(getenv("REMOTE_ADDR"));
-				qStrncpy(upload_id_new, uniq, sizeof(upload_id_new)-1);
+				qStrCpy(upload_id_new, sizeof(upload_id_new), uniq, sizeof(upload_id_new));
 				free(uniq);
 				upload_id = upload_id_new;
 			}
@@ -953,10 +953,10 @@ static bool _upload_getstatus(const char *upload_id, const char *upload_basepath
 	snprintf(tmppath, sizeof(tmppath), "%s/Q_UPLOAD_FILE", upload_savedir);
 	char *upload_file = qFileLoad(tmppath, NULL);
 	if(upload_file != NULL) {
-		strcpy(upload_cname, upload_file);
+		qStrCpy(upload_cname, upload_cname_size, upload_file, upload_cname_size);
 		free(upload_file);
 	} else {
-		strcpy(upload_cname, "-");
+		qStrCpy(upload_cname, upload_cname_size, "-", upload_cname_size);
 	}
 
 	/* get csize */

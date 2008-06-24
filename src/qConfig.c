@@ -68,8 +68,8 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 				free(str);
 				return NULL;
 			}
-			strncpy(buf, p + CONST_STRLEN(_INCLUDE_DIRECTIVE), len);
-			buf[len] = '\0';
+
+			qStrCpy(buf, sizeof(buf), p + CONST_STRLEN(_INCLUDE_DIRECTIVE), len);
 			qStrTrim(buf);
 
 			/* adjust file path */
@@ -93,8 +93,7 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 			}
 
 			/* replace */
-			strncpy(buf, p, CONST_STRLEN(_INCLUDE_DIRECTIVE) + len);
-			buf[CONST_STRLEN(_INCLUDE_DIRECTIVE) + len] = '\0';
+			qStrCpy(buf, sizeof(buf), p, CONST_STRLEN(_INCLUDE_DIRECTIVE) + len);
 			p = qStrReplace("sn", str, buf, t);
 			free(t);
 			free(str);
@@ -189,13 +188,12 @@ static char *_parseVariable(Q_ENTRY *config, char *value) {
 			if(bcnt > 0) continue; /* found internal ${ */
 
 			/* found atomic ${ }. pick internal string */
-			char buf[1024];
+			char buf[MAX_LINEBUF];
 			int len;
 
 			len = e - s - 2; /* length between ${ , } */
 			if (len >= (sizeof(buf) - 1)) continue; /* too long */
-			strncpy(buf, s + 2, len);
-			buf[len] = '\0';
+			qStrCpy(buf, sizeof(buf), s + 2, len);
 			qStrTrim(buf);
 
 			/* get the string to replace*/
@@ -221,8 +219,7 @@ static char *_parseVariable(Q_ENTRY *config, char *value) {
 			}
 
 			/* replace */
-			strncpy(buf, s, len + 3); /* ${value} */
-			buf[len + 3] = '\0';
+			qStrCpy(buf, sizeof(buf), s, len + 3); /* ${value} */
 
 			s = qStrReplace("sn", value, buf, t);
 			if (freet == 1) free(t);

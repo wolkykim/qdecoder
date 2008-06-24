@@ -47,11 +47,10 @@ bool qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout) {
 	while (*sp != '\0') {
 		/* SSI invocation */
 		if (!strncmp(sp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
-			char ssi_inc_file[1024], *endp;
+			char ssi_inc_file[MAX_LINEBUF], *endp;
 			if ((endp = strstr(sp, SSI_INCLUDE_END)) != NULL) {
 				sp += strlen(SSI_INCLUDE_START);
-				strncpy(ssi_inc_file, sp, endp - sp);
-				ssi_inc_file[endp-sp] = '\0';
+				qStrCpy(ssi_inc_file, sizeof(ssi_inc_file), sp, endp - sp);
 				sp = (endp + strlen(SSI_INCLUDE_END)) - 1;
 
 				if (qFileExist(ssi_inc_file) == true) qSedFile(entry, ssi_inc_file, fpout);

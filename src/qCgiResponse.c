@@ -207,19 +207,18 @@ int qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mim
 	if (!strcmp(mime, "application/octet-stream")) disposition = "attachment";
 	else disposition = "inline";
 
-	char *filename = strdup(filepath);
+	char *filename = qFileGetName(filepath);
 
-	printf("Content-Disposition: %s;filename=\"%s\"\n", disposition, basename(filename));
+	printf("Content-Disposition: %s;filename=\"%s\"\n", disposition, filename);
 	printf("Content-Transfer-Encoding: binary\n");
 	printf("Accept-Ranges: bytes\n");
 	printf("Content-Length: %ju\n", qFileGetSize(filepath));
 	printf("Connection: close\n");
-	printf("Content-Type: %s\n", mime);
-	printf("\n");
+	qCgiResponseSetContentType(request, mime);
 
 	free(filename);
 
-
+	fflush(stdout);
 	int sent = qFileSend(fileno(stdout), fd, 0);
 
 	close(fd);

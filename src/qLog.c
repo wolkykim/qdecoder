@@ -48,8 +48,8 @@ Q_LOG *qLogOpen(const char *logbase, const char *filenameformat, int rotateinter
 	if ((log = (Q_LOG *)malloc(sizeof(Q_LOG))) == NULL) return NULL;
 
 	/* fill structure */
-	qStrncpy(log->logbase, logbase, sizeof(log->logbase)-1);
-	qStrncpy(log->nameformat, filenameformat, sizeof(log->nameformat)-1);
+	qStrCpy(log->logbase, sizeof(log->logbase), logbase, sizeof(log->logbase));
+	qStrCpy(log->nameformat, sizeof(log->nameformat), filenameformat, sizeof(log->nameformat));
 	log->fp = NULL;
 	log->console = false;
 	log->rotateinterval = ((rotateinterval > 0) ? rotateinterval : 0);

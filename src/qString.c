@@ -441,12 +441,16 @@ char *qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char
 
 /*
  * Copies at most len characters from src into dst then append '\0'.
- * The dst string will be always terminated by '\0'. And the maximul
- * n size is sizeof(dst)-1.
+ * The dst string will be always terminated by '\0'. (bytes that
+ * follow a null byte are not copied)
  */
-char *qStrncpy(char *dst, const char *src, size_t n) {
-	strncpy(dst, src, n);
-	dst[n] = '\0';
+char *qStrCpy(char *dst, size_t dstsize, const char *src, size_t nbytes) {
+	if(dst == NULL || dstsize == 0 || src == NULL || nbytes == 0) return dst;
+
+	if(nbytes >= dstsize) nbytes = dstsize - 1;
+	strncpy(dst, src, nbytes);
+	dst[nbytes] = '\0';
+
 	return dst;
 }
 
@@ -610,8 +614,7 @@ char *qStrDupBetween(const char *str, const char *start, const char *end) {
 	int len = e - s;
 
 	char *buf = (char*)malloc(sizeof(char) * (len + 1));
-	strncpy(buf, s, len);
-	buf[len] = '\0';
+	qStrCpy(buf, len + 1, s, len);
 
 	return buf;
 }
