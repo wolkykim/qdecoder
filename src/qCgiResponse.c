@@ -212,7 +212,7 @@ int qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mim
 	printf("Content-Disposition: %s;filename=\"%s\"\n", disposition, filename);
 	printf("Content-Transfer-Encoding: binary\n");
 	printf("Accept-Ranges: bytes\n");
-	printf("Content-Length: %ju\n", qFileGetSize(filepath));
+	printf("Content-Length: %zu\n", (size_t)qFileGetSize(filepath));
 	printf("Connection: close\n");
 	qCgiResponseSetContentType(request, mime);
 

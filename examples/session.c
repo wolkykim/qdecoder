@@ -31,9 +31,8 @@ int main(void) {
 	const char *name   = qEntryGetStr(req, "name");
 	const char *value  = qEntryGetStr(req, "value");
 
-	/* start session. this function should be called before qCgiResponseSetContentType(). */
+	/* start session. */
 	Q_ENTRY *sess = qSessionInit(req, NULL);
-	const char *sessionid = qSessionGetId(sess);
 
 	/* Mose case, you don't need to set timeout. this is just example */
 	if (expire > 0) qSessionSetTimeout(sess, expire);

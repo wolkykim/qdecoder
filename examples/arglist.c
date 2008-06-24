@@ -23,18 +23,15 @@
 #include "qDecoder.h"
 
 int main(void) {
-	char *string, *query;
+	Q_ENTRY *req = qCgiRequestParse(NULL);
+	qCgiResponseSetContentType(req, "text/html");
+
+	const char *string = qEntryGetStr(req, "string");
+	const char *query = qEntryGetStr(req, "query");
+
 	char *qlist[256], **qp;
-	int queries, tmatches, matches;
-
-	qContentType("text/html");
-	qDecoder();
-
-	string = qGetValueNotEmpty("Type any string.", "string");
-	query = qGetValueNotEmpty("Type any query.", "query");
-
-	queries = qArgMake(query, qlist);
-	matches = qArgMatch(string, qlist);
+	int queries = qArgMake((char*)query, qlist);
+	int matches = qArgMatch((char*)string, qlist);
 
 	printf("String: <b>%s</b><br>\n", string);
 	printf("Query Input: <b>%s</b><br>\n", query);
@@ -45,11 +42,12 @@ int main(void) {
 	for (qp = qlist; *qp; qp++) qPrintf(1, "\"%s\" ", *qp);
 	printf("</b> (%d queries)<br>\n", queries);
 	printf("qArgEmprint(): ");
-	tmatches = qArgEmprint(1, string, qlist);
+	int tmatches = qArgEmprint(1, (char*)string, qlist);
 	printf(" (%d query matched)<br>\n", tmatches);
 	printf("qArgMatch(): %d query matched<br>\n", matches);
 
 	qArgFree(qlist);
-	qFree();
+
+	qEntryFree(req);
 	return 0;
 }
