@@ -224,8 +224,7 @@ static char *_parseVariable(Q_ENTRY *config, char *value) {
 			s = qStrReplace("sn", value, buf, t);
 			if (freet == 1) free(t);
 			free(value);
-			value = qStrTrim(s);
-			/* printf("%s\n", value); */
+			value = s;
 
 			loop = 1;
 			break;

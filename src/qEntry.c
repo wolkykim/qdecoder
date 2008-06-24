@@ -134,8 +134,10 @@ int qEntryRemove(Q_ENTRY *entry, const char *name) {
 			/* set next entry */
 			obj = next;
 		} else {
-			/* set next entry */
+			/* remember prev object */
 			prev = obj;
+
+			/* set next entry */
 			obj = obj->next;
 		}
 	}
@@ -265,14 +267,41 @@ bool qEntryPutInt(Q_ENTRY *entry, const char *name, int num, bool update) {
 const void *qEntryGet(Q_ENTRY *entry, const char *name, int *size) {
 	if(entry == NULL || name == NULL) return NULL;
 
-	const Q_NLOBJ *obj;
-	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
+	Q_NLOBJ *obj;
+	for(obj = entry->first; obj; obj = obj->next) {
 		if(!strcmp(obj->name, name)) {
 			if(size != NULL) *size = obj->size;
+			entry->cont = obj->next;
 			return obj->object;
 		}
 	}
 
+	entry->cont = NULL;
+	return NULL;
+}
+
+/**
+ * Find object with given name. (case-insensitive)
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ * @param size		if size is not NULL, object size will be stored.
+ *
+ * @return		a pointer of the stored object.
+ */
+const void *qEntryGetCase(Q_ENTRY *entry, const char *name, int *size) {
+	if(entry == NULL || name == NULL) return NULL;
+
+	Q_NLOBJ *obj;
+	for(obj = entry->first; obj; obj = obj->next) {
+		if(!strcasecmp(name, obj->name)) {
+			if(size != NULL) *size = obj->size;
+			entry->cont = obj->next;
+			return obj->object;
+		}
+	}
+
+	entry->cont = NULL;
 	return NULL;
 }
 
@@ -292,37 +321,45 @@ const void *qEntryGetNext(Q_ENTRY *entry, const char *name, int *size) {
 	if(entry == NULL || name == NULL) return NULL;
 
 	const Q_NLOBJ *obj;
-	for(obj = qEntryNext(entry); obj; obj = qEntryNext(entry)) {
+	for(obj = entry->cont; obj; obj = obj->next) {
 		if(!strcmp(obj->name, name)) {
 			entry->next = obj->next;
 			if(size != NULL) *size = obj->size;
+			entry->cont = obj->next;
 			return obj->object;
 		}
 	}
 
+	entry->cont = NULL;
 	return NULL;
 }
 
 /**
- * Find object with given name. (case-insensitive)
+ * Find next object with given name. (case-insensitive)
  *
  * @param entry		Q_ENTRY pointer
  * @param name		key name
  * @param size		if size is not NULL, object size will be stored.
  *
  * @return		a pointer of the stored object.
+ *
+ * @note
+ * qEntryGet() should be called before.
  */
-const void *qEntryGetNoCase(Q_ENTRY *entry, const char *name, int *size) {
+const void *qEntryGetNextCase(Q_ENTRY *entry, const char *name, int *size) {
 	if(entry == NULL || name == NULL) return NULL;
 
 	const Q_NLOBJ *obj;
-	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
+	for(obj = entry->cont; obj; obj = obj->next) {
 		if(!strcasecmp(name, obj->name)) {
+			entry->next = obj->next;
 			if(size != NULL) *size = obj->size;
+			entry->cont = obj->next;
 			return obj->object;
 		}
 	}
 
+	entry->cont = NULL;
 	return NULL;
 }
 
@@ -343,8 +380,8 @@ const void *qEntryGetLast(Q_ENTRY *entry, const char *name, int *size) {
 	if(entry == NULL || name == NULL) return NULL;
 
 	void *object = NULL;
-	const Q_NLOBJ *obj;
-	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
+	Q_NLOBJ *obj;
+	for(obj = entry->first; obj; obj = obj->next) {
 		if (!strcmp(name, obj->name)) {
 			object = obj->object;
 			if(size != NULL) *size = obj->size;
@@ -367,6 +404,18 @@ const void *qEntryGetLast(Q_ENTRY *entry, const char *name, int *size) {
  */
 const char *qEntryGetStr(Q_ENTRY *entry, const char *name) {
 	return (char *)qEntryGet(entry, name, NULL);
+}
+
+/**
+ * Find string object with given name. (case-insensitive)
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a pointer of the stored string object.
+ */
+const char *qEntryGetStrCase(Q_ENTRY *entry, const char *name) {
+	return (char *)qEntryGetCase(entry, name, NULL);
 }
 
 /**
@@ -401,15 +450,15 @@ const char *qEntryGetStrNext(Q_ENTRY *entry, const char *name) {
 }
 
 /**
- * Find string object with given name. (case-insensitive)
+ * Find next string object with given name. (case-insensitive)
  *
  * @param entry		Q_ENTRY pointer
  * @param name		key name
  *
  * @return		a pointer of the stored string object.
  */
-const char *qEntryGetStrNoCase(Q_ENTRY *entry, const char *name) {
-	return (char *)qEntryGetNoCase(entry, name, NULL);
+const char *qEntryGetStrNextCase(Q_ENTRY *entry, const char *name) {
+	return (char *)qEntryGetNextCase(entry, name, NULL);
 }
 
 /**
@@ -442,6 +491,20 @@ int qEntryGetInt(Q_ENTRY *entry, const char *name) {
 }
 
 /**
+ * Find integer object with given name. (case-insensitive)
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name
+ *
+ * @return		a integer value of the object.
+ */
+int qEntryGetIntCase(Q_ENTRY *entry, const char *name) {
+	const char *str =qEntryGetCase(entry, name, NULL);
+	if(str != NULL) return atoi((char *)str);
+	return 0;
+}
+
+/**
  * Find integer object with formatted name.
  *
  * @param entry		Q_ENTRY pointer
@@ -469,21 +532,21 @@ int qEntryGetIntf(Q_ENTRY *entry, char *format, ...) {
  * @return		a integer value of the object.
  */
 int qEntryGetIntNext(Q_ENTRY *entry, const char *name) {
-	const char *str =qEntryGet(entry, name, NULL);
+	const char *str =qEntryGetNext(entry, name, NULL);
 	if(str != NULL) return atoi((char *)str);
 	return 0;
 }
 
 /**
- * Find integer object with given name. (case-insensitive)
+ * Find next integer object with given name. (case-insensitive)
  *
  * @param entry		Q_ENTRY pointer
  * @param name		key name
  *
  * @return		a integer value of the object.
  */
-int qEntryGetIntNoCase(Q_ENTRY *entry, const char *name) {
-	const char *str =qEntryGetNoCase(entry, name, NULL);
+int qEntryGetIntNextCase(Q_ENTRY *entry, const char *name) {
+	const char *str =qEntryGetNextCase(entry, name, NULL);
 	if(str != NULL) return atoi((char *)str);
 	return 0;
 }
@@ -527,8 +590,8 @@ int qEntryGetNo(Q_ENTRY *entry, const char *name) {
 	if(entry == NULL || name == NULL) return 0;
 
 	int no;
-	const Q_NLOBJ *obj;
-	for(obj = qEntryFirst(entry), no = 1; obj; obj = qEntryNext(entry), no++) {
+	Q_NLOBJ *obj;
+	for(obj = entry->first, no = 1; obj; obj = obj->next, no++) {
 		if (!strcmp(name, obj->name)) return no;
 	}
 	return 0;
@@ -572,7 +635,7 @@ bool qEntryPrint(Q_ENTRY *entry, FILE *out, bool print_object) {
 	if(entry == NULL || out == NULL) return false;
 
 	const Q_NLOBJ *obj;
-	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
+	for(obj = entry->first; obj; obj = obj->next) {
 		fprintf(out, "%s=%s (%d)\n" , obj->name, (print_object?(char*)obj->object:"(object)"), obj->size);
 	}
 
@@ -590,10 +653,12 @@ bool qEntryFree(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
 
 	Q_NLOBJ *obj;
-	for(obj = (Q_NLOBJ*)qEntryFirst(entry); obj; obj = (Q_NLOBJ*)qEntryNext(entry)) {
+	for(obj = entry->first; obj;) {
+		Q_NLOBJ *next = obj->next;
 		free(obj->name);
 		free(obj->object);
 		free(obj);
+		obj = next;
 	}
 	free(entry);
 
@@ -623,7 +688,7 @@ bool qEntrySave(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode)
 	free(gmtstr);
 
 	const Q_NLOBJ *obj;
-	for(obj = qEntryFirst(entry); obj; obj = qEntryNext(entry)) {
+	for(obj = entry->first; obj; obj = obj->next) {
 		char *encval;
 		if(encode == true) encval = qEncodeUrl(obj->object);
 		else encval = obj->object;
@@ -653,7 +718,7 @@ int qEntryLoad(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode) 
 
 	int cnt = 0;
 	Q_NLOBJ *obj;
-	for(obj = (Q_NLOBJ*)qEntryFirst(loaded); obj; obj = (Q_NLOBJ*)qEntryNext(loaded)) {
+	for(obj = loaded->first; obj; obj = obj->next) {
 		if(decode == true) qDecodeUrl(obj->object);
 		qEntryPut(entry, obj->name, obj->object, obj->size, false);
 		cnt++;

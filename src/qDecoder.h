@@ -54,7 +54,8 @@ typedef struct {
 	int size;			/*!< total size of objects */
 	Q_NLOBJ *first;			/*!< first object pointer */
 	Q_NLOBJ *last;			/*!< last object pointer */
-	Q_NLOBJ *next;			/*!< next object pointer */
+	Q_NLOBJ *next;			/*!< next object pointer used by only for qEntryFirst() and qEntryNext()*/
+	Q_NLOBJ *cont;			/*!< next object pointer used by qEntry*Next*() and member functions*/
 } Q_ENTRY;
 
 /**
@@ -308,18 +309,21 @@ extern	bool		qEntryPutStr(Q_ENTRY *entry, const char *name, const char *str, boo
 extern	bool		qEntryPutStrf(Q_ENTRY *entry, const char *name, bool update, char *format, ...);
 extern	bool		qEntryPutInt(Q_ENTRY *entry, const char *name, int num, bool update);
 extern	const void*	qEntryGet(Q_ENTRY *entry, const char *name, int *size);
+extern	const void*	qEntryGetCase(Q_ENTRY *entry, const char *name, int *size);
 extern	const void*	qEntryGetNext(Q_ENTRY *entry, const char *name, int *size);
-extern	const void*	qEntryGetNoCase(Q_ENTRY *entry, const char *name, int *size);
+extern	const void*	qEntryGetNextCase(Q_ENTRY *entry, const char *name, int *size);
 extern	const void*	qEntryGetLast(Q_ENTRY *entry, const char *name, int *size);
 extern	const char*	qEntryGetStr(Q_ENTRY *entry, const char *name);
+extern	const char*	qEntryGetStrCase(Q_ENTRY *entry, const char *name);
 extern	const char*	qEntryGetStrf(Q_ENTRY *entry, char *format, ...);
 extern	const char*	qEntryGetStrNext(Q_ENTRY *entry, const char *name);
-extern	const char*	qEntryGetStrNoCase(Q_ENTRY *entry, const char *name);
+extern	const char*	qEntryGetStrNextCase(Q_ENTRY *entry, const char *name);
 extern	const char*	qEntryGetStrLast(Q_ENTRY *entry, const char *name);
 extern	int		qEntryGetInt(Q_ENTRY *entry, const char *name);
+extern	int		qEntryGetIntCase(Q_ENTRY *entry, const char *name);
 extern	int		qEntryGetIntf(Q_ENTRY *entry, char *format, ...);
 extern	int		qEntryGetIntNext(Q_ENTRY *entry, const char *name);
-extern	int		qEntryGetIntNoCase(Q_ENTRY *entry, const char *name);
+extern	int		qEntryGetIntNextCase(Q_ENTRY *entry, const char *name);
 extern	int 		qEntryGetIntLast(Q_ENTRY *entry, const char *name);
 extern	int 		qEntryGetNum(Q_ENTRY *entry);
 extern	int		qEntryGetNo(Q_ENTRY *entry, const char *name);
