@@ -25,20 +25,19 @@
 #define SOURCE		"streamedit.html.in"
 
 int main(void) {
-	Q_ENTRY *args;
-	char *name, *hobby;
+	Q_ENTRY *req = qCgiRequestParse(NULL);
+	const char *name = qEntryGetStr(req, "name");
+	const char *hobby = qEntryGetStr(req, "hobby");
 
-	qContentType("text/html");
+	Q_ENTRY *args = qEntryInit();
+	qEntryPutStr(args, "${NAME}", name, true);
+	qEntryPutStr(args, "${HOBBY}", hobby, true);
 
-	name = qGetValueDefault("Not Found", "name");
-	hobby = qGetValueDefault("Not Found", "hobby");
-
-	args = NULL;
-	args = qSedAdd(args, "${NAME}", name);
-	args = qSedAdd(args, "${HOBBY}", hobby);
-	if (qSedFile(args, SOURCE, stdout) == 0) qError("File(%s) not found.", SOURCE);
-	qSedFree(args);
+	qCgiResponseSetContentType(req, "text/html");
+	if (qSedFile(args, SOURCE, stdout) == 0) {
+		qCgiResponseError(req, "File(%s) not found.", SOURCE);
+	}
+	qEntryFree(args);
 
 	return 0;
 }
-

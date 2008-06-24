@@ -23,7 +23,10 @@
 #include "qDecoder.h"
 
 int main(void) {
-	qDownload("download.c");
+	/* Parse queries. */
+	Q_ENTRY *req = qCgiRequestParse(NULL);
+
+	qCgiResponseDownload(req, "download.c", "text/plain");
 	return 0;
 }
 

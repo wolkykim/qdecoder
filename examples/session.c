@@ -23,52 +23,49 @@
 #include "qDecoder.h"
 
 int main(void) {
-	char *sessionid;
-	char *mode, *name, *value;
-	time_t expire;
+	Q_ENTRY *req = qCgiRequestParse(NULL);
 
 	/* fetch queries */
-	expire = (time_t)qGetInt("expire");
-	mode   = qGetValueNotEmpty("Mode not found", "mode");
-	name   = qGetValue("name");
-	value  = qGetValue("value");
+	time_t expire = (time_t)qEntryGetInt(req, "expire");
+	const char *mode = qEntryGetStr(req, "mode");
+	const char *name   = qEntryGetStr(req, "name");
+	const char *value  = qEntryGetStr(req, "value");
 
-	/* Set valid interval of this session */
-	/* start session. this function should be called before qContentType(). */
-	qSession(NULL);
-	sessionid = qSessionGetID();
+	/* start session. this function should be called before qCgiResponseSetContentType(). */
+	Q_ENTRY *sess = qSessionInit(req, NULL);
+	const char *sessionid = qSessionGetId(sess);
 
-	/* Mose case, you don't need to set timeout but we use it here to give you a show case */
-	if (expire > 0) qSessionSetTimeout(expire);
+	/* Mose case, you don't need to set timeout. this is just example */
+	if (expire > 0) qSessionSetTimeout(sess, expire);
 
 	switch (mode[0]) {
 		case 's': {
-			qSessionAdd(name, value);
+			qEntryPutStr(sess, name, value, true);
 			break;
 		}
 		case 'i': {
-			qSessionAddInt(name, atoi(value));
+			qEntryPutInt(sess, name, atoi(value), true);
 			break;
 		}
 		case 'r': {
-			qSessionRemove(name);
+			qEntryRemove(sess, name);
 			break;
 		}
 		case 'd': {
-			qSessionDestroy();
-			qContentType("text/html");
-			printf("Session destroied.");
+			qSessionDestroy(sess);
+			qCgiResponseSetContentType(req, "text/html");
+			printf("Session destroied.\n");
 			return 0;
 			break;
 		}
 	}
 
 	/* screen out */
-	qContentType("text/html");
-	qSessionPrint(stdout);
+	qCgiResponseSetContentType(req, "text/html");
+	qEntryPrint(sess, stdout, true);
 
 	/* save session & free allocated memories */
-	qSessionFree();
+	qSessionSave(sess);
+	qEntryFree(sess);
 	return 0;
 }
-

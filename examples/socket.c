@@ -25,7 +25,7 @@
 
 #define SOCKET_TIMEOUT		(10)
 
-int dumpHttp(char *hostname) {
+int dumpHttp(const char *hostname) {
 	int sockfd;
 	char buf[1024];
 	int lineno;
@@ -45,7 +45,7 @@ int dumpHttp(char *hostname) {
 	// read data
 	for (lineno = 1; ; lineno++) {
 		// read line from socket
-		if (qSocketGets(sockfd, buf, sizeof(buf), SOCKET_TIMEOUT) <= 0) qError("Timeout or socket closed.");
+		if (qSocketGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) <= 0) qCgiResponseError(NULL, "Timeout or socket closed.");
 
 		// if the http header block ended, stop reading.
 		if (strlen(buf) == 0) break;
@@ -61,20 +61,18 @@ int dumpHttp(char *hostname) {
 }
 
 int main(void) {
-	char *hostname;
-	int retflag;
+	Q_ENTRY *req = qCgiRequestParse(NULL);
+	qCgiResponseSetContentType(req, "text/html");
 
-	qContentType("text/plain");
+	const char *hostname = qEntryGetStr(req, "hostname");
+	if (strlen(hostname) == 0) qCgiResponseError(req, "Invalid usages.");
 
-	hostname = qGetValueDefault("", "hostname");
-	if (strlen(hostname) == 0) qError("Invalid usages.");
-
-	retflag = dumpHttp(hostname);
+	int retflag = dumpHttp(hostname);
 	if (retflag < 0) {
-		if (retflag == -1) qError("Invalid hostname.");
-		else if (retflag == -2) qError("Can't create socket.");
-		else if (retflag == -3) qError("Connection failed.");
-		else qError("Unknown error.");
+		if (retflag == -1) qCgiResponseError(req, "Invalid hostname.");
+		else if (retflag == -2) qCgiResponseError(req, "Can't create socket.");
+		else if (retflag == -3) qCgiResponseError(req, "Connection failed.");
+		else qCgiResponseError(req, "Unknown error.");
 	}
 
 	return 0;
