@@ -337,7 +337,7 @@ char *qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx) {
 char *qHasharrGetNextKey(Q_HASHARR *tbl, int *idx) {
 	if(tbl == NULL || idx == NULL) return NULL;
 
-	for (*idx += 1; *idx < tbl[0].keylen; (*idx)++) {
+	for (*idx += 1; *idx <= tbl[0].keylen; (*idx)++) {
 		if (tbl[*idx].count == 0 || tbl[*idx].count == -2) continue;
 		return tbl[*idx].key;
 	}
