@@ -372,9 +372,9 @@ bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
 		// find dup
 		int idx2;
 		for (idx2 = idx + 1; ; idx2++) {
-			if (idx2 >= tbl[0].keylen) idx2 = 0;
+			if (idx2 > tbl[0].keylen) idx2 = 1;
 			if (idx2 == idx) {
-				DEBUG("hasharr: BUG remove failed %s. dup not found.", key);
+				DEBUG("BUG: failed to remove dup key %s.", key);
 				return false;
 			}
 			if (tbl[idx2].count == -1 && tbl[idx2].hash == idx) break;
