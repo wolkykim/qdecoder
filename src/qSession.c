@@ -139,7 +139,7 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 
 		/* save session informations */
 		char created_sec[10+1];
-		snprintf(created_sec, sizeof(created_sec), "%ld", time(NULL));
+		snprintf(created_sec, sizeof(created_sec), "%ld", (long int)time(NULL));
 		qEntryPutStr(session, INTER_SESSIONID, sessionkey, false);
 		qEntryPutStr(session, INTER_SESSION_REPO, session_repository_path, false);
 		qEntryPutStr(session, INTER_CREATED_SEC, created_sec, false);
