@@ -71,8 +71,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <sys/sem.h>
 #include "qDecoder.h"
+#include "qInternal.h"
 
 /**
  * Under-development
@@ -172,6 +174,31 @@ bool qSemEnterNowait(int semid, int semno) {
 
 	/* lock */
 	if (semop(semid, &sbuf, 1) != 0) return false;
+	return true;
+}
+
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
+bool qSemEnterForce(int semid, int semno, int maxwaitms, bool *forceflag) {
+	int wait;
+	for(wait = 0; wait < maxwaitms; wait += 10) {
+		if(qSemEnterNowait(semid, semno) == true) {
+			if(forceflag != NULL) *forceflag = false;
+			return true;
+		}
+		usleep(10*1000); // sleep 10ms
+	}
+
+	DEBUG("force to unlock semaphore %d-%d", semid, semno);
+	while(true) {
+		qSemLeave(semid, semno);
+		if(qSemEnterNowait(semid, semno) == true) break;
+	}
+
+	if(forceflag != NULL) *forceflag = true;
 	return true;
 }
 

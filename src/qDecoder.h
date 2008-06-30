@@ -236,6 +236,7 @@ extern	int		qSemInit(const char *keyfile, int keyid, int nsems, bool autodestroy
 extern	int		qSemGetId(const char *keyfile, int keyid);
 extern	bool		qSemEnter(int semid, int semno);
 extern	bool		qSemEnterNowait(int semid, int semno);
+extern	bool		qSemEnterForce(int semid, int semno, int maxwaitms, bool *forceflag);
 extern	bool		qSemLeave(int semid, int semno);
 extern	bool		qSemCheck(int semid, int semno);
 extern	bool		qSemFree(int semid);
