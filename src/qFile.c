@@ -192,7 +192,7 @@ ssize_t qFileSend(int outfd, int infd, size_t nbytes) {
 		}
 
 		// write
-		ssize_t retw = write(outfd, buf, retr);
+		ssize_t retw = _write(outfd, buf, retr);
 		if(retw <= 0) {
 			if(sent == 0) return -1;
 			break;

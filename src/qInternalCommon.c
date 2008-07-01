@@ -85,7 +85,7 @@ char *_fgets(char *str, int size, FILE *stream) {
 	return str;
 }
 
-int _writef(int fd, char *format, ...) {
+ssize_t _writef(int fd, char *format, ...) {
 	char buf[MAX_LINEBUF];
 	va_list arglist;
 
@@ -94,4 +94,19 @@ int _writef(int fd, char *format, ...) {
 	va_end(arglist);
 
 	return write(fd, buf, strlen(buf));
+}
+
+ssize_t _write(int fd, const void *buf, size_t nbytes) {
+	if(nbytes == 0) return 0;
+
+	ssize_t sent = 0;
+
+	while(sent < nbytes) {
+		ssize_t w = write(fd, buf+sent, nbytes-sent);
+		if(w <= 0) break;
+		sent += w;
+	}
+
+	if(sent > 0) return sent;
+	return -1;
 }
