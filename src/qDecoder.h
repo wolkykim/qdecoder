@@ -254,6 +254,8 @@ extern	bool		qShmFree(int shmid);
  */
 extern	int		qSocketOpen(const char *hostname, int port);
 extern	bool		qSocketClose(int sockfd);
+extern	int		qSocketWaitReadable(int sockfd, int timeoutms);
+extern	int		qSocketWaitWritable(int sockfd, int timeoutms);
 extern	ssize_t		qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms);
 extern	ssize_t		qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms);
 extern	ssize_t		qSocketWrite(int sockfd, const void *binary, size_t nbytes);
@@ -435,8 +437,6 @@ extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const 
  */
 extern	bool		qFileLock(int fd);
 extern	bool		qFileUnlock(int fd);
-extern	int		qFileWaitReadable(int sockfd, int timeoutms);
-extern	int		qFileWaitWritable(int sockfd, int timeoutms);
 extern	bool		qFileExist(const char *filepath);
 extern	char*		qFileGetName(const char *filepath);
 extern	char*		qFileGetDir(const char *filepath);

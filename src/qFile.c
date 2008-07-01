@@ -32,8 +32,6 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-#define MAX_FILESEND_CHUNK_SIZE		(32 * 1024)
-
 /**
  * Lock opened file.
  *
@@ -83,78 +81,6 @@ bool qFileUnlock(int fd) {
 	if(ret == 0) return true;
 	return false;
 #endif
-}
-
-/**
- * Wait until the file has some readable data.
- *
- * @param	fd		file descriptor
- * @param	timeoutms	wait timeout micro-seconds. if set to negative value, wait indefinitely.
- *
- * @return	1 on readable, or 0 on timeout, or -1 if an error occurred.
- *
- * @since	8.1R
- *
- * @note	does not need to set the file as non-block mode.
- * @code
- * @endcode
- */
-int qFileWaitReadable(int fd, int timeoutms) {
-	struct timeval tv;
-	fd_set readfds;
-
-	// time to wait
-	FD_ZERO(&readfds);
-	FD_SET(fd, &readfds);
-	if (timeoutms > 0) {
-		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = ((timeoutms % 1000) * 1000);
-		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
-	} else if (timeoutms == 0) { // just poll
-		tv.tv_sec = 0, tv.tv_usec = 0;
-		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
-	} else { //  blocks indefinitely
-		if (select(FD_SETSIZE, &readfds, NULL, NULL, NULL) < 0) return -1;
-	}
-
-	if (!FD_ISSET(fd, &readfds)) return 0; // timeout
-
-	return 1;
-}
-
-/**
- * Wait until the file is writable.
- *
- * @param	fd		file descriptor
- * @param	timeoutms	wait timeout micro-seconds. if set to negative value, wait indefinitely.
- *
- * @return	1 on writable, or 0 on timeout, or -1 if an error occurred.
- *
- * @since	8.1R
- *
- * @note	does not need to set the file as non-block mode.
- * @code
- * @endcode
- */
-int qFileWaitWritable(int fd, int timeoutms) {
-	struct timeval tv;
-	fd_set writefds;
-
-	// time to wait
-	FD_ZERO(&writefds);
-	FD_SET(fd, &writefds);
-	if (timeoutms > 0) {
-		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = ((timeoutms % 1000) * 1000);
-		if (select(FD_SETSIZE, NULL, &writefds, NULL, &tv) < 0) return -1;
-	} else if (timeoutms == 0) { // just poll
-		tv.tv_sec = 0, tv.tv_usec = 0;
-		if (select(FD_SETSIZE, NULL, &writefds, NULL, &tv) < 0) return -1;
-	} else { //  blocks indefinitely
-		if (select(FD_SETSIZE, NULL, &writefds, NULL, NULL) < 0) return -1;
-	}
-
-	if (!FD_ISSET(fd, &writefds)) return 0; // timeout
-
-	return 1;
 }
 
 /**
@@ -246,6 +172,7 @@ off_t qFileGetSize(const char *filepath) {
  * @return		the number of bytes written to outfd.
  */
 ssize_t qFileSend(int outfd, int infd, size_t nbytes) {
+#define MAX_FILESEND_CHUNK_SIZE		(32 * 1024)
 	if(nbytes == 0) return 0;
 
 	char buf[MAX_FILESEND_CHUNK_SIZE];
@@ -266,7 +193,7 @@ ssize_t qFileSend(int outfd, int infd, size_t nbytes) {
 
 		// write
 		ssize_t retw = _q_write(outfd, buf, retr);
-		DEBUG("write %d", (int)retw);
+		DEBUG("write %zd", retw);
 		if(retw <= 0) {
 			if(sent == 0) return -1;
 			break;

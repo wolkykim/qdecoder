@@ -93,6 +93,13 @@ ssize_t _q_writef(int fd, char *format, ...) {
 	vsnprintf(buf, sizeof(buf), format, arglist);
 	va_end(arglist);
 
+	while(true) {
+		int status = qSocketWaitWritable(fd, 1000);
+		if(status == 0) continue;
+		else if(status < 0) return -1;
+		break;
+	}
+
 	return write(fd, buf, strlen(buf));
 }
 
@@ -102,15 +109,13 @@ ssize_t _q_write(int fd, const void *buf, size_t nbytes) {
 	ssize_t sent = 0;
 
 	while(sent < nbytes) {
-		int status = qFileWaitWritable(fd, 1000);
+		int status = qSocketWaitWritable(fd, 1000);
 		if(status == 0) continue;
 		else if(status < 0) break;
 
 		ssize_t wsize = write(fd, buf+sent, nbytes-sent);
 		if(wsize > 0) sent += wsize;
 	}
-
-	DEBUG("_write %zd", sent);
 
 	if(sent > 0) return sent;
 	return -1;

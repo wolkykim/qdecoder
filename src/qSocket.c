@@ -102,12 +102,84 @@ bool qSocketClose(int sockfd) {
 }
 
 /**
+ * Wait until the socket has some readable data.
+ *
+ * @param	sockfd		socket descriptor
+ * @param	timeoutms	wait timeout milliseconds. if set to negative value, wait indefinitely.
+ *
+ * @return	1 on readable, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
+ *
+ * @since	8.1R
+ *
+ * @note	does not need to set the socket as non-block mode.
+ * @code
+ * @endcode
+ */
+int qSocketWaitReadable(int sockfd, int timeoutms) {
+	struct timeval tv;
+	fd_set readfds;
+
+	// time to wait
+	FD_ZERO(&readfds);
+	FD_SET(sockfd, &readfds);
+	if (timeoutms > 0) {
+		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = ((timeoutms % 1000) * 1000);
+		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
+	} else if (timeoutms == 0) { // just poll
+		tv.tv_sec = 0, tv.tv_usec = 0;
+		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
+	} else { //  blocks indefinitely
+		if (select(FD_SETSIZE, &readfds, NULL, NULL, NULL) < 0) return -1;
+	}
+
+	if (!FD_ISSET(sockfd, &readfds)) return 0; // timeout
+
+	return 1;
+}
+
+/**
+ * Wait until the socket is writable.
+ *
+ * @param	sockfd		socket descriptor
+ * @param	timeoutms	wait timeout mili-seconds. if set to negative value, wait indefinitely.
+ *
+ * @return	1 on writable, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
+ *
+ * @since	8.1R
+ *
+ * @note	does not need to set the socket as non-block mode.
+ * @code
+ * @endcode
+ */
+int qSocketWaitWritable(int sockfd, int timeoutms) {
+	struct timeval tv;
+	fd_set writefds;
+
+	// time to wait
+	FD_ZERO(&writefds);
+	FD_SET(sockfd, &writefds);
+	if (timeoutms > 0) {
+		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = ((timeoutms % 1000) * 1000);
+		if (select(FD_SETSIZE, NULL, &writefds, NULL, &tv) < 0) return -1;
+	} else if (timeoutms == 0) { // just poll
+		tv.tv_sec = 0, tv.tv_usec = 0;
+		if (select(FD_SETSIZE, NULL, &writefds, NULL, &tv) < 0) return -1;
+	} else { //  blocks indefinitely
+		if (select(FD_SETSIZE, NULL, &writefds, NULL, NULL) < 0) return -1;
+	}
+
+	if (!FD_ISSET(sockfd, &writefds)) return 0; // timeout
+
+	return 1;
+}
+
+/**
  * Read data from socket.
  *
  * @param	binary		data buffer pointer
  * @param	sockfd		socket descriptor
  * @param	nbytes		read size
- * @param	timeoutms	wait timeout micro-seconds
+ * @param	timeoutms	wait timeout milliseconds
  *
  * @return	the length of data readed on success, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
  *
@@ -118,12 +190,20 @@ bool qSocketClose(int sockfd) {
  * @endcode
  */
 ssize_t qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms) {
-	int sockstatus = qFileWaitReadable(sockfd, timeoutms);
-	if (sockstatus <= 0) return sockstatus;
-	ssize_t readcnt = read(sockfd, binary, nbytes);
-	if (readcnt <= 0) return -1;
+	if(nbytes == 0) return 0;
 
-	return readcnt;
+	ssize_t readbytes = 0;
+	int sockstatus = 0;
+	while(readbytes < nbytes) {
+		sockstatus = qSocketWaitReadable(sockfd, timeoutms);
+		if(sockstatus <= 0) break;
+
+		ssize_t readsize = read(sockfd, binary+readbytes, nbytes-readbytes);
+		if(readsize > 0) readbytes += readsize;
+	}
+
+	if(readbytes > 0) return readbytes;
+	return sockstatus;
 }
 
 /**
@@ -133,7 +213,7 @@ ssize_t qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms) {
  * @param	str		data buffer pointer
  * @param	sockfd		socket descriptor
  * @param	nbytes		read size
- * @param	timeoutms	wait timeout micro-seconds
+ * @param	timeoutms	wait timeout milliseconds
  *
  * @return	the length of data readed on success, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
  *
@@ -149,7 +229,7 @@ ssize_t qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms) {
 	char *ptr;
 	ssize_t readcnt = 0;
 	for (ptr = str; readcnt < (nbytes - 1); ptr++) {
-		int sockstatus = qFileWaitReadable(sockfd, timeoutms);
+		int sockstatus = qSocketWaitReadable(sockfd, timeoutms);
 		if (sockstatus <= 0) {
 			*ptr = '\0';
 			return sockstatus;
@@ -184,7 +264,7 @@ ssize_t qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms) {
  * @endcode
  */
 ssize_t qSocketWrite(int sockfd, const void *binary, size_t nbytes) {
-	return write(sockfd, binary, nbytes);
+	return _q_write(sockfd, binary, nbytes);
 }
 
 /**
@@ -205,7 +285,7 @@ ssize_t qSocketPuts(int sockfd, const char *str) {
 	if(buf == NULL) return -1;
 	sprintf(buf, "%s\r\n", str);
 
-	ssize_t sent = write(sockfd, buf, strlen(buf));
+	ssize_t sent = _q_write(sockfd, buf, strlen(buf));
 	free(buf);
 
 	return sent;
@@ -234,7 +314,7 @@ ssize_t qSocketPrintf(int sockfd, const char *format, ...) {
 	vsnprintf(buf, sizeof(buf), format, arglist);
 	va_end(arglist);
 
-	return write(sockfd, buf, strlen(buf));
+	return _q_write(sockfd, buf, strlen(buf));
 }
 
 /**
@@ -296,7 +376,7 @@ ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t n
  * @param	sockfd		socket descriptor
  * @param	nbytes		length of bytes to read from socket
  * @param	oflag		constructed by a bitwise-inclusive OR of flags defined in <fcntl.h>.
- * @param	timeoutms	wait timeout micro-seconds
+ * @param	timeoutms	wait timeout milliseconds
  *
  * @return	the number of bytes wrote on success, -1 if an error(ex:socket closed, file open failed) occurred.
  *
@@ -320,7 +400,7 @@ ssize_t qSocketSaveIntoFile(int filefd, int sockfd, size_t nbytes, int timeoutms
 		else readsize = MAX_SAVEINTOFILE_CHUNK_SIZE;
 
 		// read data
-		if (qFileWaitReadable(sockfd, timeoutms) <= 0) {
+		if (qSocketWaitReadable(sockfd, timeoutms) <= 0) {
 			if(readbytes == 0) return -1;
 			break;
 		}
@@ -340,7 +420,7 @@ ssize_t qSocketSaveIntoFile(int filefd, int sockfd, size_t nbytes, int timeoutms
  * @param	mem		memory buffer pointer
  * @param	sockfd		socket descriptor
  * @param	nbytes		length of bytes to read from socket
- * @param	timeoutms	wait timeout micro-seconds
+ * @param	timeoutms	wait timeout milliseconds
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
  *
@@ -362,7 +442,7 @@ ssize_t qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutm
 		size_t readsize = nbytes - readbytes;
 
 		// wait data
-		if (qFileWaitReadable(sockfd, timeoutms) <= 0) {
+		if (qSocketWaitReadable(sockfd, timeoutms) <= 0) {
 			if(readbytes == 0) return -1;
 			break;
 		}
