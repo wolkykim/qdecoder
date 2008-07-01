@@ -114,7 +114,8 @@ ssize_t _q_write(int fd, const void *buf, size_t nbytes) {
 		else if(status < 0) break;
 
 		ssize_t wsize = write(fd, buf+sent, nbytes-sent);
-		if(wsize > 0) sent += wsize;
+		if(wsize <= 0) break;
+		sent += wsize;
 	}
 
 	if(sent > 0) return sent;

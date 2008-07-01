@@ -32,6 +32,7 @@
 #include <netdb.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <poll.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -116,25 +117,16 @@ bool qSocketClose(int sockfd) {
  * @endcode
  */
 int qSocketWaitReadable(int sockfd, int timeoutms) {
-	struct timeval tv;
-	fd_set readfds;
+	struct pollfd fds[1];
 
-	// time to wait
-	FD_ZERO(&readfds);
-	FD_SET(sockfd, &readfds);
-	if (timeoutms > 0) {
-		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = ((timeoutms % 1000) * 1000);
-		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
-	} else if (timeoutms == 0) { // just poll
-		tv.tv_sec = 0, tv.tv_usec = 0;
-		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
-	} else { //  blocks indefinitely
-		if (select(FD_SETSIZE, &readfds, NULL, NULL, NULL) < 0) return -1;
-	}
+	fds[0].fd = sockfd;
+	fds[0].events = POLLIN;
 
-	if (!FD_ISSET(sockfd, &readfds)) return 0; // timeout
+	int status = poll(fds, 1, timeoutms);
+	if(status <= 0) return status;
 
-	return 1;
+	if(fds[0].revents & POLLIN) return 1;
+	return -1;
 }
 
 /**
@@ -152,25 +144,16 @@ int qSocketWaitReadable(int sockfd, int timeoutms) {
  * @endcode
  */
 int qSocketWaitWritable(int sockfd, int timeoutms) {
-	struct timeval tv;
-	fd_set writefds;
+	struct pollfd fds[1];
 
-	// time to wait
-	FD_ZERO(&writefds);
-	FD_SET(sockfd, &writefds);
-	if (timeoutms > 0) {
-		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = ((timeoutms % 1000) * 1000);
-		if (select(FD_SETSIZE, NULL, &writefds, NULL, &tv) < 0) return -1;
-	} else if (timeoutms == 0) { // just poll
-		tv.tv_sec = 0, tv.tv_usec = 0;
-		if (select(FD_SETSIZE, NULL, &writefds, NULL, &tv) < 0) return -1;
-	} else { //  blocks indefinitely
-		if (select(FD_SETSIZE, NULL, &writefds, NULL, NULL) < 0) return -1;
-	}
+	fds[0].fd = sockfd;
+	fds[0].events = POLLOUT;
 
-	if (!FD_ISSET(sockfd, &writefds)) return 0; // timeout
+	int status = poll(fds, 1, timeoutms);
+	if(status <= 0) return status;
 
-	return 1;
+	if(fds[0].revents & POLLOUT) return 1;
+	return -1;
 }
 
 /**
@@ -199,7 +182,11 @@ ssize_t qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms) {
 		if(sockstatus <= 0) break;
 
 		ssize_t readsize = read(sockfd, binary+readbytes, nbytes-readbytes);
-		if(readsize > 0) readbytes += readsize;
+		if(readsize <= 0) {
+			sockstatus = -1;
+			break;
+		}
+		readbytes += readsize;
 	}
 
 	if(readbytes > 0) return readbytes;
