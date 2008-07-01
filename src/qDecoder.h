@@ -254,8 +254,6 @@ extern	bool		qShmFree(int shmid);
  */
 extern	int		qSocketOpen(const char *hostname, int port);
 extern	bool		qSocketClose(int sockfd);
-extern	int		qSocketWaitReadable(int sockfd, int timeoutms);
-extern	int		qSocketWaitWritable(int sockfd, int timeoutms);
 extern	ssize_t		qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms);
 extern	ssize_t		qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms);
 extern	ssize_t		qSocketWrite(int sockfd, const void *binary, size_t nbytes);
@@ -354,20 +352,20 @@ extern	bool		qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
 /*
  * qHasharr.c
  */
-size_t	qHasharrSize(int max);
-bool	qHasharrInit(Q_HASHARR *tbl, size_t memsize);
-bool	qHasharrClear(Q_HASHARR *tbl);
-bool	qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size);
-bool	qHasharrPutStr(Q_HASHARR *tbl, char *key, char *value);
-bool	qHasharrPutInt(Q_HASHARR *tbl, char *key, int value);
-char	*qHasharrGet(Q_HASHARR *tbl, char *key, int *size);
-char	*qHasharrGetStr(Q_HASHARR *tbl, char *key);
-int	qHasharrGetInt(Q_HASHARR *tbl, char *key);
-char	*qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx);
-char	*qHasharrGetNextKey(Q_HASHARR *tbl, int *idx);
-bool	qHasharrRemove(Q_HASHARR *tbl, char *key);
-bool	qHasharrPrint(Q_HASHARR *tbl, FILE *out);
-bool	qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
+extern	size_t		qHasharrSize(int max);
+extern	bool		qHasharrInit(Q_HASHARR *tbl, size_t memsize);
+extern	bool		qHasharrClear(Q_HASHARR *tbl);
+extern	bool		qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size);
+extern	bool		qHasharrPutStr(Q_HASHARR *tbl, char *key, char *value);
+extern	bool		qHasharrPutInt(Q_HASHARR *tbl, char *key, int value);
+extern	char*		qHasharrGet(Q_HASHARR *tbl, char *key, int *size);
+extern	char*		qHasharrGetStr(Q_HASHARR *tbl, char *key);
+extern	int		qHasharrGetInt(Q_HASHARR *tbl, char *key);
+extern	char*		qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx);
+extern	char*		qHasharrGetNextKey(Q_HASHARR *tbl, int *idx);
+extern	bool		qHasharrRemove(Q_HASHARR *tbl, char *key);
+extern	bool		qHasharrPrint(Q_HASHARR *tbl, FILE *out);
+extern	bool		qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
 
 /*
  * qObstack.c
@@ -437,6 +435,8 @@ extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const 
  */
 extern	bool		qFileLock(int fd);
 extern	bool		qFileUnlock(int fd);
+extern	int		qFileWaitReadable(int sockfd, int timeoutms);
+extern	int		qFileWaitWritable(int sockfd, int timeoutms);
 extern	bool		qFileExist(const char *filepath);
 extern	char*		qFileGetName(const char *filepath);
 extern	char*		qFileGetDir(const char *filepath);

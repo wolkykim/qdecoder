@@ -51,8 +51,8 @@ Q_ENTRY *qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, c
 
 	if(query != NULL) newquery = strdup(query);
 	while (newquery && *newquery) {
-		char *value = _makeword(newquery, sepchar);
-		char *name = qStrTrim(_makeword(value, equalchar));
+		char *value = _q_makeword(newquery, sepchar);
+		char *name = qStrTrim(_q_makeword(value, equalchar));
 		qDecodeUrl(name);
 		qDecodeUrl(value);
 
@@ -114,7 +114,7 @@ char *qDecodeUrl(char *str) {
 				break;
 			}
 			case '%': {
-				str[i] = _x2c(str[j + 1], str[j + 2]);
+				str[i] = _q_x2c(str[j + 1], str[j + 2]);
 				j += 2;
 				break;
 			}

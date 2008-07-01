@@ -102,78 +102,6 @@ bool qSocketClose(int sockfd) {
 }
 
 /**
- * Wait until the socket has some readable data.
- *
- * @param	sockfd		socket descriptor
- * @param	timeoutms	wait timeout micro-seconds. if set to negative value, wait indefinitely.
- *
- * @return	1 on readable, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
- *
- * @since	8.1R
- *
- * @note	does not need to set the socket as non-block mode.
- * @code
- * @endcode
- */
-int qSocketWaitReadable(int sockfd, int timeoutms) {
-	struct timeval tv;
-	fd_set readfds;
-
-	// time to wait
-	FD_ZERO(&readfds);
-	FD_SET(sockfd, &readfds);
-	if (timeoutms > 0) {
-		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = ((timeoutms % 1000) * 1000);
-		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
-	} else if (timeoutms == 0) { // just poll
-		tv.tv_sec = 0, tv.tv_usec = 0;
-		if (select(FD_SETSIZE, &readfds, NULL, NULL, &tv) < 0) return -1;
-	} else { //  blocks indefinitely
-		if (select(FD_SETSIZE, &readfds, NULL, NULL, NULL) < 0) return -1;
-	}
-
-	if (!FD_ISSET(sockfd, &readfds)) return 0; // timeout
-
-	return 1;
-}
-
-/**
- * Wait until the socket is writable.
- *
- * @param	sockfd		socket descriptor
- * @param	timeoutms	wait timeout micro-seconds. if set to negative value, wait indefinitely.
- *
- * @return	1 on writable, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
- *
- * @since	8.1R
- *
- * @note	does not need to set the socket as non-block mode.
- * @code
- * @endcode
- */
-int qSocketWaitWritable(int sockfd, int timeoutms) {
-	struct timeval tv;
-	fd_set writefds;
-
-	// time to wait
-	FD_ZERO(&writefds);
-	FD_SET(sockfd, &writefds);
-	if (timeoutms > 0) {
-		tv.tv_sec = (timeoutms / 1000), tv.tv_usec = ((timeoutms % 1000) * 1000);
-		if (select(FD_SETSIZE, NULL, &writefds, NULL, &tv) < 0) return -1;
-	} else if (timeoutms == 0) { // just poll
-		tv.tv_sec = 0, tv.tv_usec = 0;
-		if (select(FD_SETSIZE, NULL, &writefds, NULL, &tv) < 0) return -1;
-	} else { //  blocks indefinitely
-		if (select(FD_SETSIZE, NULL, &writefds, NULL, NULL) < 0) return -1;
-	}
-
-	if (!FD_ISSET(sockfd, &writefds)) return 0; // timeout
-
-	return 1;
-}
-
-/**
  * Read data from socket.
  *
  * @param	binary		data buffer pointer
@@ -190,7 +118,7 @@ int qSocketWaitWritable(int sockfd, int timeoutms) {
  * @endcode
  */
 ssize_t qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms) {
-	int sockstatus = qSocketWaitReadable(sockfd, timeoutms);
+	int sockstatus = qFileWaitReadable(sockfd, timeoutms);
 	if (sockstatus <= 0) return sockstatus;
 	ssize_t readcnt = read(sockfd, binary, nbytes);
 	if (readcnt <= 0) return -1;
@@ -221,7 +149,7 @@ ssize_t qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms) {
 	char *ptr;
 	ssize_t readcnt = 0;
 	for (ptr = str; readcnt < (nbytes - 1); ptr++) {
-		int sockstatus = qSocketWaitReadable(sockfd, timeoutms);
+		int sockstatus = qFileWaitReadable(sockfd, timeoutms);
 		if (sockstatus <= 0) {
 			*ptr = '\0';
 			return sockstatus;
@@ -329,7 +257,10 @@ ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t n
 	int filefd;
 
 	if((filefd = open(filepath, O_RDONLY , 0))  < 0) return -1;
-	if (fstat(filefd, &filestat) < 0) return -1;
+	if (fstat(filefd, &filestat) < 0) {
+		close(filefd);
+		return -1;
+	}
 
 	ssize_t sent = 0;				// total size sent
 	ssize_t rangesize = filestat.st_size - offset;	// maximum available size can be sent
@@ -389,7 +320,7 @@ ssize_t qSocketSaveIntoFile(int filefd, int sockfd, size_t nbytes, int timeoutms
 		else readsize = MAX_SAVEINTOFILE_CHUNK_SIZE;
 
 		// read data
-		if (qSocketWaitReadable(sockfd, timeoutms) <= 0) {
+		if (qFileWaitReadable(sockfd, timeoutms) <= 0) {
 			if(readbytes == 0) return -1;
 			break;
 		}
@@ -431,7 +362,7 @@ ssize_t qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutm
 		size_t readsize = nbytes - readbytes;
 
 		// wait data
-		if (qSocketWaitReadable(sockfd, timeoutms) <= 0) {
+		if (qFileWaitReadable(sockfd, timeoutms) <= 0) {
 			if(readbytes == 0) return -1;
 			break;
 		}

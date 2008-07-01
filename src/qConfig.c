@@ -133,7 +133,7 @@ Q_ENTRY *qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar) {
 
 		/* parse & store */
 		char *value = strdup(buf);
-		char *name  = _makeword(value, sepchar);
+		char *name  = _q_makeword(value, sepchar);
 		qStrTrim(value);
 		qStrTrim(name);
 

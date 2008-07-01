@@ -82,7 +82,7 @@ bool qCountSave(const char *filepath, int number) {
 	int fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
 	if(fd < 0) return false;
 
-	if(_writef(fd, "%d", number) <= 0) {
+	if(_q_writef(fd, "%d", number) <= 0) {
 		close(fd);
 		return false;
 	}

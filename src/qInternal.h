@@ -44,10 +44,10 @@
 /*
  * qInternalCommon.c
  */
-extern	char	_x2c(char hex_up, char hex_low);
-extern	char*	_makeword(char *str, char stop);
-extern	char*	_fgets(char *str, int size, FILE *stream);
-extern	ssize_t	_writef(int fd, char *format, ...);
-extern	ssize_t	_write(int fd, const void *buf, size_t nbytes);
+extern	char	_q_x2c(char hex_up, char hex_low);
+extern	char*	_q_makeword(char *str, char stop);
+extern	char*	_q_fgets(char *str, int size, FILE *stream);
+extern	ssize_t	_q_writef(int fd, char *format, ...);
+extern	ssize_t	_q_write(int fd, const void *buf, size_t nbytes);
 
 #endif	/* _QINTERNAL_H */

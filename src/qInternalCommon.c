@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/file.h>
 #include "qDecoder.h"
 #include "qInternal.h"
@@ -32,7 +33,7 @@
 ** Return: Hex value which is changed.
 ** Do    : Change two hex character to one hex value.
 **********************************************/
-char _x2c(char hex_up, char hex_low) {
+char _q_x2c(char hex_up, char hex_low) {
 	char digit;
 
 	digit = 16 * (hex_up >= 'A' ? ((hex_up & 0xdf) - 'A') + 10 : (hex_up - '0'));
@@ -41,14 +42,13 @@ char _x2c(char hex_up, char hex_low) {
 	return digit;
 }
 
-
 /**********************************************
 ** Usage : _makeword(source string, stop character);
 ** Return: Pointer of Parsed string.
 ** Do    : It copy source string before stop character.
 **         The pointer of source string direct after stop character.
 **********************************************/
-char *_makeword(char *str, char stop) {
+char *_q_makeword(char *str, char stop) {
 	char *word;
 	int  len, i;
 
@@ -68,7 +68,7 @@ char *_makeword(char *str, char stop) {
 /*********************************************
 ** Usage : This function is perfectly same as fgets();
 **********************************************/
-char *_fgets(char *str, int size, FILE *stream) {
+char *_q_fgets(char *str, int size, FILE *stream) {
 	int c;
 	char *ptr;
 
@@ -85,7 +85,7 @@ char *_fgets(char *str, int size, FILE *stream) {
 	return str;
 }
 
-ssize_t _writef(int fd, char *format, ...) {
+ssize_t _q_writef(int fd, char *format, ...) {
 	char buf[MAX_LINEBUF];
 	va_list arglist;
 
@@ -96,16 +96,21 @@ ssize_t _writef(int fd, char *format, ...) {
 	return write(fd, buf, strlen(buf));
 }
 
-ssize_t _write(int fd, const void *buf, size_t nbytes) {
+ssize_t _q_write(int fd, const void *buf, size_t nbytes) {
 	if(nbytes == 0) return 0;
 
 	ssize_t sent = 0;
 
 	while(sent < nbytes) {
-		ssize_t w = write(fd, buf+sent, nbytes-sent);
-		if(w <= 0) break;
-		sent += w;
+		int status = qFileWaitWritable(fd, 1000);
+		if(status == 0) continue;
+		else if(status < 0) break;
+
+		ssize_t wsize = write(fd, buf+sent, nbytes-sent);
+		if(wsize > 0) sent += wsize;
 	}
+
+	DEBUG("_write %zd", sent);
 
 	if(sent > 0) return sent;
 	return -1;

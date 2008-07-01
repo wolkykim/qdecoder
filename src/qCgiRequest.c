@@ -433,7 +433,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 		for (i = 0; boundary[i] != '\0'; i++) printf("%02X ", boundary[i]);
 		printf("<p>\n");
 
-		for (j = 1; _fgets(buf, sizeof(buf), stdin) != NULL; j++) {
+		for (j = 1; _q_fgets(buf, sizeof(buf), stdin) != NULL; j++) {
 			printf("Line %d, len %d : %s<br>\n", j, strlen(buf), buf);
 			//for (i = 0; buf[i] != '\0'; i++) printf("%02X ", buf[i]);
 			printf("<br>\n");
@@ -442,13 +442,13 @@ static int _parse_multipart(Q_ENTRY *request) {
 	}
 
 	/* check boundary */
-	if (_fgets(buf, sizeof(buf), stdin) == NULL) {
+	if (_q_fgets(buf, sizeof(buf), stdin) == NULL) {
 		DEBUG("Bbrowser sent a non-HTTP compliant message.");
 		return amount;
 	}
 
 	/* for explore 4.0 of NT, it sent \r\n before starting, fucking Micro$oft */
-	if (!strcmp(buf, "\r\n")) _fgets(buf, sizeof(buf), stdin);
+	if (!strcmp(buf, "\r\n")) _q_fgets(buf, sizeof(buf), stdin);
 
 	if (strncmp(buf, boundary, strlen(boundary)) != 0) {
 		DEBUG("Invalid string format.");
@@ -525,7 +525,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 		int valuelen = 0;
 
 		/* get information */
-		while (_fgets(buf, sizeof(buf), stdin)) {
+		while (_q_fgets(buf, sizeof(buf), stdin)) {
 			if (!strcmp(buf, "\r\n")) break;
 			else if (!strncasecmp(buf, "Content-Disposition: ", CONST_STRLEN("Content-Disposition: "))) {
 				int c_count;
