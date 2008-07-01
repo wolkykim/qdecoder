@@ -642,7 +642,7 @@ char *qStrUnique(const char *seed) {
 #endif
 
 	char szSeed[128];
-	snprintf(szSeed, sizeof(szSeed), "%u%d%ld%ld%ld%s", getpid(), count, random(), (long int)time(NULL), usec, (seed!=NULL?seed:""));
+	snprintf(szSeed, sizeof(szSeed), "%u%d%ld%lu%ld%s", getpid(), count, random(), (unsigned long int)time(NULL), usec, (seed!=NULL?seed:""));
 	return qHashMd5Str(szSeed, strlen(szSeed));
 }
 
