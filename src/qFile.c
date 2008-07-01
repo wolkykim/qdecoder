@@ -199,7 +199,10 @@ ssize_t qFileSend(int outfd, int infd, size_t nbytes) {
 		}
 
 		sent += retw;
-		if(retr != retw) break;
+		if(retr != retw) {
+			DEBUG("size mismatch %zd, %zd", retr, retw);
+			break;
+		}
 	}
 
 	return sent;
