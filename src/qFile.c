@@ -186,6 +186,7 @@ ssize_t qFileSend(int outfd, int infd, size_t nbytes) {
 
 		// read
 		ssize_t retr = read(infd, buf, sendsize);
+		DEBUG("read %zd", retr);
 		if (retr <= 0) {
 			if(sent == 0) return -1;
 			break;
@@ -193,6 +194,7 @@ ssize_t qFileSend(int outfd, int infd, size_t nbytes) {
 
 		// write
 		ssize_t retw = _write(outfd, buf, retr);
+		DEBUG("write %zd", retw);
 		if(retw <= 0) {
 			if(sent == 0) return -1;
 			break;
