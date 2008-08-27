@@ -140,6 +140,7 @@ typedef struct {
 		char*	password;
 		char*	database;
 		bool	autocommit;
+		bool	fetchtype;
 	} info;				/*!< database connection infomation */
 
 	// for mysql database
@@ -153,10 +154,10 @@ typedef struct {
  */
 typedef struct {
 #ifdef _Q_ENABLE_MYSQL
+	bool		fetchtype;
 	MYSQL_RES	*rs;
 	MYSQL_FIELD	*fields;
 	MYSQL_ROW	row;
-	int		rows;
 	int		cols;
 	int		cursor;
 #endif
@@ -275,6 +276,7 @@ extern	bool		qDbFree(Q_DB *db);
 extern	const char*	qDbGetError(Q_DB *db, unsigned int *errorno);
 extern	bool		qDbPing(Q_DB *db);
 extern	bool		qDbGetLastConnStatus(Q_DB *db);
+extern	bool		qDbSetFetchType(Q_DB *db, bool use);
 
 extern	int		qDbExecuteUpdate(Q_DB *db, const char *query);
 extern	int		qDbExecuteUpdatef(Q_DB *db, const char *format, ...);

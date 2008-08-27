@@ -118,6 +118,7 @@ Q_DB *qDbInit(const char *dbtype, const char *addr, int port, const char *userna
 	db->info.password = strdup(password);
 	db->info.database = strdup(database);
 	db->info.autocommit = autocommit;
+	db->info.fetchtype = false; // store mode
 
 	// set db handler
 #ifdef _Q_ENABLE_MYSQL
@@ -279,6 +280,17 @@ bool qDbGetLastConnStatus(Q_DB *db) {
 	return db->connected;
 }
 
+/**
+ * Under-development
+ *
+ * @since not released yet
+ */
+bool qDbSetFetchType(Q_DB *db, bool use) { // false : store, true : each row must be retrieved from the database
+	if (db == NULL) return false;
+	db->info.fetchtype = use;
+	return true;
+}
+
 /////////////////////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS - query
 /////////////////////////////////////////////////////////////////////////
@@ -340,7 +352,13 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, const char *query) {
 	Q_DBRESULT *result = (Q_DBRESULT *)malloc(sizeof(Q_DBRESULT));
 	if (result == NULL) return NULL;
 
-	if ((result->rs = mysql_store_result(db->mysql)) == NULL) {
+	result->fetchtype = db->info.fetchtype;
+	if(result->fetchtype == false) {
+		result->rs = mysql_store_result(db->mysql);
+	} else {
+		result->rs = mysql_use_result(db->mysql);
+	}
+	if (result->rs == NULL) {
 		free(result);
 		return NULL;
 	}
@@ -348,7 +366,6 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, const char *query) {
 	/* get meta data */
 	result->fields = NULL;
 	result->row = NULL;
-	result->rows = mysql_num_rows(result->rs);
 	result->cols = mysql_num_fields(result->rs);
 	result->cursor = 0;
 
@@ -401,6 +418,9 @@ bool qDbResultFree(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
 	if (result == NULL) return false;
 	if (result->rs != NULL) {
+		if(result->fetchtype == true) {
+			while(mysql_fetch_row(result->rs) != NULL);
+		}
 		mysql_free_result(result->rs);
 		result->rs = NULL;
 	}
@@ -433,7 +453,7 @@ int qDbGetCols(Q_DBRESULT *result) {
 int qDbGetRows(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
-	return result->rows;
+	return mysql_num_rows(result->rs);
 #else
 	return 0;
 #endif
