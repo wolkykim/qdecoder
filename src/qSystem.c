@@ -18,7 +18,7 @@
  *************************************************************************/
 
 /**
- * @file qEnv.c Environment Handling API
+ * @file qSystem.c System API
  */
 
 #include <stdio.h>

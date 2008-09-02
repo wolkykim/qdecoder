@@ -200,7 +200,7 @@ int qArgEmprint(int mode, char *str, char **qlist) {
 	int  i, j, flag, matches;
 
 	if (!*qlist) {
-		qPuts(mode, str);
+		qHtmlPuts(mode, str);
 		return 0;
 	}
 
@@ -219,7 +219,7 @@ int qArgEmprint(int mode, char *str, char **qlist) {
 		for (i = 0, flag = 0; qlist[i] != NULL; i++) {
 			if (!strncasecmp(sp, qlist[i], strlen(qlist[i]))) {
 				*bp = '\0'; /* Mark string end */
-				qPuts(mode, buf); /* flash buffer */
+				qHtmlPuts(mode, buf); /* flash buffer */
 				bp = buf; /* reset buffer pointer */
 				printf("<b>");
 				for (j = 1; j <= (int)strlen(qlist[i]); j++) {
@@ -238,7 +238,7 @@ int qArgEmprint(int mode, char *str, char **qlist) {
 		}
 	}
 	*bp = '\0'; /* Mark string end */
-	qPuts(mode, buf); /* Flash buffer */
+	qHtmlPuts(mode, buf); /* Flash buffer */
 
 	free(buf);
 	free(freestr);

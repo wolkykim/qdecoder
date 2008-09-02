@@ -80,7 +80,7 @@ OBJ		= qCgiRequest.o		\
 					\
 		qString.o		\
 		qFile.o			\
-		qValid.o		\
+		qHtml.o			\
 		qCount.o		\
 		qTime.o			\
 		qSystem.o		\

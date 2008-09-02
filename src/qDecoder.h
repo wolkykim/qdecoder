@@ -396,8 +396,8 @@ extern	bool		qLog(Q_LOG *log, const char *format, ...);
 /*
  * qSystem.c
  */
-extern const char	*qSysGetEnv(const char *envname, const char *nullstr);
-extern char		*qSysCmd(const char *cmd);
+extern	const char	*qSysGetEnv(const char *envname, const char *nullstr);
+extern	char		*qSysCmd(const char *cmd);
 
 /*
  * qEncode.c
@@ -417,8 +417,6 @@ extern	unsigned int	qHashFnv32(unsigned int max, const void *data, size_t nbytes
 /*
  * qString.c
  */
-bool	qPrintf(int mode, char *format, ...);
-bool	qPuts(int mode, char *buf);
 extern	char*		qStrTrim(char *str);
 extern	char*		qStrTrimTail(char *str);
 extern	char*		qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char *word);
@@ -452,10 +450,12 @@ extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bo
 extern	char*		qFileReadLine(FILE *fp);
 
 /*
- * qValid.c
+ * qHtml.c
  */
-extern	bool		qCheckEmail(const char *email);
-extern	bool		qCheckUrl(const char *url);
+extern	bool		qHtmlPrintf(int mode, const char *format, ...);
+extern	bool		qHtmlPuts(int mode, char *buf);
+extern	bool		qHtmlIsEmail(const char *email);
+extern	bool		qHtmlIsUrl(const char *url);
 
 /*
  * qCount.c
