@@ -78,12 +78,12 @@ OBJ		= qCgiRequest.o		\
 		qEncode.o		\
 		qHash.o			\
 					\
-		qEnv.o			\
 		qString.o		\
 		qFile.o			\
 		qValid.o		\
 		qCount.o		\
 		qTime.o			\
+		qSystem.o		\
 					\
 		qInternalCommon.o	\
 		md5/md5c.o

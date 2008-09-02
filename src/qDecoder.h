@@ -396,8 +396,8 @@ extern	bool		qLog(Q_LOG *log, const char *format, ...);
 /*
  * qSystem.c
  */
-char	*qSysGetenv(char *envname, char *nullstr);
-char	*qSysCmd(char *cmd);
+extern const char	*qSysGetEnv(const char *envname, const char *nullstr);
+extern char		*qSysCmd(const char *cmd);
 
 /*
  * qEncode.c

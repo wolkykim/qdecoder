@@ -287,7 +287,7 @@ Q_ENTRY *qCgiRequestParseQueries(Q_ENTRY *request, const char *method) {
 	}
 
 	if(method == NULL || !strcmp(method, "POST")) { /* parse POST method */
-		char *content_type = qGetenvDefault("", "CONTENT_TYPE");
+		const char *content_type = qSysGetEnv("CONTENT_TYPE", "");
 		if (!strncmp(content_type, "application/x-www-form-urlencoded", CONST_STRLEN("application/x-www-form-urlencoded"))) {
 			char *query = qCgiRequestGetQueryString("POST");
 			if(query != NULL) {
@@ -834,7 +834,7 @@ static char *_upload_getsavedir(char *upload_savedir, int size, const char *uplo
 	if(upload_savedir == NULL || upload_id == NULL || upload_basepath == NULL || strlen(upload_basepath) == 0) return NULL;
 
         char md5seed[1024];
-        snprintf(md5seed, sizeof(md5seed), "%s|%s|%s", QDECODER_PRIVATEKEY, qGetenvDefault("", "REMOTE_ADDR"), upload_id);
+        snprintf(md5seed, sizeof(md5seed), "%s|%s|%s", QDECODER_PRIVATEKEY, qSysGetEnv("REMOTE_ADDR", ""), upload_id);
         char *md5str = qHashMd5Str(md5seed, strlen(md5seed));
         snprintf(upload_savedir, size, "%s/Q_%s", upload_basepath, md5str);
         free(md5str);

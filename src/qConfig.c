@@ -201,12 +201,12 @@ static char *_parseVariable(Q_ENTRY *config, char *value) {
 			int freet = 0;
 			switch (buf[0]) {
 				case _VAR_CMD : {
-					if ((t = qStrTrim(qCmd(buf + 1))) == NULL) t = "";
+					if ((t = qStrTrim(qSysCmd(buf + 1))) == NULL) t = "";
 					else freet = 1;
 					break;
 				}
 				case _VAR_ENV : {
-					t = qGetenvDefault("", buf + 1);
+					t = (char*)qSysGetEnv(buf + 1, "");
 					break;
 				}
 				default : {

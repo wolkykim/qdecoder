@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include "qDecoder.h"
 
 /**********************************************
@@ -32,10 +33,22 @@
 ** Do    : Get environment string.
 **         When it does not find 'envname', it will return 'nullstr'.
 **********************************************/
-char *qGetenvDefault(char *nullstr, char *envname) {
-	char *envstr;
-
-	if ((envstr = getenv(envname)) != NULL) return envstr;
-
+const char *qSysGetEnv(const char *envname, const char *nullstr) {
+	const char *envstr = getenv(envname);
+	if (envstr != NULL) return envstr;
 	return nullstr;
+}
+
+/**********************************************
+** Usage : qCmd(external command);
+** Return: Execution output, File not found NULL.
+**********************************************/
+char *qSysCmd(const char *cmd) {
+	FILE *fp = popen(cmd, "r");
+	if (fp == NULL) return NULL;
+	char *str = qFileRead(fp, NULL);
+	pclose(fp);
+
+	if(str == NULL) str = strdup("");
+	return str;
 }

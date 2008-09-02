@@ -403,20 +403,3 @@ ssize_t qFileSave(const char *filepath, const void *buf, size_t size, bool appen
 
 	return count;
 }
-
-/**********************************************
-** Usage : qCmd(external command);
-** Return: Execution output, File not found NULL.
-**********************************************/
-char *qCmd(char *cmd) {
-	FILE *fp;
-	char *str;
-
-	fp = popen(cmd, "r");
-	if (fp == NULL) return NULL;
-	str = qFileRead(fp, NULL);
-	pclose(fp);
-
-	if(str == NULL) str = strdup("");
-	return str;
-}
