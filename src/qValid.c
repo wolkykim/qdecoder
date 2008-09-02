@@ -32,7 +32,7 @@
 ** Return: If it is valid return 1. Or return 0.
 ** Do    : Check E-mail address.
 **********************************************/
-bool qCheckEmail(char *email) {
+bool qCheckEmail(const char *email) {
 	int i, alpa, dot, gol;
 
 	if (email == NULL) return false;
@@ -72,7 +72,7 @@ bool qCheckEmail(char *email) {
 ** Return: If it is valid return 1. Or return 0.
 ** Do    : Check valid URL.
 **********************************************/
-bool qCheckUrl(char *url) {
+bool qCheckUrl(const char *url) {
 	if (!strncmp(url, "http://", 7)) return true;
 	else if (!strncmp(url, "ftp://", 6)) return true;
 	else if (!strncmp(url, "telnet://", 9)) return true;

@@ -394,9 +394,10 @@ extern	bool		qLogFlush(Q_LOG *log);
 extern	bool		qLog(Q_LOG *log, const char *format, ...);
 
 /*
- * qEnv.c
+ * qSystem.c
  */
-char	*qGetenvDefault(char *nullstr, char *envname);
+char	*qSysGetenv(char *envname, char *nullstr);
+char	*qSysCmd(char *cmd);
 
 /*
  * qEncode.c
@@ -449,13 +450,12 @@ extern	void*		qFileLoad(const char *filepath, size_t *nbytes);
 extern	void*		qFileRead(FILE *fp, size_t *nbytes);
 extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bool append);
 extern	char*		qFileReadLine(FILE *fp);
-char	*qCmd(char *cmd);
 
 /*
  * qValid.c
  */
-bool	qCheckEmail(char *email);
-bool	qCheckURL(char *url);
+extern	bool		qCheckEmail(const char *email);
+extern	bool		qCheckUrl(const char *url);
 
 /*
  * qCount.c
