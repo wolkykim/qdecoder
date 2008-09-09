@@ -28,7 +28,7 @@ QLIB	= ../src/libqDecoder.a
 #QLIB	= ../src/libqDecoder.so
 
 ## Main
-all:	query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi arglist.cgi session.cgi config.cgi socket.cgi
+all:	query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi session.cgi config.cgi socket.cgi
 
 query.cgi: ${QLIB} query.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o query.cgi query.o ${QLIB}
@@ -52,9 +52,6 @@ download.cgi: ${QLIB} download.o
 
 streamedit.cgi: ${QLIB} streamedit.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o streamedit.cgi streamedit.o ${QLIB}
-
-arglist.cgi: ${QLIB} arglist.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o arglist.cgi arglist.o ${QLIB}
 
 session.cgi: ${QLIB} session.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o session.cgi session.o ${QLIB}
