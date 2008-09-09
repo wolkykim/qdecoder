@@ -272,7 +272,7 @@ void *qFileLoad(const char *filepath, size_t *nbytes) {
 }
 
 /**
- * Load file stream into memory.
+ * Load file stream which has unknown size into memory.
  *
  * @param fp		FILE pointer
  * @param nbytes	has two purpost, one is to set how many bytes are readed. the other is actual the number loaded bytes will be stored. nbytes must be point 0 or NULL to read end of stream.

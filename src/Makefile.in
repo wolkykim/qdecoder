@@ -59,8 +59,6 @@ OBJ		= qCgiRequest.o		\
 		qSession.o		\
 					\
 		qConfig.o		\
-		qArg.o			\
-		qAwk.o			\
 		qSed.o			\
 					\
 		qSem.o			\

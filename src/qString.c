@@ -278,12 +278,23 @@ char *qStrRev(char *str) {
 	return str;
 }
 
-/*********************************************
-** Usage : qStrTok(string, token stop string, return stop character);
-** Do    : Find token string. (usage like strtok())
-** Return: Pointer of token & character of stop.
-**********************************************/
-char *qStrTok(char *str, const char *token, char *retstop) {
+/**
+ * Split string into tokens
+ *
+ * @param str		source string
+ * @param delimiters	string that specifies a set of delimiters that may surround the token being extracted
+ * @param retstop	stop delimiter character will be stored. it can be NULL if you don't want to know.
+ *
+ * @return	a pointer to the first byte of a token if successful, otherwise returns NULL.
+ *
+ * @note
+ * The major difference between qStrTok() and standard strtok() is that qStrTok() can returns empty string tokens.
+ * If the str is "a:b::d", qStrTok() returns "a", "b", "", "d". But strtok() returns "a","b","d".
+ *
+ * @code
+ * @endcode
+ */
+char *qStrTok(char *str, const char *delimiters, char *retstop) {
 	static char *tokenep;
 	char *tokensp;
 	int i, j;
@@ -291,10 +302,10 @@ char *qStrTok(char *str, const char *token, char *retstop) {
 	if (str != NULL) tokensp = tokenep = str;
 	else tokensp = tokenep;
 
-	for (i = strlen(token); *tokenep; tokenep++) {
+	for (i = strlen(delimiters); *tokenep; tokenep++) {
 		for (j = 0; j < i; j++) {
-			if (*tokenep == token[j]) {
-				if (retstop != NULL) *retstop = token[j];
+			if (*tokenep == delimiters[j]) {
+				if (retstop != NULL) *retstop = delimiters[j];
 				*tokenep = '\0';
 				tokenep++;
 				return tokensp;
@@ -305,6 +316,41 @@ char *qStrTok(char *str, const char *token, char *retstop) {
 	if (retstop != NULL) *retstop = '\0';
 	if (tokensp != tokenep) return tokensp;
 	return NULL;
+}
+
+/**
+ * String Tokenizer
+ *
+ * @param str		source string
+ * @param delimiters	string that specifies a set of delimiters that may surround the token being extracted
+ *
+ * @return	a pointer to the Q_ENTRY list
+ *
+ * @note	Tokens will be stored at Q_ENTRY list with key 1, 2, 3, 4, 5...
+ *
+ * @code
+ *   FILE *fp = fopen("/etc/passwd", "r");
+ *   char *buf;
+ *   while((buf = qFileReadLine(fp)) != NULL) {
+ *     qStrTrimTail(buf);
+ *      Q_ENTRY *tokens = qStrTokenizer(buf, ":");
+ *      printf("%s\n", qEntryGetStr(tokens, "1"));
+ *      qEntryFree(tokens);
+ *   }
+ *   fclose(fp);
+ * @endcode
+ */
+Q_ENTRY *qStrTokenizer(char *str, const char *delimiters) {
+	Q_ENTRY *entry = qEntryInit();
+	char *token;
+	int i;
+	for(i = 1, token = qStrTok(str, delimiters, NULL); token != NULL; token = qStrTok(NULL, delimiters, NULL), i++) {
+		char key[10+1];
+		sprintf(key, "%d", i);
+		qEntryPutStr(entry, key, token, false);
+	}
+
+	return entry;
 }
 
 /**********************************************

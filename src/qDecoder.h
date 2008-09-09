@@ -208,23 +208,6 @@ extern	Q_ENTRY*	qConfigParseFile(Q_ENTRY *config, const char *filepath, char sep
 extern	Q_ENTRY*	qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar);
 
 /*
- * qArg.c
- */
-int	qArgMake(char *str, char **qlist);
-int	qArgMatch(char *str, char **qlist);
-int	qArgEmprint(int mode, char *str, char **qlist);
-int	qArgPrint(char **qlist);
-void	qArgFree(char **qlist);
-
-/*
- * qAwk.c
- */
-FILE	*qAwkOpen(char *filepath);
-int	qAwkNext(FILE *fp, char array[][1024], char delim);
-bool	qAwkClose(FILE *fp);
-int	qAwkStr(char array[][1024], char *str, char delim);
-
-/*
  * qSed.c
  */
 extern	bool		qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout);
@@ -426,6 +409,7 @@ extern	char*		qStrLower(char *str);
 extern	char*		qStrCaseStr(const char *s1, const char *s2);
 extern	char*		qStrRev(char *str);
 extern	char*		qStrTok(char *str, const char *token, char *retstop);
+extern	Q_ENTRY*	qStrTokenizer(char *str, const char *delimiters);
 extern	char*		qStrCommaNumber(int number);
 extern	char*		qStrCatf(char *str, const char *format, ...);
 extern	char*		qStrDupBetween(const char *str, const char *start, const char *end);
