@@ -21,8 +21,6 @@
  * @file qfDecoder.c Configuration File Handling API
  */
 
-#ifndef DISABLE_CONFIGPARSER
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -233,5 +231,3 @@ static char *_parseVariable(Q_ENTRY *config, char *value) {
 
 	return value;
 }
-
-#endif /* DISABLE_CONFIGPARSER */

@@ -870,23 +870,12 @@ Optional Features:
   --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
                           enable MySQL database supports
   --disable-cgisupport    disable CGI(web application) related APIs (influence
-                          on: qDecoder.c, qSession.c, qHttpHeader.c
-                          qDownload.c qError.c)
-  --disable-configparser  disable configuration file parser & string parser
-                          APIs (influence on: qfDecode.cr, qsDecoder.c)
-  --disable-arg           disable pattern matching & string search APIs
-                          (influence on: qArg.c)
-  --disable-awk           disable file & string tokenizing APIs (influence on:
-                          qAwk.c)
-  --disable-sed           disable server side include and variable replacement
-                          APIs (influence on: qSed.c)
-  --disable-ipc           disable ipc(semaphore, shared-memory) APIs
-                          (influence on: qSem.c, qShm.c)
+                          on: qCgiRequest.c, qCgiResponse.c, qSession.c,
+                          qHtml.c)
   --disable-socket        disable socket APIs (influence on: qSocket.c)
-  --disable-hashtbl       disable hash-table data structure APIs (influence
-                          on: qHashtbl.c, qHasharr.c)
-  --disable-obstack       disable obstack APIs (influence on: qObstack.c)
-  --disable-log           disable file logging APIs (influence on: qLog.c)
+  --disable-ipc           disable IPC APIs (influence on: qSem.c, qShm.c)
+  --disable-datastructure disable data structure APIs (influence on:
+                          qHashtbl.c, qHasharr.c, qObstack.c)
 
 Some influential environment variables:
   CC          C compiler command
@@ -4058,59 +4047,17 @@ echo "$as_me: 'cgisupport' feature is disabled" >&6;}
 	fi
 
 
-	# Check whether --enable-configparser or --disable-configparser was given.
-if test "${enable_configparser+set}" = set; then
-  enableval="$enable_configparser"
+	# Check whether --enable-socket or --disable-socket was given.
+if test "${enable_socket+set}" = set; then
+  enableval="$enable_socket"
 
 else
   enableval=yes
 fi;
 	if test "$enableval" = no; then
-		{ echo "$as_me:$LINENO: 'configparser' feature is disabled" >&5
-echo "$as_me: 'configparser' feature is disabled" >&6;}
-		opt_defs="$opt_defs -DDISABLE_CONFIGPARSER"
-	fi
-
-
-	# Check whether --enable-arg or --disable-arg was given.
-if test "${enable_arg+set}" = set; then
-  enableval="$enable_arg"
-
-else
-  enableval=yes
-fi;
-	if test "$enableval" = no; then
-		{ echo "$as_me:$LINENO: 'arg' feature is disabled" >&5
-echo "$as_me: 'arg' feature is disabled" >&6;}
-		opt_defs="$opt_defs -DDISABLE_ARG"
-	fi
-
-
-	# Check whether --enable-awk or --disable-awk was given.
-if test "${enable_awk+set}" = set; then
-  enableval="$enable_awk"
-
-else
-  enableval=yes
-fi;
-	if test "$enableval" = no; then
-		{ echo "$as_me:$LINENO: 'awk' feature is disabled" >&5
-echo "$as_me: 'awk' feature is disabled" >&6;}
-		opt_defs="$opt_defs -DDISABLE_AWK"
-	fi
-
-
-	# Check whether --enable-sed or --disable-sed was given.
-if test "${enable_sed+set}" = set; then
-  enableval="$enable_sed"
-
-else
-  enableval=yes
-fi;
-	if test "$enableval" = no; then
-		{ echo "$as_me:$LINENO: 'sed' feature is disabled" >&5
-echo "$as_me: 'sed' feature is disabled" >&6;}
-		opt_defs="$opt_defs -DDISABLE_SED"
+		{ echo "$as_me:$LINENO: 'socket' feature is disabled" >&5
+echo "$as_me: 'socket' feature is disabled" >&6;}
+		opt_defs="$opt_defs -DDISABLE_SOCKET"
 	fi
 
 
@@ -4128,59 +4075,17 @@ echo "$as_me: 'ipc' feature is disabled" >&6;}
 	fi
 
 
-	# Check whether --enable-socket or --disable-socket was given.
-if test "${enable_socket+set}" = set; then
-  enableval="$enable_socket"
+	# Check whether --enable-datastructure or --disable-datastructure was given.
+if test "${enable_datastructure+set}" = set; then
+  enableval="$enable_datastructure"
 
 else
   enableval=yes
 fi;
 	if test "$enableval" = no; then
-		{ echo "$as_me:$LINENO: 'socket' feature is disabled" >&5
-echo "$as_me: 'socket' feature is disabled" >&6;}
-		opt_defs="$opt_defs -DDISABLE_SOCKET"
-	fi
-
-
-	# Check whether --enable-hashtbl or --disable-hashtbl was given.
-if test "${enable_hashtbl+set}" = set; then
-  enableval="$enable_hashtbl"
-
-else
-  enableval=yes
-fi;
-	if test "$enableval" = no; then
-		{ echo "$as_me:$LINENO: 'hashtbl' feature is disabled" >&5
-echo "$as_me: 'hashtbl' feature is disabled" >&6;}
-		opt_defs="$opt_defs -DDISABLE_HASHTBL"
-	fi
-
-
-	# Check whether --enable-obstack or --disable-obstack was given.
-if test "${enable_obstack+set}" = set; then
-  enableval="$enable_obstack"
-
-else
-  enableval=yes
-fi;
-	if test "$enableval" = no; then
-		{ echo "$as_me:$LINENO: 'obstack' feature is disabled" >&5
-echo "$as_me: 'obstack' feature is disabled" >&6;}
-		opt_defs="$opt_defs -DDISABLE_OBSTACK"
-	fi
-
-
-	# Check whether --enable-log or --disable-log was given.
-if test "${enable_log+set}" = set; then
-  enableval="$enable_log"
-
-else
-  enableval=yes
-fi;
-	if test "$enableval" = no; then
-		{ echo "$as_me:$LINENO: 'log' feature is disabled" >&5
-echo "$as_me: 'log' feature is disabled" >&6;}
-		opt_defs="$opt_defs -DDISABLE_LOG"
+		{ echo "$as_me:$LINENO: 'datastructure' feature is disabled" >&5
+echo "$as_me: 'datastructure' feature is disabled" >&6;}
+		opt_defs="$opt_defs -DDISABLE_DATASTRUCTURE"
 	fi
 
 

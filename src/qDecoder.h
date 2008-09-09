@@ -202,16 +202,28 @@ extern	bool		qSessionSave(Q_ENTRY *session);
 extern	bool		qSessionDestroy(Q_ENTRY *session);
 
 /*
- * qConfig.c
+ * qHtml.c
  */
-extern	Q_ENTRY*	qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar);
-extern	Q_ENTRY*	qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar);
+extern	bool		qHtmlPrintf(int mode, const char *format, ...);
+extern	bool		qHtmlPuts(int mode, char *buf);
+extern	bool		qHtmlIsEmail(const char *email);
+extern	bool		qHtmlIsUrl(const char *url);
 
 /*
- * qSed.c
+ * qSocket.c
  */
-extern	bool		qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout);
-extern	bool		qSedFile(Q_ENTRY *entry, const char *filepath, FILE *fpout);
+extern	int		qSocketOpen(const char *hostname, int port);
+extern	bool		qSocketClose(int sockfd);
+extern	int		qSocketWaitReadable(int sockfd, int timeoutms);
+extern	int		qSocketWaitWritable(int sockfd, int timeoutms);
+extern	ssize_t		qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms);
+extern	ssize_t		qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms);
+extern	ssize_t		qSocketWrite(int sockfd, const void *binary, size_t nbytes);
+extern	ssize_t		qSocketPuts(int sockfd, const char *str);
+extern	ssize_t		qSocketPrintf(int sockfd, const char *format, ...);
+extern	ssize_t		qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t nbytes);
+extern	ssize_t		qSocketSaveIntoFile(int outfd, int sockfd, size_t nbytes, int timeoutms);
+extern	ssize_t		qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutms);
 
 /*
  * qSem.c
@@ -232,22 +244,6 @@ extern	int		qShmInit(const char *keyfile, int keyid, size_t size, bool autodestr
 extern	int		qShmGetId(const char *keyfile, int keyid);
 extern	void*		qShmGet(int shmid);
 extern	bool		qShmFree(int shmid);
-
-/*
- * qSocket.c
- */
-extern	int		qSocketOpen(const char *hostname, int port);
-extern	bool		qSocketClose(int sockfd);
-extern	int		qSocketWaitReadable(int sockfd, int timeoutms);
-extern	int		qSocketWaitWritable(int sockfd, int timeoutms);
-extern	ssize_t		qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms);
-extern	ssize_t		qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms);
-extern	ssize_t		qSocketWrite(int sockfd, const void *binary, size_t nbytes);
-extern	ssize_t		qSocketPuts(int sockfd, const char *str);
-extern	ssize_t		qSocketPrintf(int sockfd, const char *format, ...);
-extern	ssize_t		qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t nbytes);
-extern	ssize_t		qSocketSaveIntoFile(int outfd, int sockfd, size_t nbytes, int timeoutms);
-extern	ssize_t		qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutms);
 
 /*
  * qDatabase.c
@@ -377,25 +373,10 @@ extern	bool		qLogFlush(Q_LOG *log);
 extern	bool		qLog(Q_LOG *log, const char *format, ...);
 
 /*
- * qSystem.c
+ * qConfig.c
  */
-extern	const char	*qSysGetEnv(const char *envname, const char *nullstr);
-extern	char		*qSysCmd(const char *cmd);
-
-/*
- * qEncode.c
- */
-extern	Q_ENTRY*	qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, char sepchar, int *count);
-extern	char*		qEncodeUrl(const char *str);
-extern	char*		qDecodeUrl(char *str);
-
-/*
- * qHash.c
- */
-extern	unsigned char*	qHashMd5(const void *data, size_t nbytes);
-extern	char*		qHashMd5Str(const char *str, size_t nbytes);
-extern	char*		qHashMd5File(const char *filepath, size_t *nbytes);
-extern	unsigned int	qHashFnv32(unsigned int max, const void *data, size_t nbytes);
+extern	Q_ENTRY*	qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar);
+extern	Q_ENTRY*	qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar);
 
 /*
  * qString.c
@@ -434,12 +415,25 @@ extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bo
 extern	char*		qFileReadLine(FILE *fp);
 
 /*
- * qHtml.c
+ * qEncode.c
  */
-extern	bool		qHtmlPrintf(int mode, const char *format, ...);
-extern	bool		qHtmlPuts(int mode, char *buf);
-extern	bool		qHtmlIsEmail(const char *email);
-extern	bool		qHtmlIsUrl(const char *url);
+extern	Q_ENTRY*	qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, char sepchar, int *count);
+extern	char*		qEncodeUrl(const char *str);
+extern	char*		qDecodeUrl(char *str);
+
+/*
+ * qHash.c
+ */
+extern	unsigned char*	qHashMd5(const void *data, size_t nbytes);
+extern	char*		qHashMd5Str(const char *str, size_t nbytes);
+extern	char*		qHashMd5File(const char *filepath, size_t *nbytes);
+extern	unsigned int	qHashFnv32(unsigned int max, const void *data, size_t nbytes);
+
+/*
+ * qSed.c
+ */
+extern	bool		qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout);
+extern	bool		qSedFile(Q_ENTRY *entry, const char *filepath, FILE *fpout);
 
 /*
  * qCount.c
@@ -458,6 +452,12 @@ extern	char*		qTimeGetGmtStrf(char *buf, int size, time_t utctime, const char *f
 extern	char*		qTimeGetGmtStr(time_t utctime);
 extern	const char*	qTimeGetGmtStaticStr(time_t utctime);
 extern	time_t		qTimeParseGmtStr(const char *gmtstr);
+
+/*
+ * qSystem.c
+ */
+extern	const char	*qSysGetEnv(const char *envname, const char *nullstr);
+extern	char		*qSysCmd(const char *cmd);
 
 #ifdef __cplusplus
 }

@@ -21,8 +21,6 @@
  * @file qSed.c Server Side Include and Variable Replacement API
  */
 
-#ifndef DISABLE_SED
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -94,5 +92,3 @@ bool qSedFile(Q_ENTRY *entry, const char *filepath, FILE *fpout) {
 
 	return flag;
 }
-
-#endif /* DISABLE_SED */

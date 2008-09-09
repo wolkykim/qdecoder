@@ -57,13 +57,11 @@ RM		= @RM@
 OBJ		= qCgiRequest.o		\
 		qCgiResponse.o		\
 		qSession.o		\
+		qHtml.o			\
 					\
-		qConfig.o		\
-		qSed.o			\
-					\
+		qSocket.o		\
 		qSem.o			\
 		qShm.o			\
-		qSocket.o		\
 		qDatabase.o		\
 					\
 		qEntry.o		\
@@ -72,13 +70,13 @@ OBJ		= qCgiRequest.o		\
 		qObstack.o		\
 					\
 		qLog.o			\
-					\
-		qEncode.o		\
-		qHash.o			\
+		qConfig.o		\
 					\
 		qString.o		\
 		qFile.o			\
-		qHtml.o			\
+		qEncode.o		\
+		qHash.o			\
+		qSed.o			\
 		qCount.o		\
 		qTime.o			\
 		qSystem.o		\

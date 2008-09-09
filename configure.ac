@@ -118,16 +118,10 @@ if test "$enableval" = yes; then
 	fi
 fi
 
-Q_ARG_DISABLE([cgisupport], [disable CGI(web application) related APIs (influence on: qDecoder.c, qSession.c, qHttpHeader.c qDownload.c qError.c)], [-DDISABLE_CGISUPPORT])
-Q_ARG_DISABLE([configparser], [disable configuration file parser & string parser APIs (influence on: qfDecode.cr, qsDecoder.c)], [-DDISABLE_CONFIGPARSER])
-Q_ARG_DISABLE([arg], [disable pattern matching & string search APIs (influence on: qArg.c)], [-DDISABLE_ARG])
-Q_ARG_DISABLE([awk], [disable file & string tokenizing APIs (influence on: qAwk.c)], [-DDISABLE_AWK])
-Q_ARG_DISABLE([sed], [disable server side include and variable replacement APIs (influence on: qSed.c)], [-DDISABLE_SED])
-Q_ARG_DISABLE([ipc], [disable ipc(semaphore, shared-memory) APIs (influence on: qSem.c, qShm.c)], [-DDISABLE_IPC])
+Q_ARG_DISABLE([cgisupport], [disable CGI(web application) related APIs (influence on: qCgiRequest.c, qCgiResponse.c, qSession.c, qHtml.c)], [-DDISABLE_CGISUPPORT])
 Q_ARG_DISABLE([socket], [disable socket APIs (influence on: qSocket.c)], [-DDISABLE_SOCKET])
-Q_ARG_DISABLE([hashtbl], [disable hash-table data structure APIs (influence on: qHashtbl.c, qHasharr.c)], [-DDISABLE_HASHTBL])
-Q_ARG_DISABLE([obstack], [disable obstack APIs (influence on: qObstack.c)], [-DDISABLE_OBSTACK])
-Q_ARG_DISABLE([log], [disable file logging APIs (influence on: qLog.c)], [-DDISABLE_LOG])
+Q_ARG_DISABLE([ipc], [disable IPC APIs (influence on: qSem.c, qShm.c)], [-DDISABLE_IPC])
+Q_ARG_DISABLE([datastructure], [disable data structure APIs (influence on: qHashtbl.c, qHasharr.c, qObstack.c)], [-DDISABLE_DATASTRUCTURE])
 
 AC_MSG_NOTICE([optional flags: $opt_defs $opt_incs])
 AC_SUBST([OPT_DEFS], [$opt_defs] )

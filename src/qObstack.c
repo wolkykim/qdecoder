@@ -20,10 +20,6 @@
 /**
  * @file qObstack.c qDecoder implementation of GNU obstack
  *
- * @note
- * This API can be disabled(excluded in the library) with compile option
- * -DDISABLE_OBSTACK.
- *
  * @code
  *   [Code sample - String]
  *   Q_OBSTACK *obstack;
@@ -102,7 +98,7 @@
  * @endcode
  */
 
-#ifndef DISABLE_OBSTACK
+#ifndef DISABLE_DATASTRUCTURE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -236,4 +232,4 @@ bool qObstackFree(Q_OBSTACK *obstack) {
 	return true;
 }
 
-#endif /* DISABLE_OBSTACK */
+#endif /* DISABLE_DATASTRUCTURE */
