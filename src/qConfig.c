@@ -18,7 +18,7 @@
  *************************************************************************/
 
 /**
- * @file qfDecoder.c Configuration File Handling API
+ * @file qConfig.c Configuration File Handling API
  */
 
 #include <stdio.h>

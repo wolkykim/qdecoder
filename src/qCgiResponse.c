@@ -18,7 +18,7 @@
  *************************************************************************/
 
 /**
- * @file qCgiCookie.c CGI Cookie Handling API
+ * @file qCgiResponse.c CGI Cookie Handling API
  */
 
 #ifndef DISABLE_CGISUPPORT

@@ -18,7 +18,7 @@
  *************************************************************************/
 
 /**
- * @file qEncode.c Encoding/decoding API
+ * @file qHash.c Encoding/decoding API
  */
 
 #include <stdio.h>

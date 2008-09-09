@@ -18,7 +18,7 @@
  *************************************************************************/
 
 /**
- * @file qDecoder.c Web Query & Cookie Handling API
+ * @file qCgiRequest.c Web Query & Cookie Handling API
  *
  * qDecoder supports parsing
  *   @li COOKIE
