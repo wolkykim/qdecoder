@@ -34,19 +34,29 @@
 
 static char *_parseVariable(Q_ENTRY *config, char *value);
 
-/**********************************************
-** Usage : qfDecoder(filepath, '=');
-** Return: Success pointer of the first entry, Fail NULL.
-** Do    : Save file into linked list.
-**         Starting # is used for comments.
-**
-**         @INCLUDE other.conf          => (include other.conf)
-**         base = /tmp                  => base = /tmp
-**         log  = ${base}/log           => log  = /tmp/logVariable
-**         host = ${!/bin/hostname -s}  => host = arena
-**         path = ${%PATH}              => path = /usr/bin:/usr/sbin
-**         #hmm = this is comments      => (skip comment)
-**********************************************/
+/**
+ * Load & parse configuration file
+ *
+ * @param config	a pointer of Q_ENTRY. NULL can be used for empty.
+ * @param filepath	configuration file path
+ * @param sepchar	separater used in configuration file to divice key and value
+ *
+ * @return	a pointer of Q_ENTRY in case of successful, otherwise(file not found) returns NULL
+ *
+ * @note
+ * # Configuration file format
+ *
+ * # a line which starts with # character is comment
+ * @INCLUDE other.conf          => (include other.conf)
+ * base = /tmp                  => base = /tmp
+ * log  = ${base}/log           => /tmp/log (using variable)
+ * host = ${!/bin/hostname -s}  => arena (external command result)
+ * path = ${%PATH}              => /usr/bin:/usr/sbin (environment)
+ *
+ * @code
+ *   Q_ENTRY *config = qConfigParseFile(NULL, "qdecoder.conf", '=');
+ * @endcode
+ */
 Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 	char *str = qFileLoad(filepath, NULL);
 	if (str == NULL) return NULL;
@@ -108,6 +118,21 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 	return config;
 }
 
+/**
+ * Parse string
+ *
+ * @param config	a pointer of Q_ENTRY. NULL can be used for empty.
+ * @param str		key, value pair strings
+ * @param sepchar	separater used in configuration file to divice key and value
+ *
+ * @return	a pointer of Q_ENTRY in case of successful, otherwise(file not found) returns NULL
+ *
+ * @see qConfigParseFile
+ *
+ * @code
+ *   Q_ENTRY *config = qConfigParseStr(NULL, "key = value\nhello = world", '=');
+ * @endcode
+ */
 Q_ENTRY *qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar) {
 	if (str == NULL) return NULL;
 

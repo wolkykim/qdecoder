@@ -38,7 +38,24 @@
 #endif
 
 /**
- * Parse url query string
+ * Parse URL encoded query string
+ *
+ * @param entry		a pointer of Q_ENTRY structure. NULL can be used
+ * @param query		URL encoded string
+ * @param equalchar	separater of key, value pair
+ * @param sepchar	separater of line
+ * @param count		if count is not NULL, a number of parsed entries are stored
+ *
+ * @return	a pointer of Q_ENTRY if successful, otherwise returns NULL
+ *
+ * @code
+ * cont char query = "category=love&str=%C5%A5%B5%F0%C4%DA%B4%F5&sort=asc";
+ * Q_ENTRY entries = qDecodeQueryString(NULL, req->pszQueryString, '=', '&', NULL);
+ * printf("category = %s\n", qEntryGetStr(entries, "category"));
+ * printf("str = %s\n", qEntryGetStr(entries, "str"));
+ * printf("sort = %s\n", qEntryGetStr(entries, "sort"));
+ * qEntryFree(entries);
+ * @endcode
  */
 Q_ENTRY *qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, char sepchar, int *count) {
 	if(entry == NULL) {
@@ -66,11 +83,18 @@ Q_ENTRY *qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, c
 	return entry;
 }
 
-/**********************************************
-** Usage : qEncodeUrl(string to encode);
-** Return: Pointer of encoded str which is memory allocated.
-** Do    : Encode string.
-**********************************************/
+/**
+ * Encode string as URL encoded string
+ *
+ * @param str		a pointer of source string
+ *
+ * @return	a malloced string pointer of URL encoded string in case of successful, otherwise returns NULL
+ *
+ * @code
+ * char encstr = qEncodeUrl("hello 'qDecoder' world");
+ * if(encstr != NULL) free(encstr);
+ * @endcode
+ */
 char *qEncodeUrl(const char *str) {
 	char *encstr, buf[2+1];
 	unsigned char c;
@@ -98,11 +122,23 @@ char *qEncodeUrl(const char *str) {
 	return encstr;
 }
 
-/**********************************************
-** Usage : qDecodeUrl(query pointer);
-** Return: Pointer of query string.
-** Do    : Decode query string.
-**********************************************/
+/**
+ * Parse URL encoded string
+ *
+ * @param str		a pointer of URL encoded string
+ *
+ * @return	a string pointer of str in case of successful, otherwise returns NULL
+ *
+ * @note
+ * This modify str directly
+ *
+ * @code
+ * char str[256] = "hello%20%27qDecoder%27%20world";
+ * printf("Before : %s\n", str);
+ * qDecodeUrl(str);
+ * printf("After  : %s\n", str);
+ * @endcode
+ */
 char *qDecodeUrl(char *str) {
 	int i, j;
 

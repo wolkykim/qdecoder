@@ -81,11 +81,18 @@
 #include "qInternal.h"
 
 /**
- * Under-development
+ * Initialize internal connector structure
  *
- * @since not released yet
+ * @param dbtype	database server type. currently "MYSQL" is only supported
+ * @param addr		ip or fqdn address.
+ * @param port		port number
+ * @param username	database username
+ * @param password	database password
+ * @param database	database server type. currently "MYSQL" is only supported
+ * @param autocommit	sets autocommit mode on if autocommit is true, off if autocommit is false
  *
- * @note
+ * @return	a pointer of Q_DB structure in case of successful, otherwise returns NULL.
+ *
  * @code
  *   Q_DB *db = NULL;
  *   db = qDbInit("MYSQL", "dbhost.qdecoder.org", 3306, "test", "secret", "sampledb", true);
@@ -129,9 +136,11 @@ Q_DB *qDbInit(const char *dbtype, const char *addr, int port, const char *userna
 }
 
 /**
- * Under-development
+ * Connect to database server
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB which is returned by qDbInit()
+ *
+ * @return	true if successful, otherwise returns false.
  */
 bool qDbOpen(Q_DB *db) {
 	if (db == NULL) return false;
@@ -181,9 +190,15 @@ bool qDbOpen(Q_DB *db) {
 }
 
 /**
- * Under-development
+ * Disconnect from database server
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ *
+ * @return	true if successful, otherwise returns false.
+ *
+ * @note
+ * Before you call qDbFree(), Q_DB structure still contains database information.
+ * So you can re-connect to database using qDbOpen() without qDbInit().
  */
 bool qDbClose(Q_DB *db) {
 	if (db == NULL) return false;
@@ -201,9 +216,11 @@ bool qDbClose(Q_DB *db) {
 }
 
 /**
- * Under-development
+ * De-allocate Q_DB structure
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ *
+ * @return	true if successful, otherwise returns false.
  */
 bool qDbFree(Q_DB *db)  {
 	if (db == NULL) return false;
@@ -220,9 +237,15 @@ bool qDbFree(Q_DB *db)  {
 }
 
 /**
- * Under-development
+ * Get error number and message
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ * @param errorno	if not NULL, error number will be stored
+ *
+ * @return	a pointer of error message string
+ *
+ * @note
+ * Do not free returned error message
  */
 const char *qDbGetError(Q_DB *db, unsigned int *errorno) {
 	if (db == NULL || db->connected == false) return "(no opened db)";
@@ -242,9 +265,14 @@ const char *qDbGetError(Q_DB *db, unsigned int *errorno) {
 }
 
 /**
- * Under-development
+ * Checks whether the connection to the server is working.
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ *
+ * @return	true if connection is alive, false if connection is not available and failed to reconnect
+ *
+ * @note
+ * If the connection has gone down, an attempt to reconnect.
  */
 bool qDbPing(Q_DB *db) {
 	if (db == NULL) return false;
@@ -270,9 +298,14 @@ bool qDbPing(Q_DB *db) {
 }
 
 /**
- * Under-development
+ * Get last connection status
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ *
+ * @return	true if the connection flag is set to alive, otherwise returns false
+ *
+ * @note
+ * This function just returns the the connection status flag.
  */
 bool qDbGetLastConnStatus(Q_DB *db) {
 	if (db == NULL) return false;
@@ -281,9 +314,18 @@ bool qDbGetLastConnStatus(Q_DB *db) {
 }
 
 /**
- * Under-development
+ * Set result fetching type
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ * @param use		false for storing the results to client (default mode), true for fetching directly from server,
+ *
+ * @return	true if successful otherwise returns false
+ *
+ * @note
+ * If qDbSetFetchType(db, true) is called, the results does not actually read into the client.
+ * Instead, each row must be retrieved individually by making calls to qDbResultNext().
+ * This reads the result of a query directly from the server without storing it in local buffer,
+ * which is somewhat faster and uses much less memory than default behavior qDbSetFetchType(db, false).
  */
 bool qDbSetFetchType(Q_DB *db, bool use) { // false : store, true : each row must be retrieved from the database
 	if (db == NULL) return false;
@@ -296,9 +338,12 @@ bool qDbSetFetchType(Q_DB *db, bool use) { // false : store, true : each row mus
 /////////////////////////////////////////////////////////////////////////
 
 /**
- * Under-development
+ * Executes the update DML
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ * @param query		query string
+ *
+ * @return	a number of affected rows
  */
 int qDbExecuteUpdate(Q_DB *db, const char *query) {
 	if (db == NULL || db->connected == false) return -1;
@@ -320,9 +365,12 @@ int qDbExecuteUpdate(Q_DB *db, const char *query) {
 }
 
 /**
- * Under-development
+ * Executes the formatted update DML
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ * @param format	query string format
+ *
+ * @return	a number of affected rows
  */
 int qDbExecuteUpdatef(Q_DB *db, const char *format, ...) {
 	char query[1024];
@@ -336,9 +384,12 @@ int qDbExecuteUpdatef(Q_DB *db, const char *format, ...) {
 }
 
 /**
- * Under-development
+ * Executes the query
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ * @param query		query string
+ *
+ * @return	a pointer of Q_DBRESULT
  */
 Q_DBRESULT *qDbExecuteQuery(Q_DB *db, const char *query) {
 	if (db == NULL || db->connected == false) return NULL;
@@ -376,9 +427,12 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, const char *query) {
 }
 
 /**
- * Under-development
+ * Executes the formatted query
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ * @param format	query string format
+ *
+ * @return	a pointer of Q_DBRESULT
  */
 Q_DBRESULT *qDbExecuteQueryf(Q_DB *db, const char *format, ...) {
 	char query[1024];
@@ -392,9 +446,11 @@ Q_DBRESULT *qDbExecuteQueryf(Q_DB *db, const char *format, ...) {
 }
 
 /**
- * Under-development
+ * Retrieves the next row of a result set
  *
- * @since not released yet
+ * @param result	a pointer of Q_DBRESULT
+ *
+ * @return	true if successful, false if no more rows are left
  */
 bool qDbResultNext(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
@@ -410,9 +466,11 @@ bool qDbResultNext(Q_DBRESULT *result) {
 }
 
 /**
- * Under-development
+ * De-allocate the result
  *
- * @since not released yet
+ * @param result	a pointer of Q_DBRESULT
+ *
+ * @return	true if successful, otherwise returns false
  */
 bool qDbResultFree(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
@@ -432,9 +490,11 @@ bool qDbResultFree(Q_DBRESULT *result) {
 }
 
 /**
- * Under-development
+ * Get the number of columns in the result set
  *
- * @since not released yet
+ * @param result	a pointer of Q_DBRESULT
+ *
+ * @return	the number of columns in the result set
  */
 int qDbGetCols(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
@@ -446,9 +506,11 @@ int qDbGetCols(Q_DBRESULT *result) {
 }
 
 /**
- * Under-development
+ * Get the number of rows in the result set
  *
- * @since not released yet
+ * @param result	a pointer of Q_DBRESULT
+ *
+ * @return	the number of rows in the result set
  */
 int qDbGetRows(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
@@ -460,9 +522,14 @@ int qDbGetRows(Q_DBRESULT *result) {
 }
 
 /**
- * Retrieves the current row number
+ * Get the current row number
  *
- * @since not released yet
+ * @param result	a pointer of Q_DBRESULT
+ *
+ * @return	current fetching row number of the result set
+ *
+ * @note
+ * This number is sequencial counter which is started from 1.
  */
 int qDbGetRow(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
@@ -474,9 +541,15 @@ int qDbGetRow(Q_DBRESULT *result) {
 }
 
 /**
- * Under-development
+ * Get the result as string by field name
  *
- * @since not released yet
+ * @param result	a pointer of Q_DBRESULT
+ * @param field		column name
+ *
+ * @return	a string pointer if successful, otherwise returns NULL.
+ *
+ * @note
+ * Do not free returned string.
  */
 const char *qDbGetStr(Q_DBRESULT *result, const char *field) {
 #ifdef _Q_ENABLE_MYSQL
@@ -496,9 +569,12 @@ const char *qDbGetStr(Q_DBRESULT *result, const char *field) {
 }
 
 /**
- * Under-development
+ * Get the result as string by column number
  *
- * @since not released yet
+ * @param result	a pointer of Q_DBRESULT
+ * @param idx		column number (first column is 1)
+ *
+ * @return	a string pointer if successful, otherwise returns NULL.
  */
 const char *qDbGetStrAt(Q_DBRESULT *result, int idx) {
 #ifdef _Q_ENABLE_MYSQL
@@ -510,9 +586,12 @@ const char *qDbGetStrAt(Q_DBRESULT *result, int idx) {
 }
 
 /**
- * Under-development
+ * Get the result as integer by field name
  *
- * @since not released yet
+ * @param result	a pointer of Q_DBRESULT
+ * @param field		column name
+ *
+ * @return	a integer converted value
  */
 int qDbGetInt(Q_DBRESULT *result, const char *field) {
 	const char *val = qDbGetStr(result, field);
@@ -521,9 +600,12 @@ int qDbGetInt(Q_DBRESULT *result, const char *field) {
 }
 
 /**
- * Under-development
+ * Get the result as integer by column number
  *
- * @since not released yet
+ * @param result	a pointer of Q_DBRESULT
+ * @param idx		column number (first column is 1)
+ *
+ * @return	a integer converted value
  */
 int qDbGetIntAt(Q_DBRESULT *result, int idx) {
 	const char *val = qDbGetStrAt(result, idx);
@@ -532,9 +614,11 @@ int qDbGetIntAt(Q_DBRESULT *result, int idx) {
 }
 
 /**
- * Under-development
+ * Start transaction
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ *
+ * @return	true if successful, otherwise returns false
  */
 bool qDbBeginTran(Q_DB *db) {
 	if (db == NULL) return false;
@@ -551,9 +635,12 @@ bool qDbBeginTran(Q_DB *db) {
 }
 
 /**
- * Under-development
+ * End transaction
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ * @param commit	true for commit, false for roll-back
+ *
+ * @return	true if successful, otherwise returns false
  */
 bool qDbEndTran(Q_DB *db, bool commit) {
 	if (db == NULL) return false;
@@ -563,9 +650,11 @@ bool qDbEndTran(Q_DB *db, bool commit) {
 }
 
 /**
- * Under-development
+ * Commit transaction
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ *
+ * @return	true if successful, otherwise returns false
  */
 bool qDbCommit(Q_DB *db) {
 	if (db == NULL) return false;
@@ -579,9 +668,11 @@ bool qDbCommit(Q_DB *db) {
 }
 
 /**
- * Under-development
+ * Roll-back transaction
  *
- * @since not released yet
+ * @param db		a pointer of Q_DB structure
+ *
+ * @return	true if successful, otherwise returns false
  */
 bool qDbRollback(Q_DB *db) {
 	if (db == NULL) return false;

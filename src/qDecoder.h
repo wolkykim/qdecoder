@@ -364,6 +364,12 @@ extern	int		qObstackGetNum(Q_OBSTACK *obstack);
 extern	bool		qObstackFree(Q_OBSTACK *obstack);
 
 /*
+ * qConfig.c
+ */
+extern	Q_ENTRY*	qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar);
+extern	Q_ENTRY*	qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar);
+
+/*
  * qLog.c
  */
 extern	Q_LOG*		qLogOpen(const char *logbase, const char *filenameformat, int rotateinterval, bool flush);
@@ -371,12 +377,6 @@ extern	bool		qLogClose(Q_LOG *log);
 extern	bool		qLogSetConsole(Q_LOG *log, bool consoleout);
 extern	bool		qLogFlush(Q_LOG *log);
 extern	bool		qLog(Q_LOG *log, const char *format, ...);
-
-/*
- * qConfig.c
- */
-extern	Q_ENTRY*	qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar);
-extern	Q_ENTRY*	qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar);
 
 /*
  * qString.c

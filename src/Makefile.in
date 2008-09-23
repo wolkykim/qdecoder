@@ -69,8 +69,8 @@ OBJ		= qCgiRequest.o		\
 		qHasharr.o		\
 		qObstack.o		\
 					\
-		qLog.o			\
 		qConfig.o		\
+		qLog.o			\
 					\
 		qString.o		\
 		qFile.o			\
