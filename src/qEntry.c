@@ -24,17 +24,18 @@
  *   [Code sample - String]
 *
  *   // sample data
- *   struct MY_OBJ *my_obj = getNewMyOjb();;
- *   char *my_str = "hello";
- *   int my_int = 1;
+ *   struct MY_OBJ *my_obj = getNewMyOjb(); // sample object
+ *   char *my_str = "hello"; // sample string
+ *   int my_int = 1; // sample integer
  *
  *   // store into linked-list
- *   Q_ENTRY *entries = NULL;
+ *   Q_ENTRY *entries = qEntryInit();
  *   entries = qEntryPut(entries, "obj", (void*)my_obj, sizeof(struct MY_OBJ), true);
  *   entries = qEntryPutStr(entries, "obj", my_str, true);
  *   entries = qEntryPutInt(entries, "obj", my_int, true);
  *
  *   // print out
+ *   qEntryPrint(entries, stdout, false);
  *
  *   // free object
  *   qEntryFree(entries);
@@ -56,9 +57,13 @@
 #include "qInternal.h"
 
 /**
- * Under-development
+ * Initialize linked-list structure
  *
- * @since not released yet
+ * @return	a pointer of malloced Q_ENTRY structure in case of successful, otherwise returns NULL.
+ *
+ * @code
+ *   Q_ENTRY *entries = qEntryInit();
+ * @endcode
  */
 Q_ENTRY *qEntryInit(void) {
 	Q_ENTRY *entry = (Q_ENTRY *)malloc(sizeof(Q_ENTRY));

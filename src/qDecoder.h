@@ -68,7 +68,7 @@ typedef struct {
 	int	*count;			/*!< hash collision counter. 0 indicate empty slot, -1 is used for moved slot due to hash collision */
 	int	*hash;			/*!< key hash. we use qHashFnv32() to generate hash integer */
 	char	**key;			/*!< key string */
-	char	**value;		/*!< value */
+	void	**value;		/*!< value */
 	int	*size;			/*!< value size */
 } Q_HASHTBL;
 
@@ -82,11 +82,11 @@ typedef struct {
 	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for moved slot due to hash collision, -2 is used for indicating linked block */
 	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
 
-	char	key[_Q_HASHARR_MAX_KEYSIZE];		/*!< key string which can be size truncated */
+	char	key[_Q_HASHARR_MAX_KEYSIZE];		/*!< key string, it can be truncated */
 	int	keylen;					/*!< original key length */
-	char	keymd5[16];				/*!< md5 hash of the key */
+	unsigned char keymd5[16];			/*!< md5 hash of the key */
 
-	char	value[_Q_HASHARR_DEF_VALUESIZE];	/*!< value */
+	unsigned char value[_Q_HASHARR_DEF_VALUESIZE];	/*!< value */
 	int	size;					/*!< value size */
 	int	link;					/*!< next index of the value. */
 } Q_HASHARR;
@@ -320,14 +320,14 @@ extern	int		qEntryLoad(Q_ENTRY *entry, const char *filepath, char sepchar, bool 
  */
 extern	Q_HASHTBL*	qHashtblInit(int max);
 extern	bool		qHashtblFree(Q_HASHTBL *tbl);
-extern	bool		qHashtblPut(Q_HASHTBL *tbl, const char *key, const char *value, int size);
-extern	bool		qHashtblPutStr(Q_HASHTBL *tbl, const char *key, const char *str);
-extern	bool		qHashtblPutInt(Q_HASHTBL *tbl, const char *key, int number);
-extern	char*		qHashtblGet(Q_HASHTBL *tbl, const char *key, int *size);
+extern	bool		qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size);
+extern	bool		qHashtblPutStr(Q_HASHTBL *tbl, const char *key, const char *value);
+extern	bool		qHashtblPutInt(Q_HASHTBL *tbl, const char *key, int value);
+extern	void*		qHashtblGet(Q_HASHTBL *tbl, const char *key, int *size);
 extern	char*		qHashtblGetStr(Q_HASHTBL *tbl, const char *key);
 extern	int		qHashtblGetInt(Q_HASHTBL *tbl, const char *key);
-extern	char*		qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx);
-extern	char*		qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx);
+extern	const char*	qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx);
+extern	const char*	qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx);
 extern	bool		qHashtblRemove(Q_HASHTBL *tbl, const char *key);
 extern	bool		qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
 extern	bool		qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
@@ -338,15 +338,15 @@ extern	bool		qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
 extern	size_t		qHasharrSize(int max);
 extern	bool		qHasharrInit(Q_HASHARR *tbl, size_t memsize);
 extern	bool		qHasharrClear(Q_HASHARR *tbl);
-extern	bool		qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size);
-extern	bool		qHasharrPutStr(Q_HASHARR *tbl, char *key, char *value);
-extern	bool		qHasharrPutInt(Q_HASHARR *tbl, char *key, int value);
-extern	char*		qHasharrGet(Q_HASHARR *tbl, char *key, int *size);
-extern	char*		qHasharrGetStr(Q_HASHARR *tbl, char *key);
-extern	int		qHasharrGetInt(Q_HASHARR *tbl, char *key);
-extern	char*		qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx);
-extern	char*		qHasharrGetNextKey(Q_HASHARR *tbl, int *idx);
-extern	bool		qHasharrRemove(Q_HASHARR *tbl, char *key);
+extern	bool		qHasharrPut(Q_HASHARR *tbl, const char *key, const void *value, int size);
+extern	bool		qHasharrPutStr(Q_HASHARR *tbl, const char *key, const char *value);
+extern	bool		qHasharrPutInt(Q_HASHARR *tbl, const char *key, int value);
+extern	void*		qHasharrGet(Q_HASHARR *tbl, const char *key, int *size);
+extern	char*		qHasharrGetStr(Q_HASHARR *tbl, const char *key);
+extern	int		qHasharrGetInt(Q_HASHARR *tbl, const char *key);
+extern	const char*	qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx);
+extern	const char*	qHasharrGetNextKey(Q_HASHARR *tbl, int *idx);
+extern	bool		qHasharrRemove(Q_HASHARR *tbl, const char *key);
 extern	bool		qHasharrPrint(Q_HASHARR *tbl, FILE *out);
 extern	bool		qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
 
@@ -425,7 +425,7 @@ extern	char*		qDecodeUrl(char *str);
  * qHash.c
  */
 extern	unsigned char*	qHashMd5(const void *data, size_t nbytes);
-extern	char*		qHashMd5Str(const char *str, size_t nbytes);
+extern	char*		qHashMd5Str(const void *data, size_t nbytes);
 extern	char*		qHashMd5File(const char *filepath, size_t *nbytes);
 extern	unsigned int	qHashFnv32(unsigned int max, const void *data, size_t nbytes);
 

@@ -33,7 +33,7 @@
 #include "qInternal.h"
 
 /**
- * Lock opened file.
+ * Lock file
  *
  * @param fd		file descriptor
  *
@@ -67,7 +67,7 @@ bool qFileLock(int fd) {
 }
 
 /**
- * Unlock opened file.
+ * Unlock file which is locked by qFileLock()
  *
  * @param fd		file descriptor
  *

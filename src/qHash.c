@@ -34,12 +34,19 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-
-/**********************************************
-** Usage : qMd5Digest(string);
-** Return: MD5 digested static string pointer.
-** Do    : 16 bytes digest binary data through MD5 algorithm.
-**********************************************/
+/**
+ * Get MD5 digested HEX string
+ *
+ * @param data		source object
+ * @param nbytes	size of data
+ *
+ * @return		malloced 16+1 bytes digested HEX string which is terminated by NULL character
+ *
+ * @code
+ *   unsigned char *md5 = qHashMd5((void*)"hello", 5);
+ *   free(md5);
+ * @endcode
+ */
 unsigned char *qHashMd5(const void *data, size_t nbytes) {
 	if(data == NULL) return NULL;
 
@@ -55,15 +62,24 @@ unsigned char *qHashMd5(const void *data, size_t nbytes) {
 	return digest;
 }
 
-/**********************************************
-** Usage : qMd5Str(string);
-** Return: MD5 digested static string pointer.
-** Do    : Strng converted digest string through MD5 algorithm.
-**********************************************/
-char *qHashMd5Str(const char *str, size_t nbytes) {
-	if(str == NULL) return NULL;
+/**
+ * Get MD5 digested ASCII string
+ *
+ * @param data		source object
+ * @param nbytes	size of data
+ *
+ * @return		malloced 32+1 bytes digested ASCII string which is terminated by NULL character
+ *
+ * @code
+ *   char *md5str = qHashMd5Str((void*)"hello", 5);
+ *   printf("%s\n", md5str);
+ *   free(md5str);
+ * @endcode
+ */
+char *qHashMd5Str(const void *data, size_t nbytes) {
+	if(data == NULL) return NULL;
 
-	unsigned char *digest = qHashMd5(str, nbytes);
+	unsigned char *digest = qHashMd5(data, nbytes);
 	if (digest == NULL) return NULL;
 
 	char *md5hex = (char*)malloc(sizeof(char) * (16 * 2 + 1));
@@ -78,11 +94,38 @@ char *qHashMd5Str(const char *str, size_t nbytes) {
 	return md5hex;
 }
 
-/**********************************************
-** Usage : qMd5File(filepath);
-** Return: MD5 digested static string pointer.
-** Do    : Strng converted digest string through MD5 algorithm.
-**********************************************/
+/**
+ * Get MD5 digested ASCII string
+ *
+ * @param filepath	file path
+ * @param nbytes	size of data. Set to NULL to digest end of file
+ *
+ * @return		malloced 32+1 bytes digested ASCII string which is terminated by NULL character
+ *
+ * @note
+ * If the nbytes is set, qHashMd5File() will try to digest at lease nbytes then
+ * store actual digested size into nbytes. So if you set nbytes to over size than file size,
+ * finally nbytes will have actual file size.
+ *
+ * @code
+ *   // case of digesting entire file
+ *   char *md5str = qHashMd5File("/tmp/test.dat, NULL);
+ *   printf("%s\n", md5str);
+ *   free(md5str);
+ *
+ *   // case of nbytes is set to 1 bytes length
+ *   size_t nbytes = 1;
+ *   char *md5str = qHashMd5File("/tmp/test.dat, &nbytes);
+ *   printf("%s %d\n", md5str, nbytes);
+ *   free(md5str);
+ *
+ *   // case of nbytes is set to over size
+ *   size_t nbytes = 100000;
+ *   char *md5str = qHashMd5File("/tmp/test.dat, &nbytes);
+ *   printf("%s %d\n", md5str, nbytes);
+ *   free(md5str);
+ * @endcode
+ */
 char *qHashMd5File(const char *filepath, size_t *nbytes) {
 	int fd = open(filepath, O_RDONLY, 0);
 	if (fd < 0) return NULL;
@@ -123,12 +166,25 @@ char *qHashMd5File(const char *filepath, size_t *nbytes) {
 	return md5hex;
 }
 
-/**********************************************
-** Usage : qFnv32Hash(string, max);
-** Return: unsigned 32 integer of FNV hash algorithm.
-** Do    : FNV hash algorithm
-**         if set max to 0, disable maximum limit
-**********************************************/
+/**
+ * Get FNV32 hash integer
+ *
+ * @param max		hash range. 0 ~ (max-1). Set to 0 for full range
+ * @param data		source data
+ * @param nbytes	size of data
+ *
+ * @return		FNV32 hash integer
+ *
+ * @code
+ *   unsigned int fnv32;
+ *
+ *   fnv32 = qHashFnv32(0, (void*)"hello", 5);
+ *   printf("%u\n", fnv32);
+ *
+ *   fnv32 = qHashFnv32(1000, (void*)"hello", 5);
+ *   printf("%u\n", fnv32);
+ * @endcode
+ */
 unsigned int qHashFnv32(unsigned int max, const void *data, size_t nbytes) {
 	if(data == NULL) return 0;
 

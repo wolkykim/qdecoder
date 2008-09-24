@@ -35,7 +35,7 @@
  *   int maxkeys = 1000;
  *
  *   // calculate how many memory do we need
- *   int memsize = qHasharrSize(maxkeys * 2); // generally allocate double size of max to decrease hash collision
+ *   size_t memsize = qHasharrSize(maxkeys * 2); // generally allocate double size of max to decrease hash collision
  *
  *   // allocate memory
  *   Q_HASHARR *hasharr = (Q_HASHARR *)malloc(memsize);
@@ -66,6 +66,10 @@
  *
  *   // initialize hash-table.
  *   if(qHasharrInit(hasharr, sizeof(datamem)) == false) return -1;
+ *
+ *   (...your codes here...)
+ *
+ *   // no need to free unless you use malloc()
  * @endcode
  *
  * You can create hash table on shared memory like below.
@@ -99,29 +103,47 @@
 #include "qInternal.h"
 
 static int _findEmpty(Q_HASHARR *tbl, int startidx);
-static int _getIdx(Q_HASHARR *tbl, char *key, int hash);
-static bool _putData(Q_HASHARR *tbl, int idx, int hash, char *key, char *value, int size, int count);
+static int _getIdx(Q_HASHARR *tbl, const char *key, int hash);
+static bool _putData(Q_HASHARR *tbl, int idx, int hash, const char *key, const void *value, int size, int count);
 static bool _copySlot(Q_HASHARR *tbl, int idx1, int idx2);
 static bool _removeSlot(Q_HASHARR *tbl, int idx);
 static bool _removeData(Q_HASHARR *tbl, int idx);
 
 /**
- * Under-development
+ * Get how much memory is necessary for N entries
  *
- * @return
+ * @param max		a number of maximum internal slots
+ *
+ * @return		memory size needed
+ *
+ * @note
+ * This is useful when you decide how much memory(shared-memory) required for N object entries.
+ * Be sure, a single object can be stored in several slots. So you need to consider additional
+ * slots if some data is bigger than _Q_HASHARR_DEF_VALUESIZE.
+ * By default, _Q_HASHARR_DEF_VALUESIZE is 32. This means if the size of object is bigger than
+ * 32 bytes it will use another slot.
  */
 size_t qHasharrSize(int max) {
-	size_t memsize;
-
-	memsize = sizeof(Q_HASHARR) * (max + 1);
-
+	size_t memsize = sizeof(Q_HASHARR) * (max + 1);
 	return memsize;
 }
 
 /**
- * Under-development
+ * Initialize array-hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHARR
+ * @param memsize	actual size of Q_HASHARR
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @code
+ *   // allocate memory
+ *   size_t memsize = qHasharrSize(100);
+ *   Q_HASHARR *hasharr = (Q_HASHARR *)malloc(memsize);
+ *
+ *   // initialize hash-table
+ *   if(qHasharrInit(hasharr, memsize) == false) return -1;
+ * @endcode
  */
 bool qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
 	// calculate max
@@ -139,9 +161,15 @@ bool qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
 }
 
 /**
- * Under-development
+ * Reset array-hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHARR
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @note
+ * You do not need to call this, after qHasharrInit(). This is useful when you
+ * reset all of data in the hash table.
  */
 bool qHasharrClear(Q_HASHARR *tbl) {
 	// calculate max
@@ -158,11 +186,16 @@ bool qHasharrClear(Q_HASHARR *tbl) {
 }
 
 /**
- * Under-development
+ * Put object into hash table
  *
- * @return true when successful, otherwise(table full) false
+ * @param tbl		a pointer of Q_HASHARR
+ * @param key		key string
+ * @param value		value object data
+ * @param size		size of value
+ *
+ * @return		true if successful, otherwise returns false
  */
-bool qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size) {
+bool qHasharrPut(Q_HASHARR *tbl, const char *key, const void *value, int size) {
 	if(tbl == NULL || key == NULL || value == NULL) return false;
 
 	// check full
@@ -170,9 +203,6 @@ bool qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size) {
 
 	// get hash integer
 	int hash = ((int)qHashFnv32(tbl[0].keylen, key, strlen(key))) + 1; // 0번은 안쓰므로
-
-	// if size is less than 0, we assume that the value is null terminated string.
-	if(size < 0) size = strlen(value) + 1;
 
 	// check, is slot empty
 	if (tbl[hash].count == 0) { // empty slot
@@ -233,31 +263,47 @@ bool qHasharrPut(Q_HASHARR *tbl, char *key, char *value, int size) {
 }
 
 /**
- * Under-development
+ * Put string into hash table
  *
- * @return true when successful, otherwise(table full) false
+ * @param tbl		a pointer of Q_HASHARR
+ * @param key		key string
+ * @param value		value string
+ *
+ * @return		true if successful, otherwise returns false
  */
-bool qHasharrPutStr(Q_HASHARR *tbl, char *key, char *value) {
-	return qHasharrPut(tbl, key, value, -1);
+bool qHasharrPutStr(Q_HASHARR *tbl, const char *key, const char *value) {
+	int size = (value != NULL) ? (strlen(value) + 1) : 0;
+	return qHasharrPut(tbl, key, (void *)value, size);
 }
 
 /**
- * Under-development
+ * Put integer into hash table
  *
- * @return true when successful, otherwise(table full) false
+ * @param tbl		a pointer of Q_HASHARR
+ * @param key		key string
+ * @param value		value integer
+ *
+ * @return		true if successful, otherwise returns false
  */
-bool qHasharrPutInt(Q_HASHARR *tbl, char *key, int value) {
+bool qHasharrPutInt(Q_HASHARR *tbl, const char *key, int value) {
 	char data[10+1];
 	sprintf(data, "%d", value);
-	return qHasharrPut(tbl, key, data, -1);
+	return qHasharrPut(tbl, key, (void *)data, -1);
 }
 
 /**
- * Under-development
+ * Get object from hash table
  *
- * @return value data which is malloced
+ * @param tbl		a pointer of Q_HASHARR
+ * @param key		key string
+ * @param size		if not NULL, oject size will be stored
+ *
+ * @return		malloced object pointer if successful, otherwise(not found) returns NULL
+ *
+ * @note
+ * returned object must be freed after done using.
  */
-char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
+void *qHasharrGet(Q_HASHARR *tbl, const char *key, int *size) {
 	if(tbl == NULL || key == NULL) return NULL;
 
 	// get hash integer
@@ -266,19 +312,18 @@ char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) return NULL;
 
-	char *value, *vp;
 	int newidx, valsize;
-
 	for(newidx = idx, valsize = 0; ; newidx = tbl[newidx].link) {
 		valsize += tbl[newidx].size;
 		if(tbl[newidx].link == 0) break;
 	}
 
-	value = (char *)malloc(valsize);
+	void *value, *vp;
+	value = (void *)malloc(valsize);
 	if(value == NULL) return NULL;
 
 	for(newidx = idx, vp = value; ; newidx = tbl[newidx].link) {
-		memcpy((void *)vp, (void *)tbl[newidx].value, tbl[newidx].size);
+		memcpy(vp, (void *)tbl[newidx].value, tbl[newidx].size);
 		vp += tbl[newidx].size;
 		if(tbl[newidx].link == 0) break;
 	}
@@ -288,20 +333,29 @@ char *qHasharrGet(Q_HASHARR *tbl, char *key, int *size) {
 }
 
 /**
- * Under-development
+ * Get string from hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHARR
+ * @param key		key string
+ *
+ * @return		string pointer if successful, otherwise(not found) returns NULL
+ *
+ * @note
+ * returned object must be freed after done using.
  */
-char *qHasharrGetStr(Q_HASHARR *tbl, char *key) {
-	return qHasharrGet(tbl, key, NULL);
+char *qHasharrGetStr(Q_HASHARR *tbl, const char *key) {
+	return (char*)qHasharrGet(tbl, key, NULL);
 }
 
 /**
- * Under-development
+ * Get integer from hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHARR
+ * @param key		key string
+ *
+ * @return		value integer if successful, otherwise(not found) returns 0
  */
-int qHasharrGetInt(Q_HASHARR *tbl, char *key) {
+int qHasharrGetInt(Q_HASHARR *tbl, const char *key) {
 	char *data = qHasharrGet(tbl, key, NULL);
 	if(data == NULL) return 0;
 
@@ -312,29 +366,42 @@ int qHasharrGetInt(Q_HASHARR *tbl, char *key) {
 }
 
 /**
- * Under-development
+ * Get first key name
  *
- * @return
+ * @param tbl		a pointer of Q_HASHARR
+ * @param idx		index pointer
+ *
+ * @return		key name string if successful, otherwise returns NULL
+ *
+ * @note
+ * Do not free returned key string.
  *
  * @code
  *   char *key;
  *   int idx;
  *   for(key = qHasharrGetFirstKey(tbl, &idx); key != NULL; key = qHasharrGetNextKey(tbl, &idx) {
  *     char *value = qHasharrGetStr(tbl, key);
+ *     if(value != NULL) free(value);
  *   }
  * @endcode
  */
-char *qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx) {
+const char *qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx) {
 	if(idx != NULL) *idx = 0;
 	return qHasharrGetNextKey(tbl, idx);
 }
 
 /**
- * Under-development
+ * Get next key name
  *
- * @return
+ * @param tbl		a pointer of Q_HASHARR
+ * @param idx		index pointer
+ *
+ * @return		key name string if successful, otherwise(end of table) returns NULL
+ *
+ * @note
+ * Do not free returned key string.
  */
-char *qHasharrGetNextKey(Q_HASHARR *tbl, int *idx) {
+const char *qHasharrGetNextKey(Q_HASHARR *tbl, int *idx) {
 	if(tbl == NULL || idx == NULL) return NULL;
 
 	for (*idx += 1; *idx <= tbl[0].keylen; (*idx)++) {
@@ -347,11 +414,14 @@ char *qHasharrGetNextKey(Q_HASHARR *tbl, int *idx) {
 }
 
 /**
- * Under-development
+ * Remove key from hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHARR
+ * @param key		key string
+ *
+ * @return		true if successful, otherwise(not found) returns false
  */
-bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
+bool qHasharrRemove(Q_HASHARR *tbl, const char *key) {
 	if(tbl == NULL || key == NULL) return false;
 
 	// get hash integer
@@ -406,9 +476,12 @@ bool qHasharrRemove(Q_HASHARR *tbl, char *key) {
 }
 
 /**
- * Under-development
+ * Print hash table for debugging purpose
  *
- * @return
+ * @param tbl		a pointer of Q_HASHARR
+ * @param out		output stream
+ *
+ * @return		true if successful, otherwise returns false
  */
 bool qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
 	if(tbl == NULL || out == NULL) return false;
@@ -425,9 +498,18 @@ bool qHasharrPrint(Q_HASHARR *tbl, FILE *out) {
 }
 
 /**
- * Under-development
+ * Get hash table internal status
  *
- * @return
+ * @param tbl		a pointer of Q_HASHARR
+ * @param used		if not NULL, a number of used slots(not a number of key) will be stored
+ * @param max		if not NULL, the maximum number of slots will be stored
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @note
+ * It is different from dynamic hash-table. In array-hash table, a value object can be stored
+ * in several slots if the size of the object is bigger than the size of slot. So used and max
+ * slot number is not equal to actual stored and maximum storable objects number.
  */
 bool qHasharrStatus(Q_HASHARR *tbl, int *used, int *max) {
 	if(tbl == NULL) return false;
@@ -442,10 +524,7 @@ bool qHasharrStatus(Q_HASHARR *tbl, int *used, int *max) {
 // PRIVATE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////
 
-/**
- * find empty slot
- * @return empty slow number, otherwise returns -1.
- */
+// find empty slot : return empty slow number, otherwise returns -1.
 static int _findEmpty(Q_HASHARR *tbl, int startidx) {
 	if(startidx > tbl[0].keylen) startidx = 1;
 
@@ -461,12 +540,12 @@ static int _findEmpty(Q_HASHARR *tbl, int startidx) {
 	return -1;
 }
 
-static int _getIdx(Q_HASHARR *tbl, char *key, int hash) {
+static int _getIdx(Q_HASHARR *tbl, const char *key, int hash) {
 	if (tbl[hash].count > 0) {
 		int keylen = strlen(key);
-		char keymd5[16+1];
+		unsigned char keymd5[16];
 
-		char *tmpmd5 = qHashMd5(key, keylen);
+		unsigned char *tmpmd5 = qHashMd5(key, keylen);
 		qStrCpy(keymd5, sizeof(keymd5), tmpmd5, sizeof(keymd5));
 		free(tmpmd5);
 
@@ -507,7 +586,7 @@ static int _getIdx(Q_HASHARR *tbl, char *key, int hash) {
 	return -1;
 }
 
-static bool _putData(Q_HASHARR *tbl, int idx, int hash, char *key, char *value, int size, int count) {
+static bool _putData(Q_HASHARR *tbl, int idx, int hash, const char *key, const void *value, int size, int count) {
 	// check if used
 	if(tbl[idx].count != 0) {
 		DEBUG("hasharr: BUG found.");
@@ -515,7 +594,7 @@ static bool _putData(Q_HASHARR *tbl, int idx, int hash, char *key, char *value, 
 	}
 
 	int keylen = strlen(key);
-	char *keymd5 = qHashMd5(key, keylen);
+	unsigned char *keymd5 = qHashMd5(key, keylen);
 
 	// store key
 	tbl[idx].count = count;

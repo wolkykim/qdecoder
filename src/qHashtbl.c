@@ -32,13 +32,20 @@
 
 static int _findEmpty(Q_HASHTBL *tbl, int startidx);
 static int _getIdx(Q_HASHTBL *tbl, const char *key, int hash);
-static bool _putData(Q_HASHTBL *tbl, int idx, int hash, const char *key, const char *value, int size, int count);
+static bool _putData(Q_HASHTBL *tbl, int idx, int hash, const char *key, const void *value, int size, int count);
 static bool _removeData(Q_HASHTBL *tbl, int idx);
 
 /**
- * Under-development
+ * Initialize dynamic-hash table
  *
- * @return
+ * @param max		a number of maximum  size of Q_HASHARR
+ *
+ * @return		a pointer of malloced Q_HASHTBL, otherwise returns false
+ *
+ * @code
+ *   Q_HASHTBL *hashtbl = qHashtblInit(1000);
+ *   qHashtblFree(hashtbl);
+ * @endcode
  */
 Q_HASHTBL *qHashtblInit(int max) {
 	if(max <= 0) return NULL;
@@ -56,7 +63,7 @@ Q_HASHTBL *qHashtblInit(int max) {
 	tbl->key = (char **)malloc(sizeof(char *) * max);
 	if(tbl->key != NULL) memset((void *)(tbl->key), 0, (sizeof(char *) * max));
 	tbl->value = (char **)malloc(sizeof(char *) * max);
-	if(tbl->value != NULL) memset((void *)(tbl->value), 0, (sizeof(char *) * max));
+	if(tbl->value != NULL) memset((void *)(tbl->value), 0, (sizeof(void *) * max));
 	tbl->size = (int *)malloc(sizeof(int) * max);
 	if(tbl->size != NULL) memset((void *)(tbl->size), 0, (sizeof(int) * max));
 
@@ -70,9 +77,11 @@ Q_HASHTBL *qHashtblInit(int max) {
 }
 
 /**
- * Under-development
+ * De-allocate hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHTBL
+ *
+ * @return		true if successful, otherwise returns false
  */
 bool qHashtblFree(Q_HASHTBL *tbl) {
 	if(tbl == NULL) return false;
@@ -98,11 +107,16 @@ bool qHashtblFree(Q_HASHTBL *tbl) {
 }
 
 /**
- * Under-development
+ * Put object into hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param key		key string
+ * @param value		value object data
+ * @param size		size of value
+ *
+ * @return		true if successful, otherwise returns false
  */
-bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const char *value, int size) {
+bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size) {
 	if(tbl == NULL || key == NULL || value == NULL) return false;
 
 	// get hash integer
@@ -153,58 +167,82 @@ bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const char *value, int size) {
 }
 
 /**
- * Under-development
+ * Put string into hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param key		key string
+ * @param value		value string
+ *
+ * @return		true if successful, otherwise returns false
  */
-bool qHashtblPutStr(Q_HASHTBL *tbl, const char *key, const char *str) {
-	int size = (str!=NULL) ? (strlen(str) + 1) : 0;
-	return qHashtblPut(tbl, key, str, size);
+bool qHashtblPutStr(Q_HASHTBL *tbl, const char *key, const char *value) {
+	int size = (value != NULL) ? (strlen(value) + 1) : 0;
+	return qHashtblPut(tbl, key, value, size);
 }
 
 /**
- * Under-development
+ * Put integer into hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param key		key string
+ * @param value		value integer
+ *
+ * @return		true if successful, otherwise returns false
  */
-bool qHashtblPutInt(Q_HASHTBL *tbl, const char *key, const int number) {
+bool qHashtblPutInt(Q_HASHTBL *tbl, const char *key, const int value) {
 	char data[10+1];
-	sprintf(data, "%d", number);
+	sprintf(data, "%d", value);
 	return qHashtblPut(tbl, key, data, strlen(data) + 1);
 }
 
 /**
- * Under-development
+ * Get object from hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param key		key string
+ * @param size		if not NULL, oject size will be stored
+ *
+ * @return		malloced object pointer if successful, otherwise(not found) returns NULL
+ *
+ * @note
+ * returned object must be freed after done using.
  */
-char *qHashtblGet(Q_HASHTBL *tbl, const char *key, int *size) {
+void *qHashtblGet(Q_HASHTBL *tbl, const char *key, int *size) {
 	if(tbl == NULL || key == NULL) return NULL;
 
 	int hash = (int)qHashFnv32(tbl->max, key, strlen(key));
 	int idx = _getIdx(tbl, key, hash);
 	if (idx < 0) return NULL;
 
-	char *value = (char *)malloc(tbl->size[idx]);
-	memcpy((void *)value, (void *)tbl->value[idx], tbl->size[idx]);
+	void *value = (char *)malloc(tbl->size[idx]);
+	memcpy(value, tbl->value[idx], tbl->size[idx]);
 
 	if(size != NULL) *size = tbl->size[idx];
 	return value;
 }
 
 /**
- * Under-development
+ * Get string from hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param key		key string
+ *
+ * @return		string pointer if successful, otherwise(not found) returns NULL
+ *
+ * @note
+ * returned object must be freed after done using.
  */
 char *qHashtblGetStr(Q_HASHTBL *tbl, const char *key) {
 	return qHashtblGet(tbl, key, NULL);
 }
 
 /**
- * Under-development
+ * Get integer from hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHARR
+ * @param key		key string
+ *
+ * @return		value integer if successful, otherwise(not found) returns 0
  */
 int qHashtblGetInt(Q_HASHTBL *tbl, const char *key) {
 	char *data = qHashtblGet(tbl, key, NULL);
@@ -217,21 +255,42 @@ int qHashtblGetInt(Q_HASHTBL *tbl, const char *key) {
 }
 
 /**
- * Under-development
+ * Get first key name
  *
- * @return
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param idx		index pointer
+ *
+ * @return		key name string if successful, otherwise returns NULL
+ *
+ * @note
+ * Do not free returned key string.
+ *
+ * @code
+ *   char *key;
+ *   int idx;
+ *   for(key = qHashtblGetFirstKey(tbl, &idx); key != NULL; key = qHashtblGetNextKey(tbl, &idx) {
+ *     char *value = qHashtblGetStr(tbl, key);
+ *     if(value != NULL) free(value);
+ *   }
+ * @endcode
  */
-char *qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx) {
+const char *qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx) {
 	if(idx != NULL) *idx = -1;
 	return qHashtblGetNextKey(tbl, idx);
 }
 
 /**
- * Under-development
+ * Get next key name
  *
- * @return
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param idx		index pointer
+ *
+ * @return		key name string if successful, otherwise(end of table) returns NULL
+ *
+ * @note
+ * Do not free returned key string.
  */
-char *qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx) {
+const char *qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx) {
 	if(tbl == NULL || idx == NULL) return NULL;
 
 	for ((*idx)++; *idx < tbl->max; (*idx)++) {
@@ -244,9 +303,12 @@ char *qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx) {
 }
 
 /**
- * Under-development
+ * Remove key from hash table
  *
- * @return
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param key		key string
+ *
+ * @return		true if successful, otherwise(not found) returns false
  */
 bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
 	if(tbl == NULL || key == NULL) return false;
@@ -297,9 +359,13 @@ bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
 }
 
 /**
- * Under-development
+ * Print hash table for debugging purpose
  *
- * @return
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param out		output stream
+ * @param showvalue	print out value if set to true
+ *
+ * @return		true if successful, otherwise returns false
  */
 bool qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
 	if(tbl == NULL || out == NULL) return false;
@@ -307,13 +373,22 @@ bool qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
 	int idx, num;
 	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
 		if (tbl->count[idx] == 0) continue;
-		fprintf(out, "%s=%s (idx=%d,hash=%d,size=%d)\n", tbl->key[idx], (showvalue)?tbl->value[idx]:"_binary_", idx, tbl->hash[idx], tbl->size[idx]);
+		fprintf(out, "%s=%s (idx=%d,hash=%d,size=%d)\n", tbl->key[idx], (showvalue)?(char*)tbl->value[idx]:"_binary_", idx, tbl->hash[idx], tbl->size[idx]);
 		num++;
 	}
 
 	return true;
 }
 
+/**
+ * Get hash table internal status
+ *
+ * @param tbl		a pointer of Q_HASHARR
+ * @param used		if not NULL, a number of used keys will be stored
+ * @param max		if not NULL, the maximum usable number of keys will be stored
+ *
+ * @return		true if successful, otherwise returns false
+ */
 bool qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max) {
 	if(tbl == NULL) return false;
 
@@ -323,10 +398,11 @@ bool qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max) {
 	return true;
 }
 
-/**
- * find empty slot
- * @return empty slow number, otherwise returns -1.
- */
+/////////////////////////////////////////////////////////////////////////
+// PRIVATE FUNCTIONS
+/////////////////////////////////////////////////////////////////////////
+
+// find empty slot : return empty slow number, otherwise returns -1.
 static int _findEmpty(Q_HASHTBL *tbl, int startidx) {
 	if (startidx >= tbl->max) startidx = 0;
 
@@ -372,19 +448,19 @@ static int _getIdx(Q_HASHTBL *tbl, const char *key, int hash) {
 	return -1;
 }
 
-static bool _putData(Q_HASHTBL *tbl, int idx, int hash, const char *key, const char *value, int size, int count) {
+static bool _putData(Q_HASHTBL *tbl, int idx, int hash, const char *key, const void *value, int size, int count) {
 	// check if used
 	if(tbl->count[idx] != 0) return false;
 
 	// store
 	tbl->hash[idx] = hash;
 	tbl->key[idx] = strdup(key);
-	tbl->value[idx] = (char *)malloc(size);
+	tbl->value[idx] = malloc(size);
 	if(tbl->value[idx] == NULL) {
 		free(tbl->key[idx]);
 		return false;
 	}
-	memcpy((void *)tbl->value[idx], (void *)value, size);
+	memcpy(tbl->value[idx], value, size);
 	tbl->size[idx] = size;
 	tbl->count[idx] = count;
 
