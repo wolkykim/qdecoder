@@ -20,6 +20,9 @@
 /**
  * @file qObstack.c qDecoder implementation of GNU obstack
  *
+ * An qObstack is a pool of memory containing a stack of objects.
+ * An qObstack can contain any number of objects of any size.
+ *
  * @code
  *   [Code sample - String]
  *   Q_OBSTACK *obstack;
@@ -108,9 +111,15 @@
 #include "qDecoder.h"
 
 /**
- * Under-development
+ * Initialize object-stack
  *
- * @since not released yet
+ * @return		a pointer of Q_OBSTACK structure
+ *
+ * @code
+ *   // allocate memory
+ *   Q_OBSTACK *obstack = qObstackInit();
+ *   qObstackFree(obstack);
+ * @endcode
  */
 Q_OBSTACK *qObstackInit(void) {
 	Q_OBSTACK *obstack;
@@ -129,9 +138,13 @@ Q_OBSTACK *qObstackInit(void) {
 }
 
 /**
- * Under-development
+ * Stack object
  *
- * @since not released yet
+ * @param obstack	a pointer of Q_OBSTACK
+ * @param object	a pointer of object data
+ * @param size		size of object
+ *
+ * @return		true if successful, otherwise returns false
  */
 bool qObstackGrow(Q_OBSTACK *obstack, const void *object, size_t size) {
 	if(obstack == NULL || object == NULL || size <= 0) return false;
@@ -139,18 +152,24 @@ bool qObstackGrow(Q_OBSTACK *obstack, const void *object, size_t size) {
 }
 
 /**
- * Under-development
+ * Stack string
  *
- * @since not released yet
+ * @param obstack	a pointer of Q_OBSTACK
+ * @param str		a pointer of string
+ *
+ * @return		true if successful, otherwise returns false
  */
 bool qObstackGrowStr(Q_OBSTACK *obstack, const char *str) {
 	return qObstackGrow(obstack, (void *)str, strlen(str));
 }
 
 /**
- * Under-development
+ * Stack formatted string
  *
- * @since not released yet
+ * @param obstack	a pointer of Q_OBSTACK
+ * @param format	string format
+ *
+ * @return		true if successful, otherwise returns false
  */
 bool qObstackGrowStrf(Q_OBSTACK *obstack, const char *format, ...) {
 	if(obstack == NULL) return false;
@@ -166,9 +185,12 @@ bool qObstackGrowStrf(Q_OBSTACK *obstack, const char *format, ...) {
 }
 
 /**
- * Under-development
+ * Stack formatted string
  *
- * @since not released yet
+ * @param obstack	a pointer of Q_OBSTACK
+ * @param format	string format
+ *
+ * @return		true if successful, otherwise returns false
  */
 void *qObstackFinish(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return NULL;
@@ -189,9 +211,11 @@ void *qObstackFinish(Q_OBSTACK *obstack) {
 }
 
 /**
- * Under-development
+ * Finalize objects and get merged single final object pointer
  *
- * @since not released yet
+ * @param obstack	a pointer of Q_OBSTACK
+ *
+ * @return		a pointer of finally merged object, otherwise returns NULL
  */
 void *qObstackGetFinal(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return NULL;
@@ -200,11 +224,13 @@ void *qObstackGetFinal(Q_OBSTACK *obstack) {
 }
 
 /**
- * Under-development
+ * Get stacked objects size
  *
- * @since not released yet
+ * @param obstack	a pointer of Q_OBSTACK
+ *
+ * @return		a pointer of finally merged object, otherwise returns NULL
  */
-int qObstackGetSize(Q_OBSTACK *obstack) {
+size_t qObstackGetSize(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return 0;
 	return obstack->stack->size;
 }

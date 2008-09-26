@@ -51,7 +51,7 @@ typedef struct {
  */
 typedef struct {
 	int num;			/*!< number of objects */
-	int size;			/*!< total size of objects */
+	size_t size;			/*!< total size of objects */
 	Q_NLOBJ *first;			/*!< first object pointer */
 	Q_NLOBJ *last;			/*!< last object pointer */
 	Q_NLOBJ *next;			/*!< next object pointer used by only for qEntryFirst() and qEntryNext()*/
@@ -359,7 +359,7 @@ extern	bool		qObstackGrowStr(Q_OBSTACK *obstack, const char *str);
 extern	bool		qObstackGrowStrf(Q_OBSTACK *obstack, const char *format, ...);
 extern	void*		qObstackFinish(Q_OBSTACK *obstack);
 extern	void*		qObstackGetFinal(Q_OBSTACK *obstack);
-extern	int		qObstackGetSize(Q_OBSTACK *obstack);
+extern	size_t		qObstackGetSize(Q_OBSTACK *obstack);
 extern	int		qObstackGetNum(Q_OBSTACK *obstack);
 extern	bool		qObstackFree(Q_OBSTACK *obstack);
 

@@ -18,7 +18,7 @@
  *************************************************************************/
 
 /**
- * @file qLog.c Rotating File Logging API
+ * @file qLog.c Rotating File Logger API
  */
 
 #include <stdio.h>
@@ -29,15 +29,28 @@
 #include <unistd.h>
 #include "qDecoder.h"
 
-/*
- * static function prototypes
- */
 static int _realOpen(Q_LOG *log);
 
 /**
- * Under-development
+ * Open ratating-log file
  *
- * @since 8.1R
+ * @param logbase		log directory
+ * @param filenameformat	filename format. formatting argument is same as strftime()
+ * @param rotateinterval	rotating interval seconds
+ * @param flush			set to true if you want to flush everytime logging. false for buffered logging
+ *
+ * @return		a pointer of Q_LOG structure
+ *
+ * @note
+ * rotateinterval is not relative time. If you set it to 3600, log file will be rotated at every hour.
+ * And filenameformat is same as strftime(). So If you want to log with hourly rotating, filenameformat
+ * must be defined at least hourly format, such like "xxx-%Y%m%d%H.log". You can set it to "xxx-%H.log"
+ * for daily overwriting.
+ *
+ * @code
+ *   Q_LOG *log = qLogOpen("/tmp", "qdecoder-%Y%m%d.err", 86400, false);
+ *   qLogClose(log);
+ * @endcode
  */
 Q_LOG *qLogOpen(const char *logbase, const char *filenameformat, int rotateinterval, bool flush) {
 	Q_LOG *log;
@@ -63,9 +76,11 @@ Q_LOG *qLogOpen(const char *logbase, const char *filenameformat, int rotateinter
 }
 
 /**
- * Under-development
+ * Close ratating-log file
  *
- * @since 8.1R
+ * @param log		a pointer of Q_LOG
+ *
+ * @return		true if successful, otherewise returns false
  */
 bool qLogClose(Q_LOG *log) {
 	if (log == NULL) return false;
@@ -78,9 +93,12 @@ bool qLogClose(Q_LOG *log) {
 }
 
 /**
- * Under-development
+ * Set screen out
  *
- * @since 8.1R
+ * @param log		a pointer of Q_LOG
+ * @param consoleout	if set it to true, logging messages will be printed out into stderr
+ *
+ * @return		true if successful, otherewise returns false
  */
 bool qLogSetConsole(Q_LOG *log, bool consoleout) {
 	if (log == NULL) return false;
@@ -89,9 +107,11 @@ bool qLogSetConsole(Q_LOG *log, bool consoleout) {
 }
 
 /**
- * Under-development
+ * Flush buffered log
  *
- * @since 8.1R
+ * @param log		a pointer of Q_LOG
+ *
+ * @return		true if successful, otherewise returns false
  */
 bool qLogFlush(Q_LOG *log) {
 	if (log == NULL || log->fp == NULL) return false;
@@ -103,9 +123,12 @@ bool qLogFlush(Q_LOG *log) {
 }
 
 /**
- * Under-development
+ * Log messages
  *
- * @since 8.1R
+ * @param log		a pointer of Q_LOG
+ * @param format	messages format
+ *
+ * @return		true if successful, otherewise returns false
  */
 bool qLog(Q_LOG *log, const char *format, ...) {
 	char buf[1024];
@@ -119,7 +142,7 @@ bool qLog(Q_LOG *log, const char *format, ...) {
 	va_end(arglist);
 
 	/* console out */
-	if (log->console == true) printf("%s\n", buf);
+	if (log->console == true) fprintf(stderr, "%s\n", buf);
 
 	/* check log rotate is needed*/
 	if (log->nextrotate > 0 && nowTime >= log->nextrotate) {
@@ -135,9 +158,10 @@ bool qLog(Q_LOG *log, const char *format, ...) {
 	return true;
 }
 
-/*
- * static functions
- */
+/////////////////////////////////////////////////////////////////////////
+// PRIVATE FUNCTIONS
+/////////////////////////////////////////////////////////////////////////
+
 static int _realOpen(Q_LOG *log) {
 	time_t nowtime = time(NULL);
 
