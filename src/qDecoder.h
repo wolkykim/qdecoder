@@ -103,7 +103,7 @@ typedef struct {
 
 	size_t	objsize;	// object size
 	void	*objarr;	// external queue data memory pointer
-} Q_QUEUEARR;
+} Q_QUEUE;
 
 /**
  * Structure for obstack data structure.
@@ -365,15 +365,15 @@ extern	bool		qHasharrPrint(Q_HASHARR *tbl, FILE *out);
 extern	bool		qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
 
 /*
- * qQueuearr.c
+ * qQueue.c
  */
-extern	size_t		qQueuearrSize(size_t objsize, int max);
-extern	int		qQueuearrInit(Q_QUEUEARR *queue, void* datamem, size_t datamemsize, size_t objsize);
-extern	bool		qQueuearrClear(Q_QUEUEARR *queue);
-extern	bool		qQueuearrPush(Q_QUEUEARR *queue, const void *object);
-extern	bool		qQueuearrPopFirst(Q_QUEUEARR *queue, void *object);
-extern	bool		qQueuearrPopLast(Q_QUEUEARR *queue, void *object);
-extern	bool		qQueuearrStatus(Q_QUEUEARR *queue, int *used, int *max);
+extern	size_t		qQueueSize(int max, size_t objsize);
+extern	int		qQueueInit(Q_QUEUE *queue, void* datamem, size_t datamemsize, size_t objsize);
+extern	bool		qQueueClear(Q_QUEUE *queue);
+extern	bool		qQueuePush(Q_QUEUE *queue, const void *object);
+extern	bool		qQueuePopFirst(Q_QUEUE *queue, void *object);
+extern	bool		qQueuePopLast(Q_QUEUE *queue, void *object);
+extern	bool		qQueueStatus(Q_QUEUE *queue, int *used, int *max);
 
 /*
  * qObstack.c
