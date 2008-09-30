@@ -41,7 +41,7 @@
  *   Q_HASHARR *hasharr = (Q_HASHARR *)malloc(memsize);
  *
  *   // initialize hash-table
- *   if(qHasharrInit(hasharr, memsize) == false) return -1;
+ *   if(qHasharrInit(hasharr, memsize) == 0) return -1;
  *
  *   // put some sample data
  *   if(qHasharrPut(hasharr, "sample1", "binary", 6) == false) return -1; // hash-table full
@@ -65,7 +65,7 @@
  *   Q_HASHARR *hasharr = (Q_HASHARR *)datamem;
  *
  *   // initialize hash-table.
- *   if(qHasharrInit(hasharr, sizeof(datamem)) == false) return -1;
+ *   if(qHasharrInit(hasharr, sizeof(datamem)) == 0) return -1;
  *
  *   (...your codes here...)
  *
@@ -84,7 +84,7 @@
  *   Q_HASHARR *hasharr = (Q_HASHARR *)qShmGet(shmid);
  *
  *   // initialize hash-table
- *   if(qHasharrInit(hasharr, memsize) == false) return -1;
+ *   if(qHasharrInit(hasharr, memsize) == 0) return -1;
  *
  *   (...your codes here...)
  *
@@ -134,7 +134,7 @@ size_t qHasharrSize(int max) {
  * @param tbl		a pointer of Q_HASHARR
  * @param memsize	actual size of Q_HASHARR
  *
- * @return		true if successful, otherwise returns false
+ * @return		maximum number of available slots if successful, otherwise returns 0
  *
  * @code
  *   // allocate memory
@@ -142,13 +142,13 @@ size_t qHasharrSize(int max) {
  *   Q_HASHARR *hasharr = (Q_HASHARR *)malloc(memsize);
  *
  *   // initialize hash-table
- *   if(qHasharrInit(hasharr, memsize) == false) return -1;
+ *   if(qHasharrInit(hasharr, memsize) == 0) return -1;
  * @endcode
  */
-bool qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
+int qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
 	// calculate max
 	int max = (memsize / sizeof(Q_HASHARR)) - 1;
-	if(max < 1) return false;
+	if(max < 1) return 0;
 
 	// clear memory
 	memset((void *)tbl, 0, memsize);
@@ -157,7 +157,7 @@ bool qHasharrInit(Q_HASHARR *tbl, size_t memsize) {
 	tbl[0].count = 0;	// »ç¿ëÁßÀÎ ½½·ÔÀÇ °¹¼ö
 	tbl[0].keylen = max;	// ÃÖ´ë ½½·Ô Å©±â
 
-	return true;
+	return max;
 }
 
 /**

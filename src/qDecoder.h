@@ -92,6 +92,20 @@ typedef struct {
 } Q_HASHARR;
 
 /**
+ * Structure for array-based circular-queue data structure.
+ */
+typedef struct {
+	int	max;		// maximum queue slots
+	int	used;		// used queue slots
+
+	int	head;		// head pointer
+	int	tail;		// tail pointer
+
+	size_t	objsize;	// object size
+	void	*objarr;	// external queue data memory pointer
+} Q_QUEUEARR;
+
+/**
  * Structure for obstack data structure.
  */
 typedef struct {
@@ -336,7 +350,7 @@ extern	bool		qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
  * qHasharr.c
  */
 extern	size_t		qHasharrSize(int max);
-extern	bool		qHasharrInit(Q_HASHARR *tbl, size_t memsize);
+extern	int		qHasharrInit(Q_HASHARR *tbl, size_t memsize);
 extern	bool		qHasharrClear(Q_HASHARR *tbl);
 extern	bool		qHasharrPut(Q_HASHARR *tbl, const char *key, const void *value, int size);
 extern	bool		qHasharrPutStr(Q_HASHARR *tbl, const char *key, const char *value);
@@ -349,6 +363,17 @@ extern	const char*	qHasharrGetNextKey(Q_HASHARR *tbl, int *idx);
 extern	bool		qHasharrRemove(Q_HASHARR *tbl, const char *key);
 extern	bool		qHasharrPrint(Q_HASHARR *tbl, FILE *out);
 extern	bool		qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
+
+/*
+ * qQueuearr.c
+ */
+extern	size_t		qQueuearrSize(size_t objsize, int max);
+extern	int		qQueuearrInit(Q_QUEUEARR *queue, void* datamem, size_t datamemsize, size_t objsize);
+extern	bool		qQueuearrClear(Q_QUEUEARR *queue);
+extern	bool		qQueuearrPush(Q_QUEUEARR *queue, const void *object);
+extern	bool		qQueuearrPopFirst(Q_QUEUEARR *queue, void *object);
+extern	bool		qQueuearrPopLast(Q_QUEUEARR *queue, void *object);
+extern	bool		qQueuearrStatus(Q_QUEUEARR *queue, int *used, int *max);
 
 /*
  * qObstack.c

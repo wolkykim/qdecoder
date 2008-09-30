@@ -62,7 +62,7 @@ Q_HASHTBL *qHashtblInit(int max) {
 
 	tbl->key = (char **)malloc(sizeof(char *) * max);
 	if(tbl->key != NULL) memset((void *)(tbl->key), 0, (sizeof(char *) * max));
-	tbl->value = (char **)malloc(sizeof(char *) * max);
+	tbl->value = (void **)malloc(sizeof(char *) * max);
 	if(tbl->value != NULL) memset((void *)(tbl->value), 0, (sizeof(void *) * max));
 	tbl->size = (int *)malloc(sizeof(int) * max);
 	if(tbl->size != NULL) memset((void *)(tbl->size), 0, (sizeof(int) * max));
