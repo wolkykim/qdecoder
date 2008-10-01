@@ -110,7 +110,7 @@ static bool _removeSlot(Q_HASHARR *tbl, int idx);
 static bool _removeData(Q_HASHARR *tbl, int idx);
 
 /**
- * Get how much memory is necessary for N entries
+ * Get how much memory is needed for N entries
  *
  * @param max		a number of maximum internal slots
  *
