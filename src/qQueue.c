@@ -167,6 +167,17 @@ int qQueueInit(Q_QUEUE *queue, void* datamem, size_t datamemsize, size_t objsize
 	return max;
 }
 
+/**
+ * Reset queue
+ *
+ * @param queue		a pointer of Q_QUEUE
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @note
+ * You do not need to call this, after qQueueInit(). This is useful when you
+ * reset all of data in the queue.
+ */
 bool qQueueClear(Q_QUEUE *queue) {
 	queue->used = 0;
 	queue->head = 0;
@@ -175,6 +186,14 @@ bool qQueueClear(Q_QUEUE *queue) {
 	return true;
 }
 
+/**
+ * Push object into queue
+ *
+ * @param queue		a pointer of Q_QUEUE
+ * @param object	object
+ *
+ * @return		true if successful, otherwise(queue full or not initialized) returns false
+ */
 bool qQueuePush(Q_QUEUE *queue, const void *object) {
 	if(queue == NULL || object == NULL) return false;
 
@@ -195,6 +214,16 @@ bool qQueuePush(Q_QUEUE *queue, const void *object) {
 	return true;
 }
 
+/**
+ * Pop first pushed object from queue.
+ *
+ * @param queue		a pointer of Q_QUEUE
+ * @param object	popped objected will be stored at this object pointer
+ *
+ * @return		true if successful, otherwise(queue empty or not initialized) returns false
+ *
+ * @note	Can be used for FIFO implementation
+ */
 bool qQueuePopFirst(Q_QUEUE *queue, void *object) {
 	if(queue == NULL || object == NULL) return false;
 
@@ -215,6 +244,16 @@ bool qQueuePopFirst(Q_QUEUE *queue, void *object) {
 	return true;
 }
 
+/**
+ * Pop last pushed object from queue.
+ *
+ * @param queue		a pointer of Q_QUEUE
+ * @param object	popped objected will be stored at this object pointer
+ *
+ * @return		true if successful, otherwise(queue empty or not initialized) returns false
+ *
+ * @note	Can be used for STACK implementation
+ */
 bool qQueuePopLast(Q_QUEUE *queue, void *object) {
 	if(queue == NULL || object == NULL) return false;
 
@@ -235,6 +274,15 @@ bool qQueuePopLast(Q_QUEUE *queue, void *object) {
 	return true;
 }
 
+/**
+ * Get queue internal status
+ *
+ * @param queue		a pointer of Q_QUEUE
+ * @param used		if not NULL, a number of pushed objects will be stored
+ * @param max		if not NULL, the maximum number of pushable objects(queue size) will be stored
+ *
+ * @return		true if successful, otherwise returns false
+ */
 bool qQueueStatus(Q_QUEUE *queue, int *used, int *max) {
 	if(queue == NULL) return false;
 
