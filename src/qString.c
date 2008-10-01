@@ -488,6 +488,17 @@ char *qStrUnique(const char *seed) {
 	return qHashMd5Str(szSeed, strlen(szSeed));
 }
 
+/**
+ * Test for an alpha-numeric string
+ *
+ * @param str		a pointer of string
+ *
+ * @return		true for ok, otherwise returns false
+ *
+ * @code
+ *   qCharEncode("한글", "EUC-KR", "UTF-8", 1.5);
+ * @endcode
+ */
 bool qStrIsAlnum(const char *str) {
         for (; *str; str++) {
                 if(isalnum(*str) == 0) return false;
@@ -495,6 +506,8 @@ bool qStrIsAlnum(const char *str) {
         return true;
 }
 
+#ifdef __linux__
+#include <iconv.h>
 /**
  * Convert character encoding
  *
@@ -509,8 +522,6 @@ bool qStrIsAlnum(const char *str) {
  *   qCharEncode("한글", "EUC-KR", "UTF-8", 1.5);
  * @endcode
  */
-#ifdef __linux__
-#include <iconv.h>
 char *qStrConvEncoding(const char *str, const char *fromcode, const char *tocode, float mag) {
 	if(str == NULL) return NULL;
 
