@@ -508,6 +508,8 @@ bool qStrIsAlnum(const char *str) {
 
 #ifdef __linux__
 #include <iconv.h>
+#endif
+
 /**
  * Convert character encoding
  *
@@ -523,6 +525,7 @@ bool qStrIsAlnum(const char *str) {
  * @endcode
  */
 char *qStrConvEncoding(const char *str, const char *fromcode, const char *tocode, float mag) {
+#ifdef __linux__
 	if(str == NULL) return NULL;
 
 	char *fromstr = (char*)str;
@@ -552,5 +555,7 @@ char *qStrConvEncoding(const char *str, const char *fromcode, const char *tocode
 	}
 
 	return tostr1;
-}
+#else
+	return NULL;
 #endif
+}
