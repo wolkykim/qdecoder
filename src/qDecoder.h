@@ -254,7 +254,7 @@ extern	bool		qSemFree(int semid);
 /*
  * qShm.c
  */
-extern	int		qShmInit(const char *keyfile, int keyid, size_t size, bool autodestroy);
+extern	int		qShmInit(const char *keyfile, int keyid, size_t size, bool ifexistdestroy);
 extern	int		qShmGetId(const char *keyfile, int keyid);
 extern	void*		qShmGet(int shmid);
 extern	bool		qShmFree(int shmid);

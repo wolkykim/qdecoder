@@ -190,7 +190,7 @@ bool qQueueClear(Q_QUEUE *queue) {
  * Push object into queue
  *
  * @param queue		a pointer of Q_QUEUE
- * @param object	object
+ * @param object	object pointer which points object data to push
  *
  * @return		true if successful, otherwise(queue full or not initialized) returns false
  */

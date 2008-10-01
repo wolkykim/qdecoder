@@ -69,11 +69,16 @@
 #include "qDecoder.h"
 
 /**
- * Under-development
+ * Initialize shared-memory
  *
- * @since not released yet
+ * @param keyfile	seed for generating unique IPC key
+ * @param keyid		seed for generating unique IPC key
+ * @param size		size of shared memory
+ * @param ifexistdestroy set to true for if shared memory already exists, try to destroy it first
+ *
+ * @return		non-negative shared memory identifier if successful, otherwise returns -1
  */
-int qShmInit(const char *keyfile, int keyid, size_t size, bool autodestroy) {
+int qShmInit(const char *keyfile, int keyid, size_t size, bool ifexistdestroy) {
 	key_t semkey;
 	int shmid;
 
@@ -87,7 +92,7 @@ int qShmInit(const char *keyfile, int keyid, size_t size, bool autodestroy) {
 
 	/* create shared memory */
 	if ((shmid = shmget(semkey, size, IPC_CREAT | IPC_EXCL | 0666)) == -1) {
-		if(autodestroy == false) return -1;
+		if(ifexistdestroy == false) return -1;
 
 		/* destroy & re-create */
 		if((shmid = qShmGetId(keyfile, keyid)) >= 0) qShmFree(shmid);
@@ -98,9 +103,12 @@ int qShmInit(const char *keyfile, int keyid, size_t size, bool autodestroy) {
 }
 
 /**
- * Under-development
+ * Get shared memory identifier by keyfile and keyid which are used for qShmInit()
  *
- * @since not released yet
+ * @param keyfile	seed for generating unique IPC key
+ * @param keyid		seed for generating unique IPC key
+ *
+ * @return		non-negative shared memory identifier if successful, otherwise returns -1
  */
 int qShmGetId(const char *keyfile, int keyid) {
 	int shmid;
@@ -116,9 +124,11 @@ int qShmGetId(const char *keyfile, int keyid) {
 }
 
 /**
- * Under-development
+ * Get a pointer of shared memory
  *
- * @since not released yet
+ * @param shmid		shared memory identifier
+ *
+ * @return		a pointer of shared memory
  */
 void *qShmGet(int shmid) {
 	void *pShm;
@@ -130,9 +140,11 @@ void *qShmGet(int shmid) {
 }
 
 /**
- * Under-development
+ * De-allocate shared memory
  *
- * @since not released yet
+ * @param shmid		shared memory identifier
+ *
+ * @return		true if successful, otherwise returns false
  */
 bool qShmFree(int shmid) {
 	if (shmid < 0) return false;

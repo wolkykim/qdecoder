@@ -27,22 +27,29 @@
 #include <string.h>
 #include "qDecoder.h"
 
-/**********************************************
-** Usage : qGetenvDefault(default string, environment string name);
-** Return: Environment string or 'nullstr'.
-** Do    : Get environment string.
-**         When it does not find 'envname', it will return 'nullstr'.
-**********************************************/
+/**
+ * Get system environment variable
+ *
+ * @param envname	environment name
+ * @param nullstr	if not found, return this string
+ *
+ * @return		a pointer of environment variable
+ */
 const char *qSysGetEnv(const char *envname, const char *nullstr) {
 	const char *envstr = getenv(envname);
 	if (envstr != NULL) return envstr;
 	return nullstr;
 }
 
-/**********************************************
-** Usage : qCmd(external command);
-** Return: Execution output, File not found NULL.
-**********************************************/
+/**
+ * Get the result string of external command execution
+ *
+ * @param cmd		external command
+ *
+ * @return		malloced string pointer which contains result if successful, otherwise returns NULL
+ *
+ * @note If the command does not report result but it is executed successfully, this will returns empty string(not null)
+ */
 char *qSysCmd(const char *cmd) {
 	FILE *fp = popen(cmd, "r");
 	if (fp == NULL) return NULL;
