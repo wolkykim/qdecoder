@@ -18,11 +18,11 @@
  *************************************************************************/
 
 /**
- * @file qQueue.c Array-based Circular-Queue Data Structure API
+ * @file qQueue.c Circular-Queue Data Structure API
  *
- * This circular-queue implementation is useful when you must use
- * statically allocated(fixed-size) memory such like shared-memory
- * to communicate with other processors.
+ * This implementation is designed to use statically allocated(fixed-size)
+ * memory for flexibilities. So you can use this queue with in shared-memory
+ * architecture to communicate with other processors.
  *
  * @code
  *   ----[Sample codes]----
@@ -33,12 +33,15 @@
  *
  *   int main(void) {
  *     // allocate objects data memory
- *     size_t memsize = qQueuearrSize(sizeof(struct myobj), 10);
+ *     size_t memsize = qQueueSize(10, sizeof(struct myobj));
  *     void *datamem = malloc(memsize);
  *
+ *     // for static data memory use can use this way
+ *     // char datamem[NNN];
+ *
  *     // initialize queue
- *     Q_QUEUEARR queue;
- *     if(qQueuearrInit(&queue, datamem, memsize, sizeof(struct myobj)) == 0) {
+ *     Q_QUEUE queue;
+ *     if(qQueueInit(&queue, datamem, memsize, sizeof(struct myobj)) == 0) {
  *       printf("Can't initialize queue.\n");
  *       return -1;
  *     }
@@ -52,7 +55,7 @@
  *       sprintf(obj.string, "hello world %d", i);
  *
  *       // push object
- *       if(qQueuearrPush(&queue, &obj) == false) break;
+ *       if(qQueuePush(&queue, &obj) == false) break;
  *
  *       // print debug info
  *       printf("Push     : %d, %s\n", obj.integer, obj.string);
@@ -61,10 +64,10 @@
  *     // pop object from head & tail
  *     while(true) {
  *       struct myobj pop;
- *       if(qQueuearrPopFirst(&queue, &pop) == false) break;
+ *       if(qQueuePopFirst(&queue, &pop) == false) break;
  *       printf("PopFirst : %d, %s\n", pop.integer, pop.string);
  *
- *       if(qQueuearrPopLast(&queue, &pop) == false) break;
+ *       if(qQueuePopLast(&queue, &pop) == false) break;
  *       printf("PopLast  : %d, %s\n", pop.integer, pop.string);
  *     }
  *     return 0;
@@ -103,12 +106,52 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-size_t qQueuearrSize(size_t objsize, int max) {
+/**
+ * Get how much memory is needed for N objects
+ *
+ * @param max		a number of maximum internal slots
+ * @param objsize	size of queuing object
+ *
+ * @return		memory size needed
+ *
+ * @note
+ * This is useful when you decide how much memory(shared-memory) required for N object entries.
+ */
+size_t qQueueSize(int max, size_t objsize) {
 	size_t memsize = objsize * max;
 	return memsize;
 }
 
-int qQueuearrInit(Q_QUEUEARR *queue, void* datamem, size_t datamemsize, size_t objsize) {
+/**
+ * Initialize queue
+ *
+ * @param queue		a pointer of Q_QUEUE
+ * @param datamem	a pointer of data memory
+ * @param datamemsize	size of datamem
+ * @param objsize	size of queuing object
+ *
+ * @return		maximum number of queuing objects
+ *
+ * @code
+ *     // case of dynamic data memory
+ *     size_t memsize = qQueueSize(10, sizeof(struct myobj));
+ *     void *datamem = malloc(memsize);
+ *     Q_QUEUE queue;
+ *     if(qQueueInit(&queue, datamem, memsize, sizeof(int)) == 0) {
+ *       printf("Can't initialize queue.\n");
+ *       return -1;
+ *     }
+ *
+ *     // case of static data memory
+ *     char datamem[1024];
+ *     Q_QUEUE queue;
+ *     if(qQueueInit(&queue, datamem, sizeof(datamem), sizeof(int)) == 0) {
+ *       printf("Can't initialize queue.\n");
+ *       return -1;
+ *     }
+ * @endcode
+ */
+int qQueueInit(Q_QUEUE *queue, void* datamem, size_t datamemsize, size_t objsize) {
 	if(queue == NULL || datamem == NULL || datamemsize <= 0 || objsize <= 0) return 0;
 
 	// calculate max
@@ -119,12 +162,12 @@ int qQueuearrInit(Q_QUEUEARR *queue, void* datamem, size_t datamemsize, size_t o
 	queue->max = max;
 	queue->objsize = objsize;
 	queue->objarr = datamem;
-	qQueuearrClear(queue);
+	qQueueClear(queue);
 
 	return max;
 }
 
-bool qQueuearrClear(Q_QUEUEARR *queue) {
+bool qQueueClear(Q_QUEUE *queue) {
 	queue->used = 0;
 	queue->head = 0;
 	queue->tail = 0;
@@ -132,7 +175,7 @@ bool qQueuearrClear(Q_QUEUEARR *queue) {
 	return true;
 }
 
-bool qQueuearrPush(Q_QUEUEARR *queue, const void *object) {
+bool qQueuePush(Q_QUEUE *queue, const void *object) {
 	if(queue == NULL || object == NULL) return false;
 
 	// check full
@@ -152,7 +195,7 @@ bool qQueuearrPush(Q_QUEUEARR *queue, const void *object) {
 	return true;
 }
 
-bool qQueuearrPopFirst(Q_QUEUEARR *queue, void *object) {
+bool qQueuePopFirst(Q_QUEUE *queue, void *object) {
 	if(queue == NULL || object == NULL) return false;
 
 	// check empty
@@ -172,7 +215,7 @@ bool qQueuearrPopFirst(Q_QUEUEARR *queue, void *object) {
 	return true;
 }
 
-bool qQueuearrPopLast(Q_QUEUEARR *queue, void *object) {
+bool qQueuePopLast(Q_QUEUE *queue, void *object) {
 	if(queue == NULL || object == NULL) return false;
 
 	// check empty
@@ -192,7 +235,7 @@ bool qQueuearrPopLast(Q_QUEUEARR *queue, void *object) {
 	return true;
 }
 
-bool qQueuearrStatus(Q_QUEUEARR *queue, int *used, int *max) {
+bool qQueueStatus(Q_QUEUE *queue, int *used, int *max) {
 	if(queue == NULL) return false;
 
 	if(used != NULL) *used = queue->used;
