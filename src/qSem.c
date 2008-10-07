@@ -77,11 +77,16 @@
 #include "qInternal.h"
 
 /**
- * Under-development
+ * Initialize semaphore
  *
- * @since not released yet
+ * @param keyfile	seed for generating unique IPC key
+ * @param keyid		seed for generating unique IPC key
+ * @param nsems		number of semaphore to initialize
+ * @param ifexistdestroy set to true to destroy if semaphore already exists
+ *
+ * @return		non-negative shared memory identifier if successful, otherwise returns -1
  */
-int qSemInit(const char *keyfile, int keyid, int nsems, bool autodestroy) {
+int qSemInit(const char *keyfile, int keyid, int nsems, bool ifexistdestroy) {
 	key_t semkey;
 	int semid;
 
@@ -95,7 +100,7 @@ int qSemInit(const char *keyfile, int keyid, int nsems, bool autodestroy) {
 
 	// create semaphores
 	if ((semid = semget(semkey, nsems, IPC_CREAT | IPC_EXCL | 0666)) == -1) {
-		if(autodestroy == false) return -1;
+		if(ifexistdestroy == false) return -1;
 
 		// destroy & re-create
 		if((semid = qSemGetId(keyfile, keyid)) >= 0) qSemFree(semid);
@@ -124,9 +129,12 @@ int qSemInit(const char *keyfile, int keyid, int nsems, bool autodestroy) {
 
 
 /**
- * Under-development
+ * Get semaphore identifier by keyfile and keyid for the existing semaphore
  *
- * @since not released yet
+ * @param keyfile	seed for generating unique IPC key
+ * @param keyid		seed for generating unique IPC key
+ *
+ * @return		non-negative shared memory identifier if successful, otherwise returns -1
  */
 int qSemGetId(const char *keyfile, int keyid) {
 	int semid;
@@ -142,9 +150,14 @@ int qSemGetId(const char *keyfile, int keyid) {
 }
 
 /**
- * Under-development
+ * Turn on the flag of semaphore then entering critical section
  *
- * @since not released yet
+ * @param semid		semaphore identifier
+ * @param semno		semaphore number
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @note If the semaphore is already turned on, this will wait until released
  */
 bool qSemEnter(int semid, int semno) {
 	struct sembuf sbuf;
@@ -160,9 +173,12 @@ bool qSemEnter(int semid, int semno) {
 }
 
 /**
- * Under-development
+ * Try to turn on the flag of semaphore. If it is already turned on, do not wait.
  *
- * @since not released yet
+ * @param semid		semaphore identifier
+ * @param semno		semaphore number
+ *
+ * @return		true if successful, otherwise(already turned on by other) returns false
  */
 bool qSemEnterNowait(int semid, int semno) {
 	struct sembuf sbuf;
@@ -178,9 +194,20 @@ bool qSemEnterNowait(int semid, int semno) {
 }
 
 /**
- * Under-development
+ * Force to turn on the flag of semaphore.
  *
- * @since not released yet
+ * @param semid		semaphore identifier
+ * @param semno		semaphore number
+ * @param maxwaitms	maximum waiting micro-seconds to release
+ * @param forceflag	status will be stored, it can be NULL if you don't need this information
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @note
+ * This will wait the semaphore to be released with in maxwaitms.
+ * If it it released by locker normally with in maxwaitms, forceflag will be set to false.
+ * But if maximum maxwaitms is exceed and the semaphore is released forcely, forceflag will
+ * be set to true.
  */
 bool qSemEnterForce(int semid, int semno, int maxwaitms, bool *forceflag) {
 	int wait;
@@ -203,9 +230,12 @@ bool qSemEnterForce(int semid, int semno, int maxwaitms, bool *forceflag) {
 }
 
 /**
- * Under-development
+ * Turn off the flag of semaphore then leaving critical section
  *
- * @since not released yet
+ * @param semid		semaphore identifier
+ * @param semno		semaphore number
+ *
+ * @return		true if successful, otherwise returns false
  */
 bool qSemLeave(int semid, int semno) {
 	struct sembuf sbuf;
@@ -221,9 +251,12 @@ bool qSemLeave(int semid, int semno) {
 }
 
 /**
- * Under-development
+ * Get the status of semaphore
  *
- * @since not released yet
+ * @param semid		semaphore identifier
+ * @param semno		semaphore number
+ *
+ * @return		true for the flag on, false for the flag off
  */
 bool qSemCheck(int semid, int semno) {
 	if(semctl(semid, semno, GETVAL, 0) == 0) return true; // locked
@@ -231,9 +264,11 @@ bool qSemCheck(int semid, int semno) {
 }
 
 /**
- * Under-development
+ * Release semaphore to system
  *
- * @since not released yet
+ * @param semid		semaphore identifier
+ *
+ * @return		true if successful, otherwise returns false
  */
 bool qSemFree(int semid) {
 	if (semid < 0) return false;

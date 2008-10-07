@@ -74,7 +74,7 @@
  * @param keyfile	seed for generating unique IPC key
  * @param keyid		seed for generating unique IPC key
  * @param size		size of shared memory
- * @param ifexistdestroy set to true for if shared memory already exists, try to destroy it first
+ * @param ifexistdestroy set to true to destroy if shared-memory already exists
  *
  * @return		non-negative shared memory identifier if successful, otherwise returns -1
  */
@@ -103,7 +103,7 @@ int qShmInit(const char *keyfile, int keyid, size_t size, bool ifexistdestroy) {
 }
 
 /**
- * Get shared memory identifier by keyfile and keyid which are used for qShmInit()
+ * Get shared memory identifier by keyfile and keyid for existing shared memory
  *
  * @param keyfile	seed for generating unique IPC key
  * @param keyid		seed for generating unique IPC key

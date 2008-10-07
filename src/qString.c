@@ -496,7 +496,7 @@ char *qStrUnique(const char *seed) {
  * @return		true for ok, otherwise returns false
  *
  * @code
- *   qCharEncode("한글", "EUC-KR", "UTF-8", 1.5);
+ *   qCharEncode("KoreanEncodedString", "EUC-KR", "UTF-8", 1.5);
  * @endcode
  */
 bool qStrIsAlnum(const char *str) {
@@ -521,7 +521,7 @@ bool qStrIsAlnum(const char *str) {
  * @return		a pointer of malloced converted string if successful, otherwise returns NULL
  *
  * @code
- *   qCharEncode("한글", "EUC-KR", "UTF-8", 1.5);
+ *   qCharEncode("KOREAN_EUCKR_STRING", "EUC-KR", "UTF-8", 1.5);
  * @endcode
  */
 char *qStrConvEncoding(const char *str, const char *fromcode, const char *tocode, float mag) {

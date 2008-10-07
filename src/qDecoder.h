@@ -218,8 +218,8 @@ extern	bool		qSessionDestroy(Q_ENTRY *session);
 /*
  * qHtml.c
  */
-extern	bool		qHtmlPrintf(int mode, const char *format, ...);
-extern	bool		qHtmlPuts(int mode, char *buf);
+extern	bool		qHtmlPrintf(FILE *stream, int mode, const char *format, ...);
+extern	bool		qHtmlPuts(FILE *stream, int mode, char *buf);
 extern	bool		qHtmlIsEmail(const char *email);
 extern	bool		qHtmlIsUrl(const char *url);
 
@@ -242,7 +242,7 @@ extern	ssize_t		qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int 
 /*
  * qSem.c
  */
-extern	int		qSemInit(const char *keyfile, int keyid, int nsems, bool autodestroy);
+extern	int		qSemInit(const char *keyfile, int keyid, int nsems, bool ifexistdestroy);
 extern	int		qSemGetId(const char *keyfile, int keyid);
 extern	bool		qSemEnter(int semid, int semno);
 extern	bool		qSemEnterNowait(int semid, int semno);

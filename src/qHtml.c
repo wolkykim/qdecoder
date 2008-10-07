@@ -31,13 +31,48 @@
 
 #ifndef DISABLE_CGISUPPORT
 
-/**********************************************
-** Usage : qPrintf(mode, format, arg);
-** Return: Sucess number of output bytes, Fail EOF.
-** Do    : Print message like printf.
-**         Mode : see qHtmlPuts()
-**********************************************/
-bool qHtmlPrintf(int mode, const char *format, ...) {
+/**
+ * Print out HTML contents into stream
+ *
+ * @param stream	output stream such like stdout
+ * @param mode		conversion mode
+ * @param format	string format
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @note
+ *   Mode 00 : Same as printf()
+ *   Mode 10  :Mode 0 + Convert
+ *
+ *   Mode 01 : Print HTML TAG using &lt and &gt
+ *   Mode 11 : Print HTML TAG + Convert
+ *
+ *   Mode 02 : Print HTML TAG + Auto Link
+ *   Mode 12 : Print HTML TAG + Auto Link + Convert
+ *
+ *   Mode 03 : Print HTML TAG + Auto Link(_top)
+ *   Mode 13 : Print HTML TAG + Auto Link(_top) + Convert
+ *   Mode 23 : Print HTML TAG + Auto Link(new window)
+ *   Mode 33 : Print HTML TAG + Auto Link(new window) + Convert
+ *
+ *   Mode 04 : Ignore HTML TAG
+ *   Mode 14 : Ignore HTML TAG + Convert
+ *
+ *   Mode 05 : Ignore HTML TAG + Auto Link
+ *   Mode 15 : Ignore HTML TAG + Auto Link + Convert
+ *
+ *   Mode 06 : Ignore HTML TAG + Auto Link(_top)
+ *   Mode 16 : Ignore HTML TAG + Auto Link(_top) + Convert
+ *   Mode 26 : Ignore HTML TAG + Auto Link(new window)
+ *   Mode 36 : Ignore HTML TAG + Auto Link(new window) + Convert
+ *
+ *   Convert : " "   -> " "
+ *             "  "  -> " &nbsp;"
+ *             "   " -> " &nbsp;&nbsp;"
+ *             "\n"   -> "<br>\n"
+ *             "\r\n" -> "<br>\n"
+ */
+bool qHtmlPrintf(FILE *stream, int mode, const char *format, ...) {
 	char buf[1024*10];
 	va_list arglist;
 	int status;
@@ -46,70 +81,43 @@ bool qHtmlPrintf(int mode, const char *format, ...) {
 	status = vsnprintf(buf, sizeof(buf), format, arglist);
 	va_end(arglist);
 
-	return qHtmlPuts(mode, buf);
+	return qHtmlPuts(stream, mode, buf);
 }
 
-/**********************************************
-** Usage : qPuts(mode, string pointer);
-** Do    : print HTML link as multi mode.
-**
-**         Mode 00 : Same as printf()
-**         Mode 10  :Mode 0 + Convert
-**
-**         Mode 01 : Print HTML TAG
-**         Mode 11 : Print HTML TAG + Convert
-**
-**         Mode 02 : Print HTML TAG + Auto Link
-**         Mode 12 : Print HTML TAG + Auto Link + Convert
-**
-**         Mode 03 : Print HTML TAG + Auto Link(_top)
-**         Mode 13 : Print HTML TAG + Auto Link(_top) + Convert
-**         Mode 23 : Print HTML TAG + Auto Link(new window)
-**         Mode 33 : Print HTML TAG + Auto Link(new window) + Convert
-**
-**         Mode 04 : Waste HTML TAG
-**         Mode 14 : Waste HTML TAG + Convert
-**
-**         Mode 05 : Waste HTML TAG + Auto Link
-**         Mode 15 : Waste HTML TAG + Auto Link + Convert
-**
-**         Mode 06 : Waste HTML TAG + Auto Link(_top)
-**         Mode 16 : Waste HTML TAG + Auto Link(_top) + Convert
-**         Mode 26 : Waste HTML TAG + Auto Link(new window)
-**         Mode 36 : Waste HTML TAG + Auto Link(new window) + Convert
-**
-**         Convert : " "   -> " "
-**                   "  "  -> " &nbsp;"
-**                   "   " -> " &nbsp;&nbsp;"
-**                   "\n"   -> "<br>\n"
-**                   "\r\n" -> "<br>\n"
-**
-** You can use 1x mode, to wrap long lines with no <pre> tag.
-** Note) It modify argument string.
-**********************************************/
-bool qHtmlPuts(int mode, char *buf) {
+/**
+ * Puts a string on the stream
+ *
+ * @param stream	output stream such like stdout
+ * @param mode		conversion mode
+ * @param buf		source string
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @note	It modify argument string.
+ */
+bool qHtmlPuts(FILE *stream, int mode, char *buf) {
 
 	if (buf == NULL) return false;
 
-	if (mode == 0) printf("%s", buf);
+	if (mode == 0) fprintf(stream, "%s", buf);
 	else if (mode == 10) {
 		int i;
 		for (i = 0; buf[i] != '\0'; i++) {
 			switch (buf[i]) {
 				case ' '  : {
-					if ((i > 0) && (buf[i - 1] == ' ')) printf("&nbsp;");
-					else printf(" ");
+					if ((i > 0) && (buf[i - 1] == ' ')) fprintf(stream, "&nbsp;");
+					else fprintf(stream, " ");
 					break;
 				}
 				case '\r' : {
 					break;
 				}
 				case '\n' : {
-					printf("<br>\n");
+					fprintf(stream, "<br>\n");
 					break;
 				}
 				default   : {
-					printf("%c", buf[i]);
+					fprintf(stream, "%c", buf[i]);
 					break;
 				}
 			}
@@ -235,39 +243,39 @@ bool qHtmlPuts(int mode, char *buf) {
 					else if (qHtmlIsEmail(ptr) == 1)         linkflag = 2;
 					else linkflag = 0;
 				}
-				if (linkflag == 1) printf("<a href=\"%s\" target=\"%s\">%s</a>", ptr, target, ptr);
-				else if (linkflag == 2) printf("<a href=\"mailto:%s\">%s</a>", ptr, ptr);
-				else printf("%s", ptr);
+				if (linkflag == 1) fprintf(stream, "<a href=\"%s\" target=\"%s\">%s</a>", ptr, target, ptr);
+				else if (linkflag == 2) fprintf(stream, "<a href=\"mailto:%s\">%s</a>", ptr, ptr);
+				else fprintf(stream, "%s", ptr);
 			}
 
 			/* print */
 			if (printhtml == 1) {
-				if     (retstop == '<')  printf("&lt;");
-				else if (retstop == '>')  printf("&gt;");
-				else if (retstop == '\"') printf("&quot;");
-				else if (retstop == '&')  printf("&amp;");
+				if     (retstop == '<')  fprintf(stream, "&lt;");
+				else if (retstop == '>')  fprintf(stream, "&gt;");
+				else if (retstop == '\"') fprintf(stream, "&quot;");
+				else if (retstop == '&')  fprintf(stream, "&amp;");
 
 				else if (retstop == ' '  && convert == 1) {
-					if (lastretstop == ' ' && strlen(ptr) == 0) printf("&nbsp;");
-					else printf(" ");
+					if (lastretstop == ' ' && strlen(ptr) == 0) fprintf(stream, "&nbsp;");
+					else fprintf(stream, " ");
 				} else if (retstop == '\r' && convert == 1); /* skip when convert == 1 */
-				else if (retstop == '\n' && convert == 1) printf("<br>\n");
+				else if (retstop == '\n' && convert == 1) fprintf(stream, "<br>\n");
 
-				else if (retstop != '\0') printf("%c", retstop);
+				else if (retstop != '\0') fprintf(stream, "%c", retstop);
 			} else {
 				if     (retstop == '<') ignoreflag = 1;
 				else if (retstop == '>') ignoreflag = 0;
 
-				else if (retstop == '\"' && ignoreflag == 0) printf("&quot;");
-				else if (retstop == '&'  && ignoreflag == 0) printf("&amp;");
+				else if (retstop == '\"' && ignoreflag == 0) fprintf(stream, "&quot;");
+				else if (retstop == '&'  && ignoreflag == 0) fprintf(stream, "&amp;");
 
 				else if (retstop == ' '  && ignoreflag == 0 && convert == 1) {
-					if (lastretstop == ' ' && strlen(ptr) == 0) printf("&nbsp;");
-					else printf(" ");
+					if (lastretstop == ' ' && strlen(ptr) == 0) fprintf(stream, "&nbsp;");
+					else fprintf(stream, " ");
 				} else if (retstop == '\r' && ignoreflag == 0 && convert == 1); /* skip when convert == 1 */
-				else if (retstop == '\n' && ignoreflag == 0 && convert == 1) printf("<br>\n");
+				else if (retstop == '\n' && ignoreflag == 0 && convert == 1) fprintf(stream, "<br>\n");
 
-				else if (retstop != '\0' && ignoreflag == 0) printf("%c", retstop);
+				else if (retstop != '\0' && ignoreflag == 0) fprintf(stream, "%c", retstop);
 
 			}
 
@@ -279,12 +287,13 @@ bool qHtmlPuts(int mode, char *buf) {
 	return true;
 }
 
-
-/**********************************************
-** Usage : qCheckEmail(email address);
-** Return: If it is valid return 1. Or return 0.
-** Do    : Check E-mail address.
-**********************************************/
+/**
+ * Test for an email-address formatted string
+ *
+ * @param email		email-address formatted string
+ *
+ * @return		true if successful, otherwise returns false
+ */
 bool qHtmlIsEmail(const char *email) {
 	int i, alpa, dot, gol;
 
@@ -320,11 +329,13 @@ bool qHtmlIsEmail(const char *email) {
 	return true;
 }
 
-/**********************************************
-** Usage : qCheckUrl(internet address);
-** Return: If it is valid return 1. Or return 0.
-** Do    : Check valid URL.
-**********************************************/
+/**
+ * Test for an URL formatted string
+ *
+ * @param email		URL formatted string
+ *
+ * @return		true if successful, otherwise returns false
+ */
 bool qHtmlIsUrl(const char *url) {
 	if (!strncmp(url, "http://", 7)) return true;
 	else if (!strncmp(url, "ftp://", 6)) return true;

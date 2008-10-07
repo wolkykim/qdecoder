@@ -236,9 +236,11 @@ size_t qObstackGetSize(Q_OBSTACK *obstack) {
 }
 
 /**
- * Under-development
+ * Get the number of stacked objects
  *
- * @since not released yet
+ * @param obstack	a pointer of Q_OBSTACK
+ *
+ * @return		a number of stacked objects, otherwise returns 0
  */
 int qObstackGetNum(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return 0;
@@ -246,9 +248,11 @@ int qObstackGetNum(Q_OBSTACK *obstack) {
 }
 
 /**
- * Under-development
+ * De-allocate obstack
  *
- * @since not released yet
+ * @param obstack	a pointer of Q_OBSTACK
+ *
+ * @return		true if successful, otherwise returns false
  */
 bool qObstackFree(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return false;

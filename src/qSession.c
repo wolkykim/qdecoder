@@ -35,11 +35,6 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-
-/**********************************************
-** Define Paragraph
-**********************************************/
-
 #ifdef _WIN32
 #define	SESSION_DEFAULT_REPOSITORY	"C:\\Windows\\Temp"
 #else
@@ -61,25 +56,23 @@
 
 #define SESSION_DEFAULT_TIMEOUT_INTERVAL	(30 * 60)
 
-
-/**********************************************
-** Internal Functions Definition
-**********************************************/
-
 static bool _clearRepository(const char *session_repository_path);
 static int _isValidSession(const char *filepath);
 static bool _updateTimeout(const char *filepath, time_t timeout_interval);
 
-
-/**********************************************
-** Usage : qSession(Repository Path);
-** Return: New session 1 else 0.
-** Do    : Start Session.
-**
-** ex) qSession(NULL);   // use default storage
-**     qSession("/tmp"); // use /tmp for session storage
-**********************************************/
-/* Initialize session data */
+/**
+ * Initialize session
+ *
+ * @param request	a pointer of request structure returned by qCgiRequestParse()
+ * @param dirpath	directory path where session data will be kept
+ *
+ * @return 	a pointer of malloced session data list (Q_ENTRY type)
+ *
+ * @note
+ * The returned Q_ENTRY list must be de-allocated by calling qEntryFree().
+ * And if you want to append or remove some user session data, use qEntry*()
+ * functions then finally call qSessionSave() to store updated session data.
+ */
 Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 	/* check content flag */
 	if (qCgiResponseGetContentType(request) != NULL) {
@@ -166,51 +159,54 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 	return session;
 }
 
-/**********************************************
-** Usage : qSessionSetTimeout(interval seconds);
-** Return: New expiration period.
-** Do    : Change session expiration period.
-**
-** ex) qSessionSetTimeout((time_t)3600);
-**********************************************/
+/**
+ * Set the auto-expiration seconds about user session
+ *
+ * @param session	a pointer of session structure
+ * @param seconds	expiration seconds
+ *
+ * @return 	true if successful, otherwise returns false
+ *
+ * @note Default timeout is defined as SESSION_DEFAULT_TIMEOUT_INTERVAL. 1800 seconds
+ */
 bool qSessionSetTimeout(Q_ENTRY *session, time_t seconds) {
 	if (seconds <= 0) return false;
 	qEntryPutInt(session, INTER_INTERVAL_SEC, (int)seconds, true);
 	return true;
 }
 
-/**********************************************
-** Usage : qSessionGetId();
-** Return: String pointer of session id.
-** Do    : Return current session id.
-**
-** ex) char *sessionid;
-**     sessionid = qSessionGetID();
-**********************************************/
+/**
+ * Get user session id
+ *
+ * @param session	a pointer of session structure
+ *
+ * @return 	a pointer of session identifier
+ *
+ * @note Do not free manually
+ */
 const char *qSessionGetId(Q_ENTRY *session) {
 	return qEntryGetStr(session, INTER_SESSIONID);
 }
 
-/**********************************************
-** Usage : qSessionGetCreated();
-** Return: Value of time in seconds since 0 hours,
-**         0 minutes, 0 seconds, January 1, 1970.
-** Do    : Return session created time in seconds.
-**
-** ex) time_t created;
-**     struct tm *gmtime;
-**     created = qSessionGetCreated();
-**     gmtime = gmtime(&created);
-**********************************************/
+/**
+ * Get user session created time
+ *
+ * @param session	a pointer of session structure
+ *
+ * @return 	user session created time in UTC time seconds
+ */
 time_t qSessionGetCreated(Q_ENTRY *session) {
 	const char *created = qEntryGetStr(session, INTER_CREATED_SEC);
 	return (time_t)atol(created);
 }
 
-/**********************************************
-** Usage : qSessionSave();
-** Do    : Save session data immediately.
-**********************************************/
+/**
+ * Update session data
+ *
+ * @param session	a pointer of session structure
+ *
+ * @return 	true if successful, otherwise returns false
+ */
 bool qSessionSave(Q_ENTRY *session) {
 	const char *sessionkey = qEntryGetStr(session, INTER_SESSIONID);
 	const char *session_repository_path = qEntryGetStr(session, "INTER_SESSION_REPO");
@@ -235,11 +231,17 @@ bool qSessionSave(Q_ENTRY *session) {
 	return true;
 }
 
-/**********************************************
-** Usage : qSessionDestroy();
-** Do    : Destroy current session and stored all session data
-**         will be removed.
-**********************************************/
+/**
+ * Destroy user session
+ *
+ * @param session	a pointer of session structure
+ *
+ * @return 	true if successful, otherwise returns false
+ *
+ * @note
+ * If you only want to de-allocate session structure, just call qEntryFree().
+ * This will remove all user session data permanantely and also free the session structure.
+ */
 bool qSessionDestroy(Q_ENTRY *session) {
 	const char *sessionkey = qEntryGetStr(session, INTER_SESSIONID);
 	const char *session_repository_path = qEntryGetStr(session, "INTER_SESSION_REPO");
@@ -259,10 +261,6 @@ bool qSessionDestroy(Q_ENTRY *session) {
 	if(session != NULL) qEntryFree(session);
 	return true;
 }
-
-/**********************************************
-** Internal Functions
-**********************************************/
 
 static bool _clearRepository(const char *session_repository_path) {
 #ifdef _WIN32
