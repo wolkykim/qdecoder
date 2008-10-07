@@ -40,7 +40,7 @@
  *
  * @return		true if successful, otherwise returns false
  *
- * @note
+ * @code
  *   Mode 00 : Same as printf()
  *   Mode 10  :Mode 0 + Convert
  *
@@ -71,6 +71,7 @@
  *             "   " -> " &nbsp;&nbsp;"
  *             "\n"   -> "<br>\n"
  *             "\r\n" -> "<br>\n"
+ * @endcode
  */
 bool qHtmlPrintf(FILE *stream, int mode, const char *format, ...) {
 	char buf[1024*10];
