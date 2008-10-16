@@ -65,7 +65,6 @@ static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port);
  * @code
  * @endcode
  */
-
 int qSocketOpen(const char *hostname, int port) {
 	/* host conversion */
 	struct sockaddr_in addr;

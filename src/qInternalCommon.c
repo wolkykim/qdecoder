@@ -121,3 +121,12 @@ ssize_t _q_write(int fd, const void *buf, size_t nbytes) {
 	if(sent > 0) return sent;
 	return -1;
 }
+
+/* win32 compatible */
+int _q_unlink(const char *pathname) {
+#ifdef _WIN32
+	return _unlink(pathname);
+else
+	return unlink(pathname);
+#endif
+}

@@ -49,5 +49,6 @@ extern	char*	_q_makeword(char *str, char stop);
 extern	char*	_q_fgets(char *str, int size, FILE *stream);
 extern	ssize_t	_q_writef(int fd, char *format, ...);
 extern	ssize_t	_q_write(int fd, const void *buf, size_t nbytes);
+extern	int	_q_unlink(const char *pathname);
 
 #endif	/* _QINTERNAL_H */

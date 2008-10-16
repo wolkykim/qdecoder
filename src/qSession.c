@@ -110,8 +110,8 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 		int valid = _isValidSession(session_timeout_path);
 		if (valid <= 0) { /* expired or not found */
 			if(valid < 0) {
-				unlink(session_storage_path);
-				unlink(session_timeout_path);
+				_q_unlink(session_storage_path);
+				_q_unlink(session_timeout_path);
 			}
 
 			/* remake storage path */
@@ -255,8 +255,8 @@ bool qSessionDestroy(Q_ENTRY *session) {
 	snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 	snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
-	unlink(session_storage_path);
-	unlink(session_timeout_path);
+	_q_unlink(session_storage_path);
+	_q_unlink(session_timeout_path);
 
 	if(session != NULL) qEntryFree(session);
 	return true;
@@ -280,12 +280,12 @@ static bool _clearRepository(const char *session_repository_path) {
 			snprintf(timeoutpath, sizeof(timeoutpath), "%s/%s", session_repository_path, dirp->d_name);
 			if (_isValidSession(timeoutpath) <= 0) { /* expired */
 				/* remove timeout */
-				unlink(timeoutpath);
+				_q_unlink(timeoutpath);
 
 				/* remove properties */
 				timeoutpath[strlen(timeoutpath) - strlen(SESSION_TIMEOUT_EXTENSION)] = '\0';
 				strcat(timeoutpath, SESSION_STORAGE_EXTENSION);
-				unlink(timeoutpath);
+				_q_unlink(timeoutpath);
 			}
 		}
 	}
