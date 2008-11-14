@@ -167,7 +167,7 @@ off_t qFileGetSize(const char *filepath) {
  *
  * @param outfd		output file descriptor
  * @param infd		input file descriptor
- * @param size		the number of bytes to copy between file descriptors. 0 means transfer until end of infd.
+ * @param nbytes	the number of bytes to copy between file descriptors. 0 means transfer until end of infd.
  *
  * @return		the number of bytes written to outfd.
  */
@@ -233,9 +233,9 @@ ssize_t qFileSend(int outfd, int infd, size_t nbytes) {
  *
  * @note
  * This method actually allocates memory more than 1 bytes than filesize then append
- * '\0' character at the end. For example, when the file size is 10 bytes long, 10+1
- * bytes will allocated and the last byte is always '\0' character. So you can load
- * text file and use without appending '\0' character. By the way, *size still will
+ * NULL character at the end. For example, when the file size is 10 bytes long, 10+1
+ * bytes will allocated and the last byte is always NULL character. So you can load
+ * text file and use without appending NULL character. By the way, *size still will
  * be returned the actual file size of 10.
  */
 void *qFileLoad(const char *filepath, size_t *nbytes) {
@@ -280,7 +280,7 @@ void *qFileLoad(const char *filepath, size_t *nbytes) {
  * @return		allocated memory pointer if successful, otherwise returns NULL.
  *
  * @note
- * This method append '\0' character at the end of stream. but nbytes only counts
+ * This method append NULL character at the end of stream. but nbytes only counts
  * actual readed bytes.
  */
 void *qFileRead(FILE *fp, size_t *nbytes) {

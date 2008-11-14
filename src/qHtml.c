@@ -333,7 +333,7 @@ bool qHtmlIsEmail(const char *email) {
 /**
  * Test for an URL formatted string
  *
- * @param email		URL formatted string
+ * @param url		URL formatted string
  *
  * @return		true if successful, otherwise returns false
  */

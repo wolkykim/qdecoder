@@ -88,21 +88,21 @@ typedef struct {
 
 	unsigned char value[_Q_HASHARR_DEF_VALUESIZE];	/*!< value */
 	int	size;					/*!< value size */
-	int	link;					/*!< next index of the value. */
+	int	link;					/*!< next index of the value */
 } Q_HASHARR;
 
 /**
  * Structure for array-based circular-queue data structure.
  */
 typedef struct {
-	int	max;		// maximum queue slots
-	int	used;		// used queue slots
+	int	max;			/*!< maximum queue slots */
+	int	used;			/*!< used queue slots */
 
-	int	head;		// head pointer
-	int	tail;		// tail pointer
+	int	head;			/*!< head pointer */
+	int	tail;			/*!< tail pointer */
 
-	size_t	objsize;	// object size
-	void	*objarr;	// external queue data memory pointer
+	size_t	objsize;		/*!< object size */
+	void	*objarr;		/*!< external queue data memory pointer */
 } Q_QUEUE;
 
 /**

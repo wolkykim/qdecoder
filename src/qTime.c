@@ -182,7 +182,6 @@ const char *qTimeGetGmtStaticStr(time_t utctime) {
  *   free(s);
  * @endcode
  */
-extern char *strptime(const char*, const char*, struct tm*);
 time_t qTimeParseGmtStr(const char *gmtstr) {
 	struct tm gmtm;
 	if(strptime(gmtstr, "%a, %d %b %Y %H:%M:%S", &gmtm) == NULL) return 0;

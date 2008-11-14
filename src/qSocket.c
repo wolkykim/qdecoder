@@ -194,7 +194,7 @@ ssize_t qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms) {
 
 /**
  * Read line from the stream.
- * New-line characters '\r', '\n' will not be stored into buffer.
+ * New-line characters(CR, LF ) will not be stored into buffer.
  *
  * @param	str		data buffer pointer
  * @param	sockfd		socket descriptor
@@ -254,7 +254,7 @@ ssize_t qSocketWrite(int sockfd, const void *binary, size_t nbytes) {
 }
 
 /**
- * Send string with newline characters(\r\n) to socket.
+ * Send string with newline characters(CRLF) to socket.
  *
  * @param	sockfd		socket descriptor
  * @param	str		string pointer

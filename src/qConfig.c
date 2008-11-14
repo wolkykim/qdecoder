@@ -43,15 +43,16 @@ static char *_parseVariable(Q_ENTRY *config, char *value);
  *
  * @return	a pointer of Q_ENTRY in case of successful, otherwise(file not found) returns NULL
  *
- * @note
- * # Configuration file format
+ * @note	Configuration file forma
  *
+ * @code
  * # a line which starts with # character is comment
  * @INCLUDE other.conf          => (include other.conf)
  * base = /tmp                  => base = /tmp
  * log  = ${base}/log           => /tmp/log (using variable)
  * host = ${!/bin/hostname -s}  => arena (external command result)
  * path = ${%PATH}              => /usr/bin:/usr/sbin (environment)
+ * @endcode
  *
  * @code
  *   Q_ENTRY *config = qConfigParseFile(NULL, "qdecoder.conf", '=');

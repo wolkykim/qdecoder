@@ -188,7 +188,6 @@ bool qObstackGrowStrf(Q_OBSTACK *obstack, const char *format, ...) {
  * Stack formatted string
  *
  * @param obstack	a pointer of Q_OBSTACK
- * @param format	string format
  *
  * @return		true if successful, otherwise returns false
  */

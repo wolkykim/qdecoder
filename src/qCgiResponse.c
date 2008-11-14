@@ -175,6 +175,7 @@ bool qCgiResponseRedirect(Q_ENTRY *request, const char *uri) {
  * Force to send(download) file to client in accordance with given mime type.
  *
  * @param filepath	file to send
+ * @param filepath	file to send
  * @param mimetype	mimetype. NULL can be used for "application/octet-stream" mimetype.
  *
  * @return	 	the number of bytes sent. otherwise(file not found) returns -1.

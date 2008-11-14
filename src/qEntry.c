@@ -156,6 +156,7 @@ int qEntryRemove(Q_ENTRY *entry, const char *name) {
  * @param entry		Q_ENTRY pointer
  * @param name		key name.
  * @param object	object pointer
+ * @param size		size of the object
  * @param update	in case of false, just insert. in case of true, remove all same key then insert object if found.
  *
  * @return		true if successful, otherwise returns false.
@@ -606,7 +607,6 @@ int qEntryGetNo(Q_ENTRY *entry, const char *name) {
  * Reverse-sort internal stored object.
  *
  * @param entry		Q_ENTRY pointer
- * @param name		key name
  *
  * @note
  * This method can be used to improve look up performance.

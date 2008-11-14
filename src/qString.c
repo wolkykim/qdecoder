@@ -207,7 +207,7 @@ char *qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char
 }
 
 /**
- * Copies at most len characters from src into dst then append '\0'.
+ * Copies at most len characters from src into dst then append NULL terminating character.
  *
  * @param dst		a pointer of the string to be copied
  * @param dstsize	size of dst
@@ -216,7 +216,7 @@ char *qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char
  *
  * @return		always returns a pointer of dst
  *
- * @note The dst string will be always terminated by '\0'. (bytes that follow a null byte are not copied)
+ * @note The dst string will be always terminated by NULL character. (bytes that follow a null byte are not copied)
  */
 char *qStrCpy(char *dst, size_t dstsize, const char *src, size_t nbytes) {
 	if(dst == NULL || dstsize == 0 || src == NULL || nbytes == 0) return dst;
@@ -266,8 +266,8 @@ char *qStrLower(char *str) {
 /**
  * Find a substring with no case-censitive
  *
- * @param big		a pointer of source string
- * @param small		a pointer of substring
+ * @param s1		a pointer of source string
+ * @param s2		a pointer of substring
  *
  * @return		a pointer of the first occurrence in the big string if successful, otherwise returns NULL
  */
