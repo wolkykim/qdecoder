@@ -51,4 +51,10 @@ extern	ssize_t	_q_writef(int fd, char *format, ...);
 extern	ssize_t	_q_write(int fd, const void *buf, size_t nbytes);
 extern	int	_q_unlink(const char *pathname);
 
+/*
+ * To prevent compiler warning
+ */
+extern	char*	strptime(const char *, const char *, struct tm *);
+
+
 #endif	/* _QINTERNAL_H */
