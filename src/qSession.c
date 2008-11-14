@@ -44,7 +44,7 @@
 #define SESSION_ID			"QSESSIONID"
 #define SESSION_PREFIX			"qsession-"
 #define SESSION_STORAGE_EXTENSION	".properties"
-#define SESSION_TIMEOUT_EXTENSION	".timeout"
+#define SESSION_TIMEOUT_EXTENSION	".expire"
 #define SESSION_TIMETOCLEAR_FILENAME	"qsession-timetoclear"
 
 #define INTER_PREFIX			"_Q_"
@@ -227,7 +227,7 @@ bool qSessionSave(Q_ENTRY *session) {
 		return false;
 	}
 
-	//_clearRepository(session_repository_path);
+	_clearRepository(session_repository_path);
 	return true;
 }
 
