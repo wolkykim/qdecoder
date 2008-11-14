@@ -78,8 +78,7 @@
  *
  * You can switch to file mode by calling qCgiRequestParseOption().
  * @code
- *   Q_ENTRY *req = NULL;
- *   req = qCgiRequestParseOption(req, true, "/tmp", 86400);
+ *   Q_ENTRY *req = qCgiRequestParseOption(true, "/tmp", 86400);
  *   req = qCgiRequestParse(req);
  *   (...your codes here...)
  *   qEntryFree(req);
@@ -131,8 +130,7 @@
  *   int main(...) {
  *     // if you use "progress mode", this codes should be located at
  *     // the first line in main().
- *     Q_ENTRY *req = NULL;
- *     req = qCgiRequestParseOption(req, true, "/tmp", 86400);
+ *     Q_ENTRY *req = qCgiRequestParseOption(true, "/tmp", 86400);
  *     req = qCgiRequestParse(req);
  *
  *     (...your codes here...)
@@ -187,16 +185,14 @@ static bool _upload_clear_base(const char *upload_basepath, int upload_clearold)
  * This method should be called before qCgiRequestParse().
  *
  * @code
- *   Q_ENTRY *req = qCgiRequestParseOption(NULL, true, "/tmp", 86400);
+ *   Q_ENTRY *req = qCgiRequestParseOption(true, "/tmp", 86400);
  *   req = qCgiRequestParse(req);
  * @endcode
  */
-Q_ENTRY *qCgiRequestParseOption(Q_ENTRY *request, bool filemode, const char *basepath, int clearold) {
+Q_ENTRY *qCgiRequestParseOption(bool filemode, const char *basepath, int clearold) {
 	/* init entry structure */
-	if(request == NULL) {
-		request = qEntryInit();
-		if(request == NULL) return NULL;
-	}
+	Q_ENTRY *request = qEntryInit();
+	if(request == NULL) return NULL;
 
 	if(filemode == true) {
 		if(basepath == NULL || qFileExist(basepath) == false) {
@@ -461,7 +457,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 	bool  finish;
 	for (finish = false; finish == false; amount++) {
 		/* check file save mode */
-		while(upload_filesave == false && upload_basepath != NULL && qEntryGetNum(request) > 2) {
+		while(upload_filesave == false && upload_basepath != NULL && amount == 1) {
 			char *content_length = getenv("CONTENT_LENGTH");
 			if(content_length == NULL) {
 				break;
@@ -612,7 +608,6 @@ static int _parse_multipart(Q_ENTRY *request) {
 		if(value != NULL) free(value);
 		if(filename != NULL) free(filename);
 		if(contenttype != NULL) free(contenttype);
-
 	}
 
 	if (upload_filesave == true) { /* save end time */
@@ -877,10 +872,11 @@ static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const c
 
 	/* draw progress bar */
 	int failcnt = 0;
-	while(failcnt < 10) {
+	while(failcnt < 5) {
 		upload_tsize = upload_csize = 0;
 
 		if(_upload_getstatus(upload_id, upload_basepath, &upload_tsize, &upload_csize, upload_cname, sizeof(upload_cname)) == false) {
+			failcnt++;
 			sleep(1);
 			continue;
 		}
@@ -929,7 +925,6 @@ static bool _upload_getstatus(const char *upload_id, const char *upload_basepath
 #else
 	DIR     *dp;
 	struct  dirent *dirp;
-
 	char upload_savedir[MAX_PATHLEN], tmppath[MAX_PATHLEN];
 
 	/* get basepath */

@@ -189,7 +189,7 @@ extern "C" {
 /*
  * qCgiRequest.c
  */
-extern	Q_ENTRY*	qCgiRequestParseOption(Q_ENTRY *request, bool filemode, const char *basepath, int clearold);
+extern	Q_ENTRY*	qCgiRequestParseOption(bool filemode, const char *basepath, int clearold);
 extern	Q_ENTRY*	qCgiRequestParse(Q_ENTRY *request);
 extern	Q_ENTRY*	qCgiRequestParseQueries(Q_ENTRY *request, const char *method);
 extern	Q_ENTRY*	qCgiRequestParseCookies(Q_ENTRY *request);

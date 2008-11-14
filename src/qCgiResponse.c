@@ -243,7 +243,7 @@ int qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mim
 	free(filename);
 
 	fflush(stdout);
-	int sent = qFileSend(fileno(stdout), fd, 0);
+	int sent = qFileSend(fileno(stdout), fd, qFileGetSize(filepath));
 
 	close(fd);
 	return sent;

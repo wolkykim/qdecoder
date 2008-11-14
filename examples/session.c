@@ -65,5 +65,6 @@ int main(void) {
 	/* save session & free allocated memories */
 	qSessionSave(sess);
 	qEntryFree(sess);
+	qEntryFree(req);
 	return 0;
 }

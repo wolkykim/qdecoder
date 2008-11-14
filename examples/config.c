@@ -22,7 +22,7 @@
 #include <stdbool.h>
 #include "qDecoder.h"
 
-#define CONF_FILE		"confparser.conf"
+#define CONF_FILE		"config.conf"
 
 int main(void) {
 	/* Parse queries. */

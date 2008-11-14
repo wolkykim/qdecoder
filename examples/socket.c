@@ -23,7 +23,7 @@
 #include <string.h>
 #include "qDecoder.h"
 
-#define SOCKET_TIMEOUT		(5 * 1000)
+#define SOCKET_TIMEOUT		(3 * 1000)
 
 int dumpHttp(const char *hostname, int port) {
 	// open socket

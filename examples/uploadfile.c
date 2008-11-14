@@ -28,7 +28,7 @@ int main(void) {
 	int i;
 
 	/* parse queries. */
-	Q_ENTRY *req = qCgiRequestParseOption(NULL, true, TMPPATH, (1 * 60 * 60));
+	Q_ENTRY *req = qCgiRequestParseOption(true, TMPPATH, (1 * 60 * 60));
 	if(req == NULL) qCgiResponseError(req, "Can't set option.");
 	req = qCgiRequestParse(req);
 
