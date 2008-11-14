@@ -6,6 +6,9 @@ qDecoder Changes
 ``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``New'', ``Replaced'' and ``Removed''.
 
+  Release 9.0
+    This is new branch of qDecoder. qDecoder 9.0 does not support lower version compatibility.
+
   Release 8.1
     ADD) unsigned int qFnv32Hash(char *str, unsigned int max);
     FIX) qSocketWaitReadable() - 'timeoutsec' argument changed to 'timeoutms'

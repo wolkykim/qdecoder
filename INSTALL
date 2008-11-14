@@ -9,12 +9,12 @@ qDecoder Installation Guide
    * Install
    * Deinstall
    * Test
-   * Running under Microsoft Visual C++
 
 Step 1. Getting qDecoder Package
 
 The latest version of qDecoder can be downloaded from
 http://www.qDecoder.org/ or ftp://ftp.qDecoder.org/pub/qDecoder/.
+To get working current : svn co svn://svn.qdecoder.org/qdecoder/trunk qdecoder
 
 Step 2. Unpacking qDecoder Package
 
@@ -54,7 +54,6 @@ is unpacked like the following:
      COPYING    - Copyright-related documents
      INSTALL    - Installation guide
      README     - General guide
-     REFERENCE  - Manual on how to use functions
      qDecoder.jpg - Logotype picture
 
      Makefile.in --+
@@ -85,28 +84,20 @@ compiled in the system most efficiently.
      (...some messages...)
      Optional Features:
 
+       --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
        --enable-debug          enable debugging print out
        --enable-64bit          enable 64 bit supports
+       --enable-sendfile       enable sendfile if possible
        --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
                                enable MySQL database supports
        --disable-cgisupport    disable CGI(web application) related APIs (influence
-                               on: qDecoder.c, qSession.c, qHttpHeader.c
-                               qDownload.c qError.c)
-       --disable-configparser  disable configuration file parser & string parser
-                               APIs (influence on: qfDecode.cr, qsDecoder.c)
-       --disable-arg           disable pattern matching & string search APIs
-                               (influence on: qArg.c)
-       --disable-awk           disable file & string tokenizing APIs (influence on:
-                               qAwk.c)
-       --disable-sed           disable server side include and variable replacement
-                               APIs (influence on: qSed.c)
-       --disable-ipc           disable ipc(semaphore, shared-memory) APIs
-                               (influence on: qSem.c, qShm.c)
+                               on: qCgiRequest.c, qCgiResponse.c, qSession.c,
+                               qHtml.c)
        --disable-socket        disable socket APIs (influence on: qSocket.c)
-       --disable-hashtbl       disable hash-table data structure APIs (influence
-                               on: qHashtbl.c, qHasharr.c)
-       --disable-obstack       disable obstack APIs (influence on: qObstack.c)
-       --disable-log           disable file logging APIs (influence on: qLog.c)
+       --disable-ipc           disable IPC APIs (influence on: qSem.c, qShm.c)
+       --disable-datastructure disable data structure APIs (influence on:
+                               qHashtbl.c, qHasharr.c, qObstack.c)
+
 
      $ ./configure
      creating cache ./config.cache
@@ -129,23 +120,6 @@ compiled in the system most efficiently.
       4 config.h         8 configure.ac      4 Makefile       4 .svn/
 
      $ make
-     ===> src
-     gcc -g -O2 -DSTDC_HEADERS=1 -DHAVE_CTYPE_H=1 -DHAVE_TIME_H=1 -DHAVE_SYS_STAT_H=1
-      -DHAVE_SYS_TYPES_H=1 -DHAVE_STRFTIME=1 -DHAVE_VPRINTF=1 -DHAVE_STRDUP=1 -DHAVE_
-     STRSTR=1 -I. -c -o qDecoder.o qDecoder.c
-     ...(omission)...
-     /bin/rm -f libqDecoder.so
-     ln -s libqDecoder.so.1 libqDecoder.so
-     <=== src
-     ===> examples
-     gcc -g -O2 -DSTDC_HEADERS=1 -DHAVE_CTYPE_H=1 -DHAVE_TIME_H=1 -DHAVE_SYS_STAT_H=1
-      -DHAVE_SYS_TYPES_H=1 -DHAVE_STRFTIME=1 -DHAVE_VPRINTF=1 -DHAVE_STRDUP=1 -DHAVE_
-     STRSTR=1 -I. -I../src -c -o fetch.o fetch.c
-     ...(omission)...
-     gcc -g -O2 -DSTDC_HEADERS=1 -DHAVE_CTYPE_H=1 -DHAVE_TIME_H=1 -DHAVE_SYS_STAT_H=1
-      -DHAVE_SYS_TYPES_H=1 -DHAVE_STRFTIME=1 -DHAVE_VPRINTF=1 -DHAVE_STRDUP=1 -DHAVE_
-     STRSTR=1 -I. -I../src -o arglist.cgi arglist.o ../src/libqDecoder.a
-     <=== examples
      ...(omission)...
 
 NOTE) In case of Solaris, it is often the case that "make" is not set up in
@@ -236,80 +210,6 @@ Makefile: ``make clean all QLIB=../src/libqDecoder.so'')
      -rwxr-xr-x  1 root  power  11852   6  2 22:33 multivalue.cgi
      -rwxr-xr-x  1 root  power  12052   6  2 22:33 streamedit.cgi
      -rwsr-sr-x  1 root  power  12393   6  2 22:33 upload.cgi
-
-Step 7. Running under Microsoft Visual C++
-
-Although, for the convenience purpose, qDecoder is provided by using Unix
-packaging tools, and almost all the examples are prepared on the basis of
-Unixenvironment, they are developed the way they can be used under NT
-environment.Packages 6.0.2 and above are provided along with project files
-that are set upbeforehand so that static libraries can be immediately
-created under the Microsoft Visual C++ environment which almost all the
-Windows developers use. Chances are they can be used under the environment
-of other compilers.
-
-  1. Getting qDecoder Package: Refer to Getting qDecoder Package.
-
-  2. Unpacking qDecoder Package: Unzip the package in a specific directory
-     using a decompression program. (e.g. WinZip)
-
-  3. Compile:
-       1. Open win32/qDecoder.dsw through the "File -> Open Workspace"
-          menu.
-       2. Create libraries through the "Build -> Build qDecoder.lib" menu.
-
-               ------Configuration: qDecoder - Win32 Release------
-               Compiling...
-               qArg.c
-               qAwk.c
-               .
-               .
-               (skip)
-               .
-               .
-               qTime.c
-               qValid.c
-               Creating library...
-
-               qDecoder.lib - 0 error(s), 0 warning(s)
-
-          NOTE) Since compiled library files for Win32 use already exist as
-          win32/Release/qDecoder.lib of the package, you may omit this
-          procedure and use the pertinent library files. At the same time,
-          you can acquire a ready compiled package from
-          ftp://ftp.qDecoder.org/pub/qDecoder/precompiled/Win32/.
-
-  4. Install: Respectively copy the src/qDecoder.h header file and the
-     created win32/Release/qDecoder.lib in a specific directory, in the
-     basic header of Visual C++, or in a library directory. (If they are
-     copied in the primary directory, there is no need to additionally
-     designate the path when using headers and libraries.)
-     ex) C:\Program Files\Microsoft Visual Studio\VC98\Lib\qDecoder.lib
-     ex) C:\Program Files\Microsoft Visual Studio\VC98\Include\qDecoder.h
-
-  5. Usages:
-       1. Insert #include or #include "...PATH...\qDecoder.h" in the source
-          file.
-       2. Add qDecoder.lib to ''Project -> Setting -> Link ->
-          Object/library modules'. (Specify the path when not installed on
-          the primary library directory.)
-
-  6. Test:
-       1. Create ``File -> New -> Win32 Console Application''.
-       2. Insert examples/fetch.c through ``FileView -> Source Files -> Add
-          Files to Folder''.
-       3. Add qDecoder.lib to ``Project -> Setting -> Link ->
-          Object/library modules''.
-       4. Compile ``Build -> Build PRJ_NAME.exe'' and create the execution
-          file.
-       5. Copy PRJ_NAME.exe in the CGI executable directory of the local
-          web server (IIS). And then, check the operation through the
-          browser. http://localhost/...PATH.../PRJ_NAME.exe?query=OK
-          [Pic: Win32 Test Step 1] [Pic: Win32 Test Step 2]
-
-          [Pic: Win32 Test Step 3] [Pic: Win32 Test Step 4]
-
-          [Pic: Win32 Test Step 5]
 
   ------------------------------------------------------------------------
                           [The qDecoder Project]
