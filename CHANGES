@@ -9,41 +9,6 @@ qDecoder Changes
   Release 9.0
     This is new branch of qDecoder. qDecoder 9.0 does not support lower version compatibility.
 
-  Release 8.1
-    ADD) unsigned int qFnv32Hash(char *str, unsigned int max);
-    FIX) qSocketWaitReadable() - 'timeoutsec' argument changed to 'timeoutms'
-    to support waiting microseconds. To wait indefinitely timeoutms can be set
-    to negative value. To do just polling status, timeoutms can be set to 0.
-    And now it returns -1 if an error occurred for detecting closed socket.
-    FIX) qSocketRead() - 'timeoutsec' argument changed to 'timeoutms'
-    FIX) qSocketGets() - 'timeoutsec' argument changed to 'timeoutms'
-    FIX) qSocketSaveIntoFile() - 'timeoutsec' argument changed to 'timeoutms'
-    FIX) qSocketRead() - returns 0 when timeout, returns -1 when an error occured;
-    FIX) qSocketGets() - returns 0 when timeout, returns -1 when an error occured;
-
-    ADD) qDatabase.c
-    ADD) qLog.c
-    ADD) qStrcat()
-    FIX) qfDecoder()
-    FIX) qSocketGets()
-    ADD) qRemoveTailSpace();
-    ADD) qStrdupBetween();
-    ADD) qfGets();
-    ADD) qCmd();
-    ADD) qStrtok();
-    FIX) qAwk.c
-    REM) qMisc.c
-    REM) qUniqueID();
-    ADD) qUniqId(); - 유니크성을 강화
-    FIX) qSocketClose() = 리턴 1/0으로 바꿈
-    FIX) qfValue(), qfiValue() - 마지막 찾은 값을 리턴하도록
-    REM) qCGIenv()
-    REM) qCGIname();
-    FIX) Q_Entry -> Q_ENTRY
-    REM) qSocketSetNonblock();
-    FIX) qSocketGets(), qSocketPrintf()
-    REM) qStricmp(), qStrincmp()
-
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive
     uploading.
