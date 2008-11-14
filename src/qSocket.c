@@ -456,7 +456,7 @@ ssize_t qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutm
  */
 static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port) {
 	/* here we assume that the hostname argument contains ip address */
-	memset((void*)&addr, 0, sizeof(struct sockaddr_in));
+	memset((void*)addr, 0, sizeof(struct sockaddr_in));
 	if (!inet_aton(hostname, &addr->sin_addr)) { /* fail then try another way */
 		struct hostent *hp;
 		if ((hp = gethostbyname (hostname)) == 0) return false;

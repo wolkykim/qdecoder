@@ -58,9 +58,8 @@ int main(void) {
 			break;
 		}
 	}
-
 	/* screen out */
-	qCgiResponseSetContentType(req, "text/html");
+	qCgiResponseSetContentType(req, "text/plain");
 	qEntryPrint(sess, stdout, true);
 
 	/* save session & free allocated memories */

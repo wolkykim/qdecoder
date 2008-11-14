@@ -64,7 +64,7 @@ socket.cgi: ${QLIB} socket.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o socket.cgi socket.o ${QLIB}
 
 obstack.cgi: ${QLIB} obstack.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o obstack.cgi socket.o ${QLIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o obstack.cgi obstack.o ${QLIB}
 
 ${QLIB}:
 	(cd ../src/; make all)

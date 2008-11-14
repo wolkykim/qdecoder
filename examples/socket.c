@@ -23,15 +23,11 @@
 #include <string.h>
 #include "qDecoder.h"
 
-#define SOCKET_TIMEOUT		(10)
+#define SOCKET_TIMEOUT		(5 * 1000)
 
-int dumpHttp(const char *hostname) {
-	int sockfd;
-	char buf[1024];
-	int lineno;
-
+int dumpHttp(const char *hostname, int port) {
 	// open socket
-	sockfd = qSocketOpen(hostname, 80);
+	int sockfd = qSocketOpen(hostname, port);
 	if (sockfd < 0) return sockfd;
 
 	// send data
@@ -43,15 +39,10 @@ int dumpHttp(const char *hostname) {
 	qSocketPrintf(sockfd, "\n");
 
 	// read data
-	for (lineno = 1; ; lineno++) {
-		// read line from socket
-		if (qSocketGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) <= 0) qCgiResponseError(NULL, "Timeout or socket closed.");
-
-		// if the http header block ended, stop reading.
-		if (strlen(buf) == 0) break;
-
-		// print header
-		printf("%d: %s\n", lineno, buf);
+	char buf[1024];
+	int lineno;
+	for (lineno = 1; qSocketGets(buf, sockfd, sizeof(buf), SOCKET_TIMEOUT) >= 0; lineno++) {
+		printf("%03d: %s\n", lineno, buf);
 	}
 
 	// close socket
@@ -62,12 +53,12 @@ int dumpHttp(const char *hostname) {
 
 int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL);
-	qCgiResponseSetContentType(req, "text/html");
+	qCgiResponseSetContentType(req, "text/plain");
 
 	const char *hostname = qEntryGetStr(req, "hostname");
-	if (strlen(hostname) == 0) qCgiResponseError(req, "Invalid usages.");
+	if (hostname == NULL || strlen(hostname) == 0) qCgiResponseError(req, "Invalid usages.");
 
-	int retflag = dumpHttp(hostname);
+	int retflag = dumpHttp(hostname, 80);
 	if (retflag < 0) {
 		if (retflag == -1) qCgiResponseError(req, "Invalid hostname.");
 		else if (retflag == -2) qCgiResponseError(req, "Can't create socket.");
@@ -77,4 +68,3 @@ int main(void) {
 
 	return 0;
 }
-

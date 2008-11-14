@@ -86,7 +86,7 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 	/* check session status & get session id */
 	bool new_session;
 	char *sessionkey;
-	if(request != NULL && qEntryGetStr(request, SESSION_ID) != NULL) {
+	if(qEntryGetStr(request, SESSION_ID) != NULL) {
 		sessionkey = strdup(qEntryGetStr(request, SESSION_ID));
 		new_session = false;
 	} else { /* new session */
@@ -209,7 +209,7 @@ time_t qSessionGetCreated(Q_ENTRY *session) {
  */
 bool qSessionSave(Q_ENTRY *session) {
 	const char *sessionkey = qEntryGetStr(session, INTER_SESSIONID);
-	const char *session_repository_path = qEntryGetStr(session, "INTER_SESSION_REPO");
+	const char *session_repository_path = qEntryGetStr(session, INTER_SESSION_REPO);
 	int session_timeout_interval = qEntryGetInt(session, INTER_INTERVAL_SEC);
 	if(sessionkey == NULL || session_repository_path == NULL) return false;
 
@@ -227,7 +227,7 @@ bool qSessionSave(Q_ENTRY *session) {
 		return false;
 	}
 
-	_clearRepository(session_repository_path);
+	//_clearRepository(session_repository_path);
 	return true;
 }
 
@@ -301,11 +301,11 @@ static int _isValidSession(const char *filepath) {
 	double timediff;
 
 	if ((timeout = (time_t)qCountRead(filepath)) == 0) return 0;
-	;
+
 	timenow = time(NULL);
 	timediff = difftime(timeout, timenow); /* return timeout - timenow */
 
-	if (timediff >= (double)0) return 1; /* valid */
+	if (timediff >= 0) return 1; /* valid */
 	return -1; /* expired */
 }
 
@@ -313,7 +313,7 @@ static int _isValidSession(const char *filepath) {
 static bool _updateTimeout(const char *filepath, time_t timeout_interval) {
 	if(timeout_interval <= 0) return false;
 
-	if(qCountUpdate(filepath, timeout_interval) <= 0) return false;
+	if(qCountSave(filepath, time(NULL) + timeout_interval) <= 0) return false;
 	return true;
 }
 
