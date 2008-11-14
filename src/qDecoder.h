@@ -32,7 +32,7 @@
 #include <sys/types.h>
 
 /**
- * Base Structures used for Internal
+ * Base Structures used for Internal - named object
  */
 typedef struct Q_NLOBJ {
 	char *name;			/*!< key name */
@@ -41,6 +41,9 @@ typedef struct Q_NLOBJ {
 	struct Q_NLOBJ *next;		/*!< link pointer */
 } Q_NLOBJ;
 
+/**
+ * Base Structures used for Internal - object
+ */
 typedef struct {
 	void *object;			/*!< object data */
 	int  size;			/*!< object size */
@@ -72,12 +75,11 @@ typedef struct {
 	int	*size;			/*!< value size */
 } Q_HASHTBL;
 
+#define _Q_HASHARR_MAX_KEYSIZE		(31+1)
+#define _Q_HASHARR_DEF_VALUESIZE	(32)
 /**
  * Structure for hash-table data structure based on array.
  */
-#define _Q_HASHARR_MAX_KEYSIZE		(31+1)
-#define _Q_HASHARR_DEF_VALUESIZE	(32)
-
 typedef struct {
 	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for moved slot due to hash collision, -2 is used for indicating linked block */
 	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
