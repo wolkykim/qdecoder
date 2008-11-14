@@ -361,7 +361,6 @@ ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t n
  * @param	filefd		save file descriptor
  * @param	sockfd		socket descriptor
  * @param	nbytes		length of bytes to read from socket
- * @param	oflag		constructed by a bitwise-inclusive OR of flags defined in <fcntl.h>.
  * @param	timeoutms	wait timeout milliseconds
  *
  * @return	the number of bytes wrote on success, -1 if an error(ex:socket closed, file open failed) occurred.

@@ -196,7 +196,7 @@ extern	char*		qCgiRequestGetQueryString(const char *query_type);
 /*
  * qCgiResponse.c
  */
-extern	bool		qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value, int exp_days, const char *path, const char *domain, bool secure);
+extern	bool		qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value, int expire, const char *path, const char *domain, bool secure);
 extern	bool		qCgiResponseRemoveCookie(Q_ENTRY *request, const char *name, const char *path, const char *domain, bool secure);
 
 extern	bool		qCgiResponseSetContentType(Q_ENTRY *request, const char *mimetype);

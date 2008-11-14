@@ -39,12 +39,19 @@
 /**
  * Set cookie
  *
- * @return	in case of success, returns true.
- *		otherwise(qContentType() is called before) false
+ * @param request	a pointer of request structure
+ * @param name		cookie name
+ * @param value		cookie value
+ * @param expire	expire related time in seconds (0 means end of session)
+ * @param path		cookie path (NULL can current path)
+ * @param domain	cookie domain (NULL means current domain)
+ * @param secure	secure flag
+ *
+ * @return	true in case of success, otherwise returns false
  *
  * @code
- *   // Apply cookie in the current domain and directory for 30 days.
- *   qCgiResponseSetCookie(req, "NAME", "qDecoder", 30, NULL, NULL, false);
+ *   // Apply cookie in the current domain and directory for 1 day.
+ *   qCgiResponseSetCookie(req, "NAME", "qDecoder", 86400, NULL, NULL, false);
  *
  *   // Apply cookie to the "/" directory of "*.qdecoder.org" until the
  *   // browser is closed.
@@ -54,18 +61,8 @@
  *   // requirements are satisfied.
  *   qCgiResponseSetCookie(req, name, value, 0, NULL, NULL, true);
  * @endcode
- *
- * @note
- * When cookie is set up, the point of time when values
- * are handed over through qGetValue() is when the next program is called.
- * In some implementations, however, cookies need to be set up for the
- * simplicity of logic while, at the same time, this needs to be applied to
- * other routines. In this case, qEntryAddStr() can prevent the alteration
- * of logic and the waste of additional codes by adding values to the cookie
- * linked-list. But setting up cookies at clients (browsers) does not succeed
- * always. Thus, users should be careful when using qEntryAddStr().
  */
-bool qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value, int exp_days, const char *path, const char *domain, bool secure) {
+bool qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value, int expire, const char *path, const char *domain, bool secure) {
 	/* check content flag */
 	if (qCgiResponseGetContentType(request) != NULL) {
 		DEBUG("Should be called before qCgiResponseSetContentType().");
@@ -79,9 +76,8 @@ bool qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value
 	snprintf(cookie, sizeof(cookie), "%s=%s", encname, encvalue);
 	free(encname), free(encvalue);
 
-	if (exp_days != 0) {
-		time_t plus_sec = (time_t)(exp_days * 24 * 60 * 60);
-		char *gmtstr = qTimeGetGmtStr(time(NULL) + plus_sec);
+	if (expire != 0) {
+		char *gmtstr = qTimeGetGmtStr(time(NULL) + expire);
 		strcat(cookie, "; expires=");
 		strcat(cookie, gmtstr);
 		free(gmtstr);
@@ -117,8 +113,13 @@ bool qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value
 /**
  * Remove cookie
  *
- * @return      in case of success, returns true.
- *              otherwise(qContentType() is called before) false
+ * @param request	a pointer of request structure
+ * @param name		cookie name
+ * @param path		cookie path
+ * @param domain	cookie domain
+ * @param secure	secure flag
+ *
+ * @return      true in case of success, otherwise returns false
  *
  * @code
  *   qCgiResponseSetCookie(req, "NAME", "VALUE", 0, NULL, NULL, NULL);
@@ -127,23 +128,23 @@ bool qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value
  *   qCgiResponseSetCookie(req, "NAME", "VALUE", 0, "/", "www.qdecoder.org", NULL);
  *   qCgiResponseRemoveCookie(req, "NAME", "/", "www.qdecoder.org", NULL);
  * @endcode
- *
- * @note
- * When cookies are removed,
- * the point of time when values in linked-list removed is when the next
- * program is called. In some implementations, however, cookies need to be
- * removed for the simplicity of logic while, at the same time,
- * this needs to be applied to other routines.
- *
- * In this case, qEntryRemove() can prevent the alteration of logic and
- * the waste of additional codes by removing values to the linked-list.
- * But removing cookies at clients (browsers) does not succeed always.
- * Thus, you should be careful when using qEntryRemove().
  */
 bool qCgiResponseRemoveCookie(Q_ENTRY *request, const char *name, const char *path, const char *domain, bool secure) {
         return qCgiResponseSetCookie(request, name, "", -1, path, domain, secure);
 }
 
+/**
+ * Set responding content-type
+ *
+ * @param request	a pointer of request structure
+ * @param mimetype	mimetype
+ *
+ * @return      true in case of success, otherwise returns false
+ *
+ * @code
+ *   qCgiResponseSetContentType(req, "text/html");
+ * @endcode
+ */
 bool qCgiResponseSetContentType(Q_ENTRY *request, const char *mimetype) {
 	if(qEntryGetStr(request, "_Q_CONTENTTYPE") != NULL) {
 		DEBUG("alreay set.");
@@ -156,11 +157,33 @@ bool qCgiResponseSetContentType(Q_ENTRY *request, const char *mimetype) {
 	return true;
 }
 
+/**
+ * Get content-type
+ *
+ * @param request	a pointer of request structure
+ *
+ * @return      a pointer of mimetype string in case of success, otherwise returns NULL
+ *
+ * @code
+ *   qCgiResponseSetContentType(req, "text/html");
+ * @endcode
+ */
 const char *qCgiResponseGetContentType(Q_ENTRY *request) {
 	return qEntryGetStr(request, "_Q_CONTENTTYPE");
 }
 
-
+/**
+ * Send redirection header
+ *
+ * @param request	a pointer of request structure
+ * @param uri		new URI
+ *
+ * @return      true in case of success, otherwise returns false
+ *
+ * @code
+ *   qCgiResponseRedirect(req, "http://www.qdecoder.org/");
+ * @endcode
+ */
 bool qCgiResponseRedirect(Q_ENTRY *request, const char *uri) {
 	if(qCgiResponseGetContentType(request) != NULL) {
 		DEBUG("Should be called before qCgiResponseSetContentType().");
@@ -174,7 +197,7 @@ bool qCgiResponseRedirect(Q_ENTRY *request, const char *uri) {
 /**
  * Force to send(download) file to client in accordance with given mime type.
  *
- * @param filepath	file to send
+ * @param request	a pointer of request structure
  * @param filepath	file to send
  * @param mimetype	mimetype. NULL can be used for "application/octet-stream" mimetype.
  *
@@ -186,7 +209,7 @@ bool qCgiResponseRedirect(Q_ENTRY *request, const char *uri) {
  * when the corresponding files are directly linked to the Web.
  * But this is especially useful in preprocessing files to be downloaded
  * only with user certification and in enabling downloading those files,
- * which cannot be opned on the Web, only through specific programs.
+ * which cannot be opend on the Web, only through specific programs.
  */
 int qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mimetype) {
 	if (qCgiResponseGetContentType(request) != NULL) {
@@ -225,8 +248,17 @@ int qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mim
 	close(fd);
 	return sent;
 }
-
 /**
+ * Generate and print out HTML error page
+ *
+ * @param request	a pointer of request structure
+ * @param format	error message
+ *
+ * @return      none
+ *
+ * @code
+ *   qCgiResponseError(req, "Error: can't find userid.");
+ * @endcode
  */
 void qCgiResponseError(Q_ENTRY *request, char *format, ...) {
 	char buf[MAX_LINEBUF];
