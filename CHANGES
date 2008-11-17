@@ -7,7 +7,9 @@ qDecoder Changes
 ``New'', ``Replaced'' and ``Removed''.
 
   Release 9.0
-    This is new branch of qDecoder. qDecoder 9.0 does not support lower version compatibility.
+    This is new branch of qDecoder.
+    qDecoder 9.0 does not support lower version compatibility any more.
+    Distributed under BSD-like License.
 
   Release 8.0
     NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive
