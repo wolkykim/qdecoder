@@ -63,8 +63,8 @@ typedef struct {
 	size_t size;			/*!< total size of objects */
 	Q_NLOBJ *first;			/*!< first object pointer */
 	Q_NLOBJ *last;			/*!< last object pointer */
-	Q_NLOBJ *next;			/*!< next object pointer used by only for qEntryFirst() and qEntryNext()*/
-	Q_NLOBJ *cont;			/*!< next object pointer used by qEntry*Next*() and member functions*/
+	Q_NLOBJ *next;			/*!< next object pointer used by qEntryFirst() and qEntryNext() */
+	Q_NLOBJ *cont;			/*!< next object pointer used by qEntryGet*() */
 } Q_ENTRY;
 
 /**

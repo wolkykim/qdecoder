@@ -116,7 +116,7 @@ const Q_NLOBJ *qEntryNext(Q_ENTRY *entry) {
  * @param entry		Q_ENTRY pointer
  * @param name		key name
  *
- * @return		a number of removed object.
+ * @return		a number of removed objects.
  */
 int qEntryRemove(Q_ENTRY *entry, const char *name) {
 	if(entry == NULL || name == NULL) return 0;
