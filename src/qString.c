@@ -93,7 +93,7 @@ char *qStrTrimTail(char *str) {
  * @code
  *   char *str = strdup("   \"hello world\"   ");
  *   qStrTrim(str); // to remove white spaces
- *   qStrUnchar(str, '\"', '\"'); // unquote
+ *   qStrUnchar(str, '"', '"'); // to unquote
  * @endcode
  */
 char *qStrUnchar(char *str, char head, char tail) {
