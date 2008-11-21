@@ -416,6 +416,7 @@ extern	bool		qLog(Q_LOG *log, const char *format, ...);
  */
 extern	char*		qStrTrim(char *str);
 extern	char*		qStrTrimTail(char *str);
+extern	char*		qStrUnchar(char *str, char head, char tail);
 extern	char*		qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char *word);
 extern	char*		qStrCpy(char *dst, size_t dstsize, const char *src, size_t nbytes);
 extern	char*		qStrUpper(char *str);

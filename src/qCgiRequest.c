@@ -419,8 +419,12 @@ static int _parse_multipart(Q_ENTRY *request) {
 		return amount;
 	}
 
-	/* find boundary string */
-	snprintf(boundary, sizeof(boundary), "--%s", strstr(getenv("CONTENT_TYPE"), "boundary=") + CONST_STRLEN("boundary="));
+	/* find boundary string - Hidai Kenichi made this patch for handling quoted boundary string */
+	char boundary_orig[256];
+	qStrCpy(boundary_orig, sizeof(boundary_orig), strstr(getenv("CONTENT_TYPE"), "boundary=") + CONST_STRLEN("boundary="), sizeof(boundary_orig));
+	qStrUnchar(boundary_orig, '"', '"');
+	snprintf(boundary, sizeof(boundary), "--%s", boundary_orig);
+
 	/* This is not necessary but, I can not trust MS Explore */
 	qStrTrim(boundary);
 

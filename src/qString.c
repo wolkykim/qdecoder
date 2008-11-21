@@ -80,6 +80,35 @@ char *qStrTrimTail(char *str) {
 }
 
 /**
+ * Remove character from head and tail of the string.
+ *
+ * @param str		source string
+ * @param head		heading character
+ * @param tail		tailing character
+ *
+ * @return a pointer of source string if rsuccessful, otherewise returns NULL
+ *
+ * @note This modify source string directly.
+ *
+ * @code
+ *   char *str = strdup("   \"hello world\"   ");
+ *   qStrTrim(str); // to remove white spaces
+ *   qStrUnchar(str, '\"', '\"'); // unquote
+ * @endcode
+ */
+char *qStrUnchar(char *str, char head, char tail) {
+	if (str == NULL) return NULL;
+
+	int len = strlen(str);
+	if (len >= 2 && str[0] == head && str[len-1] == tail) {
+		memmove(str, str + 1, len - 2);
+		str[len - 2] = '\0';
+	}
+
+	return str;
+}
+
+/**
  * Replace string or tokens as word from source string with given mode.
  *
  * @param mode		replacing mode
