@@ -189,27 +189,7 @@ and Makefile, think how you should apply qDecoder to your program.
 
 The example is linked to the static library (libqDecoder.a). If a shared
 library (libqDecoder.so) is linked, the program gets more compact and works
-efficiently. Modify "QLIB = ../src/libqDecoder.a" of examples/Makefile into
-"QLIB = ../src/libqDecoder.so". And then, compile it again through the
-"make clean all" command at the examples directory. (You can get the same
-result by doing as follows at the examples directory without modifying
-Makefile: ``make clean all QLIB=../src/libqDecoder.so'')
-
-     $ make clean all QLIB=../src/libqDecoder.a (When linking static libraries)
-     $ ls -al *.cgi
-     -rwxr-xr-x  1 root  power  61876   6  2 22:32 arglist.cgi
-     -rwxr-xr-x  1 root  power  61210   6  2 22:32 fetch.cgi
-     -rwxr-xr-x  1 root  power  61331   6  2 22:32 multivalue.cgi
-     -rwxr-xr-x  1 root  power  61551   6  2 22:32 streamedit.cgi
-     -rwsr-sr-x  1 root  power  61639   6  2 22:32 upload.cgi
-
-     $ make clean all QLIB=../src/libqDecoder.so (When linking shared libraries)
-     $ ls -al *.cgi
-     -rwxr-xr-x  1 root  power  12682   6  2 22:33 arglist.cgi
-     -rwxr-xr-x  1 root  power  11560   6  2 22:33 fetch.cgi
-     -rwxr-xr-x  1 root  power  11852   6  2 22:33 multivalue.cgi
-     -rwxr-xr-x  1 root  power  12052   6  2 22:33 streamedit.cgi
-     -rwsr-sr-x  1 root  power  12393   6  2 22:33 upload.cgi
+efficiently.
 
   ------------------------------------------------------------------------
                           [The qDecoder Project]

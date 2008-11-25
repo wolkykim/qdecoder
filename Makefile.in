@@ -47,7 +47,9 @@ clean:
 distclean: clean
 	@for DIR in src examples; do \
 		echo "===> $${DIR}"; \
-		(cd $${DIR}; make clean; rm -f Makefile); \
+		(cd $${DIR}; make clean; ${RM} -f Makefile); \
 		echo "<=== $${DIR}"; \
 	done
-	${RM} -f config.log config.status config.h
+	${RM} -rf autom4te.cache
+	${RM} -f configure.lineno config.log config.status config.h
+	${RM} -f Makefile
