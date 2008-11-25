@@ -7,8 +7,10 @@ qDecoder Changes
 ``New'', ``Replaced'' and ``Removed''.
 
   Release 9.0.1
+    FIX) qCgiRequestParseQueries() - quoted boundary patch (reported by Hidai Kenichi)
+    NEW) qStrUnchar() - remove character from head and tail of the string
     NEW) qDecoderVersion() - get the version string of qDecoder library.
-    FIX) examples/Makefile.in - minor fixes
+    FIX) minor fixes related packaging.
 
   Release 9.0
     This is new branch of qDecoder.
