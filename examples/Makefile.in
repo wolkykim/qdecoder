@@ -23,61 +23,60 @@
 ## THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##
 
-## Which compiler
+prefix		= @prefix@
+exec_prefix	= ${prefix}
+
+## Compiler options
 CC	= @CC@
 CFLAGS	= @CFLAGS@
 DEFS	= @DEFS@
-INCLUDE	= -I. -I../src
-
-## qDecoder Library Path
-QLIB	= ../src/libqDecoder.a
-#QLIB	= ../src/libqDecoder.so
+INCLUDE	= -I. -I@includedir@
+LIB	= @libdir@/libqDecoder.a
 
 ## Main
 all:	query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi session.cgi config.cgi socket.cgi obstack.cgi
 
-query.cgi: ${QLIB} query.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o query.cgi query.o ${QLIB}
+query.cgi: query.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o query.cgi query.o ${LIB}
 
-cookie.cgi: ${QLIB} cookie.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o cookie.cgi cookie.o ${QLIB}
+cookie.cgi: cookie.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o cookie.cgi cookie.o ${LIB}
 
-multivalue.cgi:	${QLIB} multivalue.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o multivalue.cgi multivalue.o ${QLIB}
+multivalue.cgi:	multivalue.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o multivalue.cgi multivalue.o ${LIB}
 
-upload.cgi: ${QLIB} upload.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o upload.cgi upload.o ${QLIB}
+upload.cgi: upload.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o upload.cgi upload.o ${LIB}
 	chmod 6755 upload.cgi
 
-uploadfile.cgi: ${QLIB} uploadfile.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o uploadfile.cgi uploadfile.o ${QLIB}
+uploadfile.cgi: uploadfile.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o uploadfile.cgi uploadfile.o ${LIB}
 	chmod 6755 uploadfile.cgi
+	mkdir -p -m 755 upload tmp
 
-download.cgi: ${QLIB} download.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o download.cgi download.o ${QLIB}
+download.cgi: download.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o download.cgi download.o ${LIB}
 
-streamedit.cgi: ${QLIB} streamedit.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o streamedit.cgi streamedit.o ${QLIB}
+streamedit.cgi: streamedit.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o streamedit.cgi streamedit.o ${LIB}
 
-session.cgi: ${QLIB} session.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o session.cgi session.o ${QLIB}
+session.cgi: session.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o session.cgi session.o ${LIB}
 	chmod 6755 session.cgi
 
-config.cgi: ${QLIB} config.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o config.cgi config.o ${QLIB}
+config.cgi: config.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o config.cgi config.o ${LIB}
 
-socket.cgi: ${QLIB} socket.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o socket.cgi socket.o ${QLIB}
+socket.cgi: socket.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o socket.cgi socket.o ${LIB}
 
-obstack.cgi: ${QLIB} obstack.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o obstack.cgi obstack.o ${QLIB}
-
-${QLIB}:
-	(cd ../src/; make all)
+obstack.cgi: obstack.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o obstack.cgi obstack.o ${LIB}
 
 ## Clear Module
 clean:
-	rm -rf *.o *.cgi upload/* tmp/*
+	rm -f *.o *.cgi
+	rm -rf upload tmp
 
 ## Compile Module
 .c.o:

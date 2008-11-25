@@ -32,6 +32,8 @@
 #ifndef _QDECODER_H
 #define _QDECODER_H
 
+#define _Q_VERSION			"9.0.1"
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
@@ -490,8 +492,9 @@ extern	time_t		qTimeParseGmtStr(const char *gmtstr);
 /*
  * qSystem.c
  */
-extern	const char	*qSysGetEnv(const char *envname, const char *nullstr);
-extern	char		*qSysCmd(const char *cmd);
+extern	const char*	qSysGetEnv(const char *envname, const char *nullstr);
+extern	char*		qSysCmd(const char *cmd);
+extern	const char*	qDecoderVersion(void);
 
 #ifdef __cplusplus
 }

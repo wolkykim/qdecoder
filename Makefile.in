@@ -21,11 +21,10 @@
 ## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ## THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-DIRS	= src examples
 RM	= @RM@
 
 all:
-	@for DIR in ${DIRS}; do \
+	@for DIR in src; do \
 		echo "===> $${DIR}"; \
 		(cd $${DIR}; make all); \
 		echo "<=== $${DIR}"; \
@@ -39,17 +38,16 @@ uninstall:
 	(cd src/; make deinstall)
 
 clean:
-	@for DIR in ${DIRS}; do \
+	@for DIR in src; do \
 		echo "===> $${DIR}"; \
 		(cd $${DIR}; make clean); \
 		echo "<=== $${DIR}"; \
 	done
-	${RM} -f config.log config.status
-	${RM} -rf autom4te.cache
 
 distclean: clean
-	@for DIR in ${DIRS} .; do \
-		echo "===> Removing $${DIR}/Makefile"; \
-		(cd $${DIR}; rm -f Makefile); \
+	@for DIR in src examples; do \
+		echo "===> $${DIR}"; \
+		(cd $${DIR}; make clean; rm -f Makefile); \
+		echo "<=== $${DIR}"; \
 	done
-	${RM} -f config.h
+	${RM} -f config.log config.status config.h

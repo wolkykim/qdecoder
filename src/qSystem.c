@@ -65,3 +65,12 @@ char *qSysCmd(const char *cmd) {
 	if(str == NULL) str = strdup("");
 	return str;
 }
+
+/**
+ * Get the version string of qDecoder library
+ *
+ * @return		a pointer of version string
+ */
+const char *qDecoderVersion(void) {
+	return _Q_VERSION;
+}
