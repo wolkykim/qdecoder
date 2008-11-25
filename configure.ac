@@ -67,7 +67,7 @@ AC_DEFUN([Q_ARG_DISABLE], [
 #PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib:/usr/libexec:/usr/ccs/bin:/usr/local/bin:/usr/local/sbin:/usr/local/lib:/usr/local/libexec:/usr/local/mysql/include
 PATH=$PATH:/usr/local/mysql/include
 
-AC_INIT([qDecoder], [9 RELEASE], [http://www.qdecoder.org/])
+AC_INIT([qDecoder], [9 RELEASE], [http://www.qDecoder.org/])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile])
