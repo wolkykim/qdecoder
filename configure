@@ -3980,7 +3980,7 @@ fi;
 	if test "$enableval" = yes; then
 		{ echo "$as_me:$LINENO: '64bit' feature is enabled" >&5
 echo "$as_me: '64bit' feature is enabled" >&6;}
-		opt_defs="$opt_defs -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64"
+		opt_defs="$opt_defs -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64"
 	fi
 
 
