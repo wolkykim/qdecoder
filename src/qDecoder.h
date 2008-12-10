@@ -245,8 +245,8 @@ extern	ssize_t		qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms)
 extern	ssize_t		qSocketWrite(int sockfd, const void *binary, size_t nbytes);
 extern	ssize_t		qSocketPuts(int sockfd, const char *str);
 extern	ssize_t		qSocketPrintf(int sockfd, const char *format, ...);
-extern	ssize_t		qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t nbytes);
-extern	ssize_t		qSocketSaveIntoFile(int outfd, int sockfd, size_t nbytes, int timeoutms);
+extern	off_t		qSocketSendfile(int sockfd, int fd, off_t offset, off_t nbytes);
+extern	off_t		qSocketSaveIntoFile(int fd, int sockfd, off_t nbytes, int timeoutms);
 extern	ssize_t		qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutms);
 
 /*
@@ -444,7 +444,7 @@ extern	char*		qFileGetName(const char *filepath);
 extern	char*		qFileGetDir(const char *filepath);
 extern	char*		qFileGetExt(const char *filepath);
 extern	off_t		qFileGetSize(const char *filepath);
-extern	ssize_t		qFileSend(int outfd, int infd, size_t nbytes);
+extern	off_t		qFileSend(int outfd, int infd, off_t nbytes);
 extern	void*		qFileLoad(const char *filepath, size_t *nbytes);
 extern	void*		qFileRead(FILE *fp, size_t *nbytes);
 extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bool append);

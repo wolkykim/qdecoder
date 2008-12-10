@@ -177,13 +177,13 @@ off_t qFileGetSize(const char *filepath) {
  *
  * @return		the number of bytes written to outfd.
  */
-ssize_t qFileSend(int outfd, int infd, size_t nbytes) {
+off_t qFileSend(int outfd, int infd, off_t nbytes) {
 #define MAX_FILESEND_CHUNK_SIZE		(32 * 1024)
 	if(nbytes == 0) return 0;
 
 	char buf[MAX_FILESEND_CHUNK_SIZE];
 
-	ssize_t sent = 0; // total size sent
+	off_t sent = 0; // total size sent
 	while(sent < nbytes) {
 		size_t sendsize;	// this time sending size
 		if(nbytes - sent <= sizeof(buf)) sendsize = nbytes - sent;

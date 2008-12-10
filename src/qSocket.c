@@ -312,9 +312,9 @@ ssize_t qSocketPrintf(int sockfd, const char *format, ...) {
 /**
  * Send file to socket.
  *
- * @param	sockfd		socket descriptor
- * @param	filepath	variable argument lists
- * @param	offset		file start to send
+ * @param	sockfd		socket descriptor (out)
+ * @param	fd		file descriptor (in)
+ * @param	offset		file offset to send
  * @param	nbytes		total bytes to send. 0 means send data until EOF.
  *
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
@@ -324,22 +324,17 @@ ssize_t qSocketPrintf(int sockfd, const char *format, ...) {
  * @code
  * @endcode
  */
-ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t nbytes) {
+off_t qSocketSendfile(int sockfd, int fd, off_t offset, off_t nbytes) {
 	struct stat filestat;
-	int filefd;
+	if (fstat(fd, &filestat) < 0) return -1;
 
-	if((filefd = open(filepath, O_RDONLY , 0))  < 0) return -1;
-	if (fstat(filefd, &filestat) < 0) {
-		close(filefd);
-		return -1;
-	}
-
-	ssize_t sent = 0;				// total size sent
-	ssize_t rangesize = filestat.st_size - offset;	// maximum available size can be sent
-	if(nbytes > 0 && nbytes < rangesize) rangesize = nbytes; // set rangesize to requested size
+	off_t sent = 0;					// total size sent
+	off_t rangesize = filestat.st_size - offset;	// maximum available size can be sent
+	if(rangesize < 0) rangesize = 0;
+	else if(nbytes > 0 && nbytes < rangesize) rangesize = nbytes; // set rangesize to requested size
 
 #if !(defined(ENABLE_SENDFILE) && defined(__linux__))
-	if (offset > 0) lseek(filefd, offset, SEEK_SET);
+	if (offset > 0) lseek(fd, offset, SEEK_SET);
 #endif
 
 	while(sent < rangesize) {
@@ -349,23 +344,22 @@ ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t n
 
 		ssize_t ret = 0;
 #if defined(ENABLE_SENDFILE) && defined(__linux__)
-		ret = sendfile(sockfd, filefd, &offset, sendsize);
+		ret = sendfile(sockfd, fd, &offset, sendsize);
 #else
-		ret = qFileSend(sockfd, filefd, sendsize);
+		ret = qFileSend(sockfd, fd, sendsize);
 #endif
 		if(ret <= 0) break; // Connection closed by peer
 		sent += ret;
 	}
 
-	close(filefd);
 	return sent;
 }
 
 /**
  * Store socket data into file directly.
  *
- * @param	filefd		save file descriptor
- * @param	sockfd		socket descriptor
+ * @param	fd		file descriptor (out)
+ * @param	sockfd		socket descriptor (in)
  * @param	nbytes		length of bytes to read from socket
  * @param	timeoutms	wait timeout milliseconds
  *
@@ -377,13 +371,13 @@ ssize_t qSocketSendfile(int sockfd, const char *filepath, off_t offset, size_t n
  *		only affected if no data reached to socket until timeoutms reached.
  *		if some data are received, it will wait until timeoutms reached again.
  * @code
- *   qSocketSaveIntoFile(filefd, sockfd, 100, 5000);
+ *   qSocketSaveIntoFile(fd, sockfd, 100, 5000);
  * @endcode
  */
-ssize_t qSocketSaveIntoFile(int filefd, int sockfd, size_t nbytes, int timeoutms) {
+off_t qSocketSaveIntoFile(int fd, int sockfd, off_t nbytes, int timeoutms) {
 	if(nbytes <= 0) return 0;
 
-	ssize_t readbytes, readed;
+	off_t readbytes, readed;
 	for (readbytes = 0; readbytes < nbytes; readbytes += readed) {
 		// calculate reading size
 		int readsize;
@@ -396,7 +390,7 @@ ssize_t qSocketSaveIntoFile(int filefd, int sockfd, size_t nbytes, int timeoutms
 			break;
 		}
 
-		readed = qFileSend(filefd, sockfd, readsize);
+		readed = qFileSend(fd, sockfd, readsize);
 		if (readed <= 0) {
 			if(readbytes == 0) return -1;
 			break;
