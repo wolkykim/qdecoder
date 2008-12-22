@@ -872,7 +872,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-debug          enable debugging output
   --enable-lfs            enable large file supports
-  --enable-sendfile       enable sendfile if possible
+  --enable-sendfile       use sendfile() if possible
   --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
                           enable MySQL database supports
   --disable-cgi           disable CGI APIs
