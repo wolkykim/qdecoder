@@ -870,18 +870,15 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-debug          enable debugging print out
-  --enable-64bit          enable 64 bit supports
+  --enable-debug          enable debugging output
+  --enable-lfs            enable large file supports
   --enable-sendfile       enable sendfile if possible
   --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
                           enable MySQL database supports
-  --disable-cgisupport    disable CGI(web application) related APIs (influence
-                          on: qCgiRequest.c, qCgiResponse.c, qSession.c,
-                          qHtml.c)
-  --disable-socket        disable socket APIs (influence on: qSocket.c)
-  --disable-ipc           disable IPC APIs (influence on: qSem.c, qShm.c)
-  --disable-datastructure disable data structure APIs (influence on:
-                          qHashtbl.c, qHasharr.c, qObstack.c)
+  --disable-cgi           disable CGI APIs
+  --disable-socket        disable socket APIs
+  --disable-ipc           disable IPC APIs
+  --disable-datastructure disable data-structure APIs
 
 Some influential environment variables:
   CC          C compiler command
@@ -2308,7 +2305,7 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-if test "$CC" = gcc; then
+if test $ac_compiler_gnu = yes; then
 	CFLAGS="$CFLAGS -Wall -fPIC"
 fi
 
@@ -3970,16 +3967,16 @@ echo "$as_me: 'debug' feature is enabled" >&6;}
 	fi
 
 
-	# Check whether --enable-64bit or --disable-64bit was given.
-if test "${enable_64bit+set}" = set; then
-  enableval="$enable_64bit"
+	# Check whether --enable-lfs or --disable-lfs was given.
+if test "${enable_lfs+set}" = set; then
+  enableval="$enable_lfs"
 
 else
   enableval=no
 fi;
 	if test "$enableval" = yes; then
-		{ echo "$as_me:$LINENO: '64bit' feature is enabled" >&5
-echo "$as_me: '64bit' feature is enabled" >&6;}
+		{ echo "$as_me:$LINENO: 'lfs' feature is enabled" >&5
+echo "$as_me: 'lfs' feature is enabled" >&6;}
 		opt_defs="$opt_defs -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 	fi
 
@@ -4045,17 +4042,17 @@ See \`config.log' for more details." >&2;}
 fi
 
 
-	# Check whether --enable-cgisupport or --disable-cgisupport was given.
-if test "${enable_cgisupport+set}" = set; then
-  enableval="$enable_cgisupport"
+	# Check whether --enable-cgi or --disable-cgi was given.
+if test "${enable_cgi+set}" = set; then
+  enableval="$enable_cgi"
 
 else
   enableval=yes
 fi;
 	if test "$enableval" = no; then
-		{ echo "$as_me:$LINENO: 'cgisupport' feature is disabled" >&5
-echo "$as_me: 'cgisupport' feature is disabled" >&6;}
-		opt_defs="$opt_defs -DDISABLE_CGISUPPORT"
+		{ echo "$as_me:$LINENO: 'cgi' feature is disabled" >&5
+echo "$as_me: 'cgi' feature is disabled" >&6;}
+		opt_defs="$opt_defs -DDISABLE_CGI"
 	fi
 
 

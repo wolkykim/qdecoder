@@ -27,7 +27,7 @@
  * @file qCgiResponse.c CGI Cookie Handling API
  */
 
-#ifndef DISABLE_CGISUPPORT
+#ifndef DISABLE_CGI
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -294,4 +294,4 @@ void qCgiResponseError(Q_ENTRY *request, char *format, ...) {
 	exit(EXIT_FAILURE);
 }
 
-#endif /* DISABLE_CGISUPPORT */
+#endif /* DISABLE_CGI */

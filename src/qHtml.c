@@ -35,7 +35,7 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-#ifndef DISABLE_CGISUPPORT
+#ifndef DISABLE_CGI
 
 /**
  * Print out HTML contents into stream
@@ -352,4 +352,4 @@ bool qHtmlIsUrl(const char *url) {
 	return false;
 }
 
-#endif /* DISABLE_CGISUPPORT */
+#endif /* DISABLE_CGI */

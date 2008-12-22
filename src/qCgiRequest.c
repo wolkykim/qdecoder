@@ -146,7 +146,7 @@
  * @endcode
  */
 
-#ifndef DISABLE_CGISUPPORT
+#ifndef DISABLE_CGI
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1036,4 +1036,4 @@ static bool _upload_clear_base(const char *upload_basepath, int upload_clearold)
 #endif
 }
 
-#endif /* DISABLE_CGISUPPORT */
+#endif /* DISABLE_CGI */

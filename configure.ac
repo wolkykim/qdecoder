@@ -79,7 +79,7 @@ AC_PREFIX_DEFAULT([/usr/local])
 
 ## Checks for programs.
 AC_PROG_CC
-if test "$CC" = gcc; then
+if test $ac_compiler_gnu = yes; then
 	CFLAGS="$CFLAGS -Wall -fPIC"
 fi
 
@@ -112,8 +112,8 @@ AC_TYPE_OFF_T
 opt_defs=""
 opt_incs=""
 
-Q_ARG_ENABLE([debug], [enable debugging print out], [-DBUILD_DEBUG])
-Q_ARG_ENABLE([64bit], [enable 64 bit supports], [-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
+Q_ARG_ENABLE([debug], [enable debugging output], [-DBUILD_DEBUG])
+Q_ARG_ENABLE([lfs], [enable large file supports], [-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
 Q_ARG_ENABLE([sendfile], [enable sendfile if possible], [-DENABLE_SENDFILE])
 
 AC_ARG_ENABLE([mysql],[AS_HELP_STRING([--enable-mysql=/MYSQL_INCLUDE_DIR_PATH/], [enable MySQL database supports])],[enableval=yes],[enableval=no])
@@ -128,10 +128,10 @@ if test "$enableval" = yes; then
 	fi
 fi
 
-Q_ARG_DISABLE([cgisupport], [disable CGI(web application) related APIs (influence on: qCgiRequest.c, qCgiResponse.c, qSession.c, qHtml.c)], [-DDISABLE_CGISUPPORT])
-Q_ARG_DISABLE([socket], [disable socket APIs (influence on: qSocket.c)], [-DDISABLE_SOCKET])
-Q_ARG_DISABLE([ipc], [disable IPC APIs (influence on: qSem.c, qShm.c)], [-DDISABLE_IPC])
-Q_ARG_DISABLE([datastructure], [disable data structure APIs (influence on: qHashtbl.c, qHasharr.c, qObstack.c)], [-DDISABLE_DATASTRUCTURE])
+Q_ARG_DISABLE([cgi], [disable CGI APIs], [-DDISABLE_CGI])
+Q_ARG_DISABLE([socket], [disable socket APIs], [-DDISABLE_SOCKET])
+Q_ARG_DISABLE([ipc], [disable IPC APIs], [-DDISABLE_IPC])
+Q_ARG_DISABLE([datastructure], [disable data-structure APIs], [-DDISABLE_DATASTRUCTURE])
 
 AC_MSG_NOTICE([optional flags: $opt_defs $opt_incs])
 AC_SUBST([OPT_DEFS], [$opt_defs] )

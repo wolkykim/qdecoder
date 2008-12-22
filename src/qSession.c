@@ -27,7 +27,7 @@
  * @file qSession.c HTTP Session Handling API
  */
 
-#ifndef DISABLE_CGISUPPORT
+#ifndef DISABLE_CGI
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -323,4 +323,4 @@ static bool _updateTimeout(const char *filepath, time_t timeout_interval) {
 	return true;
 }
 
-#endif /* DISABLE_CGISUPPORT */
+#endif /* DISABLE_CGI */
