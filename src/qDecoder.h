@@ -32,7 +32,7 @@
 #ifndef _QDECODER_H
 #define _QDECODER_H
 
-#define _Q_VERSION			"9.0.1"
+#define _Q_VERSION			"9.0.2"
 
 #include <stdio.h>
 #include <stdbool.h>

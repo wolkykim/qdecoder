@@ -80,7 +80,7 @@ AC_PREFIX_DEFAULT([/usr/local])
 ## Checks for programs.
 AC_PROG_CC
 if test "$CC" = gcc; then
-	CFLAGS="$CFLAGS -Wall"
+	CFLAGS="$CFLAGS -Wall -fPIC"
 fi
 
 AC_PROG_INSTALL

@@ -6,6 +6,10 @@ qDecoder Changes
 ``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``New'', ``Replaced'' and ``Removed''.
 
+  Release 9.0.2
+    FIX) large file problems. (changing some size_t type to off_t type)
+    FIX) supports to building shared libraries on FreeBSD AMD 64bit machine.
+
   Release 9.0.1
     FIX) qCgiRequestParseQueries() - quoted boundary patch. (by Hidai Kenichi)
     NEW) qStrUnchar() - remove character from head and tail of the string.
