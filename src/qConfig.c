@@ -69,22 +69,22 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 	if (str == NULL) return NULL;
 
 	/* processing include directive */
-	char *p = str;;
-	while ((p = strstr(p, _INCLUDE_DIRECTIVE)) != NULL) {
-		if (p == str || p[-1] == '\n') {
-			char buf[MAX_PATHLEN], *e, *t = NULL;
-			int len;
+	char *strp = str;;
+	while ((strp = strstr(strp, _INCLUDE_DIRECTIVE)) != NULL) {
+		if (strp == str || strp[-1] == '\n') {
+			char buf[MAX_PATHLEN];
 
 			/* parse filename */
-			for (e = p + CONST_STRLEN(_INCLUDE_DIRECTIVE); *e != '\n' && *e != '\0'; e++);
-			len = e - (p + CONST_STRLEN(_INCLUDE_DIRECTIVE));
+			char *tmpp;
+			for (tmpp = strp + CONST_STRLEN(_INCLUDE_DIRECTIVE); *tmpp != '\n' && *tmpp != '\0'; tmpp++);
+			int len = tmpp - (strp + CONST_STRLEN(_INCLUDE_DIRECTIVE));
 			if (len >= sizeof(buf)) {
 				DEBUG("Can't process %s directive.", _INCLUDE_DIRECTIVE);
 				free(str);
 				return NULL;
 			}
 
-			qStrCpy(buf, sizeof(buf), p + CONST_STRLEN(_INCLUDE_DIRECTIVE), len);
+			qStrCpy(buf, sizeof(buf), strp + CONST_STRLEN(_INCLUDE_DIRECTIVE), len);
 			qStrTrim(buf);
 
 			/* adjust file path */
@@ -93,28 +93,32 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 				char *dir = qFileGetDir(filepath);
 				if (strlen(dir) + 1 + strlen(buf) >= sizeof(buf)) {
 					DEBUG("Can't process %s directive.", _INCLUDE_DIRECTIVE);
+					free(dir);
 					free(str);
 					return NULL;
 				}
 				snprintf(tmp, sizeof(tmp), "%s/%s", dir, buf);
+				free(dir);
+
 				strcpy(buf, tmp);
 			}
 
 			/* read file */
-			if (strlen(buf) == 0 || (t = qFileLoad(buf, NULL)) == NULL) {
+			char *incdata;
+			if (strlen(buf) == 0 || (incdata = qFileLoad(buf, NULL)) == NULL) {
 				DEBUG("Can't process '%s%s' directive.", _INCLUDE_DIRECTIVE, buf);
 				free(str);
 				return NULL;
 			}
 
 			/* replace */
-			qStrCpy(buf, sizeof(buf), p, CONST_STRLEN(_INCLUDE_DIRECTIVE) + len);
-			p = qStrReplace("sn", str, buf, t);
-			free(t);
+			qStrCpy(buf, sizeof(buf), strp, CONST_STRLEN(_INCLUDE_DIRECTIVE) + len);
+			strp = qStrReplace("sn", str, buf, incdata);
+			free(incdata);
 			free(str);
-			str = p;
+			str = strp;
 		} else {
-			p += CONST_STRLEN(_INCLUDE_DIRECTIVE);
+			strp += CONST_STRLEN(_INCLUDE_DIRECTIVE);
 		}
 	}
 
