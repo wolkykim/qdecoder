@@ -39,10 +39,6 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-#ifdef __linux__
-#include <iconv.h>
-#endif
-
 /**
  * Parse URL encoded query string
  *

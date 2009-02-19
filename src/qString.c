@@ -577,12 +577,9 @@ char *qStrConvEncoding(const char *str, const char *fromcode, const char *tocode
 		return NULL;
 	}
 
-	printf("%d %d\n", fromsize, tosize);
 	int ret = iconv(it, &fromstr, &fromsize, &tostr, &tosize);
-
 	iconv_close(it);
 
-	printf("%d %d\n", fromsize, tosize);
 	if(ret < 0) {
 		DEBUG("iconv() failed.");
 		free(tostr1);
