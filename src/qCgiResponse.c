@@ -29,7 +29,11 @@
 
 #ifndef DISABLE_CGI
 
+#ifdef ENABLE_FASTCGI
+#include "fcgi_stdio.h"
+#else
 #include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdarg.h>

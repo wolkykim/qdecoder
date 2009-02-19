@@ -873,6 +873,8 @@ Optional Features:
   --enable-debug          enable debugging output
   --enable-lfs            enable large file supports
   --enable-sendfile       use sendfile() if possible
+  --enable-fastcgi=/FASTCGI_INCLUDE_DIR_PATH/
+                          enable FastCGI supports
   --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
                           enable MySQL database supports
   --disable-cgi           disable CGI APIs
@@ -3995,6 +3997,52 @@ echo "$as_me: 'sendfile' feature is enabled" >&6;}
 	fi
 
 
+# Check whether --enable-fastcgi or --disable-fastcgi was given.
+if test "${enable_fastcgi+set}" = set; then
+  enableval="$enable_fastcgi"
+  enableval=yes
+else
+  enableval=no
+fi;
+if test "$enableval" = yes; then
+	as_ac_File=`echo "ac_cv_file_$enable_fastcgi/fcgi_stdio.h" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $enable_fastcgi/fcgi_stdio.h" >&5
+echo $ECHO_N "checking for $enable_fastcgi/fcgi_stdio.h... $ECHO_C" >&6
+if eval "test \"\${$as_ac_File+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$enable_fastcgi/fcgi_stdio.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
+if test `eval echo '${'$as_ac_File'}'` = yes; then
+  enableval=yes
+else
+  enableval=no
+fi
+
+	if test "$enableval" = yes; then
+		{ echo "$as_me:$LINENO: 'fastcgi' feature is enabled" >&5
+echo "$as_me: 'fastcgi' feature is enabled" >&6;}
+		opt_defs="$opt_defs -DENABLE_FASTCGI"
+		opt_incs="$opt_incs -I$enable_fastcgi"
+	else
+		{ { echo "$as_me:$LINENO: error: can't find 'fcgi_stdio.h' header file in '$enable_fastcgi' directory. can't enable fastcgi support.
+See \`config.log' for more details." >&5
+echo "$as_me: error: can't find 'fcgi_stdio.h' header file in '$enable_fastcgi' directory. can't enable fastcgi support.
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+	fi
+fi
+
 # Check whether --enable-mysql or --disable-mysql was given.
 if test "${enable_mysql+set}" = set; then
   enableval="$enable_mysql"
@@ -4033,9 +4081,9 @@ echo "$as_me: 'mysql' feature is enabled" >&6;}
 		opt_defs="$opt_defs -DENABLE_MYSQL"
 		opt_incs="$opt_incs -I$enable_mysql"
 	else
-		{ { echo "$as_me:$LINENO: error: can't find 'mysql.h' header in '$enable_mysql' directory
+		{ { echo "$as_me:$LINENO: error: can't find 'mysql.h' header file in '$enable_mysql' directory. can't enable mysql support.
 See \`config.log' for more details." >&5
-echo "$as_me: error: can't find 'mysql.h' header in '$enable_mysql' directory
+echo "$as_me: error: can't find 'mysql.h' header file in '$enable_mysql' directory. can't enable mysql support.
 See \`config.log' for more details." >&2;}
    { (exit 1); exit 1; }; }
 	fi

@@ -116,6 +116,18 @@ Q_ARG_ENABLE([debug], [enable debugging output], [-DBUILD_DEBUG])
 Q_ARG_ENABLE([lfs], [enable large file supports], [-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
 Q_ARG_ENABLE([sendfile], [use sendfile() if possible], [-DENABLE_SENDFILE])
 
+AC_ARG_ENABLE([fastcgi],[AS_HELP_STRING([--enable-fastcgi=/FASTCGI_INCLUDE_DIR_PATH/], [enable FastCGI supports])],[enableval=yes],[enableval=no])
+if test "$enableval" = yes; then
+	AC_CHECK_FILE([$enable_fastcgi/fcgi_stdio.h],[enableval=yes],[enableval=no])
+	if test "$enableval" = yes; then
+		AC_MSG_NOTICE(['fastcgi' feature is enabled])
+		opt_defs="$opt_defs -DENABLE_FASTCGI"
+		opt_incs="$opt_incs -I$enable_fastcgi"
+	else
+		AC_MSG_FAILURE([can't find 'fcgi_stdio.h' header file in '$enable_fastcgi' directory. can't enable fastcgi support.])
+	fi
+fi
+
 AC_ARG_ENABLE([mysql],[AS_HELP_STRING([--enable-mysql=/MYSQL_INCLUDE_DIR_PATH/], [enable MySQL database supports])],[enableval=yes],[enableval=no])
 if test "$enableval" = yes; then
 	AC_CHECK_FILE([$enable_mysql/mysql.h],[enableval=yes],[enableval=no])
@@ -124,7 +136,7 @@ if test "$enableval" = yes; then
 		opt_defs="$opt_defs -DENABLE_MYSQL"
 		opt_incs="$opt_incs -I$enable_mysql"
 	else
-		AC_MSG_FAILURE([can't find 'mysql.h' header in '$enable_mysql' directory])
+		AC_MSG_FAILURE([can't find 'mysql.h' header file in '$enable_mysql' directory. can't enable mysql support.])
 	fi
 fi
 
