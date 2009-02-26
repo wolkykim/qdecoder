@@ -7,7 +7,7 @@ qDecoder Changes
 ``New'', ``Replaced'' and ``Removed''.
 
   Release 9.0.3
-    NEW) Modified autoconf script and source codes to support FastCGI
+    NEW) Modified autoconf script and source codes to support FastCGI.
 
   Release 9.0.2
     FIX) large file problems. (changing some size_t type to off_t type)
@@ -25,11 +25,11 @@ qDecoder Changes
     Distributed under BSD-like License.
 
   Release 8.0
-    NEW) qDecoderSetUploadBase() - Initialize qDecoder() for progressive
+    NEW) qDecoderSetUploadBase() - initialize qDecoder() for progressive
     uploading.
     FIX) qDecoder() - Now qDecoder() supports progressive uploading and direct
     file saving into disk.
-    NEW) qSedArgAddDirect() - For huge size(over 1024 - 1) value.
+    NEW) qSedArgAddDirect() - for huge size(over 1024 - 1) value.
 
   Release 7.1.1
     FIX) qSedArgAdd() - Adjust miss typed variable length. (1024*64 => 1024)
