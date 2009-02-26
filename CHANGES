@@ -6,6 +6,9 @@ qDecoder Changes
 ``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``New'', ``Replaced'' and ``Removed''.
 
+  Release 9.0.3
+    NEW) Modified autoconf script and source codes to support FastCGI
+
   Release 9.0.2
     FIX) large file problems. (changing some size_t type to off_t type)
     FIX) fixed up shared library building problem on FreeBSD AMD 64 machine.
