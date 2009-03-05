@@ -48,9 +48,9 @@
 /**
  * Read counter(integer) from file with advisory file locking.
  *
- * @param filepath file path
+ * @param filepath	file path
  *
- * @return	counter value readed from file. in case of failure, returns 0.
+ * @return		counter value readed from file. in case of failure, returns 0.
  *
  * @note
  * @code
@@ -76,22 +76,22 @@ int qCountRead(const char *filepath) {
  * @param filepath	file path
  * @param number	counter integer value
  *
- * @return	saved counter value. in case of failure, returns 0.
+ * @return		true if successful, otherwise returns false.
  *
  * @note
  * @code
  *   qCountSave("number.dat", 75);
  * @endcode
  */
-int qCountSave(const char *filepath, int number) {
+bool qCountSave(const char *filepath, int number) {
 	int fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
 	if(fd < 0) return false;
 
 	ssize_t updated = _q_writef(fd, "%d", number);
 	close(fd);
 
-	if(updated > 0) return number;
-	return 0;
+	if(updated > 0) return true;
+	return false;
 }
 
 /**
@@ -101,7 +101,7 @@ int qCountSave(const char *filepath, int number) {
  * @param filepath	file path
  * @param number	how much increase or decrease
  *
- * @return	updated counter value. in case of failure, returns 0.
+ * @return		updated counter value. in case of failure, returns 0.
  *
  * @note
  * @code
@@ -112,5 +112,6 @@ int qCountSave(const char *filepath, int number) {
 int qCountUpdate(const char *filepath, int number) {
 	int counter = qCountRead(filepath);
 	counter += number;
-	return qCountSave(filepath, counter);
+	if(qCountSave(filepath, counter) == true) return counter;
+	return 0;
 }
