@@ -63,12 +63,11 @@ int qCountRead(const char *filepath) {
 	if(fd < 0) return 0;
 
 	char buf[10+1];
-	if(read(fd, buf, sizeof(buf)) <= 0) {
-		close(fd);
-		return 0;
-	}
+	ssize_t readed = read(fd, buf, sizeof(buf));
+	close(fd);
 
-	return atoi(buf);
+	if(readed > 0) return atoi(buf);
+	return 0;
 }
 
 /**
@@ -77,24 +76,22 @@ int qCountRead(const char *filepath) {
  * @param filepath	file path
  * @param number	counter integer value
  *
- * @return	in case of success, returns true. otherwise false.
+ * @return	saved counter value. in case of failure, returns 0.
  *
  * @note
  * @code
  *   qCountSave("number.dat", 75);
  * @endcode
  */
-bool qCountSave(const char *filepath, int number) {
+int qCountSave(const char *filepath, int number) {
 	int fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
 	if(fd < 0) return false;
 
-	if(_q_writef(fd, "%d", number) <= 0) {
-		close(fd);
-		return false;
-	}
-
+	ssize_t updated = _q_writef(fd, "%d", number);
 	close(fd);
-	return true;
+
+	if(updated > 0) return number;
+	return 0;
 }
 
 /**

@@ -475,7 +475,7 @@ extern	bool		qSedFile(Q_ENTRY *entry, const char *filepath, FILE *fpout);
  * qCount.c
  */
 extern	int		qCountRead(const char *filepath);
-extern	bool		qCountSave(const char *filepath, int number);
+extern	int		qCountSave(const char *filepath, int number);
 extern	int		qCountUpdate(const char *filepath, int number);
 
 /*
