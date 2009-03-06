@@ -228,7 +228,7 @@ bool qSessionSave(Q_ENTRY *session) {
 		DEBUG("Can't save session file %s", session_storage_path);
 		return false;
 	}
-	if (_updateTimeout(session_timeout_path, session_timeout_interval) == 0) {
+	if (_updateTimeout(session_timeout_path, session_timeout_interval) == false) {
 		DEBUG("Can't update file %s", session_timeout_path);
 		return false;
 	}
@@ -319,7 +319,7 @@ static int _isValidSession(const char *filepath) {
 static bool _updateTimeout(const char *filepath, time_t timeout_interval) {
 	if(timeout_interval <= 0) return false;
 
-	if(qCountSave(filepath, time(NULL) + timeout_interval) <= 0) return false;
+	if(qCountSave(filepath, (time(NULL) + timeout_interval)) == false) return false;
 	return true;
 }
 
