@@ -236,7 +236,7 @@ extern	bool		qHtmlIsUrl(const char *url);
 /*
  * qSocket.c
  */
-extern	int		qSocketOpen(const char *hostname, int port);
+extern	int		qSocketOpen(const char *hostname, int port, int timeoutms);
 extern	bool		qSocketClose(int sockfd);
 extern	int		qSocketWaitReadable(int sockfd, int timeoutms);
 extern	int		qSocketWaitWritable(int sockfd, int timeoutms);

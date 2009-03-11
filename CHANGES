@@ -5,6 +5,8 @@ qDecoder Changes
 
    ``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'', ``New'',
    ``Replaced'' and ``Removed''.
+     * Current
+          + FIX) Added timeout parameter to qSocketOpen().
      * Release 9.0.3
           + NEW) Modified autoconf script and source codes to support FastCGI.
      * Release 9.0.2

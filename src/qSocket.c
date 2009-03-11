@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <poll.h>
+#include <errno.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -56,12 +57,12 @@
 #define MAX_SAVEINTOFILE_CHUNK_SIZE	(64 * 1024)
 
 static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port);
-
 /**
  * Create a TCP socket for the remote host and port.
  *
  * @param	hostname	remote hostname
  * @param	port		remote port
+ * @param	timeoutms	wait timeout milliseconds. if set to negative value, wait indefinitely.
  *
  * @return	the new socket descriptor, or -1 in case of invalid hostname, -2 in case of socket creation failure, -3 in case of connection failure.
  *
@@ -71,20 +72,28 @@ static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port);
  * @code
  * @endcode
  */
-int qSocketOpen(const char *hostname, int port) {
+int qSocketOpen(const char *hostname, int port, int timeoutms) {
 	/* host conversion */
 	struct sockaddr_in addr;
 	if (_getAddr(&addr, hostname, port) == false) return -1; /* invalid hostname */
 
-	/* make sockfd */
+	/* create new socket */
 	int sockfd;
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) return -2; /* sockfd creation fail */
 
-	/* connect */
-	if (connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+	/* set to non-block socket*/
+	int flags = fcntl(sockfd, F_GETFL, 0);
+	if(timeoutms >= 0) fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+	/* try to connect */
+	int status = connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
+	if( status < 0 && (errno != EINPROGRESS || qSocketWaitWritable(sockfd, timeoutms) <= 0) ) {
 		qSocketClose(sockfd);
-		return -3; /* connection fail */
+		return -3; /* connection failed */
 	}
+
+	/* restore to block socket */
+	if(timeoutms >= 0) fcntl(sockfd, F_SETFL, flags);
 
 	return sockfd;
 }

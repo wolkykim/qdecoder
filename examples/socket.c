@@ -33,7 +33,7 @@
 
 int dumpHttp(const char *hostname, int port) {
 	// open socket
-	int sockfd = qSocketOpen(hostname, port);
+	int sockfd = qSocketOpen(hostname, port, SOCKET_TIMEOUT);
 	if (sockfd < 0) return sockfd;
 
 	// send data
