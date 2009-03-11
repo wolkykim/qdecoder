@@ -7,6 +7,8 @@ qDecoder Changes
    ``Replaced'' and ``Removed''.
      * Current
           + FIX) Added timeout parameter to qSocketOpen().
+          + FIX) configure script supports --enable-fastcgi option.
+          + FIX) Fixed bug about qCountUpdate() does not returns updated counter value.
      * Release 9.0.3
           + NEW) Modified autoconf script and source codes to support FastCGI.
      * Release 9.0.2
