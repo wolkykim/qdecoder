@@ -160,8 +160,8 @@ bool qDbOpen(Q_DB *db) {
 	// initialize handler
 	if(db->mysql != NULL) qDbClose(db);
 
-	db->mysql = mysql_init(NULL);
-	if(db->mysql == NULL) return false;
+	if(mysql_library_init(0, NULL, NULL) != 0) return NULL;
+	if((db->mysql = mysql_init(NULL)) == NULL) return false;
 
 	// set options
 	my_bool reconnect = _Q_MYSQL_OPT_RECONNECT;
@@ -213,6 +213,7 @@ bool qDbClose(Q_DB *db) {
 	if(db->mysql != NULL) {
 		mysql_close(db->mysql);
 		db->mysql = NULL;
+		mysql_library_end();
 	}
 	db->connected = false;
 	return true;
