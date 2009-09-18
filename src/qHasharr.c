@@ -552,7 +552,7 @@ static int _getIdx(Q_HASHARR *tbl, const char *key, int hash) {
 		unsigned char keymd5[16];
 
 		unsigned char *tmpmd5 = qHashMd5(key, keylen);
-		qStrCpy(keymd5, sizeof(keymd5), tmpmd5, sizeof(keymd5));
+		strncpy(keymd5, tmpmd5, 16);
 		free(tmpmd5);
 
 		int count, idx;
