@@ -437,12 +437,12 @@ static int _parse_multipart(Q_ENTRY *request) {
 		qCgiResponseSetContentType(request, "text/html");
 
 		printf("Content Length = %s<br>\n", getenv("CONTENT_LENGTH"));
-		printf("Boundary len %d : %s<br>\n", strlen(boundary), boundary);
+		printf("Boundary len %zu : %s<br>\n", strlen(boundary), boundary);
 		for (i = 0; boundary[i] != '\0'; i++) printf("%02X ", boundary[i]);
 		printf("<p>\n");
 
 		for (j = 1; _q_fgets(buf, sizeof(buf), stdin) != NULL; j++) {
-			printf("Line %d, len %d : %s<br>\n", j, strlen(buf), buf);
+			printf("Line %d, len %zu : %s<br>\n", j, strlen(buf), buf);
 			//for (i = 0; buf[i] != '\0'; i++) printf("%02X ", buf[i]);
 			printf("<br>\n");
 		}
