@@ -33,49 +33,55 @@ DEFS	= @DEFS@
 INCLUDE	= -I. -I@includedir@
 LIB	= @libdir@/libqDecoder.a
 
+TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi session.cgi config.cgi socket.cgi obstack.cgi \
+	hashtable
+
 ## Main
-all:	query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi session.cgi config.cgi socket.cgi obstack.cgi
+all:	${TARGETS}
 
 query.cgi: query.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o query.cgi query.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 
 cookie.cgi: cookie.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o cookie.cgi cookie.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 
 multivalue.cgi:	multivalue.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o multivalue.cgi multivalue.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 
 upload.cgi: upload.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o upload.cgi upload.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 	chmod 6755 upload.cgi
 
 uploadfile.cgi: uploadfile.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o uploadfile.cgi uploadfile.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 	chmod 6755 uploadfile.cgi
 	mkdir -p -m 755 upload tmp
 
 download.cgi: download.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o download.cgi download.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 
 streamedit.cgi: streamedit.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o streamedit.cgi streamedit.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 
 session.cgi: session.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o session.cgi session.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 	chmod 6755 session.cgi
 
 config.cgi: config.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o config.cgi config.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 
 socket.cgi: socket.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o socket.cgi socket.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 
 obstack.cgi: obstack.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o obstack.cgi obstack.o ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+
+hashtable: hashtable.o
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 
 ## Clear Module
 clean:
-	rm -f *.o *.cgi
+	rm -f *.o ${TARGETS}
 	rm -rf upload tmp
 
 ## Compile Module
