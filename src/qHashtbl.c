@@ -40,20 +40,28 @@ static int _findEmpty(Q_HASHTBL *tbl, int startidx);
 static int _getIdx(Q_HASHTBL *tbl, const char *key, int hash);
 static bool _putData(Q_HASHTBL *tbl, int idx, int hash, const char *key, const void *value, int size, int count);
 static bool _removeData(Q_HASHTBL *tbl, int idx);
+static bool _setThreshold(Q_HASHTBL *tbl, int max, int threshold);
 
 /**
  * Initialize dynamic-hash table
  *
- * @param max		a number of maximum  size of Q_HASHARR
+ * @param max		a number of initial number of slots of Q_HASHTBL
+ * @param resize	enable or disable auto incremental resizing
+ * @param threshold	a persent of threshold for resizing. 0 for default.
  *
  * @return		a pointer of malloced Q_HASHTBL, otherwise returns false
  *
  * @code
- *   Q_HASHTBL *hashtbl = qHashtblInit(1000);
+ *   // initial table size is 1000, enable resizing, use default threshold
+ *   Q_HASHTBL *hashtbl = qHashtblInit(1000, true, 0);
  *   qHashtblFree(hashtbl);
  * @endcode
+ *
+ * @note
+ * If the total number of used slots is reached at threshold parameter, hash table is automatically enlarged to double size(_Q_HASHTBL_RESIZE_MAG).
+ * The default threshold is 80% and is defined in header with _Q_HASHTBL_DEF_THRESHOLD.
  */
-Q_HASHTBL *qHashtblInit(int max) {
+Q_HASHTBL *qHashtblInit(int max, bool resize, int threshold) {
 	if(max <= 0) return NULL;
 
 	Q_HASHTBL *tbl = (Q_HASHTBL *)malloc(sizeof(Q_HASHTBL));
@@ -61,6 +69,13 @@ Q_HASHTBL *qHashtblInit(int max) {
 
 	memset((void *)tbl, 0, sizeof(Q_HASHTBL));
 
+	// calculate and set threshold
+	if(resize == true) {
+		if(threshold <= 0 || threshold > 100) threshold = _Q_HASHTBL_DEF_THRESHOLD;
+		_setThreshold(tbl, max, threshold);
+	}
+
+	// allocate table space
 	tbl->count = (int *)malloc(sizeof(int) * max);
 	if(tbl->count != NULL) memset((void *)(tbl->count), 0, (sizeof(int) * max));
 	tbl->hash = (int *)malloc(sizeof(int) * max);
@@ -73,6 +88,7 @@ Q_HASHTBL *qHashtblInit(int max) {
 	tbl->size = (int *)malloc(sizeof(int) * max);
 	if(tbl->size != NULL) memset((void *)(tbl->size), 0, (sizeof(int) * max));
 
+	// check allocation was successful
 	if(tbl->count == NULL || tbl->hash == NULL || tbl->key == NULL || tbl->value == NULL || tbl->size == NULL) {
 		qHashtblFree(tbl);
 		return NULL;
@@ -80,6 +96,63 @@ Q_HASHTBL *qHashtblInit(int max) {
 
 	tbl->max = max;
 	return tbl;
+}
+
+/**
+ * Resize dynamic-hash table
+ *
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param max		a number of initial number of slots of Q_HASHTBL
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @code
+ *   // initial table size is 1000, enable resizing, use default threshold
+ *   qHashtblResize(tbl, 3000);
+ * @endcode
+ *
+ * @note
+ * auto resize flag and resize threshold parameter will be set to same as previous.
+ */
+bool qHashtblResize(Q_HASHTBL *tbl, int max) {
+	if(max <= 0) return false;
+	if(max == tbl->max) return true;	// don't need to resize, just set threshold
+
+	// create new table
+	Q_HASHTBL *newtbl = qHashtblInit(max, false, 0);
+	if(newtbl == NULL) return false;
+
+	// copy entries
+	int idx, num;
+	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
+		if (tbl->count[idx] == 0) continue;
+		if(qHashtblPut(newtbl, tbl->key[idx], tbl->value[idx], tbl->size[idx]) == false) {
+			DEBUG("hashtbl: resize failed");
+			qHashtblFree(newtbl);
+			return false;
+		}
+		num++;
+	}
+
+	// set threshold
+	if(tbl->threshold > 0) {
+		_setThreshold(newtbl, max, tbl->threshold);
+	}
+
+	// de-allocate contents from the old table schema
+	Q_HASHTBL *tmptbl = (Q_HASHTBL *)malloc(sizeof(Q_HASHTBL));
+	if(tmptbl == NULL) {
+		qHashtblFree(newtbl);
+		return false;
+	}
+	memcpy(tmptbl, tbl, sizeof(Q_HASHTBL));
+	qHashtblFree(tmptbl);
+
+	// move contents of newtable schema then remove schema itself
+	memcpy(tbl, newtbl, sizeof(Q_HASHTBL));
+	free(newtbl);
+
+	return true;
 }
 
 /**
@@ -131,7 +204,7 @@ bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size) {
 	// check, is slot empty
 	if (tbl->count[hash] == 0) { // empty slot
 		// put data
-		_putData(tbl, hash, hash, key, value, size, 1);
+		if(_putData(tbl, hash, hash, key, value, size, 1) == false) return false;
 
 		DEBUG("hashtbl: put(new) %s (idx=%d,hash=%d,tot=%d)", key, hash, hash, tbl->num);
 	} else if (tbl->count[hash] > 0) { // same key exists or hash collision
@@ -147,26 +220,32 @@ bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size) {
 			if (idx < 0) return false;
 
 			// put data
-			_putData(tbl, idx, hash, key, value, size, -1); // -1 is used for idx != hash;
+			if(_putData(tbl, idx, hash, key, value, size, -1) == false) return false; // -1 is used for collision resolution idx != hash;
 
 			// increase counter from leading slot
 			tbl->count[hash]++;
 
 			DEBUG("hashtbl: put(col) %s (idx=%d,hash=%d,tot=%d)", key, idx, hash, tbl->num);
 		}
-	} else { // in case of -1. used for dup data, move it
+	} else { // in case of -1. used for collided data, move it
 		// find empty slot
 		int idx = _findEmpty(tbl, hash);
 		if (idx < 0) return false;
 
-		// move dup data
-		_putData(tbl, idx, tbl->hash[hash], tbl->key[hash], tbl->value[hash], tbl->size[hash], tbl->count[hash]);
+		// move collided data
+		if(_putData(tbl, idx, tbl->hash[hash], tbl->key[hash], tbl->value[hash], tbl->size[hash], tbl->count[hash]) == false) return false;
 		_removeData(tbl, hash);
 
 		// store data
-		_putData(tbl, hash, hash, key, value, size, 1);
+		if(_putData(tbl, hash, hash, key, value, size, 1) == false) return false;
 
 		DEBUG("hashtbl: put(swp) %s (idx=%d,hash=%d,tot=%d)", key, hash, hash, tbl->num);
+	}
+
+	// check threshold
+	if(tbl->threshold > 0 && tbl->num >= tbl->resizeat) {
+		DEBUG("hashtbl: resizing %d/%d/%d,%d%%->%d/%d", tbl->num, tbl->resizeat, tbl->max, tbl->threshold, tbl->num, tbl->max * _Q_HASHTBL_RESIZE_MAG);
+		qHashtblResize(tbl, (tbl->max * _Q_HASHTBL_RESIZE_MAG));
 	}
 
 	return true;
@@ -245,7 +324,7 @@ char *qHashtblGetStr(Q_HASHTBL *tbl, const char *key) {
 /**
  * Get integer from hash table
  *
- * @param tbl		a pointer of Q_HASHARR
+ * @param tbl		a pointer of Q_HASHTBL
  * @param key		key string
  *
  * @return		value integer if successful, otherwise(not found) returns 0
@@ -343,11 +422,11 @@ bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
 		// move to leading slot
 		int backupcount = tbl->count[idx];
 		_removeData(tbl, idx); // remove leading slot
-		_putData(tbl, idx, tbl->hash[idx2], tbl->key[idx2], tbl->value[idx2], tbl->size[idx2], backupcount - 1); // copy to leading slot
+		if(_putData(tbl, idx, tbl->hash[idx2], tbl->key[idx2], tbl->value[idx2], tbl->size[idx2], backupcount - 1) == false) return false; // copy to leading slot
 		_removeData(tbl, idx2); // remove dup slot
 
 		DEBUG("hashtbl: rem(lead) %s (idx=%d,tot=%d)", key, idx, tbl->num);
-	} else { // in case of -1. used for dup data
+	} else { // in case of -1. used for collided data
 		// decrease counter from leading slot
 		if(tbl->count[tbl->hash[idx]] <= 1) {
 			DEBUG("hashtbl: BUG remove failed %s. counter of leading slot mismatch.", key);
@@ -379,7 +458,7 @@ bool qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
 	int idx, num;
 	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
 		if (tbl->count[idx] == 0) continue;
-		fprintf(out, "%s=%s (idx=%d,hash=%d,size=%d)\n", tbl->key[idx], (showvalue)?(char*)tbl->value[idx]:"_binary_", idx, tbl->hash[idx], tbl->size[idx]);
+		fprintf(out, "%s=%s (idx=%d,hash=%d,size=%d,count=%d)\n", tbl->key[idx], (showvalue)?(char*)tbl->value[idx]:"_binary_", idx, tbl->hash[idx], tbl->size[idx], tbl->count[idx]);
 		num++;
 	}
 
@@ -389,7 +468,7 @@ bool qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
 /**
  * Get hash table internal status
  *
- * @param tbl		a pointer of Q_HASHARR
+ * @param tbl		a pointer of Q_HASHTBL
  * @param used		if not NULL, a number of used keys will be stored
  * @param max		if not NULL, the maximum usable number of keys will be stored
  *
@@ -485,6 +564,18 @@ static bool _removeData(Q_HASHTBL *tbl, int idx) {
 
 	// decrease used counter
 	tbl->num--;
+
+	return true;
+}
+
+static bool _setThreshold(Q_HASHTBL *tbl, int max, int threshold) {
+	if(threshold <= 0 || threshold > 100) return false;
+
+	int num = ((max * threshold) / 100);
+	if(num >= max) num = max - 1;
+
+	tbl->threshold = threshold;
+	tbl->resizeat = num;
 
 	return true;
 }

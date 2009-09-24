@@ -69,12 +69,16 @@ typedef struct {
 	Q_NLOBJ *cont;			/*!< next object pointer used by qEntryGet*() */
 } Q_ENTRY;
 
+#define _Q_HASHTBL_RESIZE_MAG		(2)
+#define _Q_HASHTBL_DEF_THRESHOLD	(80)
 /**
  * Structure for hash-table data structure.
  */
 typedef struct {
 	int	max;			/*!< maximum hashtable size */
 	int	num;			/*!< used slot counter */
+	int	threshold;		/*!< if the percent of used slot counter exceeds this threshold percent, new larger table(max * _Q_HASHTBL_RESIZE_MAG) is allocated */
+	int	resizeat;		/*!< calculated used amount = (max * threshold) / 100 */
 
 	int	*count;			/*!< hash collision counter. 0 indicate empty slot, -1 is used for moved slot due to hash collision */
 	int	*hash;			/*!< key hash. we use qHashFnv32() to generate hash integer */
@@ -89,7 +93,7 @@ typedef struct {
  * Structure for hash-table data structure based on array.
  */
 typedef struct {
-	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for moved slot due to hash collision, -2 is used for indicating linked block */
+	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for collision resolution, -2 is used for indicating linked block */
 	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
 
 	char	key[_Q_HASHARR_MAX_KEYSIZE];		/*!< key string, it can be truncated */
@@ -342,7 +346,8 @@ extern	int		qEntryLoad(Q_ENTRY *entry, const char *filepath, char sepchar, bool 
 /*
  * qHashtbl.c
  */
-extern	Q_HASHTBL*	qHashtblInit(int max);
+extern	Q_HASHTBL*	qHashtblInit(int max, bool resize, int threshold);
+extern	bool		qHashtblResize(Q_HASHTBL *tbl, int max);
 extern	bool		qHashtblFree(Q_HASHTBL *tbl);
 extern	bool		qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size);
 extern	bool		qHashtblPutStr(Q_HASHTBL *tbl, const char *key, const char *value);
