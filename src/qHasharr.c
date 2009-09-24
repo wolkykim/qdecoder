@@ -230,7 +230,7 @@ bool qHasharrPut(Q_HASHARR *tbl, const char *key, const void *value, int size) {
 			int idx = _findEmpty(tbl, hash);
 			if (idx < 0) return false;
 
-			// put data. -1 is used for dup key (idx != hash);
+			// put data. -1 is used for collision resolution (idx != hash);
 			if(_putData(tbl, idx, hash, key, value, size, -1) == false) {
 				DEBUG("hasharr: FAILED put(col) %s", key);
 				return false;
@@ -241,7 +241,7 @@ bool qHasharrPut(Q_HASHARR *tbl, const char *key, const void *value, int size) {
 
 			DEBUG("hasharr: put(col) %s (idx=%d,hash=%d,tot=%d)", key, idx, hash, tbl[0].count);
 		}
-	} else { // in case of -1 or -2. used for dup or expanded data, move it
+	} else { // in case of -1 or -2. used for collision resolution or oversized value data, move it
 
 		// find empty slot
 		int idx = _findEmpty(tbl, hash);
@@ -460,11 +460,11 @@ bool qHasharrRemove(Q_HASHARR *tbl, const char *key) {
 		int backupcount = tbl[idx].count;
 		_removeData(tbl, idx); // remove leading data
 		_copySlot(tbl, idx, idx2); // copy slot
-		tbl[idx].count = backupcount - 1; // adjust dup count
+		tbl[idx].count = backupcount - 1; // adjust collision counter
 		_removeSlot(tbl, idx2); // remove moved slot
 
 		DEBUG("hasharr: rem(lead) %s (idx=%d,tot=%d)", key, idx, tbl[0].count);
-	} else { // in case of -1. used for dup data
+	} else { // in case of -1. used for collisio resolution
 		// decrease counter from leading slot
 		if(tbl[ tbl[idx].hash ].count <= 1) {
 			DEBUG("hasharr: BUG remove failed %s. counter of leading slot mismatch.", key);
@@ -472,7 +472,7 @@ bool qHasharrRemove(Q_HASHARR *tbl, const char *key) {
 		}
 		tbl[ tbl[idx].hash ].count--;
 
-		// remove dup data
+		// remove data
 		_removeData(tbl, idx);
 
 		DEBUG("hasharr: rem(dup) %s (idx=%d,tot=%d)", key, idx, tbl[0].count);
