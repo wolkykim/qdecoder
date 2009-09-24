@@ -43,7 +43,7 @@ void stringSample(void) {
 	// print out
 	printf("[String Sample]\n");
 	printf("Final string = %s\n", final);
-	printf("Total Size = %d, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
+	printf("Total Size = %zu, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
 
 	// free obstack
 	qObstackFree(obstack);
@@ -78,7 +78,7 @@ void objectSample(void) {
 	for(i = 0; i < qObstackGetNum(obstack); i++) {
 		printf("Object%d final = %d, %s\n", i+1, final[i].num, final[i].str);
 	}
-	printf("Total Size = %d, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
+	printf("Total Size = %zu, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
 
 	// free obstack
 	qObstackFree(obstack);
