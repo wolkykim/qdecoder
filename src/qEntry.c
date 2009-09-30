@@ -163,11 +163,11 @@ int qEntryRemove(Q_ENTRY *entry, const char *name) {
  * @param name		key name.
  * @param object	object pointer
  * @param size		size of the object
- * @param update	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
  *
  * @return		true if successful, otherwise returns false.
  */
-bool qEntryPut(Q_ENTRY *entry, const char *name, const void *object, int size, bool update) {
+bool qEntryPut(Q_ENTRY *entry, const char *name, const void *object, int size, bool replace) {
 	/* check arguments */
 	if(entry == NULL || name == NULL || object == NULL || size < 0) return false;
 
@@ -184,7 +184,7 @@ bool qEntryPut(Q_ENTRY *entry, const char *name, const void *object, int size, b
 	memcpy(dup_object, object, size);
 
 	/* check same name */
-	if (update == true) qEntryRemove(entry, dup_name);
+	if (replace == true) qEntryRemove(entry, dup_name);
 
 	/* new entry */
 	Q_NLOBJ *obj = (Q_NLOBJ*)malloc(sizeof(Q_NLOBJ));
@@ -216,13 +216,13 @@ bool qEntryPut(Q_ENTRY *entry, const char *name, const void *object, int size, b
  * @param entry		Q_ENTRY pointer
  * @param name		key name.
  * @param str		string value
- * @param update	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
  *
  * @return		true if successful, otherwise returns false.
  */
-bool qEntryPutStr(Q_ENTRY *entry, const char *name, const char *str, bool update) {
+bool qEntryPutStr(Q_ENTRY *entry, const char *name, const char *str, bool replace) {
 	int size = (str!=NULL) ? (strlen(str) + 1) : 0;
-	return qEntryPut(entry, name, (const void *)str, size, update);
+	return qEntryPut(entry, name, (const void *)str, size, replace);
 }
 
 /**
@@ -230,12 +230,12 @@ bool qEntryPutStr(Q_ENTRY *entry, const char *name, const char *str, bool update
  *
  * @param entry		Q_ENTRY pointer
  * @param name		key name.
- * @param update	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
  * @param format	formatted string value
  *
  * @return		true if successful, otherwise returns false.
  */
-bool qEntryPutStrf(Q_ENTRY *entry, const char *name, bool update, char *format, ...) {
+bool qEntryPutStrf(Q_ENTRY *entry, const char *name, bool replace, char *format, ...) {
 	char str[MAX_LINEBUF];
 	va_list arglist;
 
@@ -243,7 +243,7 @@ bool qEntryPutStrf(Q_ENTRY *entry, const char *name, bool update, char *format, 
 	vsnprintf(str, sizeof(str), format, arglist);
 	va_end(arglist);
 
-	return qEntryPutStr(entry, name, str, update);
+	return qEntryPutStr(entry, name, str, replace);
 }
 
 /**
@@ -252,14 +252,14 @@ bool qEntryPutStrf(Q_ENTRY *entry, const char *name, bool update, char *format, 
  * @param entry		Q_ENTRY pointer
  * @param name		key name.
  * @param num		number value
- * @param update	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
  *
  * @return		true if successful, otherwise returns false.
  */
-bool qEntryPutInt(Q_ENTRY *entry, const char *name, int num, bool update) {
+bool qEntryPutInt(Q_ENTRY *entry, const char *name, int num, bool replace) {
 	char str[10+1];
 	sprintf(str, "%d", num);
-	return qEntryPut(entry, name, (void *)str, strlen(str) + 1, update);
+	return qEntryPut(entry, name, (void *)str, strlen(str) + 1, replace);
 }
 
 /**
