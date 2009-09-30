@@ -38,8 +38,6 @@
 
 #define _INCLUDE_DIRECTIVE	"@INCLUDE "
 
-static char *_parseVariable(Q_ENTRY *config, char *value);
-
 /**
  * Load & parse configuration file
  *
@@ -171,99 +169,12 @@ Q_ENTRY *qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar) {
 		qStrTrim(value);
 		qStrTrim(name);
 
-		qEntryPutStr(config, name, value, true);
+		qEntryPutStrParsed(config, name, value, true);
 
 		free(name);
 		free(value);
 	}
 	free(org);
 
-	/* processing ${} directive */
-	Q_NLOBJ *obj;
-	for(obj = (Q_NLOBJ*)qEntryFirst(config); obj; obj = (Q_NLOBJ*)qEntryNext(config)) {
-		obj->object = _parseVariable(config, obj->object);
-	}
-
 	return config;
-}
-
-#define _VAR			'$'
-#define _VAR_OPEN		'{'
-#define _VAR_CLOSE		'}'
-#define _VAR_CMD		'!'
-#define _VAR_ENV		'%'
-static char *_parseVariable(Q_ENTRY *config, char *value) {
-	int loop;
-
-	do {
-		char *s, *e;
-		int bcnt;
-
-		loop = 0;
-
-		/* find ${ */
-		for(s = value; *s != '\0'; s++) {
-			if(!(*s == _VAR && *(s+1) == _VAR_OPEN)) continue;
-
-			/* found ${, try to find }. s points $ */
-			bcnt = 1; /* braket open counter */
-			for(e = s + 2; *e != '\0'; e++) {
-				if(*e == _VAR && *(e+1) == _VAR_OPEN) { /* found internal ${ */
-					s = e - 1; /* e is always bigger than s, so negative overflow never occured */
-					break;
-				}
-				else if(*e == _VAR_OPEN) bcnt++;
-				else if(*e == _VAR_CLOSE) bcnt--;
-				else continue;
-
-				if(bcnt == 0) break;
-			}
-			if(*e == '\0') break; /* braket mismatch */
-			if(bcnt > 0) continue; /* found internal ${ */
-
-			/* found atomic ${ }. pick internal string */
-			char buf[MAX_LINEBUF];
-			int len;
-
-			len = e - s - 2; /* length between ${ , } */
-			if (len >= (sizeof(buf) - 1)) continue; /* too long */
-			qStrCpy(buf, sizeof(buf), s + 2, len);
-			qStrTrim(buf);
-
-			/* get the string to replace*/
-			char *t;
-			int freet = 0;
-			switch (buf[0]) {
-				case _VAR_CMD : {
-					if ((t = qStrTrim(qSysCmd(buf + 1))) == NULL) t = "";
-					else freet = 1;
-					break;
-				}
-				case _VAR_ENV : {
-					t = (char*)qSysGetEnv(buf + 1, "");
-					break;
-				}
-				default : {
-					if ((t = (char *)qEntryGetStr(config, buf)) == NULL) {
-						s = e; /* not found */
-						continue;
-					}
-					break;
-				}
-			}
-
-			/* replace */
-			qStrCpy(buf, sizeof(buf), s, len + 3); /* ${value} */
-
-			s = qStrReplace("sn", value, buf, t);
-			if (freet == 1) free(t);
-			free(value);
-			value = s;
-
-			loop = 1;
-			break;
-		}
-	} while(loop == 1);
-
-	return value;
 }

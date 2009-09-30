@@ -247,6 +247,37 @@ bool qEntryPutStrf(Q_ENTRY *entry, const char *name, bool replace, char *format,
 }
 
 /**
+ * Add string object with parsed into linked-list structure.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name.
+ * @param str		string value which may contain variables like ${...}
+ * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ *
+ * @return		true if successful, otherwise returns false.
+ *
+ * @code
+ * ${key_name}		variable replacement
+ * ${!system_command}	external command results
+ * ${%PATH}		get environments
+ * @endcode
+ *
+ * @code
+ *   qEntryPutStrParsed(entry, "BASE", "/usr/local", true);
+ *   qEntryPutStrParsed(entry, "BIN", "${BASE}/bin", true);
+ *   qEntryPutStrParsed(entry, "HOSTNAME", "${!/bin/hostname -s}", true);
+ *   qEntryPutStrParsed(entry, "USER", "${%USER}", true);
+ * @endcode
+ */
+bool qEntryPutStrParsed(Q_ENTRY *entry, const char *name, const char *str, bool replace) {
+	char *newstr = qEntryParseStr(entry, str);
+	int size = (newstr!=NULL) ? (strlen(newstr) + 1) : 0;
+	bool ret = qEntryPut(entry, name, (const void *)newstr, size, replace);
+	if(newstr != NULL) free(newstr);
+	return ret;
+}
+
+/**
  * Add integer object into linked-list structure.
  *
  * @param entry		Q_ENTRY pointer
@@ -578,6 +609,108 @@ int qEntryGetIntLast(Q_ENTRY *entry, const char *name) {
 }
 
 /**
+ * Parse string with given entries.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param str		string value which may contain variables like ${...}
+ *
+ * @return		malloced string if successful, otherwise returns NULL.
+ *
+ * @code
+ * ${key_name}		variable replacement
+ * ${!system_command}	external command results
+ * ${%PATH}		get environments
+ * @endcode
+ *
+ * @code
+ *   char *info = qEntryParseStr(entry, "${SOME_KEY} ${!uname -a} ${%PATH}", true);
+ *   if(info != NULL) free(info);
+ * @endcode
+ */
+#define _VAR			'$'
+#define _VAR_OPEN		'{'
+#define _VAR_CLOSE		'}'
+#define _VAR_CMD		'!'
+#define _VAR_ENV		'%'
+char *qEntryParseStr(Q_ENTRY *entry, const char *str) {
+	if(str == NULL) return NULL;
+	if(entry == NULL) return strdup(str);
+
+	bool loop;
+	char *value = strdup(str);
+	do {
+		loop = false;
+
+		/* find ${ */
+		char *s, *e;
+		int openedbrakets;
+		for(s = value; *s != '\0'; s++) {
+			if(!(*s == _VAR && *(s+1) == _VAR_OPEN)) continue;
+
+			/* found ${, try to find }. s points $ */
+			openedbrakets = 1; /* braket open counter */
+			for(e = s + 2; *e != '\0'; e++) {
+				if(*e == _VAR && *(e+1) == _VAR_OPEN) { /* found internal ${ */
+					s = e - 1; /* e is always bigger than s, so negative overflow never occured */
+					break;
+				}
+				else if(*e == _VAR_OPEN) openedbrakets++;
+				else if(*e == _VAR_CLOSE) openedbrakets--;
+				else continue;
+
+				if(openedbrakets == 0) break;
+			}
+			if(*e == '\0') break; /* braket mismatch */
+			if(openedbrakets > 0) continue; /* found internal ${ */
+
+			/* pick string between ${, } */
+			int varlen = e - s - 2; /* length between ${ , } */
+			char *varstr = (char*)malloc(varlen + 3 + 1);
+			if(varstr == NULL) continue;
+			strncpy(varstr, s + 2, varlen);
+			varstr[varlen] = '\0';
+
+			/* get the new string to replace */
+			char *newstr;
+			bool freenewstr = false;
+			switch (varstr[0]) {
+				case _VAR_CMD : {
+					if ((newstr = qStrTrim(qSysCmd(varstr + 1))) != NULL) freenewstr = true;
+					else newstr = "";
+					break;
+				}
+				case _VAR_ENV : {
+					newstr = (char*)qSysGetEnv(varstr + 1, "");
+					break;
+				}
+				default : {
+					if ((newstr = (char *)qEntryGetStr(entry, varstr)) == NULL) {
+						s = e; /* not found */
+						continue;
+					}
+					break;
+				}
+			}
+
+			/* replace */
+			strncpy(varstr, s, varlen + 3); /* ${str} */
+			varstr[varlen + 3] = '\0';
+
+			s = qStrReplace("sn", value, varstr, newstr);
+			if (freenewstr == true) free(newstr);
+			free(varstr);
+			free(value);
+			value = s;
+
+			loop = true;
+			break;
+		}
+	} while(loop == true);
+
+	return value;
+}
+
+/**
  * Get total number of stored objects
  *
  * @param entry		Q_ENTRY pointer
@@ -591,7 +724,7 @@ int qEntryGetNum(Q_ENTRY *entry) {
 }
 
 /**
- * Get the stored sequence number of the object.
+ * Get stored logical sequence number for the object.
  *
  * @param entry		Q_ENTRY pointer
  * @param name		key name
