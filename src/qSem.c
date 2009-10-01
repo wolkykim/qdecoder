@@ -91,6 +91,10 @@
  * @param ifexistdestroy set to true to destroy if semaphore already exists
  *
  * @return		non-negative shared memory identifier if successful, otherwise returns -1
+ *
+ * @code
+ *   int semid = qSemInit("/tmp/mydaemon.pid", 'q', 10, true);
+ * @endcode
  */
 int qSemInit(const char *keyfile, int keyid, int nsems, bool ifexistdestroy) {
 	key_t semkey;
