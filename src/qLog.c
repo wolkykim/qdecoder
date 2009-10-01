@@ -34,15 +34,15 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include "qDecoder.h"
+#include "qInternal.h"
 
-static int _realOpen(Q_LOG *log);
+static bool _realOpen(Q_LOG *log);
 
 /**
  * Open ratating-log file
  *
- * @param logbase		log directory
- * @param filenameformat	filename format. formatting argument is same as strftime()
- * @param rotateinterval	rotating interval seconds
+ * @param filepathfmt		filename format. formatting argument is same as strftime()
+ * @param rotateinterval	rotating interval seconds, set 0 to disable rotation
  * @param flush			set to true if you want to flush everytime logging. false for buffered logging
  *
  * @return		a pointer of Q_LOG structure
@@ -50,30 +50,27 @@ static int _realOpen(Q_LOG *log);
  * @note
  * rotateinterval is not relative time. If you set it to 3600, log file will be rotated at every hour.
  * And filenameformat is same as strftime(). So If you want to log with hourly rotating, filenameformat
- * must be defined at least hourly format, such like "xxx-%Y%m%d%H.log". You can set it to "xxx-%H.log"
- * for daily overwriting.
+ * must be defined including hour format like "/somepath/xxx-%Y%m%d%H.log". You can set it to
+ * "/somepath/xxx-%H.log" for daily overrided log file.
  *
  * @code
- *   Q_LOG *log = qLogOpen("/tmp", "qdecoder-%Y%m%d.err", 86400, false);
+ *   Q_LOG *log = qLogOpen("/tmp/qdecoder-%Y%m%d.err", 86400, false);
  *   qLogClose(log);
  * @endcode
  */
-Q_LOG *qLogOpen(const char *logbase, const char *filenameformat, int rotateinterval, bool flush) {
+Q_LOG *qLogOpen(const char *filepathfmt, int rotateinterval, bool flush) {
 	Q_LOG *log;
 
 	/* malloc Q_LOG structure */
 	if ((log = (Q_LOG *)malloc(sizeof(Q_LOG))) == NULL) return NULL;
 
 	/* fill structure */
-	qStrCpy(log->logbase, sizeof(log->logbase), logbase, sizeof(log->logbase));
-	qStrCpy(log->nameformat, sizeof(log->nameformat), filenameformat, sizeof(log->nameformat));
-	log->fp = NULL;
-	log->console = false;
-	log->rotateinterval = ((rotateinterval > 0) ? rotateinterval : 0);
-	log->nextrotate = 0;
+	memset((void *)(log), 0, sizeof(Q_LOG));
+	qStrCpy(log->filepathfmt, sizeof(log->filepathfmt), filepathfmt, sizeof(log->filepathfmt));
+	if(rotateinterval > 0) log->rotateinterval = rotateinterval;
 	log->flush = flush;
 
-	if (_realOpen(log) == 0) {
+	if (_realOpen(log) == false) {
 		qLogClose(log);
 		return NULL;
 	}
@@ -99,16 +96,24 @@ bool qLogClose(Q_LOG *log) {
 }
 
 /**
- * Set screen out
+ * Duplicate log string into other stream
  *
  * @param log		a pointer of Q_LOG
- * @param consoleout	if set it to true, logging messages will be printed out into stderr
+ * @param fp		logging messages will be printed out into this stream. set NULL to disable.
+ * @param flush		set to true if you want to flush everytime duplicating.
  *
  * @return		true if successful, otherewise returns false
+ *
+ * @code
+ *   qLogDuplicate(log, stdout, true);	// enable console out with flushing
+ *   qLogDuplicate(log, stderr, false);	// enable console out
+ *   qLogDuplicate(log, NULL, false);	// disable console out (default)
+ * @endcode
  */
-bool qLogSetConsole(Q_LOG *log, bool consoleout) {
+bool qLogDuplicate(Q_LOG *log, FILE *outfp, bool flush) {
 	if (log == NULL) return false;
-	log->console = consoleout;
+	log->outfp = outfp;
+	log->outflush = flush;
 	return true;
 }
 
@@ -120,11 +125,11 @@ bool qLogSetConsole(Q_LOG *log, bool consoleout) {
  * @return		true if successful, otherewise returns false
  */
 bool qLogFlush(Q_LOG *log) {
-	if (log == NULL || log->fp == NULL) return false;
+	if (log == NULL) return false;
 
-	if (log->flush == true) return true; /* already flushed */
+	if (log->fp != NULL &&log->flush == false) fflush(log->fp);
+	if (log->outfp != NULL && log->outflush == false) fflush(log->outfp);
 
-	if(fflush(log->fp) == 0) return true;
 	return false;
 }
 
@@ -147,8 +152,11 @@ bool qLog(Q_LOG *log, const char *format, ...) {
 	vsnprintf(buf, sizeof(buf), format, arglist);
 	va_end(arglist);
 
-	/* console out */
-	if (log->console == true) fprintf(stderr, "%s\n", buf);
+	/* duplicate stream */
+	if (log->outfp != NULL) {
+		fprintf(log->outfp, "%s\n", buf);
+		if(log->outflush == true) fflush(log->outfp);
+	}
 
 	/* check log rotate is needed*/
 	if (log->nextrotate > 0 && nowTime >= log->nextrotate) {
@@ -157,8 +165,6 @@ bool qLog(Q_LOG *log, const char *format, ...) {
 
 	/* log to file */
 	if (fprintf(log->fp, "%s\n", buf) < 0) return false;
-
-	/* check flash flag */
 	if (log->flush == true) fflush(log->fp);
 
 	return true;
@@ -168,14 +174,32 @@ bool qLog(Q_LOG *log, const char *format, ...) {
 // PRIVATE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////
 
-static int _realOpen(Q_LOG *log) {
-	time_t nowtime = time(NULL);
+static bool _realOpen(Q_LOG *log) {
+	const time_t nowtime = time(NULL);
 
 	/* generate filename */
-	strftime(log->filename, sizeof(log->filename), log->nameformat, localtime(&nowtime));
-	snprintf(log->logpath, sizeof(log->logpath), "%s/%s", log->logbase, log->filename);
-	if (log->fp != NULL) fclose(log->fp);
-	if ((log->fp = fopen(log->logpath, "a")) == NULL) return 0;
+	char newfilepath[PATH_MAX];
+	strftime(newfilepath, sizeof(newfilepath), log->filepathfmt, localtime(&nowtime));
+
+	/* open or re-open log file */
+	if (log->fp == NULL) {
+		if ((log->fp = fopen(newfilepath, "a")) == NULL) {
+			DEBUG("_realOpen: Can't open log file '%s'.", newfilepath);
+			return false;
+		}
+		qStrCpy(log->filepath, sizeof(log->filepath), newfilepath, sizeof(log->filepath));
+	} else if(strcmp(log->filepath, newfilepath)) { /* have opened stream, only reopen if new filename is different with existing one */
+		FILE *newfp = fopen(newfilepath, "a");
+		if (newfp != NULL) {
+			fclose(log->fp);
+			log->fp = newfp;
+			qStrCpy(log->filepath, sizeof(log->filepath), newfilepath, sizeof(log->filepath));
+		} else {
+			DEBUG("_realOpen: Can't open log file '%s' for rotating.", newfilepath);
+		}
+	} else {
+		DEBUG("_realOpen: skip re-opening log file.");
+	}
 
 	/* set next rotate time */
 	if (log->rotateinterval > 0) {
@@ -186,5 +210,5 @@ static int _realOpen(Q_LOG *log) {
 		log->nextrotate = 0;
 	}
 
-	return 1;
+	return true;
 }

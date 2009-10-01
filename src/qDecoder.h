@@ -32,11 +32,12 @@
 #ifndef _QDECODER_H
 #define _QDECODER_H
 
-#define _Q_VERSION			"9.0.3"
+#define _Q_VERSION			"9.0.4"
 
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
+#include <limits.h>
 #include <sys/types.h>
 
 /**
@@ -131,17 +132,15 @@ typedef struct {
  * Structure for file log.
  */
 typedef struct {
-	char	logbase[1024];		/*!< directory which log file is located  */
-	char	nameformat[256];	/*!< file naming format like qdecoder-%Y%m%d.log */
-
-	char	filename[256];		/*!< generated filename according to the name format */
-	char	logpath[1024];		/*!< generated system path of log file */
+	char	filepathfmt[PATH_MAX];	/*!< file file naming format like /somepath/qdecoder-%Y%m%d.log */
+	char	filepath[PATH_MAX];	/*!< generated system path of log file */
 	FILE	*fp;			/*!< file pointer of logpath */
-
-	bool	console;		/*!< flag for console print out */
 	int	rotateinterval;		/*!< log file will be rotate in this interval seconds */
 	int	nextrotate;		/*!< next rotate universal time, seconds */
-	bool	flush;			/*!< flag for immediate sync */
+	bool	flush;			/*!< flag for immediate flushing */
+
+	FILE	*outfp;			/*!< stream pointer for duplication */
+	bool	outflush;		/*!< flag for immediate flushing for duplicated stream */
 } Q_LOG;
 
 /* Database Support*/
@@ -414,9 +413,9 @@ extern	Q_ENTRY*	qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar);
 /*
  * qLog.c
  */
-extern	Q_LOG*		qLogOpen(const char *logbase, const char *filenameformat, int rotateinterval, bool flush);
+extern	Q_LOG*		qLogOpen(const char *filepathfmt, int rotateinterval, bool flush);
 extern	bool		qLogClose(Q_LOG *log);
-extern	bool		qLogSetConsole(Q_LOG *log, bool consoleout);
+extern	bool		qLogDuplicate(Q_LOG *log, FILE *outfp, bool flush);
 extern	bool		qLogFlush(Q_LOG *log);
 extern	bool		qLog(Q_LOG *log, const char *format, ...);
 
