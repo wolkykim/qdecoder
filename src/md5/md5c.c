@@ -29,13 +29,6 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <string.h>
-
-#ifdef _KERNEL
-#include <machine/endian.h>
-#else
-#include <endian.h>
-#endif
-
 #include "md5.h"
 
 static void MD5Transform(u_int32_t [4], const unsigned char [64]);
