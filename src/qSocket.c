@@ -67,10 +67,6 @@ static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port);
  * @return	the new socket descriptor, or -1 in case of invalid hostname, -2 in case of socket creation failure, -3 in case of connection failure.
  *
  * @since	8.1R
- *
- * @note
- * @code
- * @endcode
  */
 int qSocketOpen(const char *hostname, int port, int timeoutms) {
 	/* host conversion */
@@ -106,10 +102,6 @@ int qSocketOpen(const char *hostname, int port, int timeoutms) {
  * @return	true on success, or false if an error occurred.
  *
  * @since	8.1R
- *
- * @note
- * @code
- * @endcode
  */
 bool qSocketClose(int sockfd) {
 	if(close(sockfd) == 0) return true;
@@ -127,8 +119,6 @@ bool qSocketClose(int sockfd) {
  * @since	8.1R
  *
  * @note	does not need to set the socket as non-block mode.
- * @code
- * @endcode
  */
 int qSocketWaitReadable(int sockfd, int timeoutms) {
 	struct pollfd fds[1];
@@ -154,8 +144,6 @@ int qSocketWaitReadable(int sockfd, int timeoutms) {
  * @since	8.1R
  *
  * @note	does not need to set the socket as non-block mode.
- * @code
- * @endcode
  */
 int qSocketWaitWritable(int sockfd, int timeoutms) {
 	struct pollfd fds[1];
@@ -183,8 +171,6 @@ int qSocketWaitWritable(int sockfd, int timeoutms) {
  * @since	8.1R
  *
  * @note	does not need to set the socket as non-block mode.
- * @code
- * @endcode
  */
 ssize_t qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms) {
 	if(nbytes == 0) return 0;
@@ -223,8 +209,6 @@ ssize_t qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms) {
  * @note	be sure the return length is not the length of stored data.
  *		it means how many bytes are readed from the socket.
  *		so the new-line characters will be counted, but not be stored.
- * @code
- * @endcode
  */
 ssize_t qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms) {
 	char *ptr;
@@ -260,9 +244,6 @@ ssize_t qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms) {
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
  *
  * @since	8.1R
- *
- * @code
- * @endcode
  */
 ssize_t qSocketWrite(int sockfd, const void *binary, size_t nbytes) {
 	return _q_write(sockfd, binary, nbytes);
@@ -277,9 +258,6 @@ ssize_t qSocketWrite(int sockfd, const void *binary, size_t nbytes) {
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
  *
  * @since	8.1R
- *
- * @code
- * @endcode
  */
 ssize_t qSocketPuts(int sockfd, const char *str) {
 	char *buf = (char *)malloc(strlen(str) + 2 + 1);
@@ -304,8 +282,6 @@ ssize_t qSocketPuts(int sockfd, const char *str) {
  *
  * @note	the final length of formatted string must be less than 1024
  *		If you need to send more huge string, use qSocketPuts instead.
- * @code
- * @endcode
  */
 ssize_t qSocketPrintf(int sockfd, const char *format, ...) {
 	char buf[MAX_LINEBUF];
@@ -329,9 +305,6 @@ ssize_t qSocketPrintf(int sockfd, const char *format, ...) {
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
  *
  * @since	8.1R
- *
- * @code
- * @endcode
  */
 off_t qSocketSendfile(int sockfd, int fd, off_t offset, off_t nbytes) {
 	struct stat filestat;
@@ -423,8 +396,6 @@ off_t qSocketSaveIntoFile(int fd, int sockfd, off_t nbytes, int timeoutms) {
  * @note	timeoutms is not the total retrieving time.
  *		only affected if no data reached to socket until timeoutms reached.
  *		if some data are received, it will wait until timeoutms reached again.
- * @code
- * @endcode
  */
 ssize_t qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutms) {
 	if(nbytes <= 0) return 0;

@@ -35,7 +35,6 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "md5/md5_global.h"
 #include "md5/md5.h"
 #include "qDecoder.h"
 #include "qInternal.h"
