@@ -871,6 +871,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-debug          enable debugging output
+  --enable-threadsafe     enable thread-safe feature
   --enable-lfs            enable large file supports
   --enable-sendfile       use sendfile() if possible
   --enable-fastcgi=/FASTCGI_INCLUDE_DIR_PATH/
@@ -3951,7 +3952,7 @@ fi
 #AC_CHECK_FUNCS([socket sendfile, dkdkdk])
 
 ## Set additional arguments
-opt_defs=""
+opt_defs="-D_GNU_SOURCE"
 opt_incs=""
 
 
@@ -3966,6 +3967,20 @@ fi;
 		{ echo "$as_me:$LINENO: 'debug' feature is enabled" >&5
 echo "$as_me: 'debug' feature is enabled" >&6;}
 		opt_defs="$opt_defs -DBUILD_DEBUG"
+	fi
+
+
+	# Check whether --enable-threadsafe or --disable-threadsafe was given.
+if test "${enable_threadsafe+set}" = set; then
+  enableval="$enable_threadsafe"
+
+else
+  enableval=no
+fi;
+	if test "$enableval" = yes; then
+		{ echo "$as_me:$LINENO: 'threadsafe' feature is enabled" >&5
+echo "$as_me: 'threadsafe' feature is enabled" >&6;}
+		opt_defs="$opt_defs -DENABLE_THREADSAFE"
 	fi
 
 

@@ -70,7 +70,7 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 	char *strp = str;;
 	while ((strp = strstr(strp, _INCLUDE_DIRECTIVE)) != NULL) {
 		if (strp == str || strp[-1] == '\n') {
-			char buf[MAX_PATHLEN];
+			char buf[PATH_MAX];
 
 			/* parse filename */
 			char *tmpp;
@@ -87,7 +87,7 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 
 			/* adjust file path */
 			if (!(buf[0] == '/' || buf[0] == '\\')) {
-				char tmp[MAX_PATHLEN];
+				char tmp[PATH_MAX];
 				char *dir = qFileGetDir(filepath);
 				if (strlen(dir) + 1 + strlen(buf) >= sizeof(buf)) {
 					DEBUG("Can't process %s directive.", _INCLUDE_DIRECTIVE);

@@ -26,7 +26,12 @@
 #ifndef _QINTERNAL_H
 #define _QINTERNAL_H
 
-#define QDECODER_PRIVATEKEY	"qDecoder-by-Seungyoung_Kim"
+#include <fcntl.h>
+
+/*
+ * Internal Macros
+ */
+#define	CONST_STRLEN(x)		(sizeof(x) - 1)
 
 #ifdef BUILD_DEBUG
 #define DEBUG(fmt, args...)	fprintf(stderr, "[DEBUG] " fmt " (%s:%d)\n", ##args, __FILE__, __LINE__);
@@ -34,18 +39,67 @@
 #define DEBUG(fms, args...)
 #endif
 
-/*
- * Internal Macros
- */
-#define	MAX_PATHLEN		(1023+1)
-#define	MAX_LINEBUF		(1023+1)
-#define	CONST_STRLEN(x)		(sizeof(x) - 1)
+#ifdef ENABLE_THREADSAFE
+#include <pthread.h>
+#include <time.h>
+#include <errno.h>
+static int _m = 0;
+#define MUTEX_INIT(x)		{							\
+	pthread_mutexattr_t _mutexattr;							\
+	pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_RECURSIVE);		\
+	pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);		\
+	int _ret;									\
+	if((_ret = pthread_mutex_init(&x, &_mutexattr)) != 0) {				\
+		DEBUG("mutex init: can't initialize mutex [%d:%s]", _ret, strerror(_ret));		\
+	}										\
+}
+
+#define	MUTEX_UNLOCK(x)		{							\
+	pthread_mutex_unlock(&x);							\
+	DEBUG("UNLOCK %d", (--_m));							\
+}
+
+#define MAX_MUTEX_LOCK_WAIT_SEC	(3)
+#define	MUTEX_LOCK(x)		{							\
+	struct timespec _timeout;							\
+	_timeout.tv_sec = MAX_MUTEX_LOCK_WAIT_SEC;					\
+	_timeout.tv_nsec = 0;								\
+	int _ret;									\
+	while((_ret = pthread_mutex_timedlock(&x, &_timeout)) != 0) {			\
+		if(_ret == ETIMEDOUT || _ret == EDEADLK) {				\
+			DEBUG("mutex lock: force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
+			MUTEX_UNLOCK(x);						\
+		} else {								\
+			DEBUG("mutex lock: retry [%d:%s]", _ret, strerror(_ret));			\
+		}									\
+	}										\
+	DEBUG("LOCK %d", (++_m));							\
+}
+
+#define MUTEX_DESTROY(x)	{							\
+	int _ret;									\
+	while((_ret = pthread_mutex_destroy(&x)) != 0) {				\
+		DEBUG("mutex destory: force to unlock mutex [%d:%s]", _ret, strerror(_ret));		\
+		MUTEX_UNLOCK(x);							\
+	}										\
+}
+
+#else
+
+#define	MUTEX_INIT(x)
+#define	MUTEX_UNLOCK(x)
+#define	MUTEX_LOCK(x)
+#define	MUTEX_DESTROY(x)
+
+#endif
 
 /*
  * Internal Definitions
  */
-#define	DEF_DIR_MODE	(S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
-#define	DEF_FILE_MODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
+#define QDECODER_PRIVATEKEY	"qDecoder-by-Seungyoung_Kim"
+#define	MAX_LINEBUF		(1023+1)
+#define	DEF_DIR_MODE		(S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
+#define	DEF_FILE_MODE		(S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 
 /*
  * qInternalCommon.c
@@ -61,6 +115,5 @@ extern	int	_q_unlink(const char *pathname);
  * To prevent compiler warning
  */
 extern	char*	strptime(const char *, const char *, struct tm *);
-
 
 #endif	/* _QINTERNAL_H */

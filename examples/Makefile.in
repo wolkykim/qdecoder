@@ -29,9 +29,9 @@ exec_prefix	= ${prefix}
 ## Compiler options
 CC	= @CC@
 CFLAGS	= @CFLAGS@
-DEFS	= @DEFS@
+DEFS	= @DEFS@ @OPT_DEFS@
 INCLUDE	= -I. -I@includedir@
-LIB	= @libdir@/libqDecoder.a
+LIB	= @libdir@/libqDecoder.a -lpthread
 
 TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi session.cgi config.cgi socket.cgi obstack.cgi \
 	hashtable

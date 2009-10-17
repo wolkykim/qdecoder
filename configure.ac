@@ -109,10 +109,11 @@ AC_TYPE_OFF_T
 #AC_CHECK_FUNCS([socket sendfile, dkdkdk])
 
 ## Set additional arguments
-opt_defs=""
+opt_defs="-D_GNU_SOURCE"
 opt_incs=""
 
 Q_ARG_ENABLE([debug], [enable debugging output], [-DBUILD_DEBUG])
+Q_ARG_ENABLE([threadsafe], [enable thread-safe feature], [-DENABLE_THREADSAFE])
 Q_ARG_ENABLE([lfs], [enable large file supports], [-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
 Q_ARG_ENABLE([sendfile], [use sendfile() if possible], [-DENABLE_SENDFILE])
 

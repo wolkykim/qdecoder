@@ -157,9 +157,10 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #ifndef _WIN32
 #include <dirent.h>	/* to use opendir() */
 #endif
@@ -465,7 +466,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 
 	bool upload_filesave = false; /* false: save into memory, true: save into file */
 	const char *upload_basepath = qEntryGetStr(request, "_Q_UPLOAD_BASEPATH");
-	char upload_savedir[MAX_PATHLEN];
+	char upload_savedir[PATH_MAX];
 	bool  finish;
 	for (finish = false; finish == false; amount++) {
 		/* check file save mode */
@@ -510,7 +511,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 			}
 
 			/* save total contents length */
-			char upload_tmppath[MAX_PATHLEN];
+			char upload_tmppath[PATH_MAX];
 			snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_TSIZE", upload_savedir);
 			if (qCountSave(upload_tmppath, atoi(content_length)) == false) {
 				DEBUG("Can not save uploading information at %s", upload_tmppath);
@@ -623,7 +624,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 	}
 
 	if (upload_filesave == true) { /* save end time */
-		char upload_tmppath[MAX_PATHLEN];
+		char upload_tmppath[PATH_MAX];
 		snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_END", upload_savedir);
 		if (qCountSave(upload_tmppath, time(NULL)) == false) {
 			DEBUG("Can't save uploading information at %s", upload_tmppath);
@@ -749,12 +750,12 @@ static char *_parse_multipart_value_into_disk(const char *boundary, const char *
 	boundaryEOFlen = strlen(boundaryEOF);
 
 	/* save current upload file */
-	char upload_file[MAX_PATHLEN];
+	char upload_file[PATH_MAX];
 	snprintf(upload_file, sizeof(upload_file), "%s/Q_UPLOAD_FILE", savedir);
 	qFileSave(upload_file, filename, strlen(filename), false);
 
 	/* open temp file */
-	char upload_path[MAX_PATHLEN];
+	char upload_path[PATH_MAX];
 	snprintf(upload_path, sizeof(upload_path), "%s/Q_FILE_XXXXXX", savedir);
 
 	int upload_fd = mkstemp(upload_path);
@@ -937,7 +938,7 @@ static bool _upload_getstatus(const char *upload_id, const char *upload_basepath
 #else
 	DIR     *dp;
 	struct  dirent *dirp;
-	char upload_savedir[MAX_PATHLEN], tmppath[MAX_PATHLEN];
+	char upload_savedir[PATH_MAX], tmppath[PATH_MAX];
 
 	/* get basepath */
 	if (_upload_getsavedir(upload_savedir, sizeof(upload_savedir), upload_id, upload_basepath) == NULL) {
@@ -992,7 +993,7 @@ static bool _upload_clear_savedir(char *dirpath) {
 	while ((dirp = readdir(dp)) != NULL) {
 		if (strncmp(dirp->d_name, "Q_", CONST_STRLEN("Q_"))) continue;
 
-		char filepath[MAX_PATHLEN];
+		char filepath[PATH_MAX];
 		snprintf(filepath, sizeof(filepath), "%s/%s", dirpath, dirp->d_name);
 		unlink(filepath);
 	}
@@ -1022,7 +1023,7 @@ static bool _upload_clear_base(const char *upload_basepath, int upload_clearold)
 
 		if (!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..") || strncmp(dirp->d_name, "Q_", 2) != 0) continue;
 
-		char filepath[MAX_PATHLEN];
+		char filepath[PATH_MAX];
 		snprintf(filepath, sizeof(filepath), "%s/%s/Q_UPLOAD_START", upload_basepath, dirp->d_name);
 		starttime = qCountRead(filepath);
 		if (starttime > 0 && now - starttime < upload_clearold) continue;

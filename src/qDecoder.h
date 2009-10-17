@@ -32,7 +32,7 @@
 #ifndef _QDECODER_H
 #define _QDECODER_H
 
-#define _Q_VERSION			"9.0.5"
+#define _Q_VERSION			"9.0.6"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -76,6 +76,8 @@ typedef struct {
  * Structure for hash-table data structure.
  */
 typedef struct {
+	pthread_mutex_t	mutex;		/*!< only used if compiled with --enable-threadsafe option */
+
 	int	max;			/*!< maximum hashtable size */
 	int	num;			/*!< used slot counter */
 	int	threshold;		/*!< if the percent of used slot counter exceeds this threshold percent, new larger table(max * _Q_HASHTBL_RESIZE_MAG) is allocated */
@@ -348,7 +350,6 @@ extern	int		qEntryLoad(Q_ENTRY *entry, const char *filepath, char sepchar, bool 
  * qHashtbl.c
  */
 extern	Q_HASHTBL*	qHashtblInit(int max, bool resize, int threshold);
-extern	bool		qHashtblResize(Q_HASHTBL *tbl, int max);
 extern	bool		qHashtblFree(Q_HASHTBL *tbl);
 extern	bool		qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size);
 extern	bool		qHashtblPutStr(Q_HASHTBL *tbl, const char *key, const char *value);
@@ -359,6 +360,8 @@ extern	int		qHashtblGetInt(Q_HASHTBL *tbl, const char *key);
 extern	const char*	qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx);
 extern	const char*	qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx);
 extern	bool		qHashtblRemove(Q_HASHTBL *tbl, const char *key);
+extern	bool		qHashtblResize(Q_HASHTBL *tbl, int max);
+extern	bool		qHashtblTruncate(Q_HASHTBL *tbl);
 extern	bool		qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
 extern	bool		qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
 

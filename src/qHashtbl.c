@@ -25,6 +25,9 @@
 
 /**
  * @file qHashtbl.c Hash-table Data Structure API
+ *
+ * @note
+ * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
  */
 
 #ifndef DISABLE_DATASTRUCTURE
@@ -94,65 +97,12 @@ Q_HASHTBL *qHashtblInit(int max, bool resize, int threshold) {
 		return NULL;
 	}
 
+	MUTEX_INIT(tbl->mutex);
+
+	// now table can be used
 	tbl->max = max;
+
 	return tbl;
-}
-
-/**
- * Resize dynamic-hash table
- *
- * @param tbl		a pointer of Q_HASHTBL
- * @param max		a number of initial number of slots of Q_HASHTBL
- *
- * @return		true if successful, otherwise returns false
- *
- * @code
- *   // initial table size is 1000, enable resizing, use default threshold
- *   qHashtblResize(tbl, 3000);
- * @endcode
- *
- * @note
- * auto resize flag and resize threshold parameter will be set to same as previous.
- */
-bool qHashtblResize(Q_HASHTBL *tbl, int max) {
-	if(max <= 0) return false;
-	if(max == tbl->max) return true;	// don't need to resize, just set threshold
-
-	// create new table
-	Q_HASHTBL *newtbl = qHashtblInit(max, false, 0);
-	if(newtbl == NULL) return false;
-
-	// copy entries
-	int idx, num;
-	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
-		if (tbl->count[idx] == 0) continue;
-		if(qHashtblPut(newtbl, tbl->key[idx], tbl->value[idx], tbl->size[idx]) == false) {
-			DEBUG("hashtbl: resize failed");
-			qHashtblFree(newtbl);
-			return false;
-		}
-		num++;
-	}
-
-	// set threshold
-	if(tbl->threshold > 0) {
-		_setThreshold(newtbl, max, tbl->threshold);
-	}
-
-	// de-allocate contents from the old table schema
-	Q_HASHTBL *tmptbl = (Q_HASHTBL *)malloc(sizeof(Q_HASHTBL));
-	if(tmptbl == NULL) {
-		qHashtblFree(newtbl);
-		return false;
-	}
-	memcpy(tmptbl, tbl, sizeof(Q_HASHTBL));
-	qHashtblFree(tmptbl);
-
-	// move contents of newtable schema then remove schema itself
-	memcpy(tbl, newtbl, sizeof(Q_HASHTBL));
-	free(newtbl);
-
-	return true;
 }
 
 /**
@@ -165,21 +115,16 @@ bool qHashtblResize(Q_HASHTBL *tbl, int max) {
 bool qHashtblFree(Q_HASHTBL *tbl) {
 	if(tbl == NULL) return false;
 
-	int idx, num;
-	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
-		if (tbl->count[idx] == 0) continue;
-		free(tbl->key[idx]);
-		free(tbl->value[idx]);
-
-		num++;
-		if(num >= tbl->num) break;
-	}
-
+	MUTEX_LOCK(tbl->mutex);
+	qHashtblTruncate(tbl);
 	if(tbl->count != NULL) free(tbl->count);
 	if(tbl->hash != NULL) free(tbl->hash);
 	if(tbl->key != NULL) free(tbl->key);
 	if(tbl->value != NULL) free(tbl->value);
 	if(tbl->size != NULL) free(tbl->size);
+	MUTEX_UNLOCK(tbl->mutex);
+	MUTEX_DESTROY(tbl->mutex);
+
 	free(tbl);
 
 	return true;
@@ -201,10 +146,15 @@ bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size) {
 	// get hash integer
 	int hash = (int)qHashFnv32(tbl->max, key, strlen(key));
 
+	MUTEX_LOCK(tbl->mutex);
+
 	// check, is slot empty
 	if (tbl->count[hash] == 0) { // empty slot
 		// put data
-		if(_putData(tbl, hash, hash, key, value, size, 1) == false) return false;
+		if(_putData(tbl, hash, hash, key, value, size, 1) == false) {
+			MUTEX_UNLOCK(tbl->mutex);
+			return false;
+		}
 
 		DEBUG("hashtbl: put(new) %s (idx=%d,hash=%d,tot=%d)", key, hash, hash, tbl->num);
 	} else if (tbl->count[hash] > 0) { // same key exists or hash collision
@@ -213,14 +163,22 @@ bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size) {
 		if (idx >= 0) { // same key
 			// remove and recall
 			qHashtblRemove(tbl, key);
-			return qHashtblPut(tbl, key, value, size);
+			bool ret = qHashtblPut(tbl, key, value, size);
+			MUTEX_UNLOCK(tbl->mutex);
+			return ret;
 		} else { // no same key, just hash collision
 			// find empty slot
 			int idx = _findEmpty(tbl, hash);
-			if (idx < 0) return false;
+			if (idx < 0) {
+				MUTEX_UNLOCK(tbl->mutex);
+				return false;
+			}
 
 			// put data
-			if(_putData(tbl, idx, hash, key, value, size, -1) == false) return false; // -1 is used for collision resolution idx != hash;
+			if(_putData(tbl, idx, hash, key, value, size, -1) == false) { // -1 is used for collision resolution idx != hash;
+				MUTEX_UNLOCK(tbl->mutex);
+				return false;
+			}
 
 			// increase counter from leading slot
 			tbl->count[hash]++;
@@ -230,14 +188,23 @@ bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size) {
 	} else { // in case of -1. used for collided data, move it
 		// find empty slot
 		int idx = _findEmpty(tbl, hash);
-		if (idx < 0) return false;
+		if (idx < 0) {
+			MUTEX_UNLOCK(tbl->mutex);
+			return false;
+		}
 
 		// move collided data
-		if(_putData(tbl, idx, tbl->hash[hash], tbl->key[hash], tbl->value[hash], tbl->size[hash], tbl->count[hash]) == false) return false;
+		if(_putData(tbl, idx, tbl->hash[hash], tbl->key[hash], tbl->value[hash], tbl->size[hash], tbl->count[hash]) == false) {
+			MUTEX_UNLOCK(tbl->mutex);
+			return false;
+		}
 		_removeData(tbl, hash);
 
 		// store data
-		if(_putData(tbl, hash, hash, key, value, size, 1) == false) return false;
+		if(_putData(tbl, hash, hash, key, value, size, 1) == false) {
+			MUTEX_UNLOCK(tbl->mutex);
+			return false;
+		}
 
 		DEBUG("hashtbl: put(swp) %s (idx=%d,hash=%d,tot=%d)", key, hash, hash, tbl->num);
 	}
@@ -248,6 +215,7 @@ bool qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size) {
 		qHashtblResize(tbl, (tbl->max * _Q_HASHTBL_RESIZE_MAG));
 	}
 
+	MUTEX_UNLOCK(tbl->mutex);
 	return true;
 }
 
@@ -295,14 +263,20 @@ bool qHashtblPutInt(Q_HASHTBL *tbl, const char *key, const int value) {
 void *qHashtblGet(Q_HASHTBL *tbl, const char *key, int *size) {
 	if(tbl == NULL || key == NULL) return NULL;
 
+	MUTEX_LOCK(tbl->mutex);
+
 	int hash = (int)qHashFnv32(tbl->max, key, strlen(key));
 	int idx = _getIdx(tbl, key, hash);
-	if (idx < 0) return NULL;
+	if (idx < 0) {
+		MUTEX_UNLOCK(tbl->mutex);
+		return NULL;
+	}
 
 	void *value = (char *)malloc(tbl->size[idx]);
 	memcpy(value, tbl->value[idx], tbl->size[idx]);
 
 	if(size != NULL) *size = tbl->size[idx];
+	MUTEX_UNLOCK(tbl->mutex);
 	return value;
 }
 
@@ -378,12 +352,15 @@ const char *qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx) {
 const char *qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx) {
 	if(tbl == NULL || idx == NULL) return NULL;
 
+	MUTEX_LOCK(tbl->mutex);
 	for ((*idx)++; *idx < tbl->max; (*idx)++) {
 		if (tbl->count[*idx] == 0) continue;
 		return tbl->key[*idx];
 	}
 
 	*idx = tbl->max;
+
+	MUTEX_UNLOCK(tbl->mutex);
 	return NULL;
 }
 
@@ -398,9 +375,14 @@ const char *qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx) {
 bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
 	if(tbl == NULL || key == NULL) return false;
 
+	MUTEX_LOCK(tbl->mutex);
+
 	int hash = (int)qHashFnv32(tbl->max, key, strlen(key));
 	int idx = _getIdx(tbl, key, hash);
-	if (idx < 0) return false;
+	if (idx < 0) {
+		MUTEX_UNLOCK(tbl->mutex);
+		return false;
+	}
 
 	if (tbl->count[idx] == 1) {
 		// just remove
@@ -414,6 +396,7 @@ bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
 			if (idx2 >= tbl->max) idx2 = 0;
 			if (idx2 == idx) {
 				DEBUG("hashtbl: BUG remove failed %s. dup not found.", key);
+				MUTEX_UNLOCK(tbl->mutex);
 				return false;
 			}
 			if (tbl->count[idx2] == -1 && tbl->hash[idx2] == idx) break;
@@ -422,7 +405,10 @@ bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
 		// move to leading slot
 		int backupcount = tbl->count[idx];
 		_removeData(tbl, idx); // remove leading slot
-		if(_putData(tbl, idx, tbl->hash[idx2], tbl->key[idx2], tbl->value[idx2], tbl->size[idx2], backupcount - 1) == false) return false; // copy to leading slot
+		if(_putData(tbl, idx, tbl->hash[idx2], tbl->key[idx2], tbl->value[idx2], tbl->size[idx2], backupcount - 1) == false) { // copy to leading slot
+			MUTEX_UNLOCK(tbl->mutex);
+			return false;
+		}
 		_removeData(tbl, idx2); // remove dup slot
 
 		DEBUG("hashtbl: rem(lead) %s (idx=%d,tot=%d)", key, idx, tbl->num);
@@ -430,6 +416,7 @@ bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
 		// decrease counter from leading slot
 		if(tbl->count[tbl->hash[idx]] <= 1) {
 			DEBUG("hashtbl: BUG remove failed %s. counter of leading slot mismatch.", key);
+			MUTEX_UNLOCK(tbl->mutex);
 			return false;
 		}
 		tbl->count[tbl->hash[idx]]--;
@@ -439,6 +426,120 @@ bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
 
 		DEBUG("hashtbl: rem(dup) %s (idx=%d,tot=%d)", key, idx, tbl->num);
 	}
+
+	MUTEX_UNLOCK(tbl->mutex);
+	return true;
+}
+
+/**
+ * Resize dynamic-hash table
+ *
+ * @param tbl		a pointer of Q_HASHTBL
+ * @param max		a number of initial number of slots of Q_HASHTBL
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @code
+ *   // initial table size is 1000, enable resizing, use default threshold
+ *   qHashtblResize(tbl, 3000);
+ * @endcode
+ *
+ * @note
+ * auto resize flag and resize threshold parameter will be set to same as previous.
+ */
+bool qHashtblResize(Q_HASHTBL *tbl, int max) {
+	if(max <= 0) return false;
+
+	MUTEX_LOCK(tbl->mutex);
+
+	if(max == tbl->max) { // don't need to resize, just set threshold
+		MUTEX_UNLOCK(tbl->mutex);
+		return true;
+	}
+
+	// create new table
+	Q_HASHTBL *newtbl = qHashtblInit(max, false, 0);
+	if(newtbl == NULL) {
+		MUTEX_UNLOCK(tbl->mutex);
+		return false;
+	}
+
+	// copy entries
+	int idx, num;
+	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
+		if (tbl->count[idx] == 0) continue;
+		if(qHashtblPut(newtbl, tbl->key[idx], tbl->value[idx], tbl->size[idx]) == false) {
+			DEBUG("hashtbl: resize failed");
+			qHashtblFree(newtbl);
+			MUTEX_UNLOCK(tbl->mutex);
+			return false;
+		}
+		num++;
+	}
+
+	if(tbl->num != newtbl->num) {
+		DEBUG("hashtbl: BUG DETECTED");
+		qHashtblFree(newtbl);
+		MUTEX_UNLOCK(tbl->mutex);
+		return false;
+	}
+
+	// set threshold
+	if(tbl->threshold > 0) {
+		_setThreshold(newtbl, max, tbl->threshold);
+	}
+
+	// de-allocate dynamic contents from the legacy table schema
+	qHashtblTruncate(tbl);
+	if(tbl->count != NULL) free(tbl->count);
+	if(tbl->hash != NULL) free(tbl->hash);
+	if(tbl->key != NULL) free(tbl->key);
+	if(tbl->value != NULL) free(tbl->value);
+	if(tbl->size != NULL) free(tbl->size);
+
+	// move contents of newtable schema then remove schema itself
+	tbl->max = newtbl->max;
+	tbl->num = newtbl->num;
+	tbl->threshold = newtbl->threshold;
+	tbl->resizeat = newtbl->resizeat;
+
+	tbl->count = newtbl->count;
+	tbl->hash = newtbl->hash;
+	tbl->key = newtbl->key;
+	tbl->value = newtbl->value;
+	tbl->size = newtbl->size;
+
+	MUTEX_DESTROY(newtbl->mutex);
+	free(newtbl);
+
+	MUTEX_UNLOCK(tbl->mutex);
+	return true;
+}
+
+/**
+ * Truncate hash table
+ *
+ * @param tbl		a pointer of Q_HASHTBL
+ *
+ * @return		true if successful, otherwise returns false
+ */
+bool qHashtblTruncate(Q_HASHTBL *tbl) {
+	if(tbl == NULL) return false;
+
+	MUTEX_LOCK(tbl->mutex);
+	int idx;
+	for (idx = 0; idx < tbl->max && tbl->num > 0; idx++) {
+		if (tbl->count[idx] == 0) continue;
+		free(tbl->key[idx]);
+		free(tbl->value[idx]);
+		tbl->count[idx] = 0;
+		tbl->num--;
+	}
+	if(tbl->num != 0) {
+		DEBUG("qHashtblTruncate: BUG DETECTED");
+		tbl->num = 0;
+	}
+	MUTEX_UNLOCK(tbl->mutex);
 
 	return true;
 }
@@ -455,12 +556,14 @@ bool qHashtblRemove(Q_HASHTBL *tbl, const char *key) {
 bool qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
 	if(tbl == NULL || out == NULL) return false;
 
+	MUTEX_LOCK(tbl->mutex);
 	int idx, num;
 	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
 		if (tbl->count[idx] == 0) continue;
 		fprintf(out, "%s=%s (idx=%d,hash=%d,size=%d,count=%d)\n", tbl->key[idx], (showvalue)?(char*)tbl->value[idx]:"_binary_", idx, tbl->hash[idx], tbl->size[idx], tbl->count[idx]);
 		num++;
 	}
+	MUTEX_UNLOCK(tbl->mutex);
 
 	return true;
 }
@@ -477,8 +580,10 @@ bool qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue) {
 bool qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max) {
 	if(tbl == NULL) return false;
 
+	MUTEX_LOCK(tbl->mutex);
 	if(used != NULL) *used = tbl->num;
 	if(max != NULL) *max = tbl->max;
+	MUTEX_UNLOCK(tbl->mutex);
 
 	return true;
 }

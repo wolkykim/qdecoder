@@ -101,9 +101,9 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 	}
 
 	/* make storage path for session */
-	char session_repository_path[MAX_PATHLEN];
-	char session_storage_path[MAX_PATHLEN];
-	char session_timeout_path[MAX_PATHLEN];
+	char session_repository_path[PATH_MAX];
+	char session_storage_path[PATH_MAX];
+	char session_timeout_path[PATH_MAX];
 	time_t session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERVAL; /* seconds */
 
 	if (dirpath != NULL) qStrCpy(session_repository_path, sizeof(session_repository_path), dirpath, sizeof(session_repository_path));
@@ -219,8 +219,8 @@ bool qSessionSave(Q_ENTRY *session) {
 	int session_timeout_interval = qEntryGetInt(session, INTER_INTERVAL_SEC);
 	if(sessionkey == NULL || session_repository_path == NULL) return false;
 
-	char session_storage_path[MAX_PATHLEN];
-	char session_timeout_path[MAX_PATHLEN];
+	char session_storage_path[PATH_MAX];
+	char session_timeout_path[PATH_MAX];
 	snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 	snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
@@ -256,8 +256,8 @@ bool qSessionDestroy(Q_ENTRY *session) {
 		return false;
 	}
 
-	char session_storage_path[MAX_PATHLEN];
-	char session_timeout_path[MAX_PATHLEN];
+	char session_storage_path[PATH_MAX];
+	char session_timeout_path[PATH_MAX];
 	snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 	snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
@@ -282,7 +282,7 @@ static bool _clearRepository(const char *session_repository_path) {
 	struct dirent *dirp;
 	while((dirp = readdir(dp)) != NULL) {
 		if (strstr(dirp->d_name, SESSION_PREFIX) && strstr(dirp->d_name, SESSION_TIMEOUT_EXTENSION)) {
-			char timeoutpath[MAX_PATHLEN];
+			char timeoutpath[PATH_MAX];
 			snprintf(timeoutpath, sizeof(timeoutpath), "%s/%s", session_repository_path, dirp->d_name);
 			if (_isValidSession(timeoutpath) <= 0) { /* expired */
 				/* remove timeout */
