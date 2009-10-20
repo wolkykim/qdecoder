@@ -33,14 +33,14 @@ int main(void) {
 	/* Parse (GET/COOKIE/POST) queries. */
 	Q_ENTRY *req = qCgiRequestParse(NULL);
 
-	const char *mode = qEntryGetStr(req, "mode");
-	const char *name = qEntryGetStr(req, "cname");
-	const char *value = qEntryGetStr(req, "cvalue");
+	const char *mode = req->getStr(req, "mode");
+	const char *name = req->getStr(req, "cname");
+	const char *value = req->getStr(req, "cvalue");
 
 	if (mode == NULL) { /* View Cookie */
 		qCgiResponseSetContentType(req, "text/plain");
-		printf("Total %d entries\n", qEntryGetNum(req));
-		qEntryPrint(req, stdout, true);
+		printf("Total %d entries\n", req->getNum(req));
+		req->print(req, stdout, true);
 	} else if (!strcmp(mode, "set")) { /* Set Cookie */
 		if (name == NULL || value == NULL) qCgiResponseError(req, "Query not found");
 		if (strlen(name) == 0) qCgiResponseError(req, "Empty cookie name can not be stored.");
@@ -59,6 +59,6 @@ int main(void) {
 		qCgiResponseError(req, "Unknown mode.");
 	}
 
-	qEntryFree(req);
+	req->free(req);
 	return 0;
 }

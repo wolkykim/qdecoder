@@ -33,7 +33,7 @@ int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL);
 
 	/* Get query */
-	char *value = (char *)qEntryGetStr(req, "query");
+	char *value = (char *)req->getStr(req, "query");
 	if(value == NULL) value = "(nothing)";
 
 	/* Print out context type */
@@ -41,7 +41,7 @@ int main(void) {
 	printf("You entered: <b>%s</b>\n", value);
 
 	/* De-allocate memories */
-	qEntryFree(req);
+	req->free(req);
 	return 0;
 }
 

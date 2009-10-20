@@ -39,9 +39,9 @@ int main(void) {
 	if(conf == NULL) qCgiResponseError(req, "Configuration file(%s) not found.", CONF_FILE);
 
 	/* Get variable */
-	const char *protocol = qEntryGetStr(conf, "PROTOCOL");
-	const char *host     = qEntryGetStr(conf, "HOST");
-	int port       = qEntryGetInt(conf, "PORT");
+	const char *protocol = conf->getStr(conf, "PROTOCOL");
+	const char *host     = conf->getStr(conf, "HOST");
+	int port       = conf->getInt(conf, "PORT");
 
 	/* Print out */
 	qCgiResponseSetContentType(req, "text/plain");
@@ -50,11 +50,11 @@ int main(void) {
 	printf("Port     : %d\n", port);
 
 	printf("\n--[CONFIGURATION DUMP]--\n");
-	qEntryPrint(conf, stdout, true);
+	conf->print(conf, stdout, true);
 
 	/* Deallocate parsed entries */
-	qEntryFree(conf);
-	qEntryFree(req);
+	conf->free(conf);
+	req->free(req);
 
 	return 0;
 }

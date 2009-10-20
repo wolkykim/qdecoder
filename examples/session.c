@@ -32,10 +32,10 @@ int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL);
 
 	/* fetch queries */
-	time_t expire = (time_t)qEntryGetInt(req, "expire");
-	const char *mode = qEntryGetStr(req, "mode");
-	const char *name   = qEntryGetStr(req, "name");
-	const char *value  = qEntryGetStr(req, "value");
+	time_t expire = (time_t)req->getInt(req, "expire");
+	const char *mode = req->getStr(req, "mode");
+	const char *name   = req->getStr(req, "name");
+	const char *value  = req->getStr(req, "value");
 
 	/* start session. */
 	Q_ENTRY *sess = qSessionInit(req, NULL);
@@ -45,15 +45,15 @@ int main(void) {
 
 	switch (mode[0]) {
 		case 's': {
-			qEntryPutStr(sess, name, value, true);
+			req->putStr(sess, name, value, true);
 			break;
 		}
 		case 'i': {
-			qEntryPutInt(sess, name, atoi(value), true);
+			req->putInt(sess, name, atoi(value), true);
 			break;
 		}
 		case 'r': {
-			qEntryRemove(sess, name);
+			req->remove(sess, name);
 			break;
 		}
 		case 'd': {
@@ -66,11 +66,11 @@ int main(void) {
 	}
 	/* screen out */
 	qCgiResponseSetContentType(req, "text/plain");
-	qEntryPrint(sess, stdout, true);
+	req->print(sess, stdout, true);
 
 	/* save session & free allocated memories */
 	qSessionSave(sess);
-	qEntryFree(sess);
-	qEntryFree(req);
+	sess->free(sess);
+	req->free(req);
 	return 0;
 }

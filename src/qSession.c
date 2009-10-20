@@ -75,8 +75,8 @@ static bool _updateTimeout(const char *filepath, time_t timeout_interval);
  * @return 	a pointer of malloced session data list (Q_ENTRY type)
  *
  * @note
- * The returned Q_ENTRY list must be de-allocated by calling qEntryFree().
- * And if you want to append or remove some user session data, use qEntry*()
+ * The returned Q_ENTRY list must be de-allocated by calling Q_ENTRY->free().
+ * And if you want to append or remove some user session data, use Q_ENTRY->*()
  * functions then finally call qSessionSave() to store updated session data.
  */
 Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
@@ -86,14 +86,14 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 		return NULL;
 	}
 
-	Q_ENTRY *session = qEntryInit();
+	Q_ENTRY *session = qEntry();
 	if(session == NULL) return NULL;
 
 	/* check session status & get session id */
 	bool new_session;
 	char *sessionkey;
-	if(qEntryGetStr(request, SESSION_ID) != NULL) {
-		sessionkey = strdup(qEntryGetStr(request, SESSION_ID));
+	if(request->getStr(request, SESSION_ID, false) != NULL) {
+		sessionkey = request->getStr(request, SESSION_ID, true);
 		new_session = false;
 	} else { /* new session */
 		sessionkey = qStrUnique(getenv("REMOTE_ADDR"));
@@ -134,29 +134,29 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 	/* if new session, set session id */
 	if (new_session == true) {
 		qCgiResponseSetCookie(request, SESSION_ID, sessionkey, 0, "/", NULL, NULL);
-		qEntryPutStr(request, SESSION_ID, sessionkey, true); /* force to add session_in to query list */
+		request->putStr(request, SESSION_ID, sessionkey, true); /* force to add session_in to query list */
 
 		/* save session informations */
 		char created_sec[10+1];
 		snprintf(created_sec, sizeof(created_sec), "%ld", (long int)time(NULL));
-		qEntryPutStr(session, INTER_SESSIONID, sessionkey, false);
-		qEntryPutStr(session, INTER_SESSION_REPO, session_repository_path, false);
-		qEntryPutStr(session, INTER_CREATED_SEC, created_sec, false);
-		qEntryPutInt(session, INTER_CONNECTIONS, 1, false);
+		session->putStr(session, INTER_SESSIONID, sessionkey, false);
+		session->putStr(session, INTER_SESSION_REPO, session_repository_path, false);
+		session->putStr(session, INTER_CREATED_SEC, created_sec, false);
+		session->putInt(session, INTER_CONNECTIONS, 1, false);
 
 		/* set timeout interval */
 		qSessionSetTimeout(session, session_timeout_interval);
 	} else { /* read session properties */
 
 		/* read exist session informations */
-		qEntryLoad(session, session_storage_path, '=', true);
+		session->load(session, session_storage_path, '=', true);
 
 		/* update session informations */
-		int conns = qEntryGetInt(session, INTER_CONNECTIONS);
-		qEntryPutInt(session, INTER_CONNECTIONS, ++conns, true);
+		int conns = session->getInt(session, INTER_CONNECTIONS);
+		session->putInt(session, INTER_CONNECTIONS, ++conns, true);
 
 		/* set timeout interval */
-		qSessionSetTimeout(session, qEntryGetInt(session, INTER_INTERVAL_SEC));
+		qSessionSetTimeout(session, session->getInt(session, INTER_INTERVAL_SEC));
 	}
 
 	free(sessionkey);
@@ -177,7 +177,7 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
  */
 bool qSessionSetTimeout(Q_ENTRY *session, time_t seconds) {
 	if (seconds <= 0) return false;
-	qEntryPutInt(session, INTER_INTERVAL_SEC, (int)seconds, true);
+	session->putInt(session, INTER_INTERVAL_SEC, (int)seconds, true);
 	return true;
 }
 
@@ -191,7 +191,7 @@ bool qSessionSetTimeout(Q_ENTRY *session, time_t seconds) {
  * @note Do not free manually
  */
 const char *qSessionGetId(Q_ENTRY *session) {
-	return qEntryGetStr(session, INTER_SESSIONID);
+	return session->getStr(session, INTER_SESSIONID, false);
 }
 
 /**
@@ -202,7 +202,7 @@ const char *qSessionGetId(Q_ENTRY *session) {
  * @return 	user session created time in UTC time seconds
  */
 time_t qSessionGetCreated(Q_ENTRY *session) {
-	const char *created = qEntryGetStr(session, INTER_CREATED_SEC);
+	const char *created = session->getStr(session, INTER_CREATED_SEC, false);
 	return (time_t)atol(created);
 }
 
@@ -214,9 +214,9 @@ time_t qSessionGetCreated(Q_ENTRY *session) {
  * @return 	true if successful, otherwise returns false
  */
 bool qSessionSave(Q_ENTRY *session) {
-	const char *sessionkey = qEntryGetStr(session, INTER_SESSIONID);
-	const char *session_repository_path = qEntryGetStr(session, INTER_SESSION_REPO);
-	int session_timeout_interval = qEntryGetInt(session, INTER_INTERVAL_SEC);
+	const char *sessionkey = session->getStr(session, INTER_SESSIONID, false);
+	const char *session_repository_path = session->getStr(session, INTER_SESSION_REPO, false);
+	int session_timeout_interval = session->getInt(session, INTER_INTERVAL_SEC);
 	if(sessionkey == NULL || session_repository_path == NULL) return false;
 
 	char session_storage_path[PATH_MAX];
@@ -224,7 +224,7 @@ bool qSessionSave(Q_ENTRY *session) {
 	snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 	snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
-	if (qEntrySave(session, session_storage_path, '=', true) == false) {
+	if (session->save(session, session_storage_path, '=', true) == false) {
 		DEBUG("Can't save session file %s", session_storage_path);
 		return false;
 	}
@@ -245,14 +245,14 @@ bool qSessionSave(Q_ENTRY *session) {
  * @return 	true if successful, otherwise returns false
  *
  * @note
- * If you only want to de-allocate session structure, just call qEntryFree().
+ * If you only want to de-allocate session structure, just call Q_ENTRY->free().
  * This will remove all user session data permanantely and also free the session structure.
  */
 bool qSessionDestroy(Q_ENTRY *session) {
-	const char *sessionkey = qEntryGetStr(session, INTER_SESSIONID);
-	const char *session_repository_path = qEntryGetStr(session, "INTER_SESSION_REPO");
+	const char *sessionkey = session->getStr(session, INTER_SESSIONID, false);
+	const char *session_repository_path = session->getStr(session, "INTER_SESSION_REPO", false);
 	if(sessionkey == NULL || session_repository_path == NULL) {
-		if(session != NULL) qEntryFree(session);
+		if(session != NULL) session->free(session);
 		return false;
 	}
 
@@ -264,7 +264,7 @@ bool qSessionDestroy(Q_ENTRY *session) {
 	_q_unlink(session_storage_path);
 	_q_unlink(session_timeout_path);
 
-	if(session != NULL) qEntryFree(session);
+	if(session != NULL) session->free(session);
 	return true;
 }
 

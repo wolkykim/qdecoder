@@ -39,11 +39,19 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
+/*
+ * Member method protos
+ */
+#ifndef _DOXYGEN_SKIP
+
+// internal usages
 static int _findEmpty(Q_HASHTBL *tbl, int startidx);
 static int _getIdx(Q_HASHTBL *tbl, const char *key, int hash);
 static bool _putData(Q_HASHTBL *tbl, int idx, int hash, const char *key, const void *value, int size, int count);
 static bool _removeData(Q_HASHTBL *tbl, int idx);
 static bool _setThreshold(Q_HASHTBL *tbl, int max, int threshold);
+
+#endif
 
 /**
  * Initialize dynamic-hash table
@@ -97,7 +105,8 @@ Q_HASHTBL *qHashtblInit(int max, bool resize, int threshold) {
 		return NULL;
 	}
 
-	MUTEX_INIT(tbl->mutex);
+	/* initialize recrusive mutex */
+	MUTEX_INIT(tbl->mutex, true);
 
 	// now table can be used
 	tbl->max = max;
@@ -592,6 +601,8 @@ bool qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max) {
 // PRIVATE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////
 
+#ifndef _DOXYGEN_SKIP
+
 // find empty slot : return empty slow number, otherwise returns -1.
 static int _findEmpty(Q_HASHTBL *tbl, int startidx) {
 	if (startidx >= tbl->max) startidx = 0;
@@ -684,5 +695,7 @@ static bool _setThreshold(Q_HASHTBL *tbl, int max, int threshold) {
 
 	return true;
 }
+
+#endif /* _DOXYGEN_SKIP */
 
 #endif /* DISABLE_DATASTRUCTURE */

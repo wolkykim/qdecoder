@@ -39,7 +39,7 @@ int main(void) {
 	req = qCgiRequestParse(req);
 
 	/* get queries */
-	const char *text = qEntryGetStr(req, "text");
+	const char *text = req->getStr(req, "text");
 	if (text == NULL) qCgiResponseError(req, "Invalid usages.");
 
 	/* result out */
@@ -47,11 +47,11 @@ int main(void) {
 	printf("You entered: <b>%s</b>\n", text);
 
 	for (i = 1; i <= 3; i++) {
-		int length =  qEntryGetIntf(req, "binary%d.length", i);
+		int length =  req->getIntf(req, "binary%d.length", i);
 		if (length > 0) {
-			const char *filename = qEntryGetStrf(req, "binary%d.filename", i);
-			const char *contenttype = qEntryGetStrf(req, "binary%d.contenttype", i);
-			const char *savepath = qEntryGetStrf(req, "binary%d.savepath", i);
+			const char *filename = req->getStrf(req, "binary%d.filename", i);
+			const char *contenttype = req->getStrf(req, "binary%d.contenttype", i);
+			const char *savepath = req->getStrf(req, "binary%d.savepath", i);
 
 			char newpath[1024];
 			sprintf(newpath, "%s/%s", BASEPATH, filename);
@@ -63,10 +63,10 @@ int main(void) {
 
 	/* dump */
 	printf("\n<p><hr>--[ DUMP INTERNAL DATA STRUCTURE ]--\n<pre>");
-	qEntryPrint(req, stdout, true);
+	req->print(req, stdout, true);
 	printf("\n</pre>\n");
 
 	/* de-allocate */
-	qEntryFree(req);
+	req->free(req);
 	return 0;
 }

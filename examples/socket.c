@@ -61,7 +61,7 @@ int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL);
 	qCgiResponseSetContentType(req, "text/plain");
 
-	const char *hostname = qEntryGetStr(req, "hostname");
+	const char *hostname = req->getStr(req, "hostname");
 	if (hostname == NULL || strlen(hostname) == 0) qCgiResponseError(req, "Invalid usages.");
 
 	int retflag = dumpHttp(hostname, 80);
@@ -71,6 +71,7 @@ int main(void) {
 		else if (retflag == -3) qCgiResponseError(req, "Connection failed.");
 		else qCgiResponseError(req, "Unknown error.");
 	}
+	req->free(req);
 
 	return 0;
 }

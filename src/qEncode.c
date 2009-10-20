@@ -51,16 +51,16 @@
  *
  * @code
  * cont char query = "category=love&str=%C5%A5%B5%F0%C4%DA%B4%F5&sort=asc";
- * Q_ENTRY entries = qDecodeQueryString(NULL, req->pszQueryString, '=', '&', NULL);
- * printf("category = %s\n", qEntryGetStr(entries, "category"));
- * printf("str = %s\n", qEntryGetStr(entries, "str"));
- * printf("sort = %s\n", qEntryGetStr(entries, "sort"));
- * qEntryFree(entries);
+ * Q_ENTRY *entry = qDecodeQueryString(NULL, req->pszQueryString, '=', '&', NULL);
+ * printf("category = %s\n", entry->getStr(entry, "category"));
+ * printf("str = %s\n", entry->getStr(entry, "str"));
+ * printf("sort = %s\n", entry->getStr(entry, "sort"));
+ * entry->free(entry);
  * @endcode
  */
 Q_ENTRY *qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, char sepchar, int *count) {
 	if(entry == NULL) {
-		entry = qEntryInit();
+		entry = qEntry();
 		if(entry == NULL) return NULL;
 	}
 
@@ -74,7 +74,7 @@ Q_ENTRY *qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, c
 		qDecodeUrl(name);
 		qDecodeUrl(value);
 
-		if(qEntryPutStr(entry, name, value, false) == true) cnt++;
+		if(entry->putStr(entry, name, value, false) == true) cnt++;
 		free(name);
 		free(value);
 	}

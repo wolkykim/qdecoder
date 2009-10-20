@@ -35,11 +35,11 @@ int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL);
 
 	/* get queries */
-	const char *text = qEntryGetStr(req, "text");
-	const char *filedata   = qEntryGetStr(req, "binary");
-	int filelength = qEntryGetInt(req, "binary.length");
-	const char *filename   = qEntryGetStr(req, "binary.filename");
-	const char *contenttype = qEntryGetStr(req, "binary.contenttype");
+	const char *text = req->getStr(req, "text");
+	const char *filedata   = req->getStr(req, "binary");
+	int filelength = req->getInt(req, "binary.length");
+	const char *filename   = req->getStr(req, "binary.filename");
+	const char *contenttype = req->getStr(req, "binary.contenttype");
 
 	/* check queries */
 	if (text == NULL) qCgiResponseError(req, "Invalid usages.");
@@ -59,10 +59,10 @@ int main(void) {
 
 	/* dump */
 	printf("\n<p><hr>--[ DUMP INTERNAL DATA STRUCTURE ]--\n<pre>");
-	qEntryPrint(req, stdout, false);
+	req->print(req, stdout, false);
 	printf("\n</pre>\n");
 
 	/* de-allocate */
-	qEntryFree(req);
+	req->free(req);
 	return 0;
 }

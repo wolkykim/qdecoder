@@ -76,7 +76,7 @@ void objectSample(void) {
 	// print out
 	printf("[Object Sample]\n");
 	for(i = 0; i < qObstackGetNum(obstack); i++) {
-		printf("Object%d final = %d, %s\n", i+1, final[i].num, final[i].str);
+		printf("Object%d final = #%d, %s\n", i+1, final[i].num, final[i].str);
 	}
 	printf("Total Size = %zu, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
 

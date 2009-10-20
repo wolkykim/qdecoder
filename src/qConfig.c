@@ -146,7 +146,7 @@ Q_ENTRY *qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar) {
 	if (str == NULL) return NULL;
 
 	if(config == NULL) {
-		config = qEntryInit();
+		config = qEntry();
 		if(config == NULL) return NULL;
 	}
 
@@ -169,7 +169,7 @@ Q_ENTRY *qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar) {
 		qStrTrim(value);
 		qStrTrim(name);
 
-		qEntryPutStrParsed(config, name, value, true);
+		config->putStrParsed(config, name, value, true);
 
 		free(name);
 		free(value);

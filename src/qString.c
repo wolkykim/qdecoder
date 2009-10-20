@@ -403,20 +403,20 @@ char *qStrTok(char *str, const char *delimiters, char *retstop) {
  *   while((buf = qFileReadLine(fp)) != NULL) {
  *     qStrTrimTail(buf);
  *      Q_ENTRY *tokens = qStrTokenizer(buf, ":");
- *      printf("%s\n", qEntryGetStr(tokens, "1"));
- *      qEntryFree(tokens);
+ *      printf("%s\n", tokens->getStr(tokens, "1"));
+ *      tokens->free(tokens);
  *   }
  *   fclose(fp);
  * @endcode
  */
 Q_ENTRY *qStrTokenizer(char *str, const char *delimiters) {
-	Q_ENTRY *entry = qEntryInit();
+	Q_ENTRY *entry = qEntry();
 	char *token;
 	int i;
 	for(i = 1, token = qStrTok(str, delimiters, NULL); token != NULL; token = qStrTok(NULL, delimiters, NULL), i++) {
 		char key[10+1];
 		sprintf(key, "%d", i);
-		qEntryPutStr(entry, key, token, false);
+		entry->putStr(entry, key, token, false);
 	}
 
 	return entry;

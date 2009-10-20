@@ -43,20 +43,19 @@
 #include <pthread.h>
 #include <time.h>
 #include <errno.h>
-static int _m = 0;
-#define MUTEX_INIT(x)		{							\
+#define MUTEX_INIT(x,r)		{							\
 	pthread_mutexattr_t _mutexattr;							\
-	pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_RECURSIVE);		\
+	if(r == true) pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_RECURSIVE);	\
 	pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);		\
 	int _ret;									\
 	if((_ret = pthread_mutex_init(&x, &_mutexattr)) != 0) {				\
-		DEBUG("mutex init: can't initialize mutex [%d:%s]", _ret, strerror(_ret));		\
+		DEBUG("mutex init: can't initialize mutex [%d:%s]", _ret, strerror(_ret));	\
 	}										\
 }
 
 #define	MUTEX_UNLOCK(x)		{							\
 	pthread_mutex_unlock(&x);							\
-	DEBUG("UNLOCK %d", (--_m));							\
+	DEBUG("MUTEX: unlocked");							\
 }
 
 #define MAX_MUTEX_LOCK_WAIT_SEC	(3)
@@ -70,23 +69,23 @@ static int _m = 0;
 			DEBUG("mutex lock: force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
 			MUTEX_UNLOCK(x);						\
 		} else {								\
-			DEBUG("mutex lock: retry [%d:%s]", _ret, strerror(_ret));			\
+			DEBUG("mutex lock: retry [%d:%s]", _ret, strerror(_ret));	\
 		}									\
 	}										\
-	DEBUG("LOCK %d", (++_m));							\
+	DEBUG("MUTEX: locked");								\
 }
 
 #define MUTEX_DESTROY(x)	{							\
 	int _ret;									\
 	while((_ret = pthread_mutex_destroy(&x)) != 0) {				\
-		DEBUG("mutex destory: force to unlock mutex [%d:%s]", _ret, strerror(_ret));		\
+		DEBUG("mutex destory: force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
 		MUTEX_UNLOCK(x);							\
 	}										\
 }
 
 #else
 
-#define	MUTEX_INIT(x)
+#define	MUTEX_INIT(x,y)
 #define	MUTEX_UNLOCK(x)
 #define	MUTEX_LOCK(x)
 #define	MUTEX_DESTROY(x)

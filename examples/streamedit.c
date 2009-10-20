@@ -32,18 +32,19 @@
 
 int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL);
-	const char *name = qEntryGetStr(req, "name");
-	const char *hobby = qEntryGetStr(req, "hobby");
+	const char *name = req->getStr(req, "name");
+	const char *hobby = req->getStr(req, "hobby");
 
-	Q_ENTRY *args = qEntryInit();
-	qEntryPutStr(args, "${NAME}", name, true);
-	qEntryPutStr(args, "${HOBBY}", hobby, true);
+	Q_ENTRY *args = qEntry();
+	args->putStr(args, "${NAME}", name, true);
+	args->putStr(args, "${HOBBY}", hobby, true);
 
 	qCgiResponseSetContentType(req, "text/html");
 	if (qSedFile(args, SOURCE, stdout) == 0) {
 		qCgiResponseError(req, "File(%s) not found.", SOURCE);
 	}
-	qEntryFree(args);
+	args->free(args);
+	req->free(req);
 
 	return 0;
 }

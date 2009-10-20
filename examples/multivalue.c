@@ -36,10 +36,10 @@ int main(void) {
 
 	printf("Your order : ");
 	char *list;
-	for(list = (char*)qEntryGetStr(req, "checklist"); list; list = (char*)qEntryGetStrNext(req, "checklist")) {
+	for(list = (char*)req->getStr(req, "checklist"); list; list = (char*)req->getStrNext(req, "checklist")) {
 		printf("<b>%s</b> \n", list);
 	}
 
-	qEntryFree(req);
+	req->free(req);
 	return 0;
 }

@@ -26,13 +26,13 @@
 /**
  * qDecoder Header file
  *
- * @file qDecoder.h
+ * @file	qDecoder.h
  */
 
 #ifndef _QDECODER_H
 #define _QDECODER_H
 
-#define _Q_VERSION			"9.0.6"
+#define _Q_VERSION			"9.0.7"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -43,39 +43,93 @@
 /**
  * Base Structures used for Internal - named object
  */
+typedef struct {
+	char*	name;			/*!< object name */
+	void*	data;			/*!< object data */
+	int	size;			/*!< object size */
+} Q_NOBJ;
+
+/**
+ * Base Structures used for Internal - named object with link
+ */
 typedef struct Q_NLOBJ {
-	char *name;			/*!< key name */
-	void *object;			/*!< object data */
-	int  size;			/*!< object size */
+	char*	name;			/*!< object name */
+	void*	data;			/*!< object data */
+	int	size;			/*!< object size */
 	struct Q_NLOBJ *next;		/*!< link pointer */
 } Q_NLOBJ;
 
 /**
- * Base Structures used for Internal - object
+ * Base Structures used for Internal - binary object
  */
 typedef struct {
-	void *object;			/*!< object data */
+	void *data;			/*!< object data */
 	int  size;			/*!< object size */
 } Q_OBJ;
 
+typedef struct Q_ENTRY	Q_ENTRY;
 /**
  * Structure for linked-list data structure.
  */
-typedef struct {
+struct Q_ENTRY {
+	pthread_mutex_t	mutex;		/*!< only used if compiled with --enable-threadsafe option */
+
 	int num;			/*!< number of objects */
 	size_t size;			/*!< total size of objects */
 	Q_NLOBJ *first;			/*!< first object pointer */
 	Q_NLOBJ *last;			/*!< last object pointer */
-	Q_NLOBJ *next;			/*!< next object pointer used by qEntryFirst() and qEntryNext() */
-	Q_NLOBJ *cont;			/*!< next object pointer used by qEntryGet*() */
-} Q_ENTRY;
+	Q_NLOBJ *cont;			/*!< next object pointer used by getObjFirst(), getObjNext() and getObjFinal() */
+
+	// member methods
+	Q_NOBJ*		(*getObjFirst)	(Q_ENTRY *entry);
+	Q_NOBJ*		(*getObjNext)	(Q_ENTRY *entry);
+	void		(*getObjFinish)	(Q_ENTRY *entry);
+
+	bool		(*put)		(Q_ENTRY *entry, const char *name, const void *data, int size, bool replace);
+	bool		(*putStr)	(Q_ENTRY *entry, const char *name, const char *str, bool replace);
+	bool		(*putStrParsed)	(Q_ENTRY *entry, const char *name, const char *str, bool replace);
+	bool		(*putInt)	(Q_ENTRY *entry, const char *name, int num, bool replace);
+
+	void*		(*get)		(Q_ENTRY *entry, const char *name, int *size, bool newmem);
+	void*		(*getCase)	(Q_ENTRY *entry, const char *name, int *size, bool newmem);
+	void*		(*getLast)	(Q_ENTRY *entry, const char *name, int *size, bool newmem);
+	Q_OBJ*		(*getMulti)	(Q_ENTRY *entry, const char *name, int *num);
+
+	char*		(*getStr)	(Q_ENTRY *entry, const char *name, bool newmem);
+	char*		(*getStrCase)	(Q_ENTRY *entry, const char *name, bool newmem);
+	char*		(*getStrLast)	(Q_ENTRY *entry, const char *name, bool newmem);
+	int		(*getInt)	(Q_ENTRY *entry, const char *name);
+	int		(*getIntCase)	(Q_ENTRY *entry, const char *name);
+	int 		(*getIntLast)	(Q_ENTRY *entry, const char *name);
+
+	int		(*remove)	(Q_ENTRY *entry, const char *name);
+
+	int 		(*getNum)	(Q_ENTRY *entry);
+	int		(*getNo)	(Q_ENTRY *entry, const char *name);
+	char*		(*parseStr)	(Q_ENTRY *entry, const char *str);
+
+	bool		(*save)		(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode);
+	int		(*load)		(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode);
+	bool		(*reverse)	(Q_ENTRY *entry);
+	bool		(*print)	(Q_ENTRY *entry, FILE *out, bool print_data);
+	bool		(*free)		(Q_ENTRY *entry);
+};
+
+/**
+ * Structure for obstack data structure.
+ */
+typedef struct {
+	Q_ENTRY *stack;			/*!< first object pointer */
+	void	*final;			/*!< final object pointer */
+} Q_OBSTACK;
 
 #define _Q_HASHTBL_RESIZE_MAG		(2)
 #define _Q_HASHTBL_DEF_THRESHOLD	(80)
+typedef struct Q_HASHTBL		Q_HASHTBL;
 /**
  * Structure for hash-table data structure.
  */
-typedef struct {
+struct Q_HASHTBL {
 	pthread_mutex_t	mutex;		/*!< only used if compiled with --enable-threadsafe option */
 
 	int	max;			/*!< maximum hashtable size */
@@ -88,7 +142,27 @@ typedef struct {
 	char	**key;			/*!< key string */
 	void	**value;		/*!< value */
 	int	*size;			/*!< value size */
-} Q_HASHTBL;
+
+	// member methods
+	bool		(*put)		(Q_HASHTBL *tbl, const char *key, const void *value, int size);
+	bool		(*putStr)	(Q_HASHTBL *tbl, const char *key, const char *value);
+	bool		(*putInt)	(Q_HASHTBL *tbl, const char *key, int value);
+
+	void*		(*get)		(Q_HASHTBL *tbl, const char *key, int *size);
+	char*		(*getStr)	(Q_HASHTBL *tbl, const char *key);
+	int		(*getInt)	(Q_HASHTBL *tbl, const char *key);
+	const char*	(*getFirstKey)	(Q_HASHTBL *tbl, int *idx);
+	const char*	(*getNextKey)	(Q_HASHTBL *tbl, int *idx);
+
+	bool		(*remove)	(Q_HASHTBL *tbl, const char *key);
+	bool		(*resize)	(Q_HASHTBL *tbl, int max);
+	bool		(*truncate)	(Q_HASHTBL *tbl);
+
+	bool		(*print)	(Q_HASHTBL *tbl, FILE *out, bool showvalue);
+	bool		(*status)	(Q_HASHTBL *tbl, int *used, int *max);
+	bool		(*free)		(Q_HASHTBL *tbl);
+
+};
 
 #define _Q_HASHARR_MAX_KEYSIZE		(31+1)
 #define _Q_HASHARR_DEF_VALUESIZE	(32)
@@ -121,14 +195,6 @@ typedef struct {
 	size_t	objsize;		/*!< object size */
 	void	*objarr;		/*!< external queue data memory pointer */
 } Q_QUEUE;
-
-/**
- * Structure for obstack data structure.
- */
-typedef struct {
-	Q_ENTRY *stack;			/*!< first object pointer */
-	void	*final;			/*!< final object pointer */
-} Q_OBSTACK;
 
 /**
  * Structure for file log.
@@ -311,40 +377,7 @@ extern	bool		qDbRollback(Q_DB *db);
 /*
  * qEntry.c
  */
-extern	Q_ENTRY*	qEntryInit(void);
-extern	const Q_NLOBJ*	qEntryFirst(Q_ENTRY *entry);
-extern	const Q_NLOBJ*	qEntryNext(Q_ENTRY *entry);
-extern	int		qEntryRemove(Q_ENTRY *entry, const char *name);
-extern	bool		qEntryPut(Q_ENTRY *entry, const char *name, const void *object, int size, bool replace);
-extern	bool		qEntryPutStr(Q_ENTRY *entry, const char *name, const char *str, bool replace);
-extern	bool		qEntryPutStrf(Q_ENTRY *entry, const char *name, bool replace, char *format, ...);
-extern	bool		qEntryPutStrParsed(Q_ENTRY *entry, const char *name, const char *str, bool replace);
-extern	bool		qEntryPutInt(Q_ENTRY *entry, const char *name, int num, bool replace);
-extern	const void*	qEntryGet(Q_ENTRY *entry, const char *name, int *size);
-extern	const void*	qEntryGetCase(Q_ENTRY *entry, const char *name, int *size);
-extern	const void*	qEntryGetNext(Q_ENTRY *entry, const char *name, int *size);
-extern	const void*	qEntryGetNextCase(Q_ENTRY *entry, const char *name, int *size);
-extern	const void*	qEntryGetLast(Q_ENTRY *entry, const char *name, int *size);
-extern	const char*	qEntryGetStr(Q_ENTRY *entry, const char *name);
-extern	const char*	qEntryGetStrCase(Q_ENTRY *entry, const char *name);
-extern	const char*	qEntryGetStrf(Q_ENTRY *entry, char *format, ...);
-extern	const char*	qEntryGetStrNext(Q_ENTRY *entry, const char *name);
-extern	const char*	qEntryGetStrNextCase(Q_ENTRY *entry, const char *name);
-extern	const char*	qEntryGetStrLast(Q_ENTRY *entry, const char *name);
-extern	int		qEntryGetInt(Q_ENTRY *entry, const char *name);
-extern	int		qEntryGetIntCase(Q_ENTRY *entry, const char *name);
-extern	int		qEntryGetIntf(Q_ENTRY *entry, char *format, ...);
-extern	int		qEntryGetIntNext(Q_ENTRY *entry, const char *name);
-extern	int		qEntryGetIntNextCase(Q_ENTRY *entry, const char *name);
-extern	int 		qEntryGetIntLast(Q_ENTRY *entry, const char *name);
-extern	char*		qEntryParseStr(Q_ENTRY *entry, const char *str);
-extern	int 		qEntryGetNum(Q_ENTRY *entry);
-extern	int		qEntryGetNo(Q_ENTRY *entry, const char *name);
-extern	bool		qEntryReverse(Q_ENTRY *entry);
-extern	bool		qEntryPrint(Q_ENTRY *entry, FILE *out, bool print_object);
-extern	bool		qEntryFree(Q_ENTRY *entry);
-extern	bool		qEntrySave(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode);
-extern	int		qEntryLoad(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode);
+extern	Q_ENTRY*	qEntry(void);
 
 /*
  * qHashtbl.c

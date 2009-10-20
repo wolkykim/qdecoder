@@ -65,11 +65,11 @@
  * @return	true if successful, otherwise returns false.
  *
  * @code
- *   Q_ENTRY *args = qEntryInit();
- *   args = qEntryPutStr(args, "${NAME}", "The qDecoder Project");
- *   args = qEntryPutStr(args, "${HOBBY}", "Open Source Project");
+ *   Q_ENTRY *args = qEntry();
+ *   args = args->putStr(args, "${NAME}", "The qDecoder Project");
+ *   args = args->putStr(args, "${HOBBY}", "Open Source Project");
  *   qSedStr(args, "${NAME} : ${HOBBY}", stdout);
- *   qEntryFree(args);
+ *   args->free(args);
  * @endcode
  */
 bool qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout) {
@@ -95,9 +95,9 @@ bool qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout) {
 		/* Pattern Matching */
 		int flag;
 		const Q_NLOBJ *obj;
-		for (obj = (Q_NLOBJ*)qEntryFirst(entry), flag = 0; obj && flag == 0; obj = (Q_NLOBJ*)qEntryNext(entry)) {
+		for (obj = (Q_NLOBJ*)entry->getObjFirst(entry), flag = 0; obj && flag == 0; obj = (Q_NLOBJ*)entry->getObjNext(entry)) {
 			if (!strncmp(sp, obj->name, strlen(obj->name))) {
-				fprintf(fpout, "%s", (char *)obj->object);
+				fprintf(fpout, "%s", (char *)obj->data);
 				sp += strlen(obj->name);
 				flag = 1;
 				break;
@@ -131,11 +131,11 @@ bool qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout) {
  * @endcode
  *
  * @code
- *   Q_ENTRY *args = qEntryInit();
- *   args = qEntryPutStr(args, "${NAME}", "The qDecoder Project");
- *   args = qEntryPutStr(args, "${HOBBY}", "Open Source Project");
+ *   Q_ENTRY *args = qEntry();
+ *   args = args->putStr(args, "${NAME}", "The qDecoder Project");
+ *   args = args->putStr(args, "${HOBBY}", "Open Source Project");
  *   qSedFile(args, "streamedit.html.in", stdout);
- *   qEntryFree(args);
+ *   args->free(args);
  * @endcode
  */
 bool qSedFile(Q_ENTRY *entry, const char *filepath, FILE *fpout) {

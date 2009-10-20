@@ -156,14 +156,14 @@ bool qCgiResponseRemoveCookie(Q_ENTRY *request, const char *name, const char *pa
  * @endcode
  */
 bool qCgiResponseSetContentType(Q_ENTRY *request, const char *mimetype) {
-	if(qEntryGetStr(request, "_Q_CONTENTTYPE") != NULL) {
+	if(request->getStr(request, "_Q_CONTENTTYPE", false) != NULL) {
 		DEBUG("alreay set.");
 		return false;
 	}
 
 	printf("Content-Type: %s\n\n", mimetype);
 
-	qEntryPutStr(request, "_Q_CONTENTTYPE", mimetype, true);
+	request->putStr(request, "_Q_CONTENTTYPE", mimetype, true);
 	return true;
 }
 
@@ -179,7 +179,7 @@ bool qCgiResponseSetContentType(Q_ENTRY *request, const char *mimetype) {
  * @endcode
  */
 const char *qCgiResponseGetContentType(Q_ENTRY *request) {
-	return qEntryGetStr(request, "_Q_CONTENTTYPE");
+	return request->getStr(request, "_Q_CONTENTTYPE", false);
 }
 
 /**
@@ -294,7 +294,7 @@ void qCgiResponseError(Q_ENTRY *request, char *format, ...) {
 		printf("</html>\n");
 	}
 
-	qEntryFree(request);
+	request->free(request);
 	exit(EXIT_FAILURE);
 }
 
