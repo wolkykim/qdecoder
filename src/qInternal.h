@@ -42,55 +42,56 @@
 #ifdef ENABLE_THREADSAFE
 
 #include <time.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
 
 #define Q_LOCK_INIT(x,r)	{							\
 	memset((void*)&x, 0, sizeof(Q_LOCK_T));						\
 	pthread_mutexattr_t _mutexattr;							\
-	if(r == true) pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_RECURSIVE);	\
-	pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);		\
+	pthread_mutexattr_init(&_mutexattr);						\
+	if(r == true) {									\
+		pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_RECURSIVE);	\
+		pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);	\
+	}										\
 	int _ret;									\
 	if((_ret = pthread_mutex_init(&x.mutex, &_mutexattr)) != 0) {			\
-		DEBUG("MUTEX: can't initialize mutex [%d:%s]", _ret, strerror(_ret));	\
+		DEBUG("Q_LOCK: can't initialize mutex. [%d:%s]", _ret, strerror(_ret));	\
 	}										\
-	DEBUG("MUTEX: initialized");							\
+	DEBUG("Q_LOCK: initialized.");							\
 }
 
 #define	Q_LOCK_LEAVE(x)		{							\
-	if(!pthread_equal(x.owner, pthread_self())) DEBUG("MUTEX: unlock - owner mismatch");	\
+	if(!pthread_equal(x.owner, pthread_self())) DEBUG("Q_LOCK: unlock - owner mismatch.");	\
 	x.count--;									\
-	DEBUG("MUTEX: try to unlock, cnt=%d", x.count);					\
 	pthread_mutex_unlock(&x.mutex);							\
 }
+//	DEBUG("Q_LOCK: unlock, cnt=%d", x.count);
 
-#define MAX_MUTEX_LOCK_WAIT_SEC	(3)
+#define MAX_MUTEX_LOCK_WAIT	(3000)
 #define	Q_LOCK_ENTER(x)		{							\
-	struct timespec _timeout;							\
-	_timeout.tv_sec = MAX_MUTEX_LOCK_WAIT_SEC;					\
-	_timeout.tv_nsec = 0;								\
-	int _ret;									\
-	while((_ret = pthread_mutex_timedlock(&x.mutex, &_timeout)) != 0) {		\
-		if(_ret == ETIMEDOUT || _ret == EDEADLK) {				\
-			DEBUG("MUTEX: can't get lock force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
-			Q_LOCK_LEAVE(x);						\
-		} else {								\
-			DEBUG("MUTEX: can;t get lock retry [%d:%s]", _ret, strerror(_ret));	\
+	while(true) {									\
+		int _ret, i;								\
+ 		for(i = 1; (_ret = pthread_mutex_trylock(&x.mutex)) != 0 && i < MAX_MUTEX_LOCK_WAIT; i++) {	\
+			usleep(1);							\
 		}									\
+		if(_ret == 0) break;							\
+		DEBUG("Q_LOCK: can't get lock - force to unlock. [%d:%s]", _ret, strerror(_ret));	\
+		Q_LOCK_LEAVE(x);							\
 	}										\
 	x.count++;									\
 	x.owner = pthread_self();							\
-	DEBUG("MUTEX: locked, cnt=%d", x.count);					\
 }
+//	DEBUG("Q_LOCK: locked, cnt=%d", x.count);
 
 #define Q_LOCK_DESTROY(x)	{							\
-	if(x.count != 0) DEBUG("MUTEX: ");						\
+	if(x.count != 0) DEBUG("Q_LOCK: mutex counter is not 0.");			\
 	int _ret;									\
 	while((_ret = pthread_mutex_destroy(&x.mutex)) != 0) {				\
-		DEBUG("MUTEX: force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
+		DEBUG("Q_LOCK: force to unlock mutex. [%d:%s]", _ret, strerror(_ret));	\
 		Q_LOCK_LEAVE(x);							\
 	}										\
-	DEBUG("MUTEX: destroyed");							\
+	DEBUG("Q_LOCK: destroyed.");							\
 }
 
 #else

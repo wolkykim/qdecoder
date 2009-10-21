@@ -67,6 +67,9 @@ static bool _realOpen(Q_LOG *log);
  *   Q_LOG *log = qLogOpen("/tmp/qdecoder-%Y%m%d.err", 86400, false);
  *   qLogClose(log);
  * @endcode
+ *
+ * @note
+ * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
  */
 Q_LOG *qLog(const char *filepathfmt, int rotateinterval, bool flush) {
 	Q_LOG *log;

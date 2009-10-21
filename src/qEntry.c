@@ -126,9 +126,6 @@ Q_ENTRY *qEntry(void) {
 
 	memset((void *)entry, 0, sizeof(Q_ENTRY));
 
-	/* initialize non-recrusive mutex */
-	Q_LOCK_INIT(entry->qlock, false);
-
 	/* member methods */
 	entry->lock		= _lock;
 	entry->unlock		= _unlock;
@@ -162,6 +159,9 @@ Q_ENTRY *qEntry(void) {
 	entry->reverse		= _reverse;
 	entry->print		= _print;
 	entry->free		= _free;
+
+	/* initialize recrusive mutex */
+	Q_LOCK_INIT(entry->qlock, true);
 
 	return entry;
 }
@@ -549,7 +549,7 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
  *   // non-thread usages
  *   Q_NLOBJ_T obj;
  *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
- *   while((entry->getNext(entry, &obj, NULL, false) == true) {
+ *   while(entry->getNext(entry, &obj, NULL, false) == true) {
  *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
  *   }
  *
@@ -557,7 +557,7 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
  *   Q_NLOBJ_T obj;
  *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
  *   entry->qlock();
- *   while((entry->getNext(entry, &obj, "key2", false) == true) {
+ *   while(entry->getNext(entry, &obj, "key2", false) == true) {
  *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
  *   }
  *   entry->unlock();
@@ -566,7 +566,7 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
  *   Q_NLOBJ_T obj;
  *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
  *   entry->qlock();
- *   while((entry->getNext(entry, &obj, NULL, true) == true) {
+ *   while(entry->getNext(entry, &obj, NULL, true) == true) {
  *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
  *     free(obj.name);
  *     free(obj.data);

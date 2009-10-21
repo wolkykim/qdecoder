@@ -390,36 +390,36 @@ static int _getInt(Q_HASHTBL *tbl, const char *name) {
  *
  * @code
  *   Q_HASHTBL *tbl = qHashtbl();
- *   tbl->putStr(entry, "key1", "hello world 1", false);
- *   tbl->putStr(entry, "key2", "hello world 2", false);
- *   tbl->putStr(entry, "key3", "hello world 3", false);
+ *   tbl->putStr(tbl, "key1", "hello world 1", false);
+ *   tbl->putStr(tbl, "key2", "hello world 2", false);
+ *   tbl->putStr(tbl, "key3", "hello world 3", false);
  *
  *   // non-thread usages
  *   int idx = 0;
  *   Q_NOBJ_T obj;
- *   while((tbl->getNext(tbl, &obj, &idx, false) == true) {
+ *   while(tbl->getNext(tbl, &obj, &idx, false) == true) {
  *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
  *   }
  *
  *   // thread model
  *   int idx = 0;
  *   Q_NOBJ_T obj;
- *   entry->lock();
- *   while((tbl->getNext(tbl, &obj, &idx, false) == true) {
+ *   tbl->lock();
+ *   while(tbl->getNext(tbl, &obj, &idx, false) == true) {
  *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
  *   }
- *   entry->unlock();
+ *   tbl->unlock();
  *
  *   // thread model 2 with newmem flag
  *   int idx = 0;
  *   Q_NOBJ_T obj;
- *   entry->lock();
- *   while((tbl->getNext(tbl, &obj, &idx, false) == true) {
+ *   tbl->lock();
+ *   while(tbl->getNext(tbl, &obj, &idx, false) == true) {
  *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
  *     free(obj.name);
  *     free(obj.data);
  *   }
- *   entry->unlock();
+ *   tbl->unlock();
  */
 static bool _getNext(Q_HASHTBL *tbl, Q_NOBJ_T *obj, int *idx, bool newmem) {
 	if(tbl == NULL || obj == NULL || idx == NULL) return NULL;
