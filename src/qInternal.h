@@ -40,11 +40,13 @@
 #endif
 
 #ifdef ENABLE_THREADSAFE
-#include <pthread.h>
+
 #include <time.h>
+#include <pthread.h>
 #include <errno.h>
-#define MUTEX_INIT(x,r)		{							\
-	memset((void*)&x, 0, sizeof(Q_LOCK));						\
+
+#define Q_LOCK_INIT(x,r)	{							\
+	memset((void*)&x, 0, sizeof(Q_LOCK_T));						\
 	pthread_mutexattr_t _mutexattr;							\
 	if(r == true) pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_RECURSIVE);	\
 	pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);		\
@@ -55,7 +57,7 @@
 	DEBUG("MUTEX: initialized");							\
 }
 
-#define	MUTEX_UNLOCK(x)		{							\
+#define	Q_LOCK_LEAVE(x)		{							\
 	if(!pthread_equal(x.owner, pthread_self())) DEBUG("MUTEX: unlock - owner mismatch");	\
 	x.count--;									\
 	DEBUG("MUTEX: try to unlock, cnt=%d", x.count);					\
@@ -63,7 +65,7 @@
 }
 
 #define MAX_MUTEX_LOCK_WAIT_SEC	(3)
-#define	MUTEX_LOCK(x)		{							\
+#define	Q_LOCK_ENTER(x)		{							\
 	struct timespec _timeout;							\
 	_timeout.tv_sec = MAX_MUTEX_LOCK_WAIT_SEC;					\
 	_timeout.tv_nsec = 0;								\
@@ -71,7 +73,7 @@
 	while((_ret = pthread_mutex_timedlock(&x.mutex, &_timeout)) != 0) {		\
 		if(_ret == ETIMEDOUT || _ret == EDEADLK) {				\
 			DEBUG("MUTEX: can't get lock force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
-			MUTEX_UNLOCK(x);						\
+			Q_LOCK_LEAVE(x);						\
 		} else {								\
 			DEBUG("MUTEX: can;t get lock retry [%d:%s]", _ret, strerror(_ret));	\
 		}									\
@@ -81,22 +83,22 @@
 	DEBUG("MUTEX: locked, cnt=%d", x.count);					\
 }
 
-#define MUTEX_DESTROY(x)	{							\
+#define Q_LOCK_DESTROY(x)	{							\
 	if(x.count != 0) DEBUG("MUTEX: ");						\
 	int _ret;									\
 	while((_ret = pthread_mutex_destroy(&x.mutex)) != 0) {				\
 		DEBUG("MUTEX: force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
-		MUTEX_UNLOCK(x);							\
+		Q_LOCK_LEAVE(x);							\
 	}										\
 	DEBUG("MUTEX: destroyed");							\
 }
 
 #else
 
-#define	MUTEX_INIT(x,y)
-#define	MUTEX_UNLOCK(x)
-#define	MUTEX_LOCK(x)
-#define	MUTEX_DESTROY(x)
+#define	Q_LOCK_INIT(x,y)
+#define	Q_LOCK_UNLOCK(x)
+#define	Q_LOCK_LOCK(x)
+#define	Q_LOCK_DESTROY(x)
 
 #endif
 

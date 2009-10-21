@@ -94,7 +94,7 @@ bool qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout) {
 
 		/* Pattern Matching */
 		int flag = 0;
- 		Q_NLOBJ obj;
+ 		Q_NLOBJ_T obj;
 		memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
 		entry->lock(entry);
  		while(entry->getNext(entry, &obj, NULL, false) == true) {

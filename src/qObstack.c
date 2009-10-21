@@ -105,6 +105,9 @@
  *   Object3 final = 2, hello2
  *   Total Size = 48, Number of Objects = 3
  * @endcode
+ *
+ * @note
+ * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
  */
 
 #ifndef DISABLE_DATASTRUCTURE

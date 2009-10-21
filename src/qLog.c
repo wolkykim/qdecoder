@@ -36,7 +36,17 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
+#ifndef _DOXYGEN_SKIP
+
+static bool _write(Q_LOG *log, const char *format, ...);
+static bool _duplicate(Q_LOG *log, FILE *outfp, bool flush);
+static bool _flush(Q_LOG *log);
+static bool _free(Q_LOG *log);
+
+// internal usages
 static bool _realOpen(Q_LOG *log);
+
+#endif
 
 /**
  * Open ratating-log file
@@ -58,7 +68,7 @@ static bool _realOpen(Q_LOG *log);
  *   qLogClose(log);
  * @endcode
  */
-Q_LOG *qLogOpen(const char *filepathfmt, int rotateinterval, bool flush) {
+Q_LOG *qLog(const char *filepathfmt, int rotateinterval, bool flush) {
 	Q_LOG *log;
 
 	/* malloc Q_LOG structure */
@@ -68,80 +78,34 @@ Q_LOG *qLogOpen(const char *filepathfmt, int rotateinterval, bool flush) {
 	memset((void *)(log), 0, sizeof(Q_LOG));
 	qStrCpy(log->filepathfmt, sizeof(log->filepathfmt), filepathfmt, sizeof(log->filepathfmt));
 	if(rotateinterval > 0) log->rotateinterval = rotateinterval;
-	log->flush = flush;
+	log->logflush = flush;
 
 	if (_realOpen(log) == false) {
-		qLogClose(log);
+		free(log);
 		return NULL;
 	}
+
+	// member methods
+	log->write	= _write;
+	log->duplicate	= _duplicate;
+	log->flush	= _flush;
+	log->free	= _free;
+
+	// initialize non-recursive lock
+	Q_LOCK_INIT(log->qlock, false);
 
 	return log;
 }
 
 /**
- * Close ratating-log file
- *
- * @param log		a pointer of Q_LOG
- *
- * @return		true if successful, otherewise returns false
- */
-bool qLogClose(Q_LOG *log) {
-	if (log == NULL) return false;
-	if (log->fp != NULL) {
-		fclose(log->fp);
-		log->fp = NULL;
-	}
-	free(log);
-	return true;
-}
-
-/**
- * Duplicate log string into other stream
- *
- * @param log		a pointer of Q_LOG
- * @param fp		logging messages will be printed out into this stream. set NULL to disable.
- * @param flush		set to true if you want to flush everytime duplicating.
- *
- * @return		true if successful, otherewise returns false
- *
- * @code
- *   qLogDuplicate(log, stdout, true);	// enable console out with flushing
- *   qLogDuplicate(log, stderr, false);	// enable console out
- *   qLogDuplicate(log, NULL, false);	// disable console out (default)
- * @endcode
- */
-bool qLogDuplicate(Q_LOG *log, FILE *outfp, bool flush) {
-	if (log == NULL) return false;
-	log->outfp = outfp;
-	log->outflush = flush;
-	return true;
-}
-
-/**
- * Flush buffered log
- *
- * @param log		a pointer of Q_LOG
- *
- * @return		true if successful, otherewise returns false
- */
-bool qLogFlush(Q_LOG *log) {
-	if (log == NULL) return false;
-
-	if (log->fp != NULL &&log->flush == false) fflush(log->fp);
-	if (log->outfp != NULL && log->outflush == false) fflush(log->outfp);
-
-	return false;
-}
-
-/**
- * Log messages
+ * Q_LOG->write(): Log messages
  *
  * @param log		a pointer of Q_LOG
  * @param format	messages format
  *
  * @return		true if successful, otherewise returns false
  */
-bool qLog(Q_LOG *log, const char *format, ...) {
+static bool _write(Q_LOG *log, const char *format, ...) {
 	char buf[1024];
 	va_list arglist;
 	time_t nowTime = time(NULL);
@@ -151,6 +115,8 @@ bool qLog(Q_LOG *log, const char *format, ...) {
 	va_start(arglist, format);
 	vsnprintf(buf, sizeof(buf), format, arglist);
 	va_end(arglist);
+
+	Q_LOCK_ENTER(log->qlock);
 
 	/* duplicate stream */
 	if (log->outfp != NULL) {
@@ -164,15 +130,87 @@ bool qLog(Q_LOG *log, const char *format, ...) {
 	}
 
 	/* log to file */
-	if (fprintf(log->fp, "%s\n", buf) < 0) return false;
-	if (log->flush == true) fflush(log->fp);
+	bool ret = false;
+	if (fprintf(log->fp, "%s\n", buf) >= 0) {
+		if (log->logflush == true) fflush(log->fp);
+		ret = true;
+	}
 
+	Q_LOCK_LEAVE(log->qlock);
+	return ret;
+}
+
+/**
+ * Q_LOG->duplicate(): Duplicate log string into other stream
+ *
+ * @param log		a pointer of Q_LOG
+ * @param fp		logging messages will be printed out into this stream. set NULL to disable.
+ * @param flush		set to true if you want to flush everytime duplicating.
+ *
+ * @return		true if successful, otherewise returns false
+ *
+ * @code
+ *   log->duplicate(log, stdout, true);	// enable console out with flushing
+ *   log->duplicate(log, stderr, false);	// enable console out
+ *   log->duplicate(log, NULL, false);	// disable console out (default)
+ * @endcode
+ */
+static bool _duplicate(Q_LOG *log, FILE *outfp, bool flush) {
+	if (log == NULL) return false;
+
+	Q_LOCK_ENTER(log->qlock);
+	log->outfp = outfp;
+	log->outflush = flush;
+	Q_LOCK_LEAVE(log->qlock);
+
+	return true;
+}
+
+/**
+ * Q_LOG->flush(): Flush buffered log
+ *
+ * @param log		a pointer of Q_LOG
+ *
+ * @return		true if successful, otherewise returns false
+ */
+static bool _flush(Q_LOG *log) {
+	if (log == NULL) return false;
+
+	// only flush if flush flag is disabled
+	Q_LOCK_ENTER(log->qlock);
+	if (log->fp != NULL && log->logflush == false) fflush(log->fp);
+	if (log->outfp != NULL && log->outflush == false) fflush(log->outfp);
+	Q_LOCK_LEAVE(log->qlock);
+
+	return false;
+}
+
+/**
+ * Q_LOG->free(): Close ratating-log file & de-allocate resources
+ *
+ * @param log		a pointer of Q_LOG
+ *
+ * @return		true if successful, otherewise returns false
+ */
+static bool _free(Q_LOG *log) {
+	if (log == NULL) return false;
+
+	Q_LOCK_ENTER(log->qlock);
+	if (log->fp != NULL) {
+		fclose(log->fp);
+		log->fp = NULL;
+	}
+	Q_LOCK_LEAVE(log->qlock);
+	Q_LOCK_DESTROY(log->qlock);
+	free(log);
 	return true;
 }
 
 /////////////////////////////////////////////////////////////////////////
 // PRIVATE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////
+
+#ifndef _DOXYGEN_SKIP
 
 static bool _realOpen(Q_LOG *log) {
 	const time_t nowtime = time(NULL);
@@ -212,3 +250,5 @@ static bool _realOpen(Q_LOG *log) {
 
 	return true;
 }
+
+#endif

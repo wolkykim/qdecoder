@@ -40,9 +40,9 @@
 #include <limits.h>
 #include <sys/types.h>
 
-typedef struct _Q_NOBJ		Q_NOBJ;
-typedef struct _Q_NLOBJ		Q_NLOBJ;
-typedef struct _Q_LOCK		Q_LOCK;
+typedef struct _Q_NOBJ_T	Q_NOBJ_T;
+typedef struct _Q_NLOBJ_T	Q_NLOBJ_T;
+typedef struct _Q_LOCK_T	Q_LOCK_T;
 
 typedef struct _Q_ENTRY		Q_ENTRY;
 typedef struct _Q_OBSTACK	Q_OBSTACK;
@@ -54,28 +54,28 @@ typedef struct _Q_DB		Q_DB;
 typedef struct _Q_DBRESULT	Q_DBRESULT;
 
 /**
- * Structure for named object
+ * Variable type for named object
  */
-struct _Q_NOBJ {
+struct _Q_NOBJ_T {
 	char*		name;		/*!< object name */
 	void*		data;		/*!< data object */
 	size_t		size;		/*!< object size */
 };
 
 /**
- * Structure for named object with link
+ * Variable type for named object with link
  */
-struct _Q_NLOBJ {
+struct _Q_NLOBJ_T {
 	char*		name;		/*!< object name */
 	void*		data;		/*!< data object */
 	size_t		size;		/*!< object size */
-	Q_NLOBJ*	next;		/*!< link pointer */
+	Q_NLOBJ_T*	next;		/*!< link pointer */
 };
 
 /**
- * Structure for lock management
+ * Variable type for lock management
  */
-struct _Q_LOCK {
+struct _Q_LOCK_T {
 	pthread_mutex_t	mutex;
 	pthread_t	owner;
 	int		count;
@@ -85,12 +85,12 @@ struct _Q_LOCK {
  * Structure for linked-list data structure.
  */
 struct _Q_ENTRY {
-	Q_LOCK		qlock;		/*!< only used if compiled with --enable-threadsafe option */
+	Q_LOCK_T	qlock;		/*!< only used if compiled with --enable-threadsafe option */
 
 	int		num;		/*!< number of objects */
 	size_t		size;		/*!< total size of data objects, does not include name size */
-	Q_NLOBJ*	first;		/*!< first object pointer */
-	Q_NLOBJ*	last;		/*!< last object pointer */
+	Q_NLOBJ_T*	first;		/*!< first object pointer */
+	Q_NLOBJ_T*	last;		/*!< last object pointer */
 
 	// member methods
 	void		(*lock)		(Q_ENTRY *entry);
@@ -104,7 +104,7 @@ struct _Q_ENTRY {
 	void*		(*get)		(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 	void*		(*getCase)	(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 	void*		(*getLast)	(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
-	bool		(*getNext)	(Q_ENTRY *entry, Q_NLOBJ *obj, const char *name, bool newmem);
+	bool		(*getNext)	(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newmem);
 
 	char*		(*getStr)	(Q_ENTRY *entry, const char *name, bool newmem);
 	char*		(*getStrCase)	(Q_ENTRY *entry, const char *name, bool newmem);
@@ -141,7 +141,7 @@ struct _Q_OBSTACK {
  * Structure for hash-table data structure.
  */
 struct _Q_HASHTBL {
-	Q_LOCK		qlock;		/*!< only used if compiled with --enable-threadsafe option */
+	Q_LOCK_T	qlock;		/*!< only used if compiled with --enable-threadsafe option */
 
 	int		max;		/*!< maximum hashtable size */
 	int		num;		/*!< used slot counter */
@@ -150,7 +150,7 @@ struct _Q_HASHTBL {
 
 	int*		count;		/*!< hash collision counter. 0 indicate empty slot, -1 is used for moved slot due to hash collision */
 	int*		hash;		/*!< key hash. we use qHashFnv32() to generate hash integer */
-	Q_NOBJ*		obj;
+	Q_NOBJ_T*	obj;
 
 	// member methods
 	void		(*lock)		(Q_HASHTBL *tbl);
@@ -163,7 +163,7 @@ struct _Q_HASHTBL {
 	void*		(*get)		(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem);
 	char*		(*getStr)	(Q_HASHTBL *tbl, const char *name, bool newmem);
 	int		(*getInt)	(Q_HASHTBL *tbl, const char *name);
-	bool		(*getNext)	(Q_HASHTBL *tbl, Q_NOBJ *obj, int *idx, bool newmem);
+	bool		(*getNext)	(Q_HASHTBL *tbl, Q_NOBJ_T *obj, int *idx, bool newmem);
 
 	bool		(*remove)	(Q_HASHTBL *tbl, const char *name);
 	bool		(*resize)	(Q_HASHTBL *tbl, int max);
@@ -196,29 +196,37 @@ struct _Q_HASHARR {
  * Structure for array-based circular-queue data structure.
  */
 struct _Q_QUEUE {
-	int	max;			/*!< maximum queue slots */
-	int	used;			/*!< used queue slots */
+	int		max;		/*!< maximum queue slots */
+	int		used;		/*!< used queue slots */
 
-	int	head;			/*!< head pointer */
-	int	tail;			/*!< tail pointer */
+	int		head;		/*!< head pointer */
+	int		tail;		/*!< tail pointer */
 
-	size_t	objsize;		/*!< object size */
-	void	*objarr;		/*!< external queue data memory pointer */
+	size_t		objsize;	/*!< object size */
+	void*		objarr;		/*!< external queue data memory pointer */
 };
 
 /**
  * Structure for file log.
  */
 struct _Q_LOG {
+	Q_LOCK_T	qlock;		/*!< only used if compiled with --enable-threadsafe option */
+
 	char	filepathfmt[PATH_MAX];	/*!< file file naming format like /somepath/qdecoder-%Y%m%d.log */
 	char	filepath[PATH_MAX];	/*!< generated system path of log file */
 	FILE	*fp;			/*!< file pointer of logpath */
 	int	rotateinterval;		/*!< log file will be rotate in this interval seconds */
 	int	nextrotate;		/*!< next rotate universal time, seconds */
-	bool	flush;			/*!< flag for immediate flushing */
+	bool	logflush;		/*!< flag for immediate flushing */
 
 	FILE	*outfp;			/*!< stream pointer for duplication */
 	bool	outflush;		/*!< flag for immediate flushing for duplicated stream */
+
+	// member methods
+	bool	(*write)		(Q_LOG *log, const char *format, ...);
+	bool	(*duplicate)		(Q_LOG *log, FILE *outfp, bool flush);
+	bool	(*flush)		(Q_LOG *log);
+	bool	(*free)			(Q_LOG *log);
 };
 
 /* Database Support*/
@@ -445,11 +453,7 @@ extern	Q_ENTRY*	qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar);
 /*
  * qLog.c
  */
-extern	Q_LOG*		qLogOpen(const char *filepathfmt, int rotateinterval, bool flush);
-extern	bool		qLogClose(Q_LOG *log);
-extern	bool		qLogDuplicate(Q_LOG *log, FILE *outfp, bool flush);
-extern	bool		qLogFlush(Q_LOG *log);
-extern	bool		qLog(Q_LOG *log, const char *format, ...);
+extern	Q_LOG*		qLog(const char *filepathfmt, int rotateinterval, bool flush);
 
 /*
  * qString.c
