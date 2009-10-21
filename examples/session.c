@@ -33,9 +33,9 @@ int main(void) {
 
 	/* fetch queries */
 	time_t expire = (time_t)req->getInt(req, "expire");
-	const char *mode = req->getStr(req, "mode");
-	const char *name   = req->getStr(req, "name");
-	const char *value  = req->getStr(req, "value");
+	const char *mode = req->getStr(req, "mode", false);
+	const char *name   = req->getStr(req, "name", false);
+	const char *value  = req->getStr(req, "value", false);
 
 	/* start session. */
 	Q_ENTRY *sess = qSessionInit(req, NULL);

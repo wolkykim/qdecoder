@@ -26,18 +26,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include "qDecoder.h"
 
 int main(void) {
 	/* Parse (GET/COOKIE/POST) queries. */
 	Q_ENTRY *req = qCgiRequestParse(NULL);
-
 	qCgiResponseSetContentType(req, "text/html");
 
 	printf("Your order : ");
-	char *list;
-	for(list = (char*)req->getStr(req, "checklist"); list; list = (char*)req->getStrNext(req, "checklist")) {
-		printf("<b>%s</b> \n", list);
+	Q_NLOBJ obj;
+	memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
+	while(req->getNext(req, &obj, "checklist", false) == true) {
+		printf("<b>%s</b> \n", (char *)obj.data);
 	}
 
 	req->free(req);

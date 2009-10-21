@@ -35,11 +35,11 @@ int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL);
 
 	/* get queries */
-	const char *text = req->getStr(req, "text");
-	const char *filedata   = req->getStr(req, "binary");
+	const char *text = req->getStr(req, "text", false);
+	const char *filedata   = req->getStr(req, "binary", false);
 	int filelength = req->getInt(req, "binary.length");
-	const char *filename   = req->getStr(req, "binary.filename");
-	const char *contenttype = req->getStr(req, "binary.contenttype");
+	const char *filename   = req->getStr(req, "binary.filename", false);
+	const char *contenttype = req->getStr(req, "binary.contenttype", false);
 
 	/* check queries */
 	if (text == NULL) qCgiResponseError(req, "Invalid usages.");

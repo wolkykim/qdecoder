@@ -33,9 +33,9 @@ int main(void) {
 	/* Parse (GET/COOKIE/POST) queries. */
 	Q_ENTRY *req = qCgiRequestParse(NULL);
 
-	const char *mode = req->getStr(req, "mode");
-	const char *name = req->getStr(req, "cname");
-	const char *value = req->getStr(req, "cvalue");
+	const char *mode = req->getStr(req, "mode", false);
+	const char *name = req->getStr(req, "cname", false);
+	const char *value = req->getStr(req, "cvalue", false);
 
 	if (mode == NULL) { /* View Cookie */
 		qCgiResponseSetContentType(req, "text/plain");

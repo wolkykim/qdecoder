@@ -68,7 +68,7 @@
  *   Q_ENTRY *args = qEntry();
  *   args = args->putStr(args, "${NAME}", "The qDecoder Project");
  *   args = args->putStr(args, "${HOBBY}", "Open Source Project");
- *   qSedStr(args, "${NAME} : ${HOBBY}", stdout);
+ *   qSedStr(args, "Your name is ${NAME} and hobby is ${HOBBY}.", stdout);
  *   args->free(args);
  * @endcode
  */
@@ -93,16 +93,20 @@ bool qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout) {
 		}
 
 		/* Pattern Matching */
-		int flag;
-		const Q_NLOBJ *obj;
-		for (obj = (Q_NLOBJ*)entry->getObjFirst(entry), flag = 0; obj && flag == 0; obj = (Q_NLOBJ*)entry->getObjNext(entry)) {
-			if (!strncmp(sp, obj->name, strlen(obj->name))) {
-				fprintf(fpout, "%s", (char *)obj->data);
-				sp += strlen(obj->name);
+		int flag = 0;
+ 		Q_NLOBJ obj;
+		memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
+		entry->lock(entry);
+ 		while(entry->getNext(entry, &obj, NULL, false) == true) {
+			if (!strncmp(sp, obj.name, strlen(obj.name))) {
+				fprintf(fpout, "%s", (char *)obj.data);
+				sp += strlen(obj.name);
 				flag = 1;
 				break;
 			}
 		}
+ 		entry->unlock(entry);
+
 		if (flag == 0) {
 			fprintf(fpout, "%c", *sp);
 			sp++;

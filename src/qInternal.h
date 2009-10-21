@@ -44,18 +44,22 @@
 #include <time.h>
 #include <errno.h>
 #define MUTEX_INIT(x,r)		{							\
+	memset((void*)&x, 0, sizeof(Q_LOCK));						\
 	pthread_mutexattr_t _mutexattr;							\
 	if(r == true) pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_RECURSIVE);	\
 	pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);		\
 	int _ret;									\
-	if((_ret = pthread_mutex_init(&x, &_mutexattr)) != 0) {				\
-		DEBUG("mutex init: can't initialize mutex [%d:%s]", _ret, strerror(_ret));	\
+	if((_ret = pthread_mutex_init(&x.mutex, &_mutexattr)) != 0) {			\
+		DEBUG("MUTEX: can't initialize mutex [%d:%s]", _ret, strerror(_ret));	\
 	}										\
+	DEBUG("MUTEX: initialized");							\
 }
 
 #define	MUTEX_UNLOCK(x)		{							\
-	pthread_mutex_unlock(&x);							\
-	DEBUG("MUTEX: unlocked");							\
+	if(!pthread_equal(x.owner, pthread_self())) DEBUG("MUTEX: unlock - owner mismatch");	\
+	x.count--;									\
+	DEBUG("MUTEX: try to unlock, cnt=%d", x.count);					\
+	pthread_mutex_unlock(&x.mutex);							\
 }
 
 #define MAX_MUTEX_LOCK_WAIT_SEC	(3)
@@ -64,23 +68,27 @@
 	_timeout.tv_sec = MAX_MUTEX_LOCK_WAIT_SEC;					\
 	_timeout.tv_nsec = 0;								\
 	int _ret;									\
-	while((_ret = pthread_mutex_timedlock(&x, &_timeout)) != 0) {			\
+	while((_ret = pthread_mutex_timedlock(&x.mutex, &_timeout)) != 0) {		\
 		if(_ret == ETIMEDOUT || _ret == EDEADLK) {				\
-			DEBUG("mutex lock: force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
+			DEBUG("MUTEX: can't get lock force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
 			MUTEX_UNLOCK(x);						\
 		} else {								\
-			DEBUG("mutex lock: retry [%d:%s]", _ret, strerror(_ret));	\
+			DEBUG("MUTEX: can;t get lock retry [%d:%s]", _ret, strerror(_ret));	\
 		}									\
 	}										\
-	DEBUG("MUTEX: locked");								\
+	x.count++;									\
+	x.owner = pthread_self();							\
+	DEBUG("MUTEX: locked, cnt=%d", x.count);					\
 }
 
 #define MUTEX_DESTROY(x)	{							\
+	if(x.count != 0) DEBUG("MUTEX: ");						\
 	int _ret;									\
-	while((_ret = pthread_mutex_destroy(&x)) != 0) {				\
-		DEBUG("mutex destory: force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
+	while((_ret = pthread_mutex_destroy(&x.mutex)) != 0) {				\
+		DEBUG("MUTEX: force to unlock mutex [%d:%s]", _ret, strerror(_ret));	\
 		MUTEX_UNLOCK(x);							\
 	}										\
+	DEBUG("MUTEX: destroyed");							\
 }
 
 #else

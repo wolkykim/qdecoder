@@ -39,9 +39,9 @@ int main(void) {
 	if(conf == NULL) qCgiResponseError(req, "Configuration file(%s) not found.", CONF_FILE);
 
 	/* Get variable */
-	const char *protocol = conf->getStr(conf, "PROTOCOL");
-	const char *host     = conf->getStr(conf, "HOST");
-	int port       = conf->getInt(conf, "PORT");
+	const char *protocol	= conf->getStr(conf, "PROTOCOL", false);
+	const char *host	= conf->getStr(conf, "HOST", false);
+	int port		= conf->getInt(conf, "PORT");
 
 	/* Print out */
 	qCgiResponseSetContentType(req, "text/plain");

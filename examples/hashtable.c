@@ -30,7 +30,7 @@
 
 int main(void) {
 	// create hash table with initially 10 data slots
-	Q_HASHTBL *tbl = qHashtblInit(INIT_MAX_TABLE_SIZE, true, 80);
+	Q_HASHTBL *tbl = qHashtbl(INIT_MAX_TABLE_SIZE, true, 80);
 
 	// insert some data into table
 	int i;
@@ -40,7 +40,7 @@ int main(void) {
 		snprintf(value, sizeof(value), "value %d", i);
 
 		printf("[%d] INSERT DATA : KEY = '%s' (%d/%d/%d,%d%%) - ", i, key, tbl->num, tbl->resizeat, tbl->max, tbl->threshold);
-		if(qHashtblPutStr(tbl, key, value) == true) {
+		if(tbl->putStr(tbl, key, value) == true) {
 			printf ("OK\n");
 		} else {
 			printf ("FAILED\n");
@@ -49,10 +49,10 @@ int main(void) {
 	}
 
 	// print out everything in the hash table
-	qHashtblPrint(tbl, stdout, true);
+	tbl->print(tbl, stdout, true);
 
 	// de-allocate hash table
-	qHashtblFree(tbl);
+	tbl->free(tbl);
 
 	return 0;
 }

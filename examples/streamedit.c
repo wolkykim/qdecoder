@@ -32,8 +32,8 @@
 
 int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL);
-	const char *name = req->getStr(req, "name");
-	const char *hobby = req->getStr(req, "hobby");
+	const char *name = req->getStr(req, "name", false);
+	const char *hobby = req->getStr(req, "hobby", false);
 
 	Q_ENTRY *args = qEntry();
 	args->putStr(args, "${NAME}", name, true);

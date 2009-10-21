@@ -76,19 +76,18 @@
 #define _VAR_CMD		'!'
 #define _VAR_ENV		'%'
 
-static Q_NOBJ*		_getObjFirst(Q_ENTRY *entry);
-static Q_NOBJ*		_getObjNext(Q_ENTRY *entry);
-static void		_getObjFinish(Q_ENTRY *entry);
+static	void		_lock(Q_ENTRY *entry);
+static	void		_unlock(Q_ENTRY *entry);
 
-static bool		_put(Q_ENTRY *entry, const char *name, const void *data, int size, bool replace);
+static bool		_put(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace);
 static bool		_putStr(Q_ENTRY *entry, const char *name, const char *str, bool replace);
 static bool		_putStrParsed(Q_ENTRY *entry, const char *name, const char *str, bool replace);
 static bool		_putInt(Q_ENTRY *entry, const char *name, int num, bool replace);
 
-static void*		_get(Q_ENTRY *entry, const char *name, int *size, bool newmem);
-static void*		_getCase(Q_ENTRY *entry, const char *name, int *size, bool newmem);
-static void*		_getLast(Q_ENTRY *entry, const char *name, int *size, bool newmem);
-static Q_OBJ*		_getMulti(Q_ENTRY *entry, const char *name, int *num);
+static void*		_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
+static void*		_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
+static void*		_getLast(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
+static bool		_getNext(Q_ENTRY *entry, Q_NLOBJ *obj, const char *name, bool newmem);
 
 static char*		_getStr(Q_ENTRY *entry, const char *name, bool newmem);
 static char*		_getStrCase(Q_ENTRY *entry, const char *name, bool newmem);
@@ -102,11 +101,12 @@ static int		_remove(Q_ENTRY *entry, const char *name);
 static int 		_getNum(Q_ENTRY *entry);
 static int		_getNo(Q_ENTRY *entry, const char *name);
 static char*		_parseStr(Q_ENTRY *entry, const char *str);
+static void*		_merge(Q_ENTRY *entry, size_t *size);
 
 static bool		_save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode);
 static int		_load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode);
 static bool		_reverse(Q_ENTRY *entry);
-static bool		_print(Q_ENTRY *entry, FILE *out, bool print_object);
+static bool		_print(Q_ENTRY *entry, FILE *out, bool print_data);
 static bool		_free(Q_ENTRY *entry);
 
 #endif
@@ -127,12 +127,11 @@ Q_ENTRY *qEntry(void) {
 	memset((void *)entry, 0, sizeof(Q_ENTRY));
 
 	/* initialize non-recrusive mutex */
-	MUTEX_INIT(entry->mutex, false);
+	MUTEX_INIT(entry->qlock, false);
 
 	/* member methods */
-	entry->getObjFirst	= _getObjFirst;
-	entry->getObjNext	= _getObjNext;
-	entry->getObjFinish	= _getObjFinish;
+	entry->lock		= _lock;
+	entry->unlock		= _unlock;
 
 	entry->put		= _put;
 	entry->putStr		= _putStr;
@@ -142,7 +141,7 @@ Q_ENTRY *qEntry(void) {
 	entry->get		= _get;
 	entry->getCase		= _getCase;
 	entry->getLast		= _getLast;
-	entry->getMulti		= _getMulti;
+	entry->getNext		= _getNext;
 
 	entry->getStr		= _getStr;
 	entry->getStrCase	= _getStrCase;
@@ -156,6 +155,7 @@ Q_ENTRY *qEntry(void) {
 	entry->getNum		= _getNum;
 	entry->getNo		= _getNo;
 	entry->parseStr		= _parseStr;
+	entry->merge		= _merge;
 
 	entry->save		= _save;
 	entry->load		= _load;
@@ -167,61 +167,21 @@ Q_ENTRY *qEntry(void) {
 }
 
 /**
- * Q_ENTRY->getObjFirst(): Get first object structure.
- *
- * @param entry		Q_ENTRY pointer
- *
- * @return		a pointer to internal Q_NLOBJ object structure if successful, otherwise returns NULL
+ * Q_entry->qlock(): Enter critical section.
  *
  * @note
- * In case of thread usages, this raise mutex lock. Q_ENTRY->getObjFinish() must be called to release lock.
+ * Q_ENTRY uses recursive mutex lock mechanism. And it uses lock at least as possible.
+ * User can raise lock to proctect data modification during Q_ENTRY->getNext() operation.
  */
-static Q_NOBJ *_getObjFirst(Q_ENTRY *entry) {
-	if(entry == NULL) return NULL;
-
-	MUTEX_LOCK(entry->mutex);
-
-	entry->cont = entry->first;
-	return _getObjNext(entry);
+static void _lock(Q_ENTRY *entry) {
+	MUTEX_LOCK(entry->qlock);
 }
 
 /**
- * Q_ENTRY->getObjNext(): Get next object structure.
- *
- * @param entry		Q_ENTRY pointer
- *
- * @return		a pointer to internal Q_NLOBJ object structure if successful, otherwise returns NULL
+ * Q_ENTRY->unlock(): Leave critical section.
  */
-static Q_NOBJ *_getObjNext(Q_ENTRY *entry) {
-	if(entry == NULL) return NULL;
-
-	Q_NOBJ *nobj = NULL;
-	Q_NLOBJ *obj = entry->cont;
-	if(obj != NULL) {
-		nobj = (Q_NOBJ*)malloc(sizeof(Q_NOBJ));
-		memset((void*)nobj, sizeof(Q_NOBJ), 0);
-		nobj->name = strdup(obj->name);
-		nobj->data = malloc(obj->size);
-		nobj->size = obj->size;
-		memcpy(nobj->data, obj->data, obj->size);
-
-		/* keep next object*/
-		entry->cont = obj->next;
-	}
-
-	return nobj;
-}
-
-/**
- * Q_ENTRY->getObjFinish(): Finish next object search.
- *
- * @param entry		Q_ENTRY pointer
- *
- * @note
- * This method should be called after using getObjFirst() and getObjNext() method to release lock.
- */
-static void _getObjFinish(Q_ENTRY *entry) {
-	MUTEX_UNLOCK(entry->mutex);
+static void _unlock(Q_ENTRY *entry) {
+	MUTEX_UNLOCK(entry->qlock);
 }
 
 /**
@@ -235,7 +195,7 @@ static void _getObjFinish(Q_ENTRY *entry) {
  *
  * @return		true if successful, otherwise returns false.
  */
-static bool _put(Q_ENTRY *entry, const char *name, const void *data, int size, bool replace) {
+static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace) {
 	/* check arguments */
 	if(entry == NULL || name == NULL || data == NULL || size < 0) return false;
 
@@ -263,7 +223,7 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, int size, b
 	obj->size = size;
 	obj->next = NULL;
 
-	MUTEX_LOCK(entry->mutex);
+	MUTEX_LOCK(entry->qlock);
 
 	/* if replace flag is set, remove same key */
 	if (replace == true) _remove(entry, dup_name);
@@ -278,7 +238,7 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, int size, b
 	entry->size += size;
 	entry->num++;
 
-	MUTEX_UNLOCK(entry->mutex);
+	MUTEX_UNLOCK(entry->qlock);
 
 	return true;
 }
@@ -294,7 +254,7 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, int size, b
  * @return		true if successful, otherwise returns false.
  */
 static bool _putStr(Q_ENTRY *entry, const char *name, const char *str, bool replace) {
-	int size = (str!=NULL) ? (strlen(str) + 1) : 0;
+	size_t size = (str!=NULL) ? (strlen(str) + 1) : 0;
 	return _put(entry, name, (const void *)str, size, replace);
 }
 
@@ -323,7 +283,7 @@ static bool _putStr(Q_ENTRY *entry, const char *name, const char *str, bool repl
  */
 static bool _putStrParsed(Q_ENTRY *entry, const char *name, const char *str, bool replace) {
 	char *newstr = _parseStr(entry, str);
-	int size = (newstr!=NULL) ? (strlen(newstr) + 1) : 0;
+	size_t size = (newstr!=NULL) ? (strlen(newstr) + 1) : 0;
 	bool ret = _put(entry, name, (const void *)newstr, size, replace);
 	if(newstr != NULL) free(newstr);
 	return ret;
@@ -355,25 +315,35 @@ static bool _putInt(Q_ENTRY *entry, const char *name, int num, bool replace) {
  *
  * @return		a pointer of data if key is found, otherwise returns NULL.
  *
+ * @code
+ *   Q_ENTRY *entry = qEntry();
+ *   (...codes...)
+ *
+ *   // with newmem flag unset
+ *   size_t size;
+ *   const char *data = entry->get(entry, "key_name", &size, false);
+ *
+ *   // with newmem flag set
+ *   size_t size;
+ *   char *data = entry->get(entry, "key_name", &size, true);
+ *   if(data != NULL) free(data);
+ * @endcode
+ *
  * @note
- * If newmem flag is true, returned data will be malloced and should be deallocated by user.
+ * If newmem flag is set, returned data will be malloced and should be deallocated by user.
  * Otherwise returned pointer will point internal buffer directly and should not be de-allocated by user.
  * In thread-safe mode, newmem flag always should be true.
  */
-static void *_get(Q_ENTRY *entry, const char *name, int *size, bool newmem) {
+static void *_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 	if(entry == NULL || name == NULL) return NULL;
 
-#ifdef ENABLE_THREADSAFE
-	if(newmem == false) return "Q_ENTRY->get(): newmem flag should be true in thread-safe mode.";
-#endif
-
-	MUTEX_LOCK(entry->mutex);
-
+	MUTEX_LOCK(entry->qlock);
+	void *data = NULL;
 	Q_NLOBJ *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		if(!strcmp(obj->name, name)) {
 			if(size != NULL) *size = obj->size;
-			void *data;
+
 			if(newmem == true) {
 				data = malloc(obj->size);
 				memcpy(data, obj->data, obj->size);
@@ -381,13 +351,12 @@ static void *_get(Q_ENTRY *entry, const char *name, int *size, bool newmem) {
 				data = obj->data;
 			}
 
-			MUTEX_UNLOCK(entry->mutex);
-			return data;
+			break;
 		}
 	}
+	MUTEX_UNLOCK(entry->qlock);
 
-	MUTEX_UNLOCK(entry->mutex);
-	return NULL;
+	return data;
 }
 
 /**
@@ -400,20 +369,15 @@ static void *_get(Q_ENTRY *entry, const char *name, int *size, bool newmem) {
  *
  * @return		a pointer of malloced data if key is found, otherwise returns NULL.
  */
-static void *_getCase(Q_ENTRY *entry, const char *name, int *size, bool newmem) {
+static void *_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 	if(entry == NULL || name == NULL) return NULL;
 
-#ifdef ENABLE_THREADSAFE
-	if(newmem == false) return "Q_ENTRY->getCase(): newmem flag should be true in thread-safe mode.";
-#endif
-
-	MUTEX_LOCK(entry->mutex);
-
+	MUTEX_LOCK(entry->qlock);
+	void *data = NULL;
 	Q_NLOBJ *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		if(!strcasecmp(name, obj->name)) {
 			if(size != NULL) *size = obj->size;
-			void *data;
 			if(newmem == true) {
 				data = malloc(obj->size);
 				memcpy(data, obj->data, obj->size);
@@ -421,13 +385,12 @@ static void *_getCase(Q_ENTRY *entry, const char *name, int *size, bool newmem) 
 				data = obj->data;
 			}
 
-			MUTEX_UNLOCK(entry->mutex);
-			return data;
+			break;
 		}
 	}
+	MUTEX_UNLOCK(entry->qlock);
 
-	MUTEX_UNLOCK(entry->mutex);
-	return NULL;
+	return data;
 }
 
 /**
@@ -444,14 +407,10 @@ static void *_getCase(Q_ENTRY *entry, const char *name, int *size, bool newmem) 
  * If you have multiple objects with same name. this method can be used to
  * find out lastest matched object.
  */
-static void *_getLast(Q_ENTRY *entry, const char *name, int *size, bool newmem) {
+static void *_getLast(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 	if(entry == NULL || name == NULL) return NULL;
 
-#ifdef ENABLE_THREADSAFE
-	if(newmem == false) return "Q_ENTRY->getCase(): newmem flag should be true in thread-safe mode.";
-#endif
-
-	MUTEX_LOCK(entry->mutex);
+	MUTEX_LOCK(entry->qlock);
 
 	Q_NLOBJ *lastobj = NULL;
 	Q_NLOBJ *obj;
@@ -470,26 +429,8 @@ static void *_getLast(Q_ENTRY *entry, const char *name, int *size, bool newmem) 
 		}
 	}
 
-	MUTEX_UNLOCK(entry->mutex);
+	MUTEX_UNLOCK(entry->qlock);
 	return data;
-}
-
-/**
- * Q_ENTRY->getMulti(): Find multiple objects with given name.
- *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
- * @param num		the number of objects found will be stored
- *
- * @return		a pointer of malloced data if key is found, otherwise returns NULL.
- *
- * @note
- * Q_OBJ* should be de-allocated by user.
- */
-static Q_OBJ *_getMulti(Q_ENTRY *entry, const char *name, int *num) {
-
-
-	return NULL;
 }
 
 /**
@@ -500,9 +441,6 @@ static Q_OBJ *_getMulti(Q_ENTRY *entry, const char *name, int *num) {
  * @param newmem	whether or not to allocate memory for the data.
  *
  * @return		a pointer of malloced data if key is found, otherwise returns NULL.
- *
- * @note
- * String object should be stored by _putStr().
  */
 static char *_getStr(Q_ENTRY *entry, const char *name, bool newmem) {
 	return (char *)_get(entry, name, NULL, newmem);
@@ -590,6 +528,84 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
 }
 
 /**
+ * Q_ENTRY->getNext(): Get next object structure.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param obj		found data will be stored in this object
+ * @param name		key name, if key name is NULL search every key in the list.
+ * @param newmem	whether or not to allocate memory for the data.
+ *
+ * @return		true if found otherwise returns false
+ *
+ * @note
+ * if newmem flag is true, user should de-allocate obj.name and obj.data resources.
+ *
+ * @code
+ *   Q_ENTRY *entry = qEntry();
+ *   entry->putStr(entry, "key1", "hello world 1", false);
+ *   entry->putStr(entry, "key2", "hello world 2", false);
+ *   entry->putStr(entry, "key3", "hello world 3", false);
+ *
+ *   // non-thread usages
+ *   Q_NLOBJ obj;
+ *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
+ *   while((entry->getNext(entry, &obj, NULL, false) == true) {
+ *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
+ *   }
+ *
+ *   // thread model with specific key search
+ *   Q_NLOBJ obj;
+ *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
+ *   entry->qlock();
+ *   while((entry->getNext(entry, &obj, "key2", false) == true) {
+ *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
+ *   }
+ *   entry->unlock();
+ *
+ *   // thread model 2 with newmem flag
+ *   Q_NLOBJ obj;
+ *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
+ *   entry->qlock();
+ *   while((entry->getNext(entry, &obj, NULL, true) == true) {
+ *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
+ *     free(obj.name);
+ *     free(obj.data);
+ *   }
+ *   entry->unlock();
+ */
+static bool _getNext(Q_ENTRY *entry, Q_NLOBJ *obj, const char *name, bool newmem) {
+	if(entry == NULL || obj == NULL) return NULL;
+
+	MUTEX_LOCK(entry->qlock);
+
+	// if obj->next is NULL, it means start over.
+	if(obj->next == NULL) obj->next = entry->first;
+
+	Q_NLOBJ *cont;
+	bool ret = false;
+	for(cont = obj->next; cont; cont = cont->next) {
+		if(name != NULL && strcmp(cont->name, name)) continue;
+
+		if(newmem == true) {
+			obj->name = strdup(cont->name);
+			obj->data = malloc(cont->size);
+			memcpy(obj->data, cont->data, cont->size);
+		} else {
+			obj->name = cont->name;
+			obj->data = cont->data;
+		}
+		obj->size = cont->size;
+		obj->next = cont->next;
+
+		ret = true;
+		break;
+	}
+
+	MUTEX_UNLOCK(entry->qlock);
+	return ret;
+}
+
+/**
  * Q_ENTRY->remove(): Remove matched objects as given name.
  *
  * @param entry		Q_ENTRY pointer
@@ -600,7 +616,7 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
 static int _remove(Q_ENTRY *entry, const char *name) {
 	if(entry == NULL || name == NULL) return 0;
 
-	MUTEX_LOCK(entry->mutex);
+	MUTEX_LOCK(entry->qlock);
 
 	int removed = 0;
 	Q_NLOBJ *prev, *obj;
@@ -635,7 +651,7 @@ static int _remove(Q_ENTRY *entry, const char *name) {
 		}
 	}
 
-	MUTEX_UNLOCK(entry->mutex);
+	MUTEX_UNLOCK(entry->qlock);
 	return removed;
 }
 
@@ -659,21 +675,25 @@ static int _getNum(Q_ENTRY *entry) {
  * @param name		key name
  *
  * @return		stored sequence number of the object if found, otherwise 0 will be returned.
+ *
+ * @note
+ * Sequence number starts from 1.
  */
 static int _getNo(Q_ENTRY *entry, const char *name) {
 	if(entry == NULL || name == NULL) return 0;
 
-	MUTEX_LOCK(entry->mutex);
+	MUTEX_LOCK(entry->qlock);
+	int ret = 0;
 	int no;
 	Q_NLOBJ *obj;
 	for(obj = entry->first, no = 1; obj; obj = obj->next, no++) {
 		if (!strcmp(name, obj->name)) {
-			MUTEX_UNLOCK(entry->mutex);
-			return no;
+			ret = no;
+			break;
 		}
 	}
-	MUTEX_UNLOCK(entry->mutex);
-	return 0;
+	MUTEX_UNLOCK(entry->qlock);
+	return ret;
 }
 
 /**
@@ -699,7 +719,7 @@ static char *_parseStr(Q_ENTRY *entry, const char *str) {
 	if(str == NULL) return NULL;
 	if(entry == NULL) return strdup(str);
 
-	MUTEX_LOCK(entry->mutex);
+	MUTEX_LOCK(entry->qlock);
 
 	bool loop;
 	char *value = strdup(str);
@@ -770,9 +790,42 @@ static char *_parseStr(Q_ENTRY *entry, const char *str) {
 		}
 	} while(loop == true);
 
-	MUTEX_UNLOCK(entry->mutex);
+	MUTEX_UNLOCK(entry->qlock);
 
 	return value;
+}
+
+/**
+ * Q_ENTRY->merge(): Merge all objects data into single object.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param size		if size is not NULL, object size will be stored.
+ *
+ * @return		a malloced pointer, otherwise(if there is no data to merge) returns NULL.
+ *
+ * @note
+ * For the convenience, it allocates 1 byte more than actual total data size and store '\0' at the end.
+ * But size parameter will have actual size(allocated size - 1).
+ * Returned memory should be de-allocated by user.
+ */
+static void *_merge(Q_ENTRY *entry, size_t *size) {
+	if(entry == NULL || entry->num <= 0) return NULL;
+
+	void *dp;
+	void *final;
+	final = dp = (void*)malloc(entry->size + 1);
+
+	MUTEX_LOCK(entry->qlock);
+	const Q_NLOBJ *obj;
+	for(obj = entry->first; obj; obj = obj->next) {
+		memcpy(dp, obj->data, obj->size);
+		dp += obj->size;
+	}
+	*((char *)dp) = '\0';
+	MUTEX_UNLOCK(entry->qlock);
+
+	if(size != NULL) *size = entry->size;
+	return final;
 }
 
 /**
@@ -789,12 +842,9 @@ static char *_parseStr(Q_ENTRY *entry, const char *str) {
 static bool _save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode) {
 	if(entry == NULL) return false;
 
-	MUTEX_LOCK(entry->mutex);
-
 	int fd;
 	if ((fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE)) < 0) {
 		DEBUG("Q_ENTRY->save(): Can't open file %s", filepath);
-		MUTEX_UNLOCK(entry->mutex);
 		return false;
 	}
 
@@ -803,7 +853,8 @@ static bool _save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encod
 	_q_writef(fd, "# %s\n", filepath);
 	free(gmtstr);
 
-	const Q_NLOBJ *obj;
+	MUTEX_LOCK(entry->qlock);
+	Q_NLOBJ *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		char *encval;
 		if(encode == true) encval = qEncodeUrl(obj->data);
@@ -811,10 +862,10 @@ static bool _save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encod
 		_q_writef(fd, "%s%c%s\n", obj->name, sepchar, encval);
 		if(encode == true) free(encval);
 	}
+	MUTEX_UNLOCK(entry->qlock);
 
 	close(fd);
 
-	MUTEX_UNLOCK(entry->mutex);
 	return true;
 }
 
@@ -834,8 +885,7 @@ static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode
 	Q_ENTRY *loaded;
 	if ((loaded = qConfigParseFile(NULL, filepath, sepchar)) == NULL) return false;
 
-	MUTEX_LOCK(entry->mutex);
-
+	MUTEX_LOCK(entry->qlock);
 	int cnt;
 	Q_NLOBJ *obj;
 	for(cnt = 0, obj = loaded->first; obj; obj = obj->next) {
@@ -845,8 +895,7 @@ static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode
 	}
 
 	_free(loaded);
-
-	MUTEX_UNLOCK(entry->mutex);
+	MUTEX_UNLOCK(entry->qlock);
 
 	return cnt;
 }
@@ -863,8 +912,7 @@ static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode
 static bool _reverse(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
 
-	MUTEX_LOCK(entry->mutex);
-
+	MUTEX_LOCK(entry->qlock);
 	Q_NLOBJ *prev, *obj;
 	for (prev = NULL, obj = entry->first; obj;) {
 		Q_NLOBJ *next = obj->next;
@@ -875,8 +923,7 @@ static bool _reverse(Q_ENTRY *entry) {
 
 	entry->last = entry->first;
 	entry->first = prev;
-
-	MUTEX_UNLOCK(entry->mutex);
+	MUTEX_UNLOCK(entry->qlock);
 
 	return true;
 }
@@ -892,14 +939,12 @@ static bool _reverse(Q_ENTRY *entry) {
 static bool _print(Q_ENTRY *entry, FILE *out, bool print_data) {
 	if(entry == NULL || out == NULL) return false;
 
-	MUTEX_LOCK(entry->mutex);
-
+	MUTEX_LOCK(entry->qlock);
 	const Q_NLOBJ *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
-		fprintf(out, "%s=%s (%d)\n" , obj->name, (print_data?(char*)obj->data:"(data)"), obj->size);
+		fprintf(out, "%s=%s (%zu)\n" , obj->name, (print_data?(char*)obj->data:"(data)"), obj->size);
 	}
-
-	MUTEX_UNLOCK(entry->mutex);
+	MUTEX_UNLOCK(entry->qlock);
 
 	return true;
 }
@@ -914,8 +959,7 @@ static bool _print(Q_ENTRY *entry, FILE *out, bool print_data) {
 static bool _free(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
 
-	MUTEX_LOCK(entry->mutex);
-
+	MUTEX_LOCK(entry->qlock);
 	Q_NLOBJ *obj;
 	for(obj = entry->first; obj;) {
 		Q_NLOBJ *next = obj->next;
@@ -924,11 +968,9 @@ static bool _free(Q_ENTRY *entry) {
 		free(obj);
 		obj = next;
 	}
-
-	MUTEX_UNLOCK(entry->mutex);
-	MUTEX_DESTROY(entry->mutex);
+	MUTEX_UNLOCK(entry->qlock);
+	MUTEX_DESTROY(entry->qlock);
 
 	free(entry);
-
 	return true;
 }

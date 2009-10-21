@@ -40,60 +40,71 @@
 #include <limits.h>
 #include <sys/types.h>
 
-/**
- * Base Structures used for Internal - named object
- */
-typedef struct {
-	char*	name;			/*!< object name */
-	void*	data;			/*!< object data */
-	int	size;			/*!< object size */
-} Q_NOBJ;
+typedef struct _Q_NOBJ		Q_NOBJ;
+typedef struct _Q_NLOBJ		Q_NLOBJ;
+typedef struct _Q_LOCK		Q_LOCK;
+
+typedef struct _Q_ENTRY		Q_ENTRY;
+typedef struct _Q_OBSTACK	Q_OBSTACK;
+typedef struct _Q_HASHTBL	Q_HASHTBL;
+typedef struct _Q_HASHARR	Q_HASHARR;
+typedef struct _Q_QUEUE		Q_QUEUE;
+typedef struct _Q_LOG		Q_LOG;
+typedef struct _Q_DB		Q_DB;
+typedef struct _Q_DBRESULT	Q_DBRESULT;
 
 /**
- * Base Structures used for Internal - named object with link
+ * Structure for named object
  */
-typedef struct Q_NLOBJ {
-	char*	name;			/*!< object name */
-	void*	data;			/*!< object data */
-	int	size;			/*!< object size */
-	struct Q_NLOBJ *next;		/*!< link pointer */
-} Q_NLOBJ;
+struct _Q_NOBJ {
+	char*		name;		/*!< object name */
+	void*		data;		/*!< data object */
+	size_t		size;		/*!< object size */
+};
 
 /**
- * Base Structures used for Internal - binary object
+ * Structure for named object with link
  */
-typedef struct {
-	void *data;			/*!< object data */
-	int  size;			/*!< object size */
-} Q_OBJ;
+struct _Q_NLOBJ {
+	char*		name;		/*!< object name */
+	void*		data;		/*!< data object */
+	size_t		size;		/*!< object size */
+	Q_NLOBJ*	next;		/*!< link pointer */
+};
 
-typedef struct Q_ENTRY	Q_ENTRY;
+/**
+ * Structure for lock management
+ */
+struct _Q_LOCK {
+	pthread_mutex_t	mutex;
+	pthread_t	owner;
+	int		count;
+};
+
 /**
  * Structure for linked-list data structure.
  */
-struct Q_ENTRY {
-	pthread_mutex_t	mutex;		/*!< only used if compiled with --enable-threadsafe option */
+struct _Q_ENTRY {
+	Q_LOCK		qlock;		/*!< only used if compiled with --enable-threadsafe option */
 
-	int num;			/*!< number of objects */
-	size_t size;			/*!< total size of objects */
-	Q_NLOBJ *first;			/*!< first object pointer */
-	Q_NLOBJ *last;			/*!< last object pointer */
-	Q_NLOBJ *cont;			/*!< next object pointer used by getObjFirst(), getObjNext() and getObjFinal() */
+	int		num;		/*!< number of objects */
+	size_t		size;		/*!< total size of data objects, does not include name size */
+	Q_NLOBJ*	first;		/*!< first object pointer */
+	Q_NLOBJ*	last;		/*!< last object pointer */
 
 	// member methods
-	Q_NOBJ*		(*getObjFirst)	(Q_ENTRY *entry);
-	Q_NOBJ*		(*getObjNext)	(Q_ENTRY *entry);
-	void		(*getObjFinish)	(Q_ENTRY *entry);
+	void		(*lock)		(Q_ENTRY *entry);
+	void		(*unlock)	(Q_ENTRY *entry);
 
-	bool		(*put)		(Q_ENTRY *entry, const char *name, const void *data, int size, bool replace);
+	bool		(*put)		(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace);
 	bool		(*putStr)	(Q_ENTRY *entry, const char *name, const char *str, bool replace);
 	bool		(*putStrParsed)	(Q_ENTRY *entry, const char *name, const char *str, bool replace);
 	bool		(*putInt)	(Q_ENTRY *entry, const char *name, int num, bool replace);
 
-	void*		(*get)		(Q_ENTRY *entry, const char *name, int *size, bool newmem);
-	void*		(*getCase)	(Q_ENTRY *entry, const char *name, int *size, bool newmem);
-	void*		(*getLast)	(Q_ENTRY *entry, const char *name, int *size, bool newmem);
-	Q_OBJ*		(*getMulti)	(Q_ENTRY *entry, const char *name, int *num);
+	void*		(*get)		(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
+	void*		(*getCase)	(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
+	void*		(*getLast)	(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
+	bool		(*getNext)	(Q_ENTRY *entry, Q_NLOBJ *obj, const char *name, bool newmem);
 
 	char*		(*getStr)	(Q_ENTRY *entry, const char *name, bool newmem);
 	char*		(*getStrCase)	(Q_ENTRY *entry, const char *name, bool newmem);
@@ -107,6 +118,7 @@ struct Q_ENTRY {
 	int 		(*getNum)	(Q_ENTRY *entry);
 	int		(*getNo)	(Q_ENTRY *entry, const char *name);
 	char*		(*parseStr)	(Q_ENTRY *entry, const char *str);
+	void*		(*merge)	(Q_ENTRY *entry, size_t *size);
 
 	bool		(*save)		(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode);
 	int		(*load)		(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode);
@@ -118,50 +130,48 @@ struct Q_ENTRY {
 /**
  * Structure for obstack data structure.
  */
-typedef struct {
+struct _Q_OBSTACK {
 	Q_ENTRY *stack;			/*!< first object pointer */
 	void	*final;			/*!< final object pointer */
-} Q_OBSTACK;
+};
 
 #define _Q_HASHTBL_RESIZE_MAG		(2)
 #define _Q_HASHTBL_DEF_THRESHOLD	(80)
-typedef struct Q_HASHTBL		Q_HASHTBL;
 /**
  * Structure for hash-table data structure.
  */
-struct Q_HASHTBL {
-	pthread_mutex_t	mutex;		/*!< only used if compiled with --enable-threadsafe option */
+struct _Q_HASHTBL {
+	Q_LOCK		qlock;		/*!< only used if compiled with --enable-threadsafe option */
 
-	int	max;			/*!< maximum hashtable size */
-	int	num;			/*!< used slot counter */
-	int	threshold;		/*!< if the percent of used slot counter exceeds this threshold percent, new larger table(max * _Q_HASHTBL_RESIZE_MAG) is allocated */
-	int	resizeat;		/*!< calculated used amount = (max * threshold) / 100 */
+	int		max;		/*!< maximum hashtable size */
+	int		num;		/*!< used slot counter */
+	int		threshold;	/*!< if the percent of used slot counter exceeds this threshold percent, new larger table(max * _Q_HASHTBL_RESIZE_MAG) is allocated */
+	int		resizeat;	/*!< calculated used amount = (max * threshold) / 100 */
 
-	int	*count;			/*!< hash collision counter. 0 indicate empty slot, -1 is used for moved slot due to hash collision */
-	int	*hash;			/*!< key hash. we use qHashFnv32() to generate hash integer */
-	char	**key;			/*!< key string */
-	void	**value;		/*!< value */
-	int	*size;			/*!< value size */
+	int*		count;		/*!< hash collision counter. 0 indicate empty slot, -1 is used for moved slot due to hash collision */
+	int*		hash;		/*!< key hash. we use qHashFnv32() to generate hash integer */
+	Q_NOBJ*		obj;
 
 	// member methods
-	bool		(*put)		(Q_HASHTBL *tbl, const char *key, const void *value, int size);
-	bool		(*putStr)	(Q_HASHTBL *tbl, const char *key, const char *value);
-	bool		(*putInt)	(Q_HASHTBL *tbl, const char *key, int value);
+	void		(*lock)		(Q_HASHTBL *tbl);
+	void		(*unlock)	(Q_HASHTBL *tbl);
 
-	void*		(*get)		(Q_HASHTBL *tbl, const char *key, int *size);
-	char*		(*getStr)	(Q_HASHTBL *tbl, const char *key);
-	int		(*getInt)	(Q_HASHTBL *tbl, const char *key);
-	const char*	(*getFirstKey)	(Q_HASHTBL *tbl, int *idx);
-	const char*	(*getNextKey)	(Q_HASHTBL *tbl, int *idx);
+	bool		(*put)		(Q_HASHTBL *tbl, const char *name, const void *data, size_t size);
+	bool		(*putStr)	(Q_HASHTBL *tbl, const char *name, const char *str);
+	bool		(*putInt)	(Q_HASHTBL *tbl, const char *name, int num);
 
-	bool		(*remove)	(Q_HASHTBL *tbl, const char *key);
+	void*		(*get)		(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem);
+	char*		(*getStr)	(Q_HASHTBL *tbl, const char *name, bool newmem);
+	int		(*getInt)	(Q_HASHTBL *tbl, const char *name);
+	bool		(*getNext)	(Q_HASHTBL *tbl, Q_NOBJ *obj, int *idx, bool newmem);
+
+	bool		(*remove)	(Q_HASHTBL *tbl, const char *name);
 	bool		(*resize)	(Q_HASHTBL *tbl, int max);
 	bool		(*truncate)	(Q_HASHTBL *tbl);
 
-	bool		(*print)	(Q_HASHTBL *tbl, FILE *out, bool showvalue);
+	bool		(*print)	(Q_HASHTBL *tbl, FILE *out, bool print_data);
 	bool		(*status)	(Q_HASHTBL *tbl, int *used, int *max);
 	bool		(*free)		(Q_HASHTBL *tbl);
-
 };
 
 #define _Q_HASHARR_MAX_KEYSIZE		(31+1)
@@ -169,7 +179,7 @@ struct Q_HASHTBL {
 /**
  * Structure for hash-table data structure based on array.
  */
-typedef struct {
+struct _Q_HASHARR {
 	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for collision resolution, -2 is used for indicating linked block */
 	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
 
@@ -180,12 +190,12 @@ typedef struct {
 	unsigned char value[_Q_HASHARR_DEF_VALUESIZE];	/*!< value */
 	int	size;					/*!< value size */
 	int	link;					/*!< next index of the value */
-} Q_HASHARR;
+};
 
 /**
  * Structure for array-based circular-queue data structure.
  */
-typedef struct {
+struct _Q_QUEUE {
 	int	max;			/*!< maximum queue slots */
 	int	used;			/*!< used queue slots */
 
@@ -194,12 +204,12 @@ typedef struct {
 
 	size_t	objsize;		/*!< object size */
 	void	*objarr;		/*!< external queue data memory pointer */
-} Q_QUEUE;
+};
 
 /**
  * Structure for file log.
  */
-typedef struct {
+struct _Q_LOG {
 	char	filepathfmt[PATH_MAX];	/*!< file file naming format like /somepath/qdecoder-%Y%m%d.log */
 	char	filepath[PATH_MAX];	/*!< generated system path of log file */
 	FILE	*fp;			/*!< file pointer of logpath */
@@ -209,7 +219,7 @@ typedef struct {
 
 	FILE	*outfp;			/*!< stream pointer for duplication */
 	bool	outflush;		/*!< flag for immediate flushing for duplicated stream */
-} Q_LOG;
+};
 
 /* Database Support*/
 #ifdef _mysql_h
@@ -224,7 +234,7 @@ typedef struct {
 /**
  * Structure for independent database interface.
  */
-typedef struct {
+struct _Q_DB {
 	bool connected;			/*!< if opened true, if closed false */
 
 	struct {
@@ -242,12 +252,12 @@ typedef struct {
 #ifdef _Q_ENABLE_MYSQL
 	MYSQL		*mysql;
 #endif
-} Q_DB;
+};
 
 /**
  * Structure for database result set.
  */
-typedef struct {
+struct _Q_DBRESULT {
 #ifdef _Q_ENABLE_MYSQL
 	bool		fetchtype;
 	MYSQL_RES	*rs;
@@ -256,7 +266,7 @@ typedef struct {
 	int		cols;
 	int		cursor;
 #endif
-} Q_DBRESULT;
+};
 
 #ifndef _DOXYGEN_SKIP
 
@@ -382,21 +392,7 @@ extern	Q_ENTRY*	qEntry(void);
 /*
  * qHashtbl.c
  */
-extern	Q_HASHTBL*	qHashtblInit(int max, bool resize, int threshold);
-extern	bool		qHashtblFree(Q_HASHTBL *tbl);
-extern	bool		qHashtblPut(Q_HASHTBL *tbl, const char *key, const void *value, int size);
-extern	bool		qHashtblPutStr(Q_HASHTBL *tbl, const char *key, const char *value);
-extern	bool		qHashtblPutInt(Q_HASHTBL *tbl, const char *key, int value);
-extern	void*		qHashtblGet(Q_HASHTBL *tbl, const char *key, int *size);
-extern	char*		qHashtblGetStr(Q_HASHTBL *tbl, const char *key);
-extern	int		qHashtblGetInt(Q_HASHTBL *tbl, const char *key);
-extern	const char*	qHashtblGetFirstKey(Q_HASHTBL *tbl, int *idx);
-extern	const char*	qHashtblGetNextKey(Q_HASHTBL *tbl, int *idx);
-extern	bool		qHashtblRemove(Q_HASHTBL *tbl, const char *key);
-extern	bool		qHashtblResize(Q_HASHTBL *tbl, int max);
-extern	bool		qHashtblTruncate(Q_HASHTBL *tbl);
-extern	bool		qHashtblPrint(Q_HASHTBL *tbl, FILE *out, bool showvalue);
-extern	bool		qHashtblStatus(Q_HASHTBL *tbl, int *used, int *max);
+extern	Q_HASHTBL*	qHashtbl(int max, bool resize, int threshold);
 
 /*
  * qHasharr.c

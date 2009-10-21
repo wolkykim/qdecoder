@@ -39,7 +39,7 @@ int main(void) {
 	req = qCgiRequestParse(req);
 
 	/* get queries */
-	const char *text = req->getStr(req, "text");
+	const char *text = req->getStr(req, "text", false);
 	if (text == NULL) qCgiResponseError(req, "Invalid usages.");
 
 	/* result out */
@@ -47,11 +47,16 @@ int main(void) {
 	printf("You entered: <b>%s</b>\n", text);
 
 	for (i = 1; i <= 3; i++) {
-		int length =  req->getIntf(req, "binary%d.length", i);
+		char name[31+1];
+		sprintf(name, "binary%d.length", i);
+		int length =  req->getInt(req, name);
 		if (length > 0) {
-			const char *filename = req->getStrf(req, "binary%d.filename", i);
-			const char *contenttype = req->getStrf(req, "binary%d.contenttype", i);
-			const char *savepath = req->getStrf(req, "binary%d.savepath", i);
+			sprintf(name, "binary%d.filename", i);
+			const char *filename = req->getStr(req, name, false);
+			sprintf(name, "binary%d.contenttype", i);
+			const char *contenttype = req->getStr(req, name, false);
+			sprintf(name, "binary%d.savepath", i);
+			const char *savepath = req->getStr(req, name, false);
 
 			char newpath[1024];
 			sprintf(newpath, "%s/%s", BASEPATH, filename);

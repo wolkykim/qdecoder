@@ -33,7 +33,7 @@ int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL);
 
 	/* Get query */
-	char *value = (char *)req->getStr(req, "query");
+	char *value = (char *)req->getStr(req, "query", false);
 	if(value == NULL) value = "(nothing)";
 
 	/* Print out context type */
