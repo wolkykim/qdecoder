@@ -41,6 +41,10 @@
 
 #ifdef ENABLE_THREADSAFE
 
+#ifndef _MULTI_THREADED
+#define	_MULTI_THREADED
+#endif
+
 #include <time.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -52,14 +56,16 @@
 	pthread_mutexattr_init(&_mutexattr);						\
 	if(r == true) {									\
 		pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_RECURSIVE);	\
-		pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);	\
 	}										\
-	int _ret;									\
-	if((_ret = pthread_mutex_init(&x.mutex, &_mutexattr)) != 0) {			\
+	int _ret = pthread_mutex_init(&x.mutex, &_mutexattr);				\
+	pthread_mutexattr_destroy(&_mutexattr);						\
+	if(_ret != 0) {									\
 		DEBUG("Q_LOCK: can't initialize mutex. [%d:%s]", _ret, strerror(_ret));	\
+		exit(EXIT_FAILURE);							\
 	}										\
 	DEBUG("Q_LOCK: initialized.");							\
 }
+//pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);
 
 #define	Q_LOCK_LEAVE(x)		{							\
 	if(!pthread_equal(x.owner, pthread_self())) DEBUG("Q_LOCK: unlock - owner mismatch.");	\
@@ -72,7 +78,8 @@
 #define	Q_LOCK_ENTER(x)		{							\
 	while(true) {									\
 		int _ret, i;								\
- 		for(i = 1; (_ret = pthread_mutex_trylock(&x.mutex)) != 0 && i < MAX_MUTEX_LOCK_WAIT; i++) {	\
+ 		for(i = 0; (_ret = pthread_mutex_trylock(&x.mutex)) != 0 && i < MAX_MUTEX_LOCK_WAIT; i++) {	\
+			if(i == 0)DEBUG("Q_LOCK: mutex is already locked - try again");	\
 			usleep(1);							\
 		}									\
 		if(_ret == 0) break;							\
