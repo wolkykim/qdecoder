@@ -499,16 +499,11 @@ char *qStrDupBetween(const char *str, const char *start, const char *end) {
  *
  * @return		a pointer of malloced string
  *
- * @note The length of returned string is 32+1 including terminating NULL character.
+ * @note
+ * The length of returned string is 32+1 bytes long including terminating NULL character.
+ * Because it uses random() internally, it's good idea to call srandom() once before use.
  */
 char *qStrUnique(const char *seed) {
-	static int count = 0;
-
-	if(count == 0) {
-        	srandom(time(NULL));
-        }
-	count++;
-
 	long int usec;
 #ifdef _WIN32
 	usec = 0;
@@ -519,7 +514,7 @@ char *qStrUnique(const char *seed) {
 #endif
 
 	char szSeed[128];
-	snprintf(szSeed, sizeof(szSeed), "%u%d%ld%lu%ld%s", getpid(), count, random(), (unsigned long int)time(NULL), usec, (seed!=NULL?seed:""));
+	snprintf(szSeed, sizeof(szSeed), "%u%ld%lu%ld%s", getpid(), random(), (unsigned long int)time(NULL), usec, (seed!=NULL?seed:""));
 	return qHashMd5Str(szSeed, strlen(szSeed));
 }
 

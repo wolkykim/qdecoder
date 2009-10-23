@@ -104,8 +104,8 @@
 #else
 
 #define	Q_LOCK_INIT(x,y)
-#define	Q_LOCK_UNLOCK(x)
-#define	Q_LOCK_LOCK(x)
+#define	Q_LOCK_LEAVE(x)
+#define	Q_LOCK_ENTER(x)
 #define	Q_LOCK_DESTROY(x)
 
 #endif
