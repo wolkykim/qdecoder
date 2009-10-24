@@ -166,11 +166,12 @@ struct _Q_HASHTBL {
 	bool		(*getNext)	(Q_HASHTBL *tbl, Q_NOBJ_T *obj, int *idx, bool newmem);
 
 	bool		(*remove)	(Q_HASHTBL *tbl, const char *name);
+	int 		(*getNum)	(Q_HASHTBL *tbl);
+	int		(*getMax)	(Q_HASHTBL *tbl);
 	bool		(*resize)	(Q_HASHTBL *tbl, int max);
 	bool		(*truncate)	(Q_HASHTBL *tbl);
 
 	bool		(*print)	(Q_HASHTBL *tbl, FILE *out, bool print_data);
-	bool		(*status)	(Q_HASHTBL *tbl, int *used, int *max);
 	bool		(*free)		(Q_HASHTBL *tbl);
 };
 
@@ -196,6 +197,8 @@ struct _Q_HASHARR {
  * Structure for array-based circular-queue data structure.
  */
 struct _Q_QUEUE {
+	Q_LOCK_T	qlock;		/*!< only used if compiled with --enable-threadsafe option */
+
 	int		max;		/*!< maximum queue slots */
 	int		used;		/*!< used queue slots */
 
@@ -203,7 +206,16 @@ struct _Q_QUEUE {
 	int		tail;		/*!< tail pointer */
 
 	size_t		objsize;	/*!< object size */
-	void*		objarr;		/*!< external queue data memory pointer */
+	void*		objarr;		/*!< queue data memory pointer */
+
+	// member methods
+	bool		(*push)		(Q_QUEUE *queue, const void *object);
+	void*		(*popFirst)	(Q_QUEUE *queue, bool remove);
+	void*		(*popLast)	(Q_QUEUE *queue, bool remove);
+	int		(*getNum)	(Q_QUEUE *queue);
+	void		(*truncate)	(Q_QUEUE *queue);
+	void		(*free)		(Q_QUEUE *queue);
+	void		(*donothing)	(Q_QUEUE *queue);
 };
 
 /**
@@ -423,13 +435,8 @@ extern	bool		qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
 /*
  * qQueue.c
  */
-extern	size_t		qQueueSize(int max, size_t objsize);
-extern	int		qQueueInit(Q_QUEUE *queue, void* datamem, size_t datamemsize, size_t objsize);
-extern	bool		qQueueClear(Q_QUEUE *queue);
-extern	bool		qQueuePush(Q_QUEUE *queue, const void *object);
-extern	bool		qQueuePopFirst(Q_QUEUE *queue, void *object);
-extern	bool		qQueuePopLast(Q_QUEUE *queue, void *object);
-extern	bool		qQueueStatus(Q_QUEUE *queue, int *used, int *max);
+extern	Q_QUEUE*	qQueue(int max, size_t objsize);
+extern	int		qQueueUsrmem(Q_QUEUE *queue, void* datamem, size_t memsize, size_t objsize);
 
 /*
  * qObstack.c

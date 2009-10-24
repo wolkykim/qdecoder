@@ -167,7 +167,7 @@ Q_ENTRY *qEntry(void) {
 }
 
 /**
- * Q_entry->qlock(): Enter critical section.
+ * Q_ENTRY->qlock(): Enter critical section.
  *
  * @note
  * Q_ENTRY uses recursive mutex lock mechanism. And it uses lock at least as possible.

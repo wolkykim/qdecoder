@@ -56,10 +56,11 @@ static bool	_getNext(Q_HASHTBL *tbl, Q_NOBJ_T *obj, int *idx, bool newmem);
 
 static bool	_remove(Q_HASHTBL *tbl, const char *name);
 
+static int	_getNum(Q_HASHTBL *tbl);
+static int	_getMax(Q_HASHTBL *tbl);
 static bool	_truncate(Q_HASHTBL *tbl);
 static bool	_resize(Q_HASHTBL *tbl, int max);
 static bool	_print(Q_HASHTBL *tbl, FILE *out, bool print_data);
-static bool	_status(Q_HASHTBL *tbl, int *used, int *max);
 static bool	_free(Q_HASHTBL *tbl);
 
 // internal usages
@@ -133,13 +134,14 @@ Q_HASHTBL *qHashtbl(int max, bool resize, int threshold) {
 
 	tbl->remove	= _remove;
 
+	tbl->getNum	= _getNum;
+	tbl->getMax	= _getMax;
 	tbl->truncate	= _truncate;
 	tbl->resize	= _resize;
 	tbl->print	= _print;
-	tbl->status	= _status;
 	tbl->free	= _free;
 
-	/* initialize recrusive mutex */
+	// initialize recrusive mutex
 	Q_LOCK_INIT(tbl->qlock, true);
 
 	// now table can be used
@@ -523,6 +525,30 @@ static bool _remove(Q_HASHTBL *tbl, const char *name) {
 }
 
 /**
+ * Q_HASHTBL->getNum(): get number of objects stored
+ *
+ * @param tbl		a pointer of Q_HASHTBL
+ *
+ * @return		number of objects stored
+ */
+static int _getNum(Q_HASHTBL *tbl) {
+	if(tbl == NULL) return 0;
+	return tbl->num;
+}
+
+/**
+ * Q_HASHTBL->getMax(): Get available maximum number of object slots
+ *
+ * @param tbl		a pointer of Q_HASHTBL
+ *
+ * @return		available maximum number of object slots
+ */
+static int _getMax(Q_HASHTBL *tbl) {
+	if(tbl == NULL) return 0;
+	return tbl->max;
+}
+
+/**
  * Q_HASHTBL->truncate(): Truncate hash table
  *
  * @param tbl		a pointer of Q_HASHTBL
@@ -650,26 +676,6 @@ bool _print(Q_HASHTBL *tbl, FILE *out, bool print_data) {
 		fprintf(out, "%s=%s (idx=%d,hash=%d,size=%zu,count=%d)\n", tbl->obj[idx].name, (print_data)?(char*)tbl->obj[idx].data:"_binary_", idx, tbl->hash[idx], tbl->obj[idx].size, tbl->count[idx]);
 		num++;
 	}
-	Q_LOCK_LEAVE(tbl->qlock);
-
-	return true;
-}
-
-/**
- * Q_HASHTBL->status(): Get hash table internal status
- *
- * @param tbl		a pointer of Q_HASHTBL
- * @param used		if not NULL, a number of used keys will be stored
- * @param max		if not NULL, the maximum usable number of keys will be stored
- *
- * @return		true if successful, otherwise returns false
- */
-bool _status(Q_HASHTBL *tbl, int *used, int *max) {
-	if(tbl == NULL) return false;
-
-	Q_LOCK_ENTER(tbl->qlock);
-	if(used != NULL) *used = tbl->num;
-	if(max != NULL) *max = tbl->max;
 	Q_LOCK_LEAVE(tbl->qlock);
 
 	return true;

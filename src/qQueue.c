@@ -26,10 +26,6 @@
 /**
  * @file qQueue.c Circular-Queue Data Structure API
  *
- * This implementation is designed to use statically allocated(fixed-size)
- * memory for flexibilities. So you can use this queue with in shared-memory
- * architecture to communicate with other processors.
- *
  * @code
  *   ----[Sample codes]----
  *   struct myobj {
@@ -38,19 +34,7 @@
  *   };
  *
  *   int main(void) {
- *     // allocate objects data memory
- *     size_t memsize = qQueueSize(10, sizeof(struct myobj));
- *     void *datamem = malloc(memsize);
- *
- *     // for static data memory use can use this way
- *     // char datamem[NNN];
- *
- *     // initialize queue
- *     Q_QUEUE queue;
- *     if(qQueueInit(&queue, datamem, memsize, sizeof(struct myobj)) == 0) {
- *       printf("Can't initialize queue.\n");
- *       return -1;
- *     }
+ *     Q_QUEUE *queue = qQueue(100, sizeof(struct myobj));
  *
  *     // push object
  *     int i;
@@ -61,7 +45,7 @@
  *       sprintf(obj.string, "hello world %d", i);
  *
  *       // push object
- *       if(qQueuePush(&queue, &obj) == false) break;
+ *       if(queue->push(queue, &obj) == false) break;
  *
  *       // print debug info
  *       printf("Push     : %d, %s\n", obj.integer, obj.string);
@@ -70,10 +54,10 @@
  *     // pop object from head & tail
  *     while(true) {
  *       struct myobj pop;
- *       if(qQueuePopFirst(&queue, &pop) == false) break;
+ *       if(queue->popFirst(queue, &pop) == false) break;
  *       printf("PopFirst : %d, %s\n", pop.integer, pop.string);
  *
- *       if(qQueuePopLast(&queue, &pop) == false) break;
+ *       if(queue->popLast(queue, &pop) == false) break;
  *       printf("PopLast  : %d, %s\n", pop.integer, pop.string);
  *     }
  *     return 0;
@@ -101,6 +85,9 @@
  *   PopFirst : 5, hello world 5
  *   PopLast  : 6, hello world 6
  * @endcode
+ *
+ * @note
+ * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
  */
 
 #ifndef DISABLE_DATASTRUCTURE
@@ -112,69 +99,244 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-/**
- * Get how much memory is needed for N objects
- *
- * @param max		a number of maximum internal slots
- * @param objsize	size of queuing object
- *
- * @return		memory size needed
- *
- * @note
- * This is useful when you decide how much memory(shared-memory) required for N object entries.
+/*
+ * Member method protos
  */
-size_t qQueueSize(int max, size_t objsize) {
-	size_t memsize = objsize * max;
-	return memsize;
-}
+#ifndef _DOXYGEN_SKIP
+static bool _push(Q_QUEUE *queue, const void *object);
+static void *_popFirst(Q_QUEUE *queue, bool remove);
+static void *_popLast(Q_QUEUE *queue, bool remove);
+static int _getNum(Q_QUEUE *queue);
+static void _truncate(Q_QUEUE *queue);
+static void _free(Q_QUEUE *queue);
+static void _freeUsrmem(Q_QUEUE *queue);
+#endif
 
 /**
  * Initialize queue
  *
- * @param queue		a pointer of Q_QUEUE
- * @param datamem	a pointer of data memory
- * @param datamemsize	size of datamem
+ * @param max		a number of maximum internal slots
  * @param objsize	size of queuing object
  *
  * @return		maximum number of queuing objects
  *
  * @code
- *     // case of dynamic data memory
- *     size_t memsize = qQueueSize(10, sizeof(struct myobj));
- *     void *datamem = malloc(memsize);
- *     Q_QUEUE queue;
- *     if(qQueueInit(&queue, datamem, memsize, sizeof(int)) == 0) {
+ *     Q_QUEUE *queue = qQueue(100, sizeof(struct myobj));
+ *     if(queue == NULL) {
  *       printf("Can't initialize queue.\n");
  *       return -1;
  *     }
  *
- *     // case of static data memory
- *     char datamem[1024];
+ *     // free
+ *     queue.free(); // this will de-allocate every thing
+ * @endcode
+ */
+Q_QUEUE *qQueue(int max, size_t objsize) {
+	if(max <= 0) return NULL;
+
+	// allocate structure
+	Q_QUEUE *queue = (Q_QUEUE*)malloc(sizeof(Q_QUEUE));
+	if(queue == NULL) return NULL;
+	memset((void*)queue, 0, sizeof(Q_QUEUE));
+
+	// allocate data memory
+	size_t memsize = max * objsize;
+	void *datamem = (void*)malloc(memsize);
+	if(datamem == NULL) {
+		free(queue);
+		return NULL;
+	}
+
+	if(qQueueUsrmem(queue, datamem, memsize, objsize) == 0) {
+		return NULL;
+	}
+
+	// change methods
+	queue->free = _free;
+
+	return queue;
+}
+
+/**
+ * Initialize queue which uses user's memory.
+ *
+ * @param queue		a pointer of Q_QUEUE
+ * @param datamem	a pointer of data memory
+ * @param memsize	size of datamem
+ * @param objsize	size of queuing object
+ *
+ * @return		maximum number of queuable objects
+ *
+ * @code
+ *     size_t memsize = sizeof(obj) * 100;
+ *     void *datamem = malloc(memsize);
  *     Q_QUEUE queue;
- *     if(qQueueInit(&queue, datamem, sizeof(datamem), sizeof(int)) == 0) {
+ *     if(qQueueUsrmem(&queue, datamem, memsize, sizeof(obj)) == 0) {
  *       printf("Can't initialize queue.\n");
  *       return -1;
  *     }
+ *
+ *     // free
+ *     queue.free(); // this will not de-allocate structure but de-allocate internal MUTEX if it's compiled with thread-safe feature
  * @endcode
+ *
+ * @note
+ * This implementation is designed to use statically allocated(fixed-size)
+ * memory for flexibilities. So you can use this queue with in shared-memory
+ * architecture to communicate with other processors.
+ * The size of datamem can be calculated with (expected_max_data_in_queue * object_size).
  */
-int qQueueInit(Q_QUEUE *queue, void* datamem, size_t datamemsize, size_t objsize) {
-	if(queue == NULL || datamem == NULL || datamemsize <= 0 || objsize <= 0) return 0;
+int qQueueUsrmem(Q_QUEUE *queue, void* datamem, size_t memsize, size_t objsize) {
+	if(queue == NULL || datamem == NULL || memsize <= 0 || objsize <= 0) return 0;
+	memset((void*)queue, 0, sizeof(Q_QUEUE));
 
 	// calculate max
-	int max = datamemsize / objsize;
-	if(max < 1) return false;
+	int max = memsize / objsize;
+	if(max < 1) return 0;
 
 	// init structure
 	queue->max = max;
 	queue->objsize = objsize;
 	queue->objarr = datamem;
-	qQueueClear(queue);
+	_truncate(queue);
+
+	// initialize recrusive mutex
+	Q_LOCK_INIT(queue->qlock, true);
+
+	// assign methods
+	queue->push	= _push;
+	queue->popFirst	= _popFirst;
+	queue->popLast	= _popLast;
+	queue->getNum	= _getNum;
+	queue->free	= _freeUsrmem;
 
 	return max;
 }
 
 /**
- * Reset queue
+ * Q_QUEUE->push(): Push object into queue
+ *
+ * @param queue		a pointer of Q_QUEUE
+ * @param object	object pointer which points object data to push
+ *
+ * @return		true if successful, otherwise(queue full or not initialized) returns false
+ */
+static bool _push(Q_QUEUE *queue, const void *object) {
+	if(queue == NULL || object == NULL) return false;
+
+	// check full
+	if(queue->used == queue->max) {
+		DEBUG("Queue full.");
+		return false;
+	}
+
+	Q_LOCK_ENTER(queue->qlock);
+	// append object
+	void *dp = queue->objarr + (queue->objsize * queue->tail);
+	memcpy(dp, object, queue->objsize);
+
+	// adjust pointer
+	queue->used++;
+	queue->tail = (queue->tail + 1) % queue->max;
+	Q_LOCK_LEAVE(queue->qlock);
+
+	return true;
+}
+
+/**
+ * Q_QUEUE->popFirst(): Pop first pushed object from queue.
+ *
+ * @param queue		a pointer of Q_QUEUE
+ *
+ * @return		object pointer which malloced if successful, otherwise returns NULL
+ *
+ * @note	Can be used for FIFO implementation
+ */
+static void *_popFirst(Q_QUEUE *queue, bool remove) {
+	if(queue == NULL) return false;
+
+	// check empty
+	if(queue->used == 0) {
+		DEBUG("Queue empty.");
+		return NULL;
+	}
+
+	// malloc object
+	void *object = malloc(queue->objsize);
+	if(object == NULL) return NULL;
+
+	Q_LOCK_ENTER(queue->qlock);
+
+	// pop object
+	void *dp = queue->objarr + (queue->objsize * queue->head);
+	memcpy(object, dp, queue->objsize);
+
+	// adjust pointer
+	if(remove == true) {
+		queue->used--;
+		queue->head = (queue->head + 1) % queue->max;
+	}
+
+	Q_LOCK_LEAVE(queue->qlock);
+
+	return object;
+}
+
+/**
+ * Q_QUEUE->popLast(): Pop last pushed object from queue.
+ *
+ * @param queue		a pointer of Q_QUEUE
+ * @param object	popped objected will be stored at this object pointer
+ *
+ * @return		object pointer which is malloced if successful, otherwise return NULL
+ *
+ * @note	Can be used for STACK implementation
+ */
+static void *_popLast(Q_QUEUE *queue, bool remove) {
+	if(queue == NULL) return false;
+
+	// check empty
+	if(queue->used == 0) {
+		DEBUG("Queue empty.");
+		return NULL;
+	}
+
+	// malloc object
+	void *object = malloc(queue->objsize);
+	if(object == NULL) return NULL;
+
+	Q_LOCK_ENTER(queue->qlock);
+
+	// pop object
+	int tail = (queue->tail > 0) ? (queue->tail - 1) : (queue->max - 1);
+	void *dp = queue->objarr + (queue->objsize * queue->tail);
+	memcpy(object, dp, queue->objsize);
+
+	// adjust pointer
+	if(remove == true) {
+		queue->tail = tail;
+		queue->used--;
+	}
+
+	Q_LOCK_LEAVE(queue->qlock);
+
+	return object;
+}
+
+/**
+ * Q_QUEUE->getNum(): Get number of objects queued
+ *
+ * @param queue		a pointer of Q_QUEUE
+ *
+ * @return		number of objects queued
+ */
+static int _getNum(Q_QUEUE *queue) {
+	if(queue == NULL) return 0;
+	return queue->used;
+}
+
+/**
+ * Q_QUEUE->truncate(): Truncate queue
  *
  * @param queue		a pointer of Q_QUEUE
  *
@@ -184,118 +346,34 @@ int qQueueInit(Q_QUEUE *queue, void* datamem, size_t datamemsize, size_t objsize
  * You do not need to call this, after qQueueInit(). This is useful when you
  * reset all of data in the queue.
  */
-bool qQueueClear(Q_QUEUE *queue) {
+static void _truncate(Q_QUEUE *queue) {
+	Q_LOCK_ENTER(queue->qlock);
 	queue->used = 0;
 	queue->head = 0;
 	queue->tail = 0;
-
-	return true;
+	Q_LOCK_LEAVE(queue->qlock);
 }
 
 /**
- * Push object into queue
+ * Q_QUEUE->free(): De-allocate queue
  *
  * @param queue		a pointer of Q_QUEUE
- * @param object	object pointer which points object data to push
- *
- * @return		true if successful, otherwise(queue full or not initialized) returns false
- */
-bool qQueuePush(Q_QUEUE *queue, const void *object) {
-	if(queue == NULL || object == NULL) return false;
-
-	// check full
-	if(queue->used == queue->max) {
-		DEBUG("Queue full.");
-		return false;
-	}
-
-	// append object
-	void *dp = queue->objarr + (queue->objsize * queue->tail);
-	memcpy(dp, object, queue->objsize);
-
-	// adjust pointer
-	queue->used++;
-	queue->tail = (queue->tail + 1) % queue->max;
-
-	return true;
-}
-
-/**
- * Pop first pushed object from queue.
- *
- * @param queue		a pointer of Q_QUEUE
- * @param object	popped objected will be stored at this object pointer
- *
- * @return		true if successful, otherwise(queue empty or not initialized) returns false
- *
- * @note	Can be used for FIFO implementation
- */
-bool qQueuePopFirst(Q_QUEUE *queue, void *object) {
-	if(queue == NULL || object == NULL) return false;
-
-	// check empty
-	if(queue->used == 0) {
-		DEBUG("Queue empty.");
-		return false;
-	}
-
-	// pop object
-	void *dp = queue->objarr + (queue->objsize * queue->head);
-	memcpy(object, dp, queue->objsize);
-
-	// adjust pointer
-	queue->used--;
-	queue->head = (queue->head + 1) % queue->max;
-
-	return true;
-}
-
-/**
- * Pop last pushed object from queue.
- *
- * @param queue		a pointer of Q_QUEUE
- * @param object	popped objected will be stored at this object pointer
- *
- * @return		true if successful, otherwise(queue empty or not initialized) returns false
- *
- * @note	Can be used for STACK implementation
- */
-bool qQueuePopLast(Q_QUEUE *queue, void *object) {
-	if(queue == NULL || object == NULL) return false;
-
-	// check empty
-	if(queue->used == 0) {
-		DEBUG("Queue empty.");
-		return false;
-	}
-
-	// adjust pointer
-	queue->tail = (queue->tail > 0) ? (queue->tail - 1) : (queue->max - 1);
-	queue->used--;
-
-	// pop object
-	void *dp = queue->objarr + (queue->objsize * queue->tail);
-	memcpy(object, dp, queue->objsize);
-
-	return true;
-}
-
-/**
- * Get queue internal status
- *
- * @param queue		a pointer of Q_QUEUE
- * @param used		if not NULL, a number of pushed objects will be stored
- * @param max		if not NULL, the maximum number of pushable objects(queue size) will be stored
  *
  * @return		true if successful, otherwise returns false
  */
-bool qQueueStatus(Q_QUEUE *queue, int *used, int *max) {
-	if(queue == NULL) return false;
+static void _free(Q_QUEUE *queue) {
+	if(queue == NULL) return;
 
-	if(used != NULL) *used = queue->used;
-	if(max != NULL) *max = queue->max;
+	Q_LOCK_ENTER(queue->qlock);
+	if(queue->objarr != NULL) free(queue->objarr);
+	Q_LOCK_LEAVE(queue->qlock);
+	Q_LOCK_DESTROY(queue->qlock);
 
-	return true;
+	free(queue);
+}
+
+static void _freeUsrmem(Q_QUEUE *queue) {
+	Q_LOCK_DESTROY(queue->qlock);
 }
 
 #endif /* DISABLE_DATASTRUCTURE */
