@@ -538,7 +538,8 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
  * @return		true if found otherwise returns false
  *
  * @note
- * if newmem flag is true, user should de-allocate obj.name and obj.data resources.
+ * obj should be filled with 0 by using memset() before first call.
+ * If newmem flag is true, user should de-allocate obj.name and obj.data resources.
  *
  * @code
  *   Q_ENTRY *entry = qEntry();
@@ -578,8 +579,8 @@ static bool _getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newm
 
 	Q_LOCK_ENTER(entry->qlock);
 
-	// if obj->next is NULL, it means start over.
-	if(obj->next == NULL) obj->next = entry->first;
+	// if obj->name is NULL, it means this is first call.
+	if(obj->name == NULL) obj->next = entry->first;
 
 	Q_NLOBJ_T *cont;
 	bool ret = false;
