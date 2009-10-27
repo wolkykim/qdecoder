@@ -213,6 +213,7 @@ struct _Q_QUEUE {
 	void*		(*popFirst)	(Q_QUEUE *queue, bool remove);
 	void*		(*popLast)	(Q_QUEUE *queue, bool remove);
 	int		(*getNum)	(Q_QUEUE *queue);
+	int		(*getAvail)	(Q_QUEUE *queue);
 	void		(*truncate)	(Q_QUEUE *queue);
 	void		(*free)		(Q_QUEUE *queue);
 	void		(*donothing)	(Q_QUEUE *queue);

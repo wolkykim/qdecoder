@@ -107,6 +107,7 @@ static bool _push(Q_QUEUE *queue, const void *object);
 static void *_popFirst(Q_QUEUE *queue, bool remove);
 static void *_popLast(Q_QUEUE *queue, bool remove);
 static int _getNum(Q_QUEUE *queue);
+static int _getAvail(Q_QUEUE *queue);
 static void _truncate(Q_QUEUE *queue);
 static void _free(Q_QUEUE *queue);
 static void _freeUsrmem(Q_QUEUE *queue);
@@ -143,6 +144,7 @@ Q_QUEUE *qQueue(int max, size_t objsize) {
 	size_t memsize = max * objsize;
 	void *datamem = (void*)malloc(memsize);
 	if(datamem == NULL) {
+		DEBUG("qQueue: can't allocate memory %zu bytes.", memsize);
 		free(queue);
 		return NULL;
 	}
@@ -208,6 +210,7 @@ int qQueueUsrmem(Q_QUEUE *queue, void* datamem, size_t memsize, size_t objsize) 
 	queue->popFirst	= _popFirst;
 	queue->popLast	= _popLast;
 	queue->getNum	= _getNum;
+	queue->getAvail	= _getAvail;
 	queue->free	= _freeUsrmem;
 
 	return max;
@@ -247,6 +250,7 @@ static bool _push(Q_QUEUE *queue, const void *object) {
  * Q_QUEUE->popFirst(): Pop first pushed object from queue.
  *
  * @param queue		a pointer of Q_QUEUE
+ * @param remove	set true for pop & remove otherwise data will not be removed.
  *
  * @return		object pointer which malloced if successful, otherwise returns NULL
  *
@@ -286,7 +290,7 @@ static void *_popFirst(Q_QUEUE *queue, bool remove) {
  * Q_QUEUE->popLast(): Pop last pushed object from queue.
  *
  * @param queue		a pointer of Q_QUEUE
- * @param object	popped objected will be stored at this object pointer
+ * @param remove	set true for pop & remove otherwise data will not be removed.
  *
  * @return		object pointer which is malloced if successful, otherwise return NULL
  *
@@ -333,6 +337,18 @@ static void *_popLast(Q_QUEUE *queue, bool remove) {
 static int _getNum(Q_QUEUE *queue) {
 	if(queue == NULL) return 0;
 	return queue->used;
+}
+
+/**
+ * Q_QUEUE->getAvail(): Get number of objects can be queued
+ *
+ * @param queue		a pointer of Q_QUEUE
+ *
+ * @return		number of objects queued
+ */
+static int _getAvail(Q_QUEUE *queue) {
+	if(queue == NULL) return 0;
+	return (queue->max - queue->used);
 }
 
 /**
