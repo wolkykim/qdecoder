@@ -300,11 +300,10 @@ struct _Q_DB {
 	bool		(*rollback)		(Q_DB *db);
 
 	bool		(*setFetchType)		(Q_DB *db, bool use);
-	bool		(*getLastConnStatus)	(Q_DB *db);
+	bool		(*getConnStatus)	(Q_DB *db);
 	bool		(*ping)			(Q_DB *db);
 	const char*	(*getError)		(Q_DB *db, unsigned int *errorno);
 	bool		(*free)			(Q_DB *db);
-
 };
 
 /**

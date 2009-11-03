@@ -109,7 +109,7 @@ static bool		_commit(Q_DB *db);
 static bool		_rollback(Q_DB *db);
 
 static bool		_setFetchType(Q_DB *db, bool use);
-static bool		_getLastConnStatus(Q_DB *db);
+static bool		_getConnStatus(Q_DB *db);
 static bool		_ping(Q_DB *db);
 static const char*	_getError(Q_DB *db, unsigned int *errorno);
 static bool		_free(Q_DB *db);
@@ -192,7 +192,7 @@ Q_DB *qDb(const char *dbtype, const char *addr, int port, const char *username, 
 	db->rollback		= _rollback;
 
 	db->setFetchType	= _setFetchType;
-	db->getLastConnStatus	= _getLastConnStatus;
+	db->getConnStatus	= _getConnStatus;
 	db->ping		= _ping;
 	db->getError		= _getError;
 	db->free		= _free;
@@ -204,7 +204,7 @@ Q_DB *qDb(const char *dbtype, const char *addr, int port, const char *username, 
 }
 
 /**
- * Connect to database server
+ * Q_DB->open(): Connect to database server
  *
  * @param db		a pointer of Q_DB object
  *
@@ -269,7 +269,7 @@ static bool _open(Q_DB *db) {
 }
 
 /**
- * Disconnect from database server
+ * Q_DB->close(): Disconnect from database server
  *
  * @param db		a pointer of Q_DB object
  *
@@ -300,7 +300,7 @@ static bool _close(Q_DB *db) {
 }
 
 /**
- * Executes the update DML
+ * Q_DB->executeUpdate(): Executes the update DML
  *
  * @param db		a pointer of Q_DB object
  * @param query		query string
@@ -330,7 +330,7 @@ static int _executeUpdate(Q_DB *db, const char *query) {
 }
 
 /**
- * Executes the formatted update DML
+ * Q_DB->executeUpdatef(): Executes the formatted update DML
  *
  * @param db		a pointer of Q_DB object
  * @param format	query string format
@@ -349,7 +349,7 @@ static int _executeUpdatef(Q_DB *db, const char *format, ...) {
 }
 
 /**
- * Executes the query
+ * Q_DB->executeQuery(): Executes the query
  *
  * @param db		a pointer of Q_DB object
  * @param query		query string
@@ -406,7 +406,7 @@ static Q_DBRESULT *_executeQuery(Q_DB *db, const char *query) {
 }
 
 /**
- * Executes the formatted query
+ * Q_DB->executeQueryf(): Executes the formatted query
  *
  * @param db		a pointer of Q_DB object
  * @param format	query string format
@@ -424,7 +424,7 @@ static Q_DBRESULT *_executeQueryf(Q_DB *db, const char *format, ...) {
 }
 
 /**
- * Start transaction
+ * Q_DB->beginTran(): Start transaction
  *
  * @param db		a pointer of Q_DB object
  *
@@ -465,7 +465,7 @@ static bool _beginTran(Q_DB *db) {
 }
 
 /**
- * Commit transaction
+ * Q_DB->commit(): Commit transaction
  *
  * @param db		a pointer of Q_DB object
  *
@@ -490,7 +490,7 @@ static bool _commit(Q_DB *db) {
 }
 
 /**
- * Roll-back and abort transaction
+ * Q_DB->rellback(): Roll-back and abort transaction
  *
  * @param db		a pointer of Q_DB object
  *
@@ -515,7 +515,7 @@ static bool _rollback(Q_DB *db) {
 }
 
 /**
- * Set result fetching type
+ * Q_DB->setFetchType(): Set result fetching type
  *
  * @param db		a pointer of Q_DB object
  * @param use		false for storing the results to client (default mode), true for fetching directly from server,
@@ -535,7 +535,7 @@ static bool _setFetchType(Q_DB *db, bool use) { // false : store, true : each ro
 }
 
 /**
- * Get last connection status
+ * Q_DB->getConnStatus(): Get last connection status
  *
  * @param db		a pointer of Q_DB object
  *
@@ -544,14 +544,14 @@ static bool _setFetchType(Q_DB *db, bool use) { // false : store, true : each ro
  * @note
  * This function just returns the the connection status flag.
  */
-static bool _getLastConnStatus(Q_DB *db) {
+static bool _getConnStatus(Q_DB *db) {
 	if (db == NULL) return false;
 
 	return db->connected;
 }
 
 /**
- * Checks whether the connection to the server is working.
+ * Q_DB->ping(): Checks whether the connection to the server is working.
  *
  * @param db		a pointer of Q_DB object
  *
@@ -580,7 +580,7 @@ static bool _ping(Q_DB *db) {
 }
 
 /**
- * Get error number and message
+ * Q_DB->getError(): Get error number and message
  *
  * @param db		a pointer of Q_DB object
  * @param errorno	if not NULL, error number will be stored
@@ -608,7 +608,7 @@ static const char *_getError(Q_DB *db, unsigned int *errorno) {
 }
 
 /**
- * De-allocate Q_DB structure
+ * Q_DB->free(): De-allocate Q_DB structure
  *
  * @param db		a pointer of Q_DB object
  *
@@ -635,7 +635,7 @@ static bool _free(Q_DB *db)  {
 }
 
 /**
- * Retrieves the next row of a result set
+ * Q_DBRESULT->next(): Retrieves the next row of a result set
  *
  * @param result	a pointer of Q_DBRESULT
  *
@@ -655,7 +655,7 @@ static bool _resultNext(Q_DBRESULT *result) {
 }
 
 /**
- * Get the number of columns in the result set
+ * Q_DBRESULT->getCols(): Get the number of columns in the result set
  *
  * @param result	a pointer of Q_DBRESULT
  *
@@ -671,7 +671,7 @@ static int _resultGetCols(Q_DBRESULT *result) {
 }
 
 /**
- * Get the number of rows in the result set
+ * Q_DBRESULT->getRows(): Get the number of rows in the result set
  *
  * @param result	a pointer of Q_DBRESULT
  *
@@ -687,7 +687,7 @@ static int _resultGetRows(Q_DBRESULT *result) {
 }
 
 /**
- * Get the current row number
+ * Q_DBRESULT->getRow(): Get the current row number
  *
  * @param result	a pointer of Q_DBRESULT
  *
@@ -706,7 +706,7 @@ static int _resultGetRow(Q_DBRESULT *result) {
 }
 
 /**
- * Get the result as string by field name
+ * Q_DBRESULT->getStr(): Get the result as string by field name
  *
  * @param result	a pointer of Q_DBRESULT
  * @param field		column name
@@ -734,7 +734,7 @@ static const char *_resultGetStr(Q_DBRESULT *result, const char *field) {
 }
 
 /**
- * Get the result as string by column number
+ * Q_DBRESULT->getStrAt(): Get the result as string by column number
  *
  * @param result	a pointer of Q_DBRESULT
  * @param idx		column number (first column is 1)
@@ -751,7 +751,7 @@ static const char *_resultGetStrAt(Q_DBRESULT *result, int idx) {
 }
 
 /**
- * Get the result as integer by field name
+ * Q_DBRESULT->getInt(): Get the result as integer by field name
  *
  * @param result	a pointer of Q_DBRESULT
  * @param field		column name
@@ -765,7 +765,7 @@ static int _resultGetInt(Q_DBRESULT *result, const char *field) {
 }
 
 /**
- * Get the result as integer by column number
+ * Q_DBRESULT->getIntAt(): Get the result as integer by column number
  *
  * @param result	a pointer of Q_DBRESULT
  * @param idx		column number (first column is 1)
@@ -779,7 +779,7 @@ static int _resultGetIntAt(Q_DBRESULT *result, int idx) {
 }
 
 /**
- * De-allocate the result
+ * Q_DBRESULT->free(): De-allocate the result
  *
  * @param result	a pointer of Q_DBRESULT
  *

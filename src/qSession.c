@@ -62,9 +62,13 @@
 
 #define SESSION_DEFAULT_TIMEOUT_INTERVAL	(30 * 60)
 
+#ifndef _DOXYGEN_SKIP
+
 static bool _clearRepository(const char *session_repository_path);
 static int _isValidSession(const char *filepath);
 static bool _updateTimeout(const char *filepath, time_t timeout_interval);
+
+#endif
 
 /**
  * Initialize session
@@ -325,6 +329,6 @@ static bool _updateTimeout(const char *filepath, time_t timeout_interval) {
 	return true;
 }
 
-#endif
+#endif /* _DOXYGEN_SKIP */
 
 #endif /* DISABLE_CGI */
