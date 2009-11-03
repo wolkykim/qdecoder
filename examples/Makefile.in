@@ -34,7 +34,7 @@ INCLUDE	= -I./ -I../src/ -I@includedir@
 LIB	= ../src/libqDecoder.a -lpthread
 
 TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi session.cgi config.cgi socket.cgi obstack.cgi \
-	hashtable
+	hashtable.cgi
 
 ## Main
 all:	${TARGETS}
@@ -76,7 +76,7 @@ socket.cgi: socket.o
 obstack.cgi: obstack.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 
-hashtable: hashtable.o
+hashtable.cgi: hashtable.o
 	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
 
 ## Clear Module

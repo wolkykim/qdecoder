@@ -268,6 +268,8 @@ bool qSessionDestroy(Q_ENTRY *session) {
 	return true;
 }
 
+#ifndef _DOXYGEN_SKIP
+
 static bool _clearRepository(const char *session_repository_path) {
 #ifdef _WIN32
 	return false;
@@ -322,5 +324,7 @@ static bool _updateTimeout(const char *filepath, time_t timeout_interval) {
 	if(qCountSave(filepath, (time(NULL) + timeout_interval)) == false) return false;
 	return true;
 }
+
+#endif
 
 #endif /* DISABLE_CGI */

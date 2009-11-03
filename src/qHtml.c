@@ -80,15 +80,14 @@
  * @endcode
  */
 bool qHtmlPrintf(FILE *stream, int mode, const char *format, ...) {
-	char buf[1024*10];
-	va_list arglist;
-	int status;
+	char *buf;
+	DYNAMIC_VSPRINTF(buf, format);
+	if(buf == NULL) false;
 
-	va_start(arglist, format);
-	status = vsnprintf(buf, sizeof(buf), format, arglist);
-	va_end(arglist);
+	bool ret = qHtmlPuts(stream, mode, buf);
+	free(buf);
 
-	return qHtmlPuts(stream, mode, buf);
+	return ret;
 }
 
 /**
@@ -241,13 +240,8 @@ bool qHtmlPuts(FILE *stream, int mode, char *buf) {
 			/* auto link */
 			if (ignoreflag == 0) {
 				if (autolink == 1) {
-					if (!strncmp(ptr, "http://",        7)) linkflag = 1;
-					else if (!strncmp(ptr, "https://",  8)) linkflag = 1;
-					else if (!strncmp(ptr, "ftp://",    6)) linkflag = 1;
-					else if (!strncmp(ptr, "telnet://", 9)) linkflag = 1;
-					else if (!strncmp(ptr, "news:",     5)) linkflag = 1;
-					else if (!strncmp(ptr, "mailto:",   7)) linkflag = 1;
-					else if (qHtmlIsEmail(ptr) == 1)         linkflag = 2;
+					if (qStrIsUrl(ptr) == true) linkflag = 1;
+					else if (qStrIsEmail(ptr) == true) linkflag = 2;
 					else linkflag = 0;
 				}
 				if (linkflag == 1) fprintf(stream, "<a href=\"%s\" target=\"%s\">%s</a>", ptr, target, ptr);
@@ -292,64 +286,6 @@ bool qHtmlPuts(FILE *stream, int mode, char *buf) {
 	}
 
 	return true;
-}
-
-/**
- * Test for an email-address formatted string
- *
- * @param email		email-address formatted string
- *
- * @return		true if successful, otherwise returns false
- */
-bool qHtmlIsEmail(const char *email) {
-	int i, alpa, dot, gol;
-
-	if (email == NULL) return false;
-
-	for (i = alpa = dot = gol = 0; email[i] != '\0'; i++) {
-		switch (email[i]) {
-			case '@' : {
-				if (alpa == 0) return false;
-				if (gol > 0)   return false;
-				gol++;
-				break;
-			}
-			case '.' : {
-				if ((i > 0)   && (email[i - 1] == '@')) return false;
-				if ((gol > 0) && (email[i - 1] == '.')) return false;
-				dot++;
-				break;
-			}
-			default  : {
-				alpa++;
-				if ((email[i] >= '0') && (email[i] <= '9')) break;
-				else if ((email[i] >= 'A') && (email[i] <= 'Z')) break;
-				else if ((email[i] >= 'a') && (email[i] <= 'z')) break;
-				else if ((email[i] == '-') || (email[i] == '_')) break;
-				else return false;
-			}
-		}
-	}
-
-	if ((alpa <= 3) || (gol == 0) || (dot == 0)) return false;
-
-	return true;
-}
-
-/**
- * Test for an URL formatted string
- *
- * @param url		URL formatted string
- *
- * @return		true if successful, otherwise returns false
- */
-bool qHtmlIsUrl(const char *url) {
-	if (!strncmp(url, "http://", 7)) return true;
-	else if (!strncmp(url, "ftp://", 6)) return true;
-	else if (!strncmp(url, "telnet://", 9)) return true;
-	else if (!strncmp(url, "mailto:", 7)) return true;
-	else if (!strncmp(url, "news:", 5)) return true;
-	return false;
 }
 
 #endif /* DISABLE_CGI */

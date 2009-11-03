@@ -454,17 +454,16 @@ char *qStrCommaNumber(int number) {
  * @param str		a pointer of original string
  * @param format	string format to append
  *
- * @return		a pointer of str
+ * @return		a pointer of str if successful, otherwise returns NULL
  */
 char *qStrCatf(char *str, const char *format, ...) {
-	char buf[MAX_LINEBUF];
-	va_list arglist;
+	char *buf;
+	DYNAMIC_VSPRINTF(buf, format);
+	if(buf == NULL) return NULL;
 
-	va_start(arglist, format);
-	vsnprintf(buf, sizeof(buf), format, arglist);
-	va_end(arglist);
-
-	return strcat(str, buf);
+	char *ret = strcat(str, buf);
+	free(buf);
+	return ret;
 }
 
 /**
@@ -526,7 +525,9 @@ char *qStrUnique(const char *seed) {
  * @return		true for ok, otherwise returns false
  *
  * @code
- *   qCharEncode("KoreanEncodedString", "EUC-KR", "UTF-8", 1.5);
+ *   if(qStrIsAlnum("hello1234") == true) {
+ *     printf("It is alpha-numeric string.");
+ *   }
  * @endcode
  */
 bool qStrIsAlnum(const char *str) {
@@ -534,6 +535,64 @@ bool qStrIsAlnum(const char *str) {
                 if(isalnum(*str) == 0) return false;
         }
         return true;
+}
+
+/**
+ * Test for an email-address formatted string
+ *
+ * @param email		email-address formatted string
+ *
+ * @return		true if successful, otherwise returns false
+ */
+bool qStrIsEmail(const char *email) {
+	int i, alpa, dot, gol;
+
+	if (email == NULL) return false;
+
+	for (i = alpa = dot = gol = 0; email[i] != '\0'; i++) {
+		switch (email[i]) {
+			case '@' : {
+				if (alpa == 0) return false;
+				if (gol > 0)   return false;
+				gol++;
+				break;
+			}
+			case '.' : {
+				if ((i > 0)   && (email[i - 1] == '@')) return false;
+				if ((gol > 0) && (email[i - 1] == '.')) return false;
+				dot++;
+				break;
+			}
+			default  : {
+				alpa++;
+				if ((email[i] >= '0') && (email[i] <= '9')) break;
+				else if ((email[i] >= 'A') && (email[i] <= 'Z')) break;
+				else if ((email[i] >= 'a') && (email[i] <= 'z')) break;
+				else if ((email[i] == '-') || (email[i] == '_')) break;
+				else return false;
+			}
+		}
+	}
+
+	if ((alpa <= 3) || (gol == 0) || (dot == 0)) return false;
+	return true;
+}
+
+/**
+ * Test for an URL formatted string
+ *
+ * @param url		URL formatted string
+ *
+ * @return		true if successful, otherwise returns false
+ */
+bool qStrIsUrl(const char *url) {
+	if (!strncmp(url, "http://", CONST_STRLEN("http://"))) return true;
+	else if (!strncmp(url, "https://", CONST_STRLEN("https://"))) return true;
+	else if (!strncmp(url, "ftp://", CONST_STRLEN("ftp://"))) return true;
+	else if (!strncmp(url, "telnet://", CONST_STRLEN("telnet://"))) return true;
+	else if (!strncmp(url, "mailto:", CONST_STRLEN("mailto:"))) return true;
+	else if (!strncmp(url, "news:", CONST_STRLEN("news:"))) return true;
+	return false;
 }
 
 #ifdef __linux__

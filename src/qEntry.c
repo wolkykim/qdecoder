@@ -800,7 +800,7 @@ static char *_parseStr(Q_ENTRY *entry, const char *str) {
  * Q_ENTRY->merge(): Merge all objects data into single object.
  *
  * @param entry		Q_ENTRY pointer
- * @param size		if size is not NULL, object size will be stored.
+ * @param size		if size is not NULL, merged object size will be stored.
  *
  * @return		a malloced pointer, otherwise(if there is no data to merge) returns NULL.
  *

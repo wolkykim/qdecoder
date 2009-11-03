@@ -279,19 +279,15 @@ ssize_t qSocketPuts(int sockfd, const char *str) {
  * @return	the number of bytes sent on success, or -1 if an error(ex:socket closed) occurred.
  *
  * @since	8.1R
- *
- * @note	the final length of formatted string must be less than 1024
- *		If you need to send more huge string, use qSocketPuts instead.
  */
 ssize_t qSocketPrintf(int sockfd, const char *format, ...) {
-	char buf[MAX_LINEBUF];
-	va_list arglist;
+	char *buf;
+	DYNAMIC_VSPRINTF(buf, format);
+	if(buf == NULL) return -1;
 
-	va_start(arglist, format);
-	vsnprintf(buf, sizeof(buf), format, arglist);
-	va_end(arglist);
-
-	return _q_write(sockfd, buf, strlen(buf));
+	ssize_t ret = _q_write(sockfd, buf, strlen(buf));
+	free(buf);
+	return ret;
 }
 
 /**

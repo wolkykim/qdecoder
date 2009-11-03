@@ -31,14 +31,37 @@
 /*
  * Internal Macros
  */
-#define	CONST_STRLEN(x)		(sizeof(x) - 1)
-
 #ifdef BUILD_DEBUG
 #define DEBUG(fmt, args...)	fprintf(stderr, "[DEBUG] " fmt " (%s:%d)\n", ##args, __FILE__, __LINE__);
 #else
 #define DEBUG(fms, args...)
-#endif
+#endif	/* BUILD_DEBUG */
 
+/*
+ * Macro Functions
+ */
+#define	CONST_STRLEN(x)		(sizeof(x) - 1)
+
+#define	DYNAMIC_VSPRINTF(s, f)	{							\
+	size_t _strsize;								\
+	for(_strsize = 1024; ; _strsize *= 2) {						\
+		s = (char*)malloc(_strsize);						\
+		if(s == NULL) {								\
+			DEBUG("DYNAMIC_VSPRINTF(): can't allocate memory.");		\
+			break;								\
+		}									\
+		va_list _arglist;							\
+		va_start(_arglist, f);							\
+		int _n = vsnprintf(s, _strsize, f, _arglist);				\
+		va_end(_arglist);							\
+		if(_n >= 0 && _n < _strsize) break;					\
+		free(s);								\
+	}										\
+}
+
+/*
+ * Q_LOCK Macros
+ */
 #ifdef ENABLE_THREADSAFE
 
 #ifndef _MULTI_THREADED
@@ -50,7 +73,7 @@
 #include <pthread.h>
 #include <errno.h>
 
-#define Q_LOCK_INIT(x,r)	{							\
+#define Q_LOCK_INIT(x,r) {								\
 	memset((void*)&x, 0, sizeof(Q_LOCK_T));						\
 	pthread_mutexattr_t _mutexattr;							\
 	pthread_mutexattr_init(&_mutexattr);						\
@@ -67,7 +90,7 @@
 }
 //pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);
 
-#define	Q_LOCK_LEAVE(x)		{							\
+#define	Q_LOCK_LEAVE(x) {								\
 	if(!pthread_equal(x.owner, pthread_self())) DEBUG("Q_LOCK: unlock - owner mismatch.");	\
 	x.count--;									\
 	pthread_mutex_unlock(&x.mutex);							\
@@ -75,7 +98,7 @@
 //	DEBUG("Q_LOCK: unlock, cnt=%d", x.count);
 
 #define MAX_MUTEX_LOCK_WAIT	(3000)
-#define	Q_LOCK_ENTER(x)		{							\
+#define	Q_LOCK_ENTER(x) {								\
 	while(true) {									\
 		int _ret, i;								\
  		for(i = 0; (_ret = pthread_mutex_trylock(&x.mutex)) != 0 && i < MAX_MUTEX_LOCK_WAIT; i++) {	\
@@ -91,7 +114,7 @@
 }
 //	DEBUG("Q_LOCK: locked, cnt=%d", x.count);
 
-#define Q_LOCK_DESTROY(x)	{							\
+#define Q_LOCK_DESTROY(x) {								\
 	if(x.count != 0) DEBUG("Q_LOCK: mutex counter is not 0.");			\
 	int _ret;									\
 	while((_ret = pthread_mutex_destroy(&x.mutex)) != 0) {				\
@@ -108,7 +131,7 @@
 #define	Q_LOCK_ENTER(x)
 #define	Q_LOCK_DESTROY(x)
 
-#endif
+#endif	/* ENABLE_THREADSAFE */
 
 /*
  * Internal Definitions

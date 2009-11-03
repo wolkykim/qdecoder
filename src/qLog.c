@@ -38,7 +38,8 @@
 
 #ifndef _DOXYGEN_SKIP
 
-static bool _write(Q_LOG *log, const char *format, ...);
+static bool _write(Q_LOG *log, const char *str);
+static bool _writef(Q_LOG *log, const char *format, ...);
 static bool _duplicate(Q_LOG *log, FILE *outfp, bool flush);
 static bool _flush(Q_LOG *log);
 static bool _free(Q_LOG *log);
@@ -90,12 +91,13 @@ Q_LOG *qLog(const char *filepathfmt, int rotateinterval, bool flush) {
 
 	// member methods
 	log->write	= _write;
+	log->writef	= _writef;
 	log->duplicate	= _duplicate;
 	log->flush	= _flush;
 	log->free	= _free;
 
-	// initialize non-recursive lock
-	Q_LOCK_INIT(log->qlock, false);
+	// initialize recursive lock
+	Q_LOCK_INIT(log->qlock, true);
 
 	return log;
 }
@@ -104,42 +106,56 @@ Q_LOG *qLog(const char *filepathfmt, int rotateinterval, bool flush) {
  * Q_LOG->write(): Log messages
  *
  * @param log		a pointer of Q_LOG
- * @param format	messages format
+ * @param str		message string
  *
  * @return		true if successful, otherewise returns false
  */
-static bool _write(Q_LOG *log, const char *format, ...) {
-	char buf[1024];
-	va_list arglist;
-	time_t nowTime = time(NULL);
-
+static bool _write(Q_LOG *log, const char *str) {
 	if (log == NULL || log->fp == NULL) return false;
-
-	va_start(arglist, format);
-	vsnprintf(buf, sizeof(buf), format, arglist);
-	va_end(arglist);
 
 	Q_LOCK_ENTER(log->qlock);
 
 	/* duplicate stream */
 	if (log->outfp != NULL) {
-		fprintf(log->outfp, "%s\n", buf);
+		fprintf(log->outfp, "%s\n", str);
 		if(log->outflush == true) fflush(log->outfp);
 	}
 
 	/* check log rotate is needed*/
-	if (log->nextrotate > 0 && nowTime >= log->nextrotate) {
+	if (log->nextrotate > 0 && time(NULL) >= log->nextrotate) {
 		_realOpen(log);
 	}
 
 	/* log to file */
 	bool ret = false;
-	if (fprintf(log->fp, "%s\n", buf) >= 0) {
+	if (fprintf(log->fp, "%s\n", str) >= 0) {
 		if (log->logflush == true) fflush(log->fp);
 		ret = true;
 	}
 
 	Q_LOCK_LEAVE(log->qlock);
+
+	return ret;
+}
+
+/**
+ * Q_LOG->writef(): Log messages
+ *
+ * @param log		a pointer of Q_LOG
+ * @param format	messages format
+ *
+ * @return		true if successful, otherewise returns false
+ */
+static bool _writef(Q_LOG *log, const char *format, ...) {
+	if (log == NULL || log->fp == NULL) return false;
+
+	char *str;
+	DYNAMIC_VSPRINTF(str, format);
+	if(str == NULL) return false;
+
+	bool ret = _write(log, str);
+
+	free(str);
 	return ret;
 }
 

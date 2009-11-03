@@ -35,7 +35,7 @@ int main(void) {
 	qCgiResponseSetContentType(req, "text/html");
 
 	printf("Your order : ");
-	Q_NLOBJ obj;
+	Q_NOBJ_T obj;
 	memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
 	while(req->getNext(req, &obj, "checklist", false) == true) {
 		printf("<b>%s</b> \n", (char *)obj.data);

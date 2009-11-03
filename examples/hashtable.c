@@ -29,6 +29,8 @@
 #define NUM_OF_TEST_DATA	(80)
 
 int main(void) {
+	qCgiResponseSetContentType(NULL, "text/plain");
+
 	// create hash table with initially 10 data slots
 	Q_HASHTBL *tbl = qHashtbl(INIT_MAX_TABLE_SIZE, true, 80);
 
@@ -49,6 +51,7 @@ int main(void) {
 	}
 
 	// print out everything in the hash table
+	printf("==================[TABLE DUMP]==================\n");
 	tbl->print(tbl, stdout, true);
 
 	// de-allocate hash table

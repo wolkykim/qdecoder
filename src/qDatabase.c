@@ -42,37 +42,42 @@
  *   Q_DB *db = NULL;
  *   Q_DBRESULT *result = NULL;
  *
- *   db = qDbInit("MYSQL", "dbhost.qdecoder.org", 3306, "test", "secret", "sampledb", true);
+ *   db = qDb("MYSQL", "dbhost.qdecoder.org", 3306, "test", "secret", "sampledb", true);
  *   if (db == NULL) {
  *     printf("ERROR: Not supported database type.\n");
  *     return -1;
  *   }
  *
  *   // try to connect
- *   if (qDbOpen(db) == false) {
+ *   if (db->open(db) == false) {
  *     printf("WARNING: Can't connect to database.\n");
  *     return -1;
  *   }
  *
  *   // get results
- *   result = qDbExecuteQuery(db, "SELECT name, population FROM City");
+ *   result = db->executeQuery(db, "SELECT name, population FROM City");
  *   if (result != NULL) {
- *     printf("COLS : %d , ROWS : %d\n", qDbGetCols(result), qDbGetRows(result));
- *     while (qDbResultNext(result) == true) {
- *       char *pszName = qDbGetValue(result, "name");
- *       int   nPopulation = qDbGetInt(result, "population");
+ *     printf("COLS : %d , ROWS : %d\n", result->getCols(result), result->getRows(result));
+ *     while (result->next(result) == true) {
+ *       char *pszName = result->getStr(result, "name");
+ *       int   nPopulation = result->getInt(result, "population");
  *       printf("Country : %s , Population : %d\n", pszName, nPopulation);
  *     }
- *     qDbResultFree(result);
+ *     result->free(result);
  *   }
  *
  *   // close connection
- *   qDbClose(db);
+ *   db->close(db);
  *
  *   // free db object
- *   qDbFree(db);
+ *   db->free(db);
  * @endcode
+ *
+ * @note
+ * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
  */
+
+#if defined(ENABLE_MYSQL)
 
 #ifdef ENABLE_MYSQL
 #include "mysql.h"
@@ -86,6 +91,42 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
+/*
+ * Member method protos
+ */
+#ifndef _DOXYGEN_SKIP
+// Q_DB object
+static bool		_open(Q_DB *db);
+static bool		_close(Q_DB *db);
+
+static int		_executeUpdate(Q_DB *db, const char *query);
+static int		_executeUpdatef(Q_DB *db, const char *format, ...);
+static Q_DBRESULT*	_executeQuery(Q_DB *db, const char *query);
+static Q_DBRESULT*	_executeQueryf(Q_DB *db, const char *format, ...);
+
+static bool		_beginTran(Q_DB *db);
+static bool		_commit(Q_DB *db);
+static bool		_rollback(Q_DB *db);
+
+static bool		_setFetchType(Q_DB *db, bool use);
+static bool		_getLastConnStatus(Q_DB *db);
+static bool		_ping(Q_DB *db);
+static const char*	_getError(Q_DB *db, unsigned int *errorno);
+static bool		_free(Q_DB *db);
+
+// Q_DBRESULT object
+static bool		_resultNext(Q_DBRESULT *result);
+static int		_resultGetCols(Q_DBRESULT *result);
+static int		_resultGetRows(Q_DBRESULT *result);
+static int		_resultGetRow(Q_DBRESULT *result);
+static const char*	_resultGetStr(Q_DBRESULT *result, const char *field);
+static const char*	_resultGetStrAt(Q_DBRESULT *result, int idx);
+static int		_resultGetInt(Q_DBRESULT *result, const char *field);
+static int		_resultGetIntAt(Q_DBRESULT *result, int idx);
+static bool		_resultFree(Q_DBRESULT *result);
+
+#endif
+
 /**
  * Initialize internal connector structure
  *
@@ -97,18 +138,17 @@
  * @param database	database server type. currently "MYSQL" is only supported
  * @param autocommit	sets autocommit mode on if autocommit is true, off if autocommit is false
  *
- * @return	a pointer of Q_DB structure in case of successful, otherwise returns NULL.
+ * @return	a pointer of Q_DB object in case of successful, otherwise returns NULL.
  *
  * @code
- *   Q_DB *db = NULL;
- *   db = qDbInit("MYSQL", "dbhost.qdecoder.org", 3306, "test", "secret", "sampledb", true);
+ *   Q_DB *db = qDb("MYSQL", "dbhost.qdecoder.org", 3306, "test", "secret", "sampledb", true);
  *   if (db == NULL) {
  *     printf("ERROR: Not supported database type.\n");
  *     return -1;
  *   }
  * @endcode
  */
-Q_DB *qDbInit(const char *dbtype, const char *addr, int port, const char *username, const char *password, const char *database, bool autocommit) {
+Q_DB *qDb(const char *dbtype, const char *addr, int port, const char *username, const char *password, const char *database, bool autocommit) {
 	// check db type
 #ifdef _Q_ENABLE_MYSQL
 	if (strcmp(dbtype, "MYSQL")) return NULL;
@@ -138,30 +178,61 @@ Q_DB *qDbInit(const char *dbtype, const char *addr, int port, const char *userna
 	db->mysql = NULL;
 #endif
 
+	// assign methods
+	db->open		= _open;
+	db->close		= _close;
+
+	db->executeUpdate	= _executeUpdate;
+	db->executeUpdatef	= _executeUpdatef;
+	db->executeQuery	= _executeQuery;
+	db->executeQueryf	= _executeQueryf;
+
+	db->beginTran		= _beginTran;
+	db->commit		= _commit;
+	db->rollback		= _rollback;
+
+	db->setFetchType	= _setFetchType;
+	db->getLastConnStatus	= _getLastConnStatus;
+	db->ping		= _ping;
+	db->getError		= _getError;
+	db->free		= _free;
+
+	// initialize recrusive mutex
+	Q_LOCK_INIT(db->qlock, true);
+
 	return db;
 }
 
 /**
  * Connect to database server
  *
- * @param db		a pointer of Q_DB which is returned by qDbInit()
+ * @param db		a pointer of Q_DB object
  *
  * @return	true if successful, otherwise returns false.
  */
-bool qDbOpen(Q_DB *db) {
+static bool _open(Q_DB *db) {
 	if (db == NULL) return false;
 
 	// if connected, close first
 	if (db->connected == true) {
-		qDbClose(db);
+		_close(db);
 	}
 
 #ifdef _Q_ENABLE_MYSQL
-	// initialize handler
-	if(db->mysql != NULL) qDbClose(db);
+	Q_LOCK_ENTER(queue->qlock);
 
-	if(mysql_library_init(0, NULL, NULL) != 0) return NULL;
-	if((db->mysql = mysql_init(NULL)) == NULL) return false;
+	// initialize handler
+	if(db->mysql != NULL) _close(db);
+
+	if(mysql_library_init(0, NULL, NULL) != 0) {
+		Q_LOCK_LEAVE(queue->qlock);
+		return false;
+	}
+
+	if((db->mysql = mysql_init(NULL)) == NULL) {
+		Q_LOCK_LEAVE(queue->qlock);
+		return false;
+	}
 
 	// set options
 	my_bool reconnect = _Q_MYSQL_OPT_RECONNECT;
@@ -176,19 +247,21 @@ bool qDbOpen(Q_DB *db) {
 
 	// try to connect
 	if(mysql_real_connect(db->mysql, db->info.addr, db->info.username, db->info.password, db->info.database, db->info.port, NULL, 0) == NULL) {
-		qDbClose(db); // free mysql handler
+		_close(db); // free mysql handler
+		Q_LOCK_LEAVE(queue->qlock);
 		return false;
 	}
 
 	// set auto-commit
 	if (mysql_autocommit(db->mysql, db->info.autocommit) != 0) {
-		qDbClose(db); // free mysql handler
+		_close(db); // free mysql handler
+		Q_LOCK_LEAVE(queue->qlock);
 		return false;
 	}
 
 	// set flag
 	db->connected = true;
-
+	Q_LOCK_LEAVE(queue->qlock);
 	return true;
 #else
 	return false;
@@ -198,173 +271,58 @@ bool qDbOpen(Q_DB *db) {
 /**
  * Disconnect from database server
  *
- * @param db		a pointer of Q_DB structure
+ * @param db		a pointer of Q_DB object
  *
  * @return	true if successful, otherwise returns false.
  *
  * @note
- * Before you call qDbFree(), Q_DB structure still contains database information.
- * So you can re-connect to database using qDbOpen() without qDbInit().
+ * Unless you call Q_DB->free(), Q_DB object will keep the database information.
+ * So you can re-connect to database using Q_DB->open().
  */
-bool qDbClose(Q_DB *db) {
+static bool _close(Q_DB *db) {
 	if (db == NULL) return false;
 
 #ifdef _Q_ENABLE_MYSQL
+	Q_LOCK_ENTER(queue->qlock);
+
 	if(db->mysql != NULL) {
 		mysql_close(db->mysql);
 		db->mysql = NULL;
 		mysql_library_end();
 	}
 	db->connected = false;
+
+	Q_LOCK_LEAVE(queue->qlock);
 	return true;
 #else
 	return false;
 #endif
 }
-
-/**
- * De-allocate Q_DB structure
- *
- * @param db		a pointer of Q_DB structure
- *
- * @return	true if successful, otherwise returns false.
- */
-bool qDbFree(Q_DB *db)  {
-	if (db == NULL) return false;
-	qDbClose(db);
-
-	free(db->info.dbtype);
-	free(db->info.addr);
-	free(db->info.username);
-	free(db->info.password);
-	free(db->info.database);
-	free(db);
-
-	return true;
-}
-
-/**
- * Get error number and message
- *
- * @param db		a pointer of Q_DB structure
- * @param errorno	if not NULL, error number will be stored
- *
- * @return	a pointer of error message string
- *
- * @note
- * Do not free returned error message
- */
-const char *qDbGetError(Q_DB *db, unsigned int *errorno) {
-	if (db == NULL || db->connected == false) return "(no opened db)";
-
-	unsigned int eno = 0;
-	const char *emsg;
-#ifdef _Q_ENABLE_MYSQL
-	eno = mysql_errno(db->mysql);
-	if(eno == 0) emsg = "(no error)";
-	else emsg = mysql_error(db->mysql);
-#else
-	emsg = "(not implemented)";
-#endif
-
-	if(errorno != NULL) *errorno = eno;
-	return emsg;
-}
-
-/**
- * Checks whether the connection to the server is working.
- *
- * @param db		a pointer of Q_DB structure
- *
- * @return	true if connection is alive, false if connection is not available and failed to reconnect
- *
- * @note
- * If the connection has gone down, an attempt to reconnect.
- */
-bool qDbPing(Q_DB *db) {
-	if (db == NULL) return false;
-
-#ifdef _Q_ENABLE_MYSQL
-	if (db->connected == true && mysql_ping(db->mysql) == 0) {
-		return true;
-	} else { // ping test failed
-		if (db->connected == true) {
-			qDbClose(db); // now db->connected == false;
-		}
-
-		if (qDbOpen(db) == true) { // try re-connect
-			DEBUG("Connection recovered.");
-			return true;
-		}
-	}
-
-	return false;
-#else
-	return false;
-#endif
-}
-
-/**
- * Get last connection status
- *
- * @param db		a pointer of Q_DB structure
- *
- * @return	true if the connection flag is set to alive, otherwise returns false
- *
- * @note
- * This function just returns the the connection status flag.
- */
-bool qDbGetLastConnStatus(Q_DB *db) {
-	if (db == NULL) return false;
-
-	return db->connected;
-}
-
-/**
- * Set result fetching type
- *
- * @param db		a pointer of Q_DB structure
- * @param use		false for storing the results to client (default mode), true for fetching directly from server,
- *
- * @return	true if successful otherwise returns false
- *
- * @note
- * If qDbSetFetchType(db, true) is called, the results does not actually read into the client.
- * Instead, each row must be retrieved individually by making calls to qDbResultNext().
- * This reads the result of a query directly from the server without storing it in local buffer,
- * which is somewhat faster and uses much less memory than default behavior qDbSetFetchType(db, false).
- */
-bool qDbSetFetchType(Q_DB *db, bool use) { // false : store, true : each row must be retrieved from the database
-	if (db == NULL) return false;
-	db->info.fetchtype = use;
-	return true;
-}
-
-/////////////////////////////////////////////////////////////////////////
-// PUBLIC FUNCTIONS - query
-/////////////////////////////////////////////////////////////////////////
 
 /**
  * Executes the update DML
  *
- * @param db		a pointer of Q_DB structure
+ * @param db		a pointer of Q_DB object
  * @param query		query string
  *
  * @return	a number of affected rows
  */
-int qDbExecuteUpdate(Q_DB *db, const char *query) {
+static int _executeUpdate(Q_DB *db, const char *query) {
 	if (db == NULL || db->connected == false) return -1;
 
 #ifdef _Q_ENABLE_MYSQL
+	Q_LOCK_ENTER(queue->qlock);
+
 	int affected = -1;
 
 	// query
 	DEBUG("%s", query);
-	if (mysql_query(db->mysql, query)) return -1;
+	if (mysql_query(db->mysql, query) == 0) {
+		/* get affected rows */
+		if ((affected = mysql_affected_rows(db->mysql)) < 0) affected = -1;
+	}
 
-	/* get affected rows */
-	if ((affected = mysql_affected_rows(db->mysql)) < 0) return -1;
-
+	Q_LOCK_LEAVE(queue->qlock);
 	return affected;
 #else
 	return -1;
@@ -374,31 +332,31 @@ int qDbExecuteUpdate(Q_DB *db, const char *query) {
 /**
  * Executes the formatted update DML
  *
- * @param db		a pointer of Q_DB structure
+ * @param db		a pointer of Q_DB object
  * @param format	query string format
  *
- * @return	a number of affected rows
+ * @return	a number of affected rows, otherwise returns -1
  */
-int qDbExecuteUpdatef(Q_DB *db, const char *format, ...) {
-	char query[1024];
-	va_list arglist;
+static int _executeUpdatef(Q_DB *db, const char *format, ...) {
+	char *query;
+	DYNAMIC_VSPRINTF(query, format);
+	if(query == NULL) return -1;
 
-	va_start(arglist, format);
-	vsnprintf(query, sizeof(query), format, arglist);
-	va_end(arglist);
+	int affected = _executeUpdate(db, query);
+	free(query);
 
-	return qDbExecuteUpdate(db, query);
+	return affected;
 }
 
 /**
  * Executes the query
  *
- * @param db		a pointer of Q_DB structure
+ * @param db		a pointer of Q_DB object
  * @param query		query string
  *
- * @return	a pointer of Q_DBRESULT
+ * @return	a pointer of Q_DBRESULT if successful, otherwise returns NULL
  */
-Q_DBRESULT *qDbExecuteQuery(Q_DB *db, const char *query) {
+static Q_DBRESULT *_executeQuery(Q_DB *db, const char *query) {
 	if (db == NULL || db->connected == false) return NULL;
 
 #ifdef _Q_ENABLE_MYSQL
@@ -427,6 +385,20 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, const char *query) {
 	result->cols = mysql_num_fields(result->rs);
 	result->cursor = 0;
 
+	/* assign methods */
+	result->next		= _resultNext;
+
+	result->getCols		= _resultGetCols;
+	result->getRows		= _resultGetRows;
+	result->getRow		= _resultGetRow;
+
+	result->getStr		= _resultGetStr;
+	result->getStrAt	= _resultGetStrAt;
+	result->getInt		= _resultGetInt;
+	result->getIntAt	= _resultGetIntAt;
+
+	result->free		= _resultFree;
+
 	return result;
 #else
 	return NULL;
@@ -436,20 +408,230 @@ Q_DBRESULT *qDbExecuteQuery(Q_DB *db, const char *query) {
 /**
  * Executes the formatted query
  *
- * @param db		a pointer of Q_DB structure
+ * @param db		a pointer of Q_DB object
  * @param format	query string format
  *
- * @return	a pointer of Q_DBRESULT
+ * @return	a pointer of Q_DBRESULT if successful, otherwise returns NULL
  */
-Q_DBRESULT *qDbExecuteQueryf(Q_DB *db, const char *format, ...) {
-	char query[1024];
-	va_list arglist;
+static Q_DBRESULT *_executeQueryf(Q_DB *db, const char *format, ...) {
+	char *query;
+	DYNAMIC_VSPRINTF(query, format);
+	if(query == NULL) return NULL;
 
-	va_start(arglist, format);
-	vsnprintf(query, sizeof(query), format, arglist);
-	va_end(arglist);
+	Q_DBRESULT *ret = db->executeQuery(db, query);
+	free(query);
+	return ret;
+}
 
-	return qDbExecuteQuery(db, query);
+/**
+ * Start transaction
+ *
+ * @param db		a pointer of Q_DB object
+ *
+ * @return	true if successful, otherwise returns false
+ *
+ * @code
+ *   db->beginTran(db);
+ *   (... insert/update/delete ...)
+ *   db->commit(db);
+ * @endcode
+ *
+ * @note
+ * This operation will raise lock if you compile "--enable-threadsafe" option
+ * to protect thread-safe operation. In this case, before calling Q_DB->commit()
+ * or Q_DB->rollback(), another threads will be hold.
+ */
+static bool _beginTran(Q_DB *db) {
+	if (db == NULL) return false;
+
+#ifdef _Q_ENABLE_MYSQL
+	Q_LOCK_ENTER(queue->qlock);
+	if(db->qlock.count != 1) {
+		Q_LOCK_LEAVE(queue->qlock);
+		return false;
+	}
+
+	Q_DBRESULT *result;
+	result = db->executeQuery(db, "START TRANSACTION");
+	if(result == NULL) {
+		Q_LOCK_LEAVE(queue->qlock);
+		return false;
+	}
+	result->free(result);
+	return true;
+#else
+	return false;
+#endif
+}
+
+/**
+ * Commit transaction
+ *
+ * @param db		a pointer of Q_DB object
+ *
+ * @return	true if successful, otherwise returns false
+ */
+static bool _commit(Q_DB *db) {
+	if (db == NULL) return false;
+
+#ifdef _Q_ENABLE_MYSQL
+	bool ret = false;
+	if (mysql_commit(db->mysql) == 0) {
+		ret = true;
+	}
+
+	if(db->qlock.count > 0) {
+		Q_LOCK_LEAVE(queue->qlock);
+	}
+	return ret;
+#else
+	return false;
+#endif
+}
+
+/**
+ * Roll-back and abort transaction
+ *
+ * @param db		a pointer of Q_DB object
+ *
+ * @return	true if successful, otherwise returns false
+ */
+static bool _rollback(Q_DB *db) {
+	if (db == NULL) return false;
+
+#ifdef _Q_ENABLE_MYSQL
+	bool ret = false;
+	if (mysql_rollback(db->mysql) == 0) {
+		ret = true;
+	}
+
+	if(db->qlock.count > 0) {
+		Q_LOCK_LEAVE(queue->qlock);
+	}
+	return ret;
+#else
+	return 0;
+#endif
+}
+
+/**
+ * Set result fetching type
+ *
+ * @param db		a pointer of Q_DB object
+ * @param use		false for storing the results to client (default mode), true for fetching directly from server,
+ *
+ * @return	true if successful otherwise returns false
+ *
+ * @note
+ * If Q_DB->setFetchType(db, true) is called, the results does not actually read into the client.
+ * Instead, each row must be retrieved individually by making calls to Q_DBRESULT->next().
+ * This reads the result of a query directly from the server without storing it in local buffer,
+ * which is somewhat faster and uses much less memory than default behavior Q_DB->setFetchType(db, false).
+ */
+static bool _setFetchType(Q_DB *db, bool use) { // false : store, true : each row must be retrieved from the database
+	if (db == NULL) return false;
+	db->info.fetchtype = use;
+	return true;
+}
+
+/**
+ * Get last connection status
+ *
+ * @param db		a pointer of Q_DB object
+ *
+ * @return	true if the connection flag is set to alive, otherwise returns false
+ *
+ * @note
+ * This function just returns the the connection status flag.
+ */
+static bool _getLastConnStatus(Q_DB *db) {
+	if (db == NULL) return false;
+
+	return db->connected;
+}
+
+/**
+ * Checks whether the connection to the server is working.
+ *
+ * @param db		a pointer of Q_DB object
+ *
+ * @return	true if connection is alive, false if connection is not available and failed to reconnect
+ *
+ * @note
+ * If the connection has gone down, an attempt to reconnect.
+ */
+static bool _ping(Q_DB *db) {
+	if (db == NULL) return false;
+
+#ifdef _Q_ENABLE_MYSQL
+	if (db->connected == true && mysql_ping(db->mysql) == 0) {
+		return true;
+	} else { // ping test failed
+		if (_open(db) == true) { // try re-connect
+			DEBUG("Connection recovered.");
+			return true;
+		}
+	}
+
+	return false;
+#else
+	return false;
+#endif
+}
+
+/**
+ * Get error number and message
+ *
+ * @param db		a pointer of Q_DB object
+ * @param errorno	if not NULL, error number will be stored
+ *
+ * @return	a pointer of error message string
+ *
+ * @note
+ * Do not free returned error message
+ */
+static const char *_getError(Q_DB *db, unsigned int *errorno) {
+	if (db == NULL || db->connected == false) return "(no opened db)";
+
+	unsigned int eno = 0;
+	const char *emsg;
+#ifdef _Q_ENABLE_MYSQL
+	eno = mysql_errno(db->mysql);
+	if(eno == 0) emsg = "(no error)";
+	else emsg = mysql_error(db->mysql);
+#else
+	emsg = "(not implemented)";
+#endif
+
+	if(errorno != NULL) *errorno = eno;
+	return emsg;
+}
+
+/**
+ * De-allocate Q_DB structure
+ *
+ * @param db		a pointer of Q_DB object
+ *
+ * @return	true if successful, otherwise returns false.
+ */
+static bool _free(Q_DB *db)  {
+	if (db == NULL) return false;
+
+	Q_LOCK_ENTER(queue->qlock);
+
+	_close(db);
+
+	free(db->info.dbtype);
+	free(db->info.addr);
+	free(db->info.username);
+	free(db->info.password);
+	free(db->info.database);
+	free(db);
+
+	Q_LOCK_LEAVE(queue->qlock);
+	Q_LOCK_DESTROY(queue->qlock);
+
+	return true;
 }
 
 /**
@@ -459,7 +641,7 @@ Q_DBRESULT *qDbExecuteQueryf(Q_DB *db, const char *format, ...) {
  *
  * @return	true if successful, false if no more rows are left
  */
-bool qDbResultNext(Q_DBRESULT *result) {
+static bool _resultNext(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL) return false;
 
@@ -473,37 +655,13 @@ bool qDbResultNext(Q_DBRESULT *result) {
 }
 
 /**
- * De-allocate the result
- *
- * @param result	a pointer of Q_DBRESULT
- *
- * @return	true if successful, otherwise returns false
- */
-bool qDbResultFree(Q_DBRESULT *result) {
-#ifdef _Q_ENABLE_MYSQL
-	if (result == NULL) return false;
-	if (result->rs != NULL) {
-		if(result->fetchtype == true) {
-			while(mysql_fetch_row(result->rs) != NULL);
-		}
-		mysql_free_result(result->rs);
-		result->rs = NULL;
-	}
-	free(result);
-	return true;
-#else
-	return false;
-#endif
-}
-
-/**
  * Get the number of columns in the result set
  *
  * @param result	a pointer of Q_DBRESULT
  *
  * @return	the number of columns in the result set
  */
-int qDbGetCols(Q_DBRESULT *result) {
+static int _resultGetCols(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
 	return result->cols;
@@ -519,7 +677,7 @@ int qDbGetCols(Q_DBRESULT *result) {
  *
  * @return	the number of rows in the result set
  */
-int qDbGetRows(Q_DBRESULT *result) {
+static int _resultGetRows(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
 	return mysql_num_rows(result->rs);
@@ -538,7 +696,7 @@ int qDbGetRows(Q_DBRESULT *result) {
  * @note
  * This number is sequencial counter which is started from 1.
  */
-int qDbGetRow(Q_DBRESULT *result) {
+static int _resultGetRow(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL) return 0;
 	return result->cursor;
@@ -558,7 +716,7 @@ int qDbGetRow(Q_DBRESULT *result) {
  * @note
  * Do not free returned string.
  */
-const char *qDbGetStr(Q_DBRESULT *result, const char *field) {
+static const char *_resultGetStr(Q_DBRESULT *result, const char *field) {
 #ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL || result->cols <= 0) return NULL;
 
@@ -566,7 +724,7 @@ const char *qDbGetStr(Q_DBRESULT *result, const char *field) {
 
 	int i;
 	for (i = 0; i < result->cols; i++) {
-		if (!strcasecmp(result->fields[i].name, field)) return qDbGetStrAt(result, i + 1);
+		if (!strcasecmp(result->fields[i].name, field)) return result->getStrAt(result, i + 1);
 	}
 
 	return NULL;
@@ -583,7 +741,7 @@ const char *qDbGetStr(Q_DBRESULT *result, const char *field) {
  *
  * @return	a string pointer if successful, otherwise returns NULL.
  */
-const char *qDbGetStrAt(Q_DBRESULT *result, int idx) {
+static const char *_resultGetStrAt(Q_DBRESULT *result, int idx) {
 #ifdef _Q_ENABLE_MYSQL
 	if (result == NULL || result->rs == NULL || result->cursor == 0 || idx <= 0 || idx > result->cols ) return NULL;
 	return result->row[idx-1];
@@ -600,8 +758,8 @@ const char *qDbGetStrAt(Q_DBRESULT *result, int idx) {
  *
  * @return	a integer converted value
  */
-int qDbGetInt(Q_DBRESULT *result, const char *field) {
-	const char *val = qDbGetStr(result, field);
+static int _resultGetInt(Q_DBRESULT *result, const char *field) {
+	const char *val = result->getStr(result, field);
 	if(val == NULL) return 0;
 	return atoi(val);
 }
@@ -614,82 +772,34 @@ int qDbGetInt(Q_DBRESULT *result, const char *field) {
  *
  * @return	a integer converted value
  */
-int qDbGetIntAt(Q_DBRESULT *result, int idx) {
-	const char *val = qDbGetStrAt(result, idx);
+static int _resultGetIntAt(Q_DBRESULT *result, int idx) {
+	const char *val = result->getStrAt(result, idx);
 	if(val == NULL) return 0;
 	return atoi(val);
 }
 
 /**
- * Start transaction
+ * De-allocate the result
  *
- * @param db		a pointer of Q_DB structure
+ * @param result	a pointer of Q_DBRESULT
  *
  * @return	true if successful, otherwise returns false
  */
-bool qDbBeginTran(Q_DB *db) {
-	if (db == NULL) return false;
-
+static bool _resultFree(Q_DBRESULT *result) {
 #ifdef _Q_ENABLE_MYSQL
-	Q_DBRESULT *result;
-	result = qDbExecuteQuery(db, "START TRANSACTION");
-	if(result == NULL) return false;
-	qDbResultFree(result);
-	return true;
-#else
-	return false;
-#endif
-}
-
-/**
- * End transaction
- *
- * @param db		a pointer of Q_DB structure
- * @param commit	true for commit, false for roll-back
- *
- * @return	true if successful, otherwise returns false
- */
-bool qDbEndTran(Q_DB *db, bool commit) {
-	if (db == NULL) return false;
-
-	if (commit == false) return qDbRollback(db);
-	return qDbCommit(db);
-}
-
-/**
- * Commit transaction
- *
- * @param db		a pointer of Q_DB structure
- *
- * @return	true if successful, otherwise returns false
- */
-bool qDbCommit(Q_DB *db) {
-	if (db == NULL) return false;
-
-#ifdef _Q_ENABLE_MYSQL
-	if (mysql_commit(db->mysql) != 0) return false;
-	return true;
-#else
-	return false;
-#endif
-}
-
-/**
- * Roll-back transaction
- *
- * @param db		a pointer of Q_DB structure
- *
- * @return	true if successful, otherwise returns false
- */
-bool qDbRollback(Q_DB *db) {
-	if (db == NULL) return false;
-
-#ifdef _Q_ENABLE_MYSQL
-	if (mysql_rollback(db->mysql) != 0) {
-		return false;
+	if (result == NULL) return false;
+	if (result->rs != NULL) {
+		if(result->fetchtype == true) {
+			while(mysql_fetch_row(result->rs) != NULL);
+		}
+		mysql_free_result(result->rs);
+		result->rs = NULL;
 	}
+	free(result);
 	return true;
 #else
-	return 0;
+	return false;
 #endif
 }
+
+#endif

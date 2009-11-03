@@ -31,29 +31,24 @@
  *
  * @code
  *   [Code sample - String]
- *   Q_OBSTACK *obstack;
- *
- *   char *final;
- *   char *tmp = "CDE";
- *
  *   // get new obstack
- *   obstack = qObstackInit();
+ *   Q_OBSTACK *obstack = qObstack();
  *
  *   // stack
- *   qObstackGrowStr(obstack, "AB");		// no need to supply size
- *   qObstackGrowStrf(obstack, "%s", tmp);	// for formatted string
- *   qObstackGrow(obstack, "FGH", 3);	// same effects as above but this can
- *   					// be used for object or binary
+ *   obstack->growStr(obstack, "AB");		// no need to supply size
+ *   obstack->growStrf(obstack, "%s", "CDE");	// for formatted string
+ *   obstack->grow(obstack, "FGH", 3);		// same effects as above but this can
+ *   						// be used for object or binary
  *
  *   // final
- *   final = (char *)qObstackFinish(obstack);
- *
+ *   char *final = (char *)obstack->getFinal(obstack);
  *
  *   // print out
  *   printf("Final string = %s\n", final);
- *   printf("Total Size = %d, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
+ *   printf("Total Size = %d, Number of Objects = %d\n", obstack->getSize(obstack), obstack->getNum(obstack));
  *
- *   qObstackFree(obstack);
+ *   free(final);
+ *   obstack->free(obstack);
  *
  *   [Result]
  *   Final string = ABCDEFGH
@@ -67,37 +62,32 @@
  *   	char	str[10];
  *   };
  *
- *   Q_OBSTACK *obstack;
- *   int i;
- *
- *   // sample object
- *   struct sampleobj obj;
- *   struct sampleobj *final;
- *
  *   // get new obstack
- *   obstack = qObstackInit();
+ *   Q_OBSTACK *obstack = qObstack();
  *
  *   // stack
+ *   int i;
+ *   struct sampleobj obj;
  *   for(i = 0; i < 3; i++) {
  *   	// filling object with sample data
  *   	obj.num  = i;
  *   	sprintf(obj.str, "hello%d", i);
  *
  *   	// stack
- *   	qObstackGrow(obstack, (void *)&obj, sizeof(struct sampleobj));
+ *   	obstack->grow(obstack, (void *)&obj, sizeof(struct sampleobj));
  *   }
  *
  *   // final
- *   final = (struct sampleobj *)qObstackFinish(obstack);
+ *   struct sampleobj *final = (struct sampleobj *)obstack->getFinal(obstack);
  *
  *   // print out
  *   qContentType("text/plain");
- *   for(i = 0; i < qObstackGetNum(obstack); i++) {
+ *   for(i = 0; i < obstack->getNum(obstack); i++) {
  *   	printf("Object%d final = %d, %s\n", i+1, final[i].num, final[i].str);
  *   }
- *   printf("Total Size = %d, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
+ *   printf("Total Size = %d, Number of Objects = %d\n", obstack->getSize(obstack), obstack->getNum(obstack));
  *
- *   qObstackFree(obstack);
+ *   obstack->free(obstack);
  *
  *   [Result]
  *   Object1 final = 0, hello0
@@ -118,6 +108,20 @@
 #include <stdarg.h>
 #include <string.h>
 #include "qDecoder.h"
+#include "qInternal.h"
+
+/*
+ * Member method protos
+ */
+#ifndef _DOXYGEN_SKIP
+static bool _grow(Q_OBSTACK *obstack, const void *object, size_t size);
+static bool _growStr(Q_OBSTACK *obstack, const char *str);
+static bool _growStrf(Q_OBSTACK *obstack, const char *format, ...);
+static void *_getFinal(Q_OBSTACK *obstack);
+static size_t _getSize(Q_OBSTACK *obstack);
+static int _getNum(Q_OBSTACK *obstack);
+static bool _free(Q_OBSTACK *obstack);
+#endif
 
 /**
  * Initialize object-stack
@@ -126,11 +130,11 @@
  *
  * @code
  *   // allocate memory
- *   Q_OBSTACK *obstack = qObstackInit();
- *   qObstackFree(obstack);
+ *   Q_OBSTACK *obstack = qObstack();
+ *   obstack->free(obstack);
  * @endcode
  */
-Q_OBSTACK *qObstackInit(void) {
+Q_OBSTACK *qObstack(void) {
 	Q_OBSTACK *obstack;
 
 	obstack = (Q_OBSTACK *)malloc(sizeof(Q_OBSTACK));
@@ -143,11 +147,20 @@ Q_OBSTACK *qObstackInit(void) {
 		return NULL;
 	}
 
+	// methods
+	obstack->grow		= _grow;
+	obstack->growStr	= _growStr;
+	obstack->growStrf	= _growStrf;
+	obstack->getFinal	= _getFinal;
+	obstack->getSize	= _getSize;
+	obstack->getNum		= _getNum;
+	obstack->free		= _free;
+
 	return obstack;
 }
 
 /**
- * Stack object
+ * Q_OBSTACK->grow(): Stack object
  *
  * @param obstack	a pointer of Q_OBSTACK
  * @param object	a pointer of object data
@@ -155,109 +168,97 @@ Q_OBSTACK *qObstackInit(void) {
  *
  * @return		true if successful, otherwise returns false
  */
-bool qObstackGrow(Q_OBSTACK *obstack, const void *object, size_t size) {
+static bool _grow(Q_OBSTACK *obstack, const void *object, size_t size) {
 	if(obstack == NULL || object == NULL || size <= 0) return false;
 	return obstack->stack->put(obstack->stack, "", object, size, false);
 }
 
 /**
- * Stack string
+ * Q_OBSTACK->growStr(): Stack string
  *
  * @param obstack	a pointer of Q_OBSTACK
  * @param str		a pointer of string
  *
  * @return		true if successful, otherwise returns false
  */
-bool qObstackGrowStr(Q_OBSTACK *obstack, const char *str) {
-	return qObstackGrow(obstack, (void *)str, strlen(str));
+static bool _growStr(Q_OBSTACK *obstack, const char *str) {
+	return _grow(obstack, (void *)str, strlen(str));
 }
 
 /**
- * Stack formatted string
+ * Q_OBSTACK->growStrf(): Stack formatted string
  *
  * @param obstack	a pointer of Q_OBSTACK
  * @param format	string format
  *
  * @return		true if successful, otherwise returns false
  */
-bool qObstackGrowStrf(Q_OBSTACK *obstack, const char *format, ...) {
+static bool _growStrf(Q_OBSTACK *obstack, const char *format, ...) {
 	if(obstack == NULL) return false;
 
-	char str[1024];
-	va_list arglist;
+	char *str;
+	DYNAMIC_VSPRINTF(str, format);
+	if(str == NULL) return false;
 
-	va_start(arglist, format);
-	vsnprintf(str, sizeof(str), format, arglist);
-	va_end(arglist);
+	bool ret = _grow(obstack, (void *)str, strlen(str));
+	free(str);
 
-	return qObstackGrow(obstack, (void *)str, strlen(str));
+	return ret;
 }
 
 /**
- * Stack formatted string
+ * Q_OBSTACK->getFinal(): Get merged single final object
  *
  * @param obstack	a pointer of Q_OBSTACK
  *
- * @return		true if successful, otherwise returns false
+ * @return		a pointer of finally merged object(malloced), otherwise returns NULL
+ *
+ * @note
+ * User should take care of malloced object.
  */
-void *qObstackFinish(Q_OBSTACK *obstack) {
+static void *_getFinal(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return NULL;
 
-	if(obstack->final != NULL) free(obstack->final);
-	obstack->final = obstack->stack->merge(obstack->stack, NULL);
-	if(obstack->final == NULL) obstack->final = strdup("");
+	void *final = obstack->stack->merge(obstack->stack, NULL);
+	if(final == NULL) final = strdup("");
 
-	return obstack->final;
+	return final;
 }
 
 /**
- * Finalize objects and get merged single final object pointer
+ * Q_OBSTACK->getSize(): Get stacked objects size
  *
  * @param obstack	a pointer of Q_OBSTACK
  *
  * @return		a pointer of finally merged object, otherwise returns NULL
  */
-void *qObstackGetFinal(Q_OBSTACK *obstack) {
-	if(obstack == NULL) return NULL;
-	if(obstack->final == NULL) qObstackFinish(obstack);
-	return obstack->final;
-}
-
-/**
- * Get stacked objects size
- *
- * @param obstack	a pointer of Q_OBSTACK
- *
- * @return		a pointer of finally merged object, otherwise returns NULL
- */
-size_t qObstackGetSize(Q_OBSTACK *obstack) {
+static size_t _getSize(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return 0;
 	return obstack->stack->size;
 }
 
 /**
- * Get the number of stacked objects
+ * Q_OBSTACK->getNum(): Get the number of stacked objects
  *
  * @param obstack	a pointer of Q_OBSTACK
  *
  * @return		a number of stacked objects, otherwise returns 0
  */
-int qObstackGetNum(Q_OBSTACK *obstack) {
+static int _getNum(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return 0;
 	return obstack->stack->getNum(obstack->stack);
 }
 
 /**
- * De-allocate obstack
+ * Q_OBSTACK->free(): De-allocate obstack
  *
  * @param obstack	a pointer of Q_OBSTACK
  *
  * @return		true if successful, otherwise returns false
  */
-bool qObstackFree(Q_OBSTACK *obstack) {
+static bool _free(Q_OBSTACK *obstack) {
 	if(obstack == NULL) return false;
 	obstack->stack->free(obstack->stack);
-	if(obstack->final != NULL) free(obstack->final);
 	free(obstack);
 	return true;
 }

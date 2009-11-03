@@ -30,23 +30,24 @@
 
 void stringSample(void) {
 	// get new obstack
-	Q_OBSTACK *obstack = qObstackInit();
+	Q_OBSTACK *obstack = qObstack();
 
 	// stack
-	qObstackGrowStr(obstack, "(string)");			// for string
-	qObstackGrowStrf(obstack, "(stringf:%s)", "hello");	// for formatted string
-	qObstackGrow(obstack, "(object)", sizeof("(object)"));	// same effects as above but this can be used for object or binary
+	obstack->growStr(obstack, "(string)");			// for string
+	obstack->growStrf(obstack, "(stringf:%s)", "hello");	// for formatted string
+	obstack->grow(obstack, "(object)", sizeof("(object)"));	// same effects as above but this can be used for object or binary
 
 	// final
-	char *final = (char *)qObstackFinish(obstack);
+	char *final = (char *)obstack->getFinal(obstack);
 
 	// print out
 	printf("[String Sample]\n");
 	printf("Final string = %s\n", final);
-	printf("Total Size = %zu, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
+	printf("Total Size = %zu, Number of Objects = %d\n", obstack->getSize(obstack), obstack->getNum(obstack));
 
 	// free obstack
-	qObstackFree(obstack);
+	free(final);
+	obstack->free(obstack);
 }
 
 void objectSample(void) {
@@ -57,7 +58,7 @@ void objectSample(void) {
 	} obj, *final;
 
 	// get new obstack
-	Q_OBSTACK *obstack = qObstackInit();
+	Q_OBSTACK *obstack = qObstack();
 
 	// stack
 	int i;
@@ -67,26 +68,26 @@ void objectSample(void) {
 		sprintf(obj.str, "hello%d", i);
 
 		// stack
-		qObstackGrow(obstack, (void *)&obj, sizeof(struct sampleobj));
+		obstack->grow(obstack, (void *)&obj, sizeof(struct sampleobj));
 	}
 
 	// final
-	final = (struct sampleobj *)qObstackFinish(obstack);
+	final = (struct sampleobj *)obstack->getFinal(obstack);
 
 	// print out
 	printf("[Object Sample]\n");
-	for(i = 0; i < qObstackGetNum(obstack); i++) {
+	for(i = 0; i < obstack->getNum(obstack); i++) {
 		printf("Object%d final = #%d, %s\n", i+1, final[i].num, final[i].str);
 	}
-	printf("Total Size = %zu, Number of Objects = %d\n", qObstackGetSize(obstack), qObstackGetNum(obstack));
+	printf("Total Size = %zu, Number of Objects = %d\n", obstack->getSize(obstack), obstack->getNum(obstack));
 
 	// free obstack
-	qObstackFree(obstack);
+	free(final);
+	obstack->free(obstack);
 }
 
 int main(void) {
-	Q_ENTRY *req = qCgiRequestParse(NULL);
-	qCgiResponseSetContentType(req, "text/plain");
+	qCgiResponseSetContentType(NULL, "text/plain");
 
 	stringSample();
 	printf("\n");

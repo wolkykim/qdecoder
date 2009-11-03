@@ -79,24 +79,6 @@ char *_q_fgets(char *str, int size, FILE *stream) {
 	return str;
 }
 
-ssize_t _q_writef(int fd, char *format, ...) {
-	char buf[MAX_LINEBUF];
-	va_list arglist;
-
-	va_start(arglist, format);
-	vsnprintf(buf, sizeof(buf), format, arglist);
-	va_end(arglist);
-
-	while(true) {
-		int status = qSocketWaitWritable(fd, 1000);
-		if(status == 0) continue;
-		else if(status < 0) return -1;
-		break;
-	}
-
-	return write(fd, buf, strlen(buf));
-}
-
 ssize_t _q_write(int fd, const void *buf, size_t nbytes) {
 	if(nbytes == 0) return 0;
 
@@ -114,6 +96,16 @@ ssize_t _q_write(int fd, const void *buf, size_t nbytes) {
 
 	if(sent > 0) return sent;
 	return -1;
+}
+
+ssize_t _q_writef(int fd, char *format, ...) {
+	char *buf;
+	DYNAMIC_VSPRINTF(buf, format);
+	if(buf == NULL) return -1;
+
+	ssize_t ret = _q_write(fd, buf, strlen(buf));
+	free(buf);
+	return ret;
 }
 
 /* win32 compatible */

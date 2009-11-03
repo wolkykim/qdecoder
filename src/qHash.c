@@ -147,7 +147,7 @@ char *qHashMd5File(const char *filepath, size_t *nbytes) {
 	MD5_CTX context;
 	MD5Init(&context);
 	ssize_t retr = 0;
-	unsigned char buf[256*1024], szDigest[16];
+	unsigned char buf[32*1024], szDigest[16];
 	while (size > 0) {
 		if (size > sizeof(buf)) retr = read(fd, buf, sizeof(buf));
 		else retr = read(fd, buf, size);

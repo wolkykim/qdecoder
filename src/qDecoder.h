@@ -92,7 +92,7 @@ struct _Q_ENTRY {
 	Q_NLOBJ_T*	first;		/*!< first object pointer */
 	Q_NLOBJ_T*	last;		/*!< last object pointer */
 
-	// member methods
+	/* public member methods */
 	void		(*lock)		(Q_ENTRY *entry);
 	void		(*unlock)	(Q_ENTRY *entry);
 
@@ -132,7 +132,14 @@ struct _Q_ENTRY {
  */
 struct _Q_OBSTACK {
 	Q_ENTRY *stack;			/*!< first object pointer */
-	void	*final;			/*!< final object pointer */
+
+	bool		(*grow)		(Q_OBSTACK *obstack, const void *object, size_t size);
+	bool		(*growStr)	(Q_OBSTACK *obstack, const char *str);
+	bool		(*growStrf)	(Q_OBSTACK *obstack, const char *format, ...);
+	void*		(*getFinal)	(Q_OBSTACK *obstack);
+	size_t		(*getSize)	(Q_OBSTACK *obstack);
+	int		(*getNum)	(Q_OBSTACK *obstack);
+	bool		(*free)		(Q_OBSTACK *obstack);
 };
 
 #define _Q_HASHTBL_RESIZE_MAG		(2)
@@ -152,7 +159,7 @@ struct _Q_HASHTBL {
 	int*		hash;		/*!< key hash. we use qHashFnv32() to generate hash integer */
 	Q_NOBJ_T*	obj;
 
-	// member methods
+	/* public member methods */
 	void		(*lock)		(Q_HASHTBL *tbl);
 	void		(*unlock)	(Q_HASHTBL *tbl);
 
@@ -208,7 +215,7 @@ struct _Q_QUEUE {
 	size_t		objsize;	/*!< object size */
 	void*		objarr;		/*!< queue data memory pointer */
 
-	// member methods
+	/* public member methods */
 	bool		(*push)		(Q_QUEUE *queue, const void *object);
 	void*		(*popFirst)	(Q_QUEUE *queue, bool remove);
 	void*		(*popLast)	(Q_QUEUE *queue, bool remove);
@@ -235,8 +242,9 @@ struct _Q_LOG {
 	FILE	*outfp;			/*!< stream pointer for duplication */
 	bool	outflush;		/*!< flag for immediate flushing for duplicated stream */
 
-	// member methods
-	bool	(*write)		(Q_LOG *log, const char *format, ...);
+	/* public member methods */
+	bool	(*write)		(Q_LOG *log, const char *str);
+	bool	(*writef)		(Q_LOG *log, const char *format, ...);
 	bool	(*duplicate)		(Q_LOG *log, FILE *outfp, bool flush);
 	bool	(*flush)		(Q_LOG *log);
 	bool	(*free)			(Q_LOG *log);
@@ -245,17 +253,19 @@ struct _Q_LOG {
 /* Database Support*/
 #ifdef _mysql_h
 #define _Q_ENABLE_MYSQL				(1)
-// mysql specific connector option
+/* mysql specific connector option */
 #define _Q_MYSQL_OPT_RECONNECT			(1)
 #define _Q_MYSQL_OPT_CONNECT_TIMEOUT		(10)
 #define _Q_MYSQL_OPT_READ_TIMEOUT		(30)
 #define _Q_MYSQL_OPT_WRITE_TIMEOUT		(30)
-#endif
+#endif	/* _mysql_h */
 
 /**
  * Structure for independent database interface.
  */
 struct _Q_DB {
+	Q_LOCK_T	qlock;		/*!< only used if compiled with --enable-threadsafe option */
+
 	bool connected;			/*!< if opened true, if closed false */
 
 	struct {
@@ -269,10 +279,32 @@ struct _Q_DB {
 		bool	fetchtype;
 	} info;				/*!< database connection infomation */
 
-	// for mysql database
+	/* for mysql database */
 #ifdef _Q_ENABLE_MYSQL
 	MYSQL		*mysql;
 #endif
+
+	/* public member methods */
+	bool		(*open)			(Q_DB *db);
+	bool		(*close)		(Q_DB *db);
+
+	int		(*executeUpdate)	(Q_DB *db, const char *query);
+	int		(*executeUpdatef)	(Q_DB *db, const char *format, ...);
+
+	Q_DBRESULT*	(*executeQuery)		(Q_DB *db, const char *query);
+	Q_DBRESULT*	(*executeQueryf)	(Q_DB *db, const char *format, ...);
+
+	bool		(*beginTran)		(Q_DB *db);
+	bool		(*endTran)		(Q_DB *db, bool commit);
+	bool		(*commit)		(Q_DB *db);
+	bool		(*rollback)		(Q_DB *db);
+
+	bool		(*setFetchType)		(Q_DB *db, bool use);
+	bool		(*getLastConnStatus)	(Q_DB *db);
+	bool		(*ping)			(Q_DB *db);
+	const char*	(*getError)		(Q_DB *db, unsigned int *errorno);
+	bool		(*free)			(Q_DB *db);
+
 };
 
 /**
@@ -286,6 +318,20 @@ struct _Q_DBRESULT {
 	MYSQL_ROW	row;
 	int		cols;
 	int		cursor;
+
+	/* public member methods */
+	bool		(*next)			(Q_DBRESULT *result);
+
+	int     	(*getCols)		(Q_DBRESULT *result);
+	int     	(*getRows)		(Q_DBRESULT *result);
+	int     	(*getRow)		(Q_DBRESULT *result);
+
+	const char*	(*getStr)		(Q_DBRESULT *result, const char *field);
+	const char*	(*getStrAt)		(Q_DBRESULT *result, int idx);
+	int		(*getInt)		(Q_DBRESULT *result, const char *field);
+	int		(*getIntAt)		(Q_DBRESULT *result, int idx);
+
+	bool		(*free)			(Q_DBRESULT *result);
 #endif
 };
 
@@ -332,8 +378,6 @@ extern	bool		qSessionDestroy(Q_ENTRY *session);
  */
 extern	bool		qHtmlPrintf(FILE *stream, int mode, const char *format, ...);
 extern	bool		qHtmlPuts(FILE *stream, int mode, char *buf);
-extern	bool		qHtmlIsEmail(const char *email);
-extern	bool		qHtmlIsUrl(const char *url);
 
 /*
  * qSocket.c
@@ -374,36 +418,7 @@ extern	bool		qShmFree(int shmid);
 /*
  * qDatabase.c
  */
-extern	Q_DB*		qDbInit(const char *dbtype, const char *addr, int port, const char *database, const char *username, const char *password, bool autocommit);
-extern	bool		qDbOpen(Q_DB *db);
-extern	bool		qDbClose(Q_DB *db);
-extern	bool		qDbFree(Q_DB *db);
-extern	const char*	qDbGetError(Q_DB *db, unsigned int *errorno);
-extern	bool		qDbPing(Q_DB *db);
-extern	bool		qDbGetLastConnStatus(Q_DB *db);
-extern	bool		qDbSetFetchType(Q_DB *db, bool use);
-
-extern	int		qDbExecuteUpdate(Q_DB *db, const char *query);
-extern	int		qDbExecuteUpdatef(Q_DB *db, const char *format, ...);
-
-extern	Q_DBRESULT*	qDbExecuteQuery(Q_DB *db, const char *query);
-extern	Q_DBRESULT*	qDbExecuteQueryf(Q_DB *db, const char *format, ...);
-extern	bool		qDbResultNext(Q_DBRESULT *result);
-extern	bool		qDbResultFree(Q_DBRESULT *result);
-
-extern	int     	qDbGetCols(Q_DBRESULT *result);
-extern	int     	qDbGetRows(Q_DBRESULT *result);
-extern	int     	qDbGetRow(Q_DBRESULT *result);
-
-extern	const char*	qDbGetStr(Q_DBRESULT *result, const char *field);
-extern	const char*	qDbGetStrAt(Q_DBRESULT *result, int idx);
-extern	int		qDbGetInt(Q_DBRESULT *result, const char *field);
-extern	int		qDbGetIntAt(Q_DBRESULT *result, int idx);
-
-extern	bool		qDbBeginTran(Q_DB *db);
-extern	bool		qDbEndTran(Q_DB *db, bool commit);
-extern	bool		qDbCommit(Q_DB *db);
-extern	bool		qDbRollback(Q_DB *db);
+extern	Q_DB*		qDb(const char *dbtype, const char *addr, int port, const char *database, const char *username, const char *password, bool autocommit);
 
 /*
  * qEntry.c
@@ -442,15 +457,7 @@ extern	int		qQueueUsrmem(Q_QUEUE *queue, void* datamem, size_t memsize, size_t o
 /*
  * qObstack.c
  */
-extern	Q_OBSTACK*	qObstackInit(void);
-extern	bool		qObstackGrow(Q_OBSTACK *obstack, const void *object, size_t size);
-extern	bool		qObstackGrowStr(Q_OBSTACK *obstack, const char *str);
-extern	bool		qObstackGrowStrf(Q_OBSTACK *obstack, const char *format, ...);
-extern	void*		qObstackFinish(Q_OBSTACK *obstack);
-extern	void*		qObstackGetFinal(Q_OBSTACK *obstack);
-extern	size_t		qObstackGetSize(Q_OBSTACK *obstack);
-extern	int		qObstackGetNum(Q_OBSTACK *obstack);
-extern	bool		qObstackFree(Q_OBSTACK *obstack);
+extern	Q_OBSTACK*	qObstack(void);
 
 /*
  * qConfig.c
@@ -482,6 +489,8 @@ extern	char*		qStrCatf(char *str, const char *format, ...);
 extern	char*		qStrDupBetween(const char *str, const char *start, const char *end);
 extern	char*		qStrUnique(const char *seed);
 extern	bool		qStrIsAlnum(const char *str);
+extern	bool		qStrIsEmail(const char *email);
+extern	bool		qStrIsUrl(const char *url);
 extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const char *tocode, float mag);
 
 /*

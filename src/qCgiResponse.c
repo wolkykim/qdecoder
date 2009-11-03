@@ -156,14 +156,14 @@ bool qCgiResponseRemoveCookie(Q_ENTRY *request, const char *name, const char *pa
  * @endcode
  */
 bool qCgiResponseSetContentType(Q_ENTRY *request, const char *mimetype) {
-	if(request->getStr(request, "_Q_CONTENTTYPE", false) != NULL) {
+	if(request != NULL && request->getStr(request, "_Q_CONTENTTYPE", false) != NULL) {
 		DEBUG("alreay set.");
 		return false;
 	}
 
 	printf("Content-Type: %s\n\n", mimetype);
 
-	request->putStr(request, "_Q_CONTENTTYPE", mimetype, true);
+	if(request != NULL) request->putStr(request, "_Q_CONTENTTYPE", mimetype, true);
 	return true;
 }
 
@@ -258,8 +258,9 @@ int qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mim
 	close(fd);
 	return sent;
 }
+
 /**
- * Generate and print out HTML error page
+ * Print out HTML error page and exit program
  *
  * @param request	a pointer of request structure
  * @param format	error message
@@ -271,12 +272,11 @@ int qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mim
  * @endcode
  */
 void qCgiResponseError(Q_ENTRY *request, char *format, ...) {
-	char buf[MAX_LINEBUF];
-	va_list arglist;
-
-	va_start(arglist, format);
-	vsnprintf(buf, sizeof(buf), format, arglist);
-	va_end(arglist);
+	char *buf;
+	DYNAMIC_VSPRINTF(buf, format);
+	if(buf == NULL) {
+		exit(EXIT_FAILURE);
+	}
 
 	if (getenv("REMOTE_ADDR") == NULL)  {
 		printf("Error: %s\n", buf);
@@ -294,6 +294,7 @@ void qCgiResponseError(Q_ENTRY *request, char *format, ...) {
 		printf("</html>\n");
 	}
 
+	free(buf);
 	request->free(request);
 	exit(EXIT_FAILURE);
 }

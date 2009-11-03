@@ -261,7 +261,7 @@ static void *_popFirst(Q_QUEUE *queue, bool remove) {
 
 	// check empty
 	if(queue->used == 0) {
-		DEBUG("Queue empty.");
+		//DEBUG("Queue empty.");
 		return NULL;
 	}
 
