@@ -32,7 +32,7 @@
 #ifndef _QDECODER_H
 #define _QDECODER_H
 
-#define _Q_VERSION			"9.0.7"
+#define _Q_VERSION			"9.1.0"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -104,14 +104,13 @@ struct _Q_ENTRY {
 	void*		(*get)		(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 	void*		(*getCase)	(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 	void*		(*getLast)	(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
-	bool		(*getNext)	(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newmem);
-
 	char*		(*getStr)	(Q_ENTRY *entry, const char *name, bool newmem);
 	char*		(*getStrCase)	(Q_ENTRY *entry, const char *name, bool newmem);
 	char*		(*getStrLast)	(Q_ENTRY *entry, const char *name, bool newmem);
 	int		(*getInt)	(Q_ENTRY *entry, const char *name);
 	int		(*getIntCase)	(Q_ENTRY *entry, const char *name);
 	int 		(*getIntLast)	(Q_ENTRY *entry, const char *name);
+	bool		(*getNext)	(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newmem);
 
 	int		(*remove)	(Q_ENTRY *entry, const char *name);
 
@@ -173,6 +172,7 @@ struct _Q_HASHTBL {
 	bool		(*getNext)	(Q_HASHTBL *tbl, Q_NOBJ_T *obj, int *idx, bool newmem);
 
 	bool		(*remove)	(Q_HASHTBL *tbl, const char *name);
+
 	int 		(*getNum)	(Q_HASHTBL *tbl);
 	int		(*getMax)	(Q_HASHTBL *tbl);
 	bool		(*resize)	(Q_HASHTBL *tbl, int max);
@@ -188,16 +188,33 @@ struct _Q_HASHTBL {
  * Structure for hash-table data structure based on array.
  */
 struct _Q_HASHARR {
-	int	count;					/*!< hash collision counter. 0 indicates empty slot, -1 is used for collision resolution, -2 is used for indicating linked block */
-	int	hash;					/*!< key hash. we use qFnv32Hash() to generate hash integer */
+	int		count;				/*!< hash collision counter. 0 indicates empty slot, -1 is used for collision resolution, -2 is used for indicating linked block */
+	int		hash;				/*!< key hash. we use qFnv32Hash() to generate hash integer */
 
-	char	key[_Q_HASHARR_MAX_KEYSIZE];		/*!< key string, it can be truncated */
-	int	keylen;					/*!< original key length */
+	char		key[_Q_HASHARR_MAX_KEYSIZE];	/*!< key string, it can be truncated */
+	int		keylen;				/*!< original key length */
 	unsigned char keymd5[16];			/*!< md5 hash of the key */
 
 	unsigned char value[_Q_HASHARR_DEF_VALUESIZE];	/*!< value */
-	int	size;					/*!< value size */
-	int	link;					/*!< next index of the value */
+	int		size;				/*!< value size */
+	int		link;				/*!< next index of the value */
+
+	/* public member methods */
+	bool		(*put)		(Q_HASHARR *tbl, const char *key, const void *value, int size);
+	bool		(*putStr)	(Q_HASHARR *tbl, const char *key, const char *str);
+	bool		(*putInt)	(Q_HASHARR *tbl, const char *key, int num);
+
+	void*		(*get)		(Q_HASHARR *tbl, const char *key, int *size);
+	char*		(*getStr)	(Q_HASHARR *tbl, const char *key);
+	int		(*getInt)	(Q_HASHARR *tbl, const char *key);
+	const char*	(*getNext)	(Q_HASHARR *tbl, int *idx);
+
+	bool		(*remove)	(Q_HASHARR *tbl, const char *key);
+	bool		(*truncate)	(Q_HASHARR *tbl);
+
+	bool		(*print)	(Q_HASHARR *tbl, FILE *out);
+	int		(*getNum)	(Q_HASHARR *tbl);
+	int		(*getMax)	(Q_HASHARR *tbl);
 };
 
 /**
@@ -319,16 +336,15 @@ struct _Q_DBRESULT {
 	int		cursor;
 
 	/* public member methods */
-	bool		(*next)			(Q_DBRESULT *result);
-
-	int     	(*getCols)		(Q_DBRESULT *result);
-	int     	(*getRows)		(Q_DBRESULT *result);
-	int     	(*getRow)		(Q_DBRESULT *result);
-
 	const char*	(*getStr)		(Q_DBRESULT *result, const char *field);
 	const char*	(*getStrAt)		(Q_DBRESULT *result, int idx);
 	int		(*getInt)		(Q_DBRESULT *result, const char *field);
 	int		(*getIntAt)		(Q_DBRESULT *result, int idx);
+	bool		(*getNext)		(Q_DBRESULT *result);
+
+	int     	(*getCols)		(Q_DBRESULT *result);
+	int     	(*getRows)		(Q_DBRESULT *result);
+	int     	(*getRow)		(Q_DBRESULT *result);
 
 	bool		(*free)			(Q_DBRESULT *result);
 #endif
@@ -433,19 +449,7 @@ extern	Q_HASHTBL*	qHashtbl(int max, bool resize, int threshold);
  * qHasharr.c
  */
 extern	size_t		qHasharrSize(int max);
-extern	int		qHasharrInit(Q_HASHARR *tbl, size_t memsize);
-extern	bool		qHasharrClear(Q_HASHARR *tbl);
-extern	bool		qHasharrPut(Q_HASHARR *tbl, const char *key, const void *value, int size);
-extern	bool		qHasharrPutStr(Q_HASHARR *tbl, const char *key, const char *value);
-extern	bool		qHasharrPutInt(Q_HASHARR *tbl, const char *key, int value);
-extern	void*		qHasharrGet(Q_HASHARR *tbl, const char *key, int *size);
-extern	char*		qHasharrGetStr(Q_HASHARR *tbl, const char *key);
-extern	int		qHasharrGetInt(Q_HASHARR *tbl, const char *key);
-extern	const char*	qHasharrGetFirstKey(Q_HASHARR *tbl, int *idx);
-extern	const char*	qHasharrGetNextKey(Q_HASHARR *tbl, int *idx);
-extern	bool		qHasharrRemove(Q_HASHARR *tbl, const char *key);
-extern	bool		qHasharrPrint(Q_HASHARR *tbl, FILE *out);
-extern	bool		qHasharrStatus(Q_HASHARR *tbl, int *used, int *max);
+extern	int		qHasharr(Q_HASHARR *tbl, size_t memsize);
 
 /*
  * qQueue.c

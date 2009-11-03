@@ -58,7 +58,7 @@
  *   result = db->executeQuery(db, "SELECT name, population FROM City");
  *   if (result != NULL) {
  *     printf("COLS : %d , ROWS : %d\n", result->getCols(result), result->getRows(result));
- *     while (result->next(result) == true) {
+ *     while (result->getNext(result) == true) {
  *       char *pszName = result->getStr(result, "name");
  *       int   nPopulation = result->getInt(result, "population");
  *       printf("Country : %s , Population : %d\n", pszName, nPopulation);
@@ -115,14 +115,16 @@ static const char*	_getError(Q_DB *db, unsigned int *errorno);
 static bool		_free(Q_DB *db);
 
 // Q_DBRESULT object
-static bool		_resultNext(Q_DBRESULT *result);
-static int		_resultGetCols(Q_DBRESULT *result);
-static int		_resultGetRows(Q_DBRESULT *result);
-static int		_resultGetRow(Q_DBRESULT *result);
 static const char*	_resultGetStr(Q_DBRESULT *result, const char *field);
 static const char*	_resultGetStrAt(Q_DBRESULT *result, int idx);
 static int		_resultGetInt(Q_DBRESULT *result, const char *field);
 static int		_resultGetIntAt(Q_DBRESULT *result, int idx);
+static bool		_resultGetNext(Q_DBRESULT *result);
+
+static int		_resultGetCols(Q_DBRESULT *result);
+static int		_resultGetRows(Q_DBRESULT *result);
+static int		_resultGetRow(Q_DBRESULT *result);
+
 static bool		_resultFree(Q_DBRESULT *result);
 
 #endif
@@ -386,16 +388,15 @@ static Q_DBRESULT *_executeQuery(Q_DB *db, const char *query) {
 	result->cursor = 0;
 
 	/* assign methods */
-	result->next		= _resultNext;
-
-	result->getCols		= _resultGetCols;
-	result->getRows		= _resultGetRows;
-	result->getRow		= _resultGetRow;
-
 	result->getStr		= _resultGetStr;
 	result->getStrAt	= _resultGetStrAt;
 	result->getInt		= _resultGetInt;
 	result->getIntAt	= _resultGetIntAt;
+	result->getNext		= _resultGetNext;
+
+	result->getCols		= _resultGetCols;
+	result->getRows		= _resultGetRows;
+	result->getRow		= _resultGetRow;
 
 	result->free		= _resultFree;
 
@@ -524,7 +525,7 @@ static bool _rollback(Q_DB *db) {
  *
  * @note
  * If Q_DB->setFetchType(db, true) is called, the results does not actually read into the client.
- * Instead, each row must be retrieved individually by making calls to Q_DBRESULT->next().
+ * Instead, each row must be retrieved individually by making calls to Q_DBRESULT->getNext().
  * This reads the result of a query directly from the server without storing it in local buffer,
  * which is somewhat faster and uses much less memory than default behavior Q_DB->setFetchType(db, false).
  */
@@ -635,77 +636,6 @@ static bool _free(Q_DB *db)  {
 }
 
 /**
- * Q_DBRESULT->next(): Retrieves the next row of a result set
- *
- * @param result	a pointer of Q_DBRESULT
- *
- * @return	true if successful, false if no more rows are left
- */
-static bool _resultNext(Q_DBRESULT *result) {
-#ifdef _Q_ENABLE_MYSQL
-	if (result == NULL || result->rs == NULL) return false;
-
-	if ((result->row = mysql_fetch_row(result->rs)) == NULL) return false;
-	result->cursor++;
-
-	return true;
-#else
-	return false;
-#endif
-}
-
-/**
- * Q_DBRESULT->getCols(): Get the number of columns in the result set
- *
- * @param result	a pointer of Q_DBRESULT
- *
- * @return	the number of columns in the result set
- */
-static int _resultGetCols(Q_DBRESULT *result) {
-#ifdef _Q_ENABLE_MYSQL
-	if (result == NULL || result->rs == NULL) return 0;
-	return result->cols;
-#else
-	return 0;
-#endif
-}
-
-/**
- * Q_DBRESULT->getRows(): Get the number of rows in the result set
- *
- * @param result	a pointer of Q_DBRESULT
- *
- * @return	the number of rows in the result set
- */
-static int _resultGetRows(Q_DBRESULT *result) {
-#ifdef _Q_ENABLE_MYSQL
-	if (result == NULL || result->rs == NULL) return 0;
-	return mysql_num_rows(result->rs);
-#else
-	return 0;
-#endif
-}
-
-/**
- * Q_DBRESULT->getRow(): Get the current row number
- *
- * @param result	a pointer of Q_DBRESULT
- *
- * @return	current fetching row number of the result set
- *
- * @note
- * This number is sequencial counter which is started from 1.
- */
-static int _resultGetRow(Q_DBRESULT *result) {
-#ifdef _Q_ENABLE_MYSQL
-	if (result == NULL || result->rs == NULL) return 0;
-	return result->cursor;
-#else
-	return 0;
-#endif
-}
-
-/**
  * Q_DBRESULT->getStr(): Get the result as string by field name
  *
  * @param result	a pointer of Q_DBRESULT
@@ -776,6 +706,77 @@ static int _resultGetIntAt(Q_DBRESULT *result, int idx) {
 	const char *val = result->getStrAt(result, idx);
 	if(val == NULL) return 0;
 	return atoi(val);
+}
+
+/**
+ * Q_DBRESULT->getNext(): Retrieves the next row of a result set
+ *
+ * @param result	a pointer of Q_DBRESULT
+ *
+ * @return	true if successful, false if no more rows are left
+ */
+static bool _resultGetNext(Q_DBRESULT *result) {
+#ifdef _Q_ENABLE_MYSQL
+	if (result == NULL || result->rs == NULL) return false;
+
+	if ((result->row = mysql_fetch_row(result->rs)) == NULL) return false;
+	result->cursor++;
+
+	return true;
+#else
+	return false;
+#endif
+}
+
+/**
+ * Q_DBRESULT->getCols(): Get the number of columns in the result set
+ *
+ * @param result	a pointer of Q_DBRESULT
+ *
+ * @return	the number of columns in the result set
+ */
+static int _resultGetCols(Q_DBRESULT *result) {
+#ifdef _Q_ENABLE_MYSQL
+	if (result == NULL || result->rs == NULL) return 0;
+	return result->cols;
+#else
+	return 0;
+#endif
+}
+
+/**
+ * Q_DBRESULT->getRows(): Get the number of rows in the result set
+ *
+ * @param result	a pointer of Q_DBRESULT
+ *
+ * @return	the number of rows in the result set
+ */
+static int _resultGetRows(Q_DBRESULT *result) {
+#ifdef _Q_ENABLE_MYSQL
+	if (result == NULL || result->rs == NULL) return 0;
+	return mysql_num_rows(result->rs);
+#else
+	return 0;
+#endif
+}
+
+/**
+ * Q_DBRESULT->getRow(): Get the current row number
+ *
+ * @param result	a pointer of Q_DBRESULT
+ *
+ * @return	current fetching row number of the result set
+ *
+ * @note
+ * This number is sequencial counter which is started from 1.
+ */
+static int _resultGetRow(Q_DBRESULT *result) {
+#ifdef _Q_ENABLE_MYSQL
+	if (result == NULL || result->rs == NULL) return 0;
+	return result->cursor;
+#else
+	return 0;
+#endif
 }
 
 /**

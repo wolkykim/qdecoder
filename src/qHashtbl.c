@@ -52,6 +52,7 @@ static bool	_putInt(Q_HASHTBL *tbl, const char *name, int num);
 static void*	_get(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem);
 static char*	_getStr(Q_HASHTBL *tbl, const char *name, bool newmem);
 static int	_getInt(Q_HASHTBL *tbl, const char *name);
+
 static bool	_getNext(Q_HASHTBL *tbl, Q_NOBJ_T *obj, int *idx, bool newmem);
 
 static bool	_remove(Q_HASHTBL *tbl, const char *name);
@@ -130,6 +131,7 @@ Q_HASHTBL *qHashtbl(int max, bool resize, int threshold) {
 	tbl->get	= _get;
 	tbl->getStr	= _getStr;
 	tbl->getInt	= _getInt;
+
 	tbl->getNext	= _getNext;
 
 	tbl->remove	= _remove;
@@ -537,11 +539,11 @@ static int _getNum(Q_HASHTBL *tbl) {
 }
 
 /**
- * Q_HASHTBL->getMax(): Get available maximum number of object slots
+ * Q_HASHTBL->getMax(): Get number of object slots
  *
  * @param tbl		a pointer of Q_HASHTBL
  *
- * @return		available maximum number of object slots
+ * @return		maximum number of object slots
  */
 static int _getMax(Q_HASHTBL *tbl) {
 	if(tbl == NULL) return 0;
@@ -703,10 +705,6 @@ bool _free(Q_HASHTBL *tbl) {
 
 	return true;
 }
-
-/////////////////////////////////////////////////////////////////////////
-// PRIVATE FUNCTIONS
-/////////////////////////////////////////////////////////////////////////
 
 #ifndef _DOXYGEN_SKIP
 

@@ -87,14 +87,13 @@ static bool		_putInt(Q_ENTRY *entry, const char *name, int num, bool replace);
 static void*		_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 static void*		_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 static void*		_getLast(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
-static bool		_getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newmem);
-
 static char*		_getStr(Q_ENTRY *entry, const char *name, bool newmem);
 static char*		_getStrCase(Q_ENTRY *entry, const char *name, bool newmem);
 static char*		_getStrLast(Q_ENTRY *entry, const char *name, bool newmem);
 static int		_getInt(Q_ENTRY *entry, const char *name);
 static int		_getIntCase(Q_ENTRY *entry, const char *name);
 static int 		_getIntLast(Q_ENTRY *entry, const char *name);
+static bool		_getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newmem);
 
 static int		_remove(Q_ENTRY *entry, const char *name);
 
@@ -138,7 +137,6 @@ Q_ENTRY *qEntry(void) {
 	entry->get		= _get;
 	entry->getCase		= _getCase;
 	entry->getLast		= _getLast;
-	entry->getNext		= _getNext;
 
 	entry->getStr		= _getStr;
 	entry->getStrCase	= _getStrCase;
@@ -146,6 +144,8 @@ Q_ENTRY *qEntry(void) {
 	entry->getInt		= _getInt;
 	entry->getIntCase	= _getIntCase;
 	entry->getIntLast	= _getIntLast;
+
+	entry->getNext		= _getNext;
 
 	entry->remove		= _remove;
 
