@@ -52,18 +52,18 @@
  *   Q_HASHARR *hasharr = (Q_HASHARR *)malloc(memsize);
  *
  *   // initialize hash-table
- *   if(qHasharrInit(hasharr, memsize) == 0) return -1;
+ *   if(qHasharr(hasharr, memsize) == 0) return -1;
  *
  *   // put some sample data
- *   if(qHasharrPut(hasharr, "sample1", "binary", 6) == false) return -1; // hash-table full
- *   if(qHasharrPutStr(hasharr, "sample2", "string") == false) return -1; // hash-table full
- *   if(qHasharrPutInt(hasharr, "sample3", 3) == false) return -1; // hash-table full
+ *   if(hasharr->put(hasharr, "sample1", "binary", 6) == false) return -1; // hash-table full
+ *   if(hasharr->putStr(hasharr, "sample2", "string") == false) return -1; // hash-table full
+ *   if(hasharr->putInt(hasharr, "sample3", 3) == false) return -1; // hash-table full
  *
  *   // fetch data
  *   int size;
- *   char *sample_bin = qHasharrGet(hasharr, "sample1", &size);
- *   char *sample_str = qHasharrGetStr(hasharr, "sample2");
- *   int  sample_int  = qHasharrGetInt(hasharr, "sample3");
+ *   char *sample_bin = hasharr->get(hasharr, "sample1", &size);
+ *   char *sample_str = hasharr->getStr(hasharr, "sample2");
+ *   int  sample_int  = hasharr->getInt(hasharr, "sample3");
  * @endcode
  *
  * Another simple way to initialize hash-table.
@@ -76,7 +76,7 @@
  *   Q_HASHARR *hasharr = (Q_HASHARR *)datamem;
  *
  *   // initialize hash-table.
- *   if(qHasharrInit(hasharr, sizeof(datamem)) == 0) return -1;
+ *   if(qHasharr(hasharr, sizeof(datamem)) == 0) return -1;
  *
  *   (...your codes here...)
  *
@@ -174,7 +174,7 @@ size_t qHasharrSize(int max) {
  *   Q_HASHARR *hasharr = (Q_HASHARR *)malloc(memsize);
  *
  *   // initialize hash-table
- *   if(qHasharrInit(hasharr, memsize) == 0) return -1;
+ *   if(qHasharr(hasharr, memsize) == 0) return -1;
  * @endcode
  *
  * @code
@@ -315,7 +315,7 @@ static bool _put(Q_HASHARR *tbl, const char *key, const void *value, int size) {
  */
 static bool _putStr(Q_HASHARR *tbl, const char *key, const char *str) {
 	int size = (str != NULL) ? (strlen(str) + 1) : 0;
-	return qHasharrPut(tbl, key, (void *)str, size);
+	return _put(tbl, key, (void *)str, size);
 }
 
 /**
@@ -330,7 +330,7 @@ static bool _putStr(Q_HASHARR *tbl, const char *key, const char *str) {
 static bool _putInt(Q_HASHARR *tbl, const char *key, int num) {
 	char data[10+1];
 	sprintf(data, "%d", num);
-	return qHasharrPut(tbl, key, (void *)data, -1);
+	return _put(tbl, key, (void *)data, -1);
 }
 
 /**

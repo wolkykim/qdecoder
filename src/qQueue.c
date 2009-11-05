@@ -227,13 +227,15 @@ int qQueueUsrmem(Q_QUEUE *queue, void* datamem, size_t memsize, size_t objsize) 
 static bool _push(Q_QUEUE *queue, const void *object) {
 	if(queue == NULL || object == NULL) return false;
 
+	Q_LOCK_ENTER(queue->qlock);
+
 	// check full
 	if(queue->used == queue->max) {
 		DEBUG("Queue full.");
+		Q_LOCK_LEAVE(queue->qlock);
 		return false;
 	}
 
-	Q_LOCK_ENTER(queue->qlock);
 	// append object
 	void *dp = queue->objarr + (queue->objsize * queue->tail);
 	memcpy(dp, object, queue->objsize);
