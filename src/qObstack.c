@@ -41,7 +41,7 @@
  *   						// be used for object or binary
  *
  *   // final
- *   char *final = (char *)obstack->getFinal(obstack);
+ *   char *final = (char *)obstack->getFinal(obstack, NULL);
  *
  *   // print out
  *   printf("Final string = %s\n", final);
@@ -78,7 +78,7 @@
  *   }
  *
  *   // final
- *   struct sampleobj *final = (struct sampleobj *)obstack->getFinal(obstack);
+ *   struct sampleobj *final = (struct sampleobj *)obstack->getFinal(obstack, NULL);
  *
  *   // print out
  *   qContentType("text/plain");
@@ -117,7 +117,7 @@
 static bool _grow(Q_OBSTACK *obstack, const void *object, size_t size);
 static bool _growStr(Q_OBSTACK *obstack, const char *str);
 static bool _growStrf(Q_OBSTACK *obstack, const char *format, ...);
-static void *_getFinal(Q_OBSTACK *obstack);
+static void *_getFinal(Q_OBSTACK *obstack, size_t *size);
 static size_t _getSize(Q_OBSTACK *obstack);
 static int _getNum(Q_OBSTACK *obstack);
 static bool _free(Q_OBSTACK *obstack);
@@ -210,17 +210,18 @@ static bool _growStrf(Q_OBSTACK *obstack, const char *format, ...) {
  * Q_OBSTACK->getFinal(): Get merged single final object
  *
  * @param obstack	a pointer of Q_OBSTACK
+ * @param size		if size is not NULL, merged object size will be stored.
  *
  * @return		a pointer of finally merged object(malloced), otherwise returns NULL
  *
  * @note
  * User should take care of malloced object.
  */
-static void *_getFinal(Q_OBSTACK *obstack) {
+static void *_getFinal(Q_OBSTACK *obstack, size_t *size) {
 	if(obstack == NULL) return NULL;
 
-	void *final = obstack->stack->merge(obstack->stack, NULL);
-	if(final == NULL) final = strdup("");
+	void *final = obstack->stack->merge(obstack->stack, size);
+	if(final == NULL) return NULL;
 
 	return final;
 }

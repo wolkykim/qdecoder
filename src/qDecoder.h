@@ -135,7 +135,7 @@ struct _Q_OBSTACK {
 	bool		(*grow)		(Q_OBSTACK *obstack, const void *object, size_t size);
 	bool		(*growStr)	(Q_OBSTACK *obstack, const char *str);
 	bool		(*growStrf)	(Q_OBSTACK *obstack, const char *format, ...);
-	void*		(*getFinal)	(Q_OBSTACK *obstack);
+	void*		(*getFinal)	(Q_OBSTACK *obstack, size_t *size);
 	size_t		(*getSize)	(Q_OBSTACK *obstack);
 	int		(*getNum)	(Q_OBSTACK *obstack);
 	bool		(*free)		(Q_OBSTACK *obstack);
