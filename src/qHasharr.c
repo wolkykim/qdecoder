@@ -649,7 +649,7 @@ static bool _putData(Q_HASHARR *tbl, int idx, int hash, const char *key, const v
 	// store key
 	tbl[idx].count = count;
 	tbl[idx].hash = hash;
-	qStrCpy(tbl[idx].key, _Q_HASHARR_MAX_KEYSIZE, key, _Q_HASHARR_MAX_KEYSIZE);
+	qStrCpy(tbl[idx].key, sizeof(tbl[idx].key), key);
 	strncpy((char*)tbl[idx].keymd5, (char*)keymd5, 16);
 	tbl[idx].keylen = keylen;
 	tbl[idx].link = 0;

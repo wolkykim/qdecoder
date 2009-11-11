@@ -110,8 +110,8 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 	char session_timeout_path[PATH_MAX];
 	time_t session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERVAL; /* seconds */
 
-	if (dirpath != NULL) qStrCpy(session_repository_path, sizeof(session_repository_path), dirpath, sizeof(session_repository_path));
-	else qStrCpy(session_repository_path, sizeof(session_repository_path), SESSION_DEFAULT_REPOSITORY, sizeof(session_repository_path));
+	if (dirpath != NULL) qStrCpy(session_repository_path, sizeof(session_repository_path), dirpath);
+	else qStrCpy(session_repository_path, sizeof(session_repository_path), SESSION_DEFAULT_REPOSITORY);
 	snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 	snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 

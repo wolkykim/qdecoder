@@ -432,7 +432,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 
 	/* find boundary string - Hidai Kenichi made this patch for handling quoted boundary string */
 	char boundary_orig[256];
-	qStrCpy(boundary_orig, sizeof(boundary_orig), strstr(getenv("CONTENT_TYPE"), "boundary=") + CONST_STRLEN("boundary="), sizeof(boundary_orig));
+	qStrCpy(boundary_orig, sizeof(boundary_orig), strstr(getenv("CONTENT_TYPE"), "boundary=") + CONST_STRLEN("boundary="));
 	qStrTrim(boundary_orig);
 	qStrUnchar(boundary_orig, '"', '"');
 	snprintf(boundary, sizeof(boundary), "--%s", boundary_orig);
@@ -487,7 +487,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 			if (upload_id == NULL || strlen(upload_id) == 0) {
 				/* not progress, just file mode */
 				char *uniq = qStrUnique(getenv("REMOTE_ADDR"));
-				qStrCpy(upload_id_new, sizeof(upload_id_new), uniq, sizeof(upload_id_new));
+				qStrCpy(upload_id_new, sizeof(upload_id_new), uniq);
 				free(uniq);
 				upload_id = upload_id_new;
 			}
@@ -967,10 +967,10 @@ static bool _upload_getstatus(const char *upload_id, const char *upload_basepath
 	snprintf(tmppath, sizeof(tmppath), "%s/Q_UPLOAD_FILE", upload_savedir);
 	char *upload_file = qFileLoad(tmppath, NULL);
 	if(upload_file != NULL) {
-		qStrCpy(upload_cname, upload_cname_size, upload_file, upload_cname_size);
+		qStrCpy(upload_cname, upload_cname_size, upload_file);
 		free(upload_file);
 	} else {
-		qStrCpy(upload_cname, upload_cname_size, "-", upload_cname_size);
+		qStrCpy(upload_cname, upload_cname_size, "-");
 	}
 
 	/* get csize */

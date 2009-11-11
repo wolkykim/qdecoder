@@ -242,23 +242,21 @@ char *qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char
 }
 
 /**
- * Copies at most len characters from src into dst then append NULL terminating character.
+ * Copy src string to dst. The dst string arrary will be always terminated by NULL character.
  *
  * @param dst		a pointer of the string to be copied
- * @param dstsize	size of dst
+ * @param size		the size of dst character arrary
  * @param src		a pointer of source string
- * @param nbytes	bytes to copy
  *
  * @return		always returns a pointer of dst
- *
- * @note The dst string will be always terminated by NULL character. (bytes that follow a null byte are not copied)
  */
-char *qStrCpy(char *dst, size_t dstsize, const char *src, size_t nbytes) {
-	if(dst == NULL || dstsize == 0 || src == NULL || nbytes == 0) return dst;
+char *qStrCpy(char *dst, size_t size, const char *src) {
+	if(dst == NULL || size == 0 || src == NULL) return dst;
 
-	if(nbytes >= dstsize) nbytes = dstsize - 1;
-	strncpy(dst, src, nbytes);
-	dst[nbytes] = '\0';
+	size_t copylen = strlen(src);
+	if(copylen >= size) copylen = size - 1;
+	memcpy((void*)dst, (void*)src, copylen);
+	dst[copylen] = '\0';
 
 	return dst;
 }
@@ -295,37 +293,6 @@ char *qStrLower(char *str) {
 	if (!str) return NULL;
 	for (cp = str; *cp; cp++) if (*cp >= 'A' && *cp <= 'Z') *cp += 32;
 	return str;
-}
-
-
-/**
- * Find a substring with no case-censitive
- *
- * @param s1		a pointer of source string
- * @param s2		a pointer of substring
- *
- * @return		a pointer of the first occurrence in the big string if successful, otherwise returns NULL
- */
-char *qStrCaseStr(const char *s1, const char *s2) {
-	if (s1 == NULL || s2 == NULL) return NULL;
-
-	char *s1p = strdup(s1);
-	char *s2p = strdup(s2);
-	if (s1p == NULL || s2p == NULL) {
-		if(s1p != NULL) free(s1p);
-		if(s2p != NULL) free(s2p);
-		return NULL;
-	}
-
-	qStrUpper(s1p);
-	qStrUpper(s2p);
-
-	char *sp = strstr(s1p, s2p);
-	if (sp != NULL) sp = (char*)s1 + (sp - s1p);
-	free(s1p);
-	free(s2p);
-
-	return sp;
 }
 
 /**
@@ -486,7 +453,8 @@ char *qStrDupBetween(const char *str, const char *start, const char *end) {
 	int len = e - s;
 
 	char *buf = (char*)malloc(sizeof(char) * (len + 1));
-	qStrCpy(buf, len + 1, s, len);
+	strncpy(buf, s, len);
+	buf[len] = '\0';
 
 	return buf;
 }

@@ -83,7 +83,8 @@ bool qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout) {
 			char ssi_inc_file[MAX_LINEBUF], *endp;
 			if ((endp = strstr(sp, SSI_INCLUDE_END)) != NULL) {
 				sp += strlen(SSI_INCLUDE_START);
-				qStrCpy(ssi_inc_file, sizeof(ssi_inc_file), sp, endp - sp);
+				strncpy(ssi_inc_file, sp, endp - sp);
+				ssi_inc_file[endp - sp] = '\0';
 				sp = (endp + strlen(SSI_INCLUDE_END));
 
 				if (qFileExist(ssi_inc_file) == true) qSedFile(entry, ssi_inc_file, fpout);

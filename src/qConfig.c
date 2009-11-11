@@ -82,10 +82,11 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 				return NULL;
 			}
 
-			qStrCpy(buf, sizeof(buf), strp + CONST_STRLEN(_INCLUDE_DIRECTIVE), len);
+			strncpy(buf, strp + CONST_STRLEN(_INCLUDE_DIRECTIVE), len);
+			buf[len] = '\0';
 			qStrTrim(buf);
 
-			/* adjust file path */
+			/* get full file path */
 			if (!(buf[0] == '/' || buf[0] == '\\')) {
 				char tmp[PATH_MAX];
 				char *dir = qFileGetDir(filepath);
@@ -110,7 +111,8 @@ Q_ENTRY *qConfigParseFile(Q_ENTRY *config, const char *filepath, char sepchar) {
 			}
 
 			/* replace */
-			qStrCpy(buf, sizeof(buf), strp, CONST_STRLEN(_INCLUDE_DIRECTIVE) + len);
+			strncpy(buf, strp, CONST_STRLEN(_INCLUDE_DIRECTIVE) + len);
+			buf[CONST_STRLEN(_INCLUDE_DIRECTIVE) + len] = '\0';
 			strp = qStrReplace("sn", str, buf, incdata);
 			free(incdata);
 			free(str);

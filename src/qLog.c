@@ -80,7 +80,7 @@ Q_LOG *qLog(const char *filepathfmt, int rotateinterval, bool flush) {
 
 	/* fill structure */
 	memset((void *)(log), 0, sizeof(Q_LOG));
-	qStrCpy(log->filepathfmt, sizeof(log->filepathfmt), filepathfmt, sizeof(log->filepathfmt));
+	qStrCpy(log->filepathfmt, sizeof(log->filepathfmt), filepathfmt);
 	if(rotateinterval > 0) log->rotateinterval = rotateinterval;
 	log->logflush = flush;
 
@@ -214,6 +214,7 @@ static bool _flush(Q_LOG *log) {
 static bool _free(Q_LOG *log) {
 	if (log == NULL) return false;
 
+	_flush(log);
 	Q_LOCK_ENTER(log->qlock);
 	if (log->fp != NULL) {
 		fclose(log->fp);
@@ -244,13 +245,13 @@ static bool _realOpen(Q_LOG *log) {
 			DEBUG("_realOpen: Can't open log file '%s'.", newfilepath);
 			return false;
 		}
-		qStrCpy(log->filepath, sizeof(log->filepath), newfilepath, sizeof(log->filepath));
+		qStrCpy(log->filepath, sizeof(log->filepath), newfilepath);
 	} else if(strcmp(log->filepath, newfilepath)) { /* have opened stream, only reopen if new filename is different with existing one */
 		FILE *newfp = fopen(newfilepath, "a");
 		if (newfp != NULL) {
 			fclose(log->fp);
 			log->fp = newfp;
-			qStrCpy(log->filepath, sizeof(log->filepath), newfilepath, sizeof(log->filepath));
+			qStrCpy(log->filepath, sizeof(log->filepath), newfilepath);
 		} else {
 			DEBUG("_realOpen: Can't open log file '%s' for rotating.", newfilepath);
 		}
