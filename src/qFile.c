@@ -97,9 +97,8 @@ bool qFileUnlock(int fd) {
  * @return		true if exists, otherwise returns false;
  */
 bool qFileExist(const char *filepath) {
-	struct stat finfo;
-	if (stat(filepath, &finfo) < 0) return false;
-	return true;
+	if(access(filepath, F_OK) == 0) return true;
+	return false;
 }
 
 /**
