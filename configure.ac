@@ -81,6 +81,8 @@ AC_PREFIX_DEFAULT([/usr/local])
 AC_PROG_CC
 if test $ac_compiler_gnu = yes; then
 	CFLAGS="$CFLAGS -Wall -fPIC"
+#else
+#	AC_MSG_FAILURE([GCC is required to compile qDecoder.])
 fi
 
 AC_PROG_INSTALL
@@ -106,7 +108,7 @@ AC_TYPE_OFF_T
 ## Checks for libraries.
 
 ## Checks for library functions.
-#AC_CHECK_FUNCS([socket sendfile, dkdkdk])
+#AC_CHECK_FUNCS([socket sendfile])
 
 ## Set additional arguments
 opt_defs="-D_GNU_SOURCE"

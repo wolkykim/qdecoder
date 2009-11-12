@@ -2310,6 +2310,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 if test $ac_compiler_gnu = yes; then
 	CFLAGS="$CFLAGS -Wall -fPIC"
+#else
+#	AC_MSG_FAILURE([GCC is required to compile qDecoder.])
 fi
 
 ac_aux_dir=
@@ -3949,7 +3951,7 @@ fi
 ## Checks for libraries.
 
 ## Checks for library functions.
-#AC_CHECK_FUNCS([socket sendfile, dkdkdk])
+#AC_CHECK_FUNCS([socket sendfile])
 
 ## Set additional arguments
 opt_defs="-D_GNU_SOURCE"

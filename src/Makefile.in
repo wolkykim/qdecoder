@@ -53,8 +53,6 @@ ARFLAGS		= -rc
 CHMOD		= @CHMOD@
 INSTALL		= @INSTALL@
 INSTALL_DATA	= @INSTALL_DATA@
-LD		= @LD@
-LDFLAGS		= @LDFLAGS@ -G
 LN_S		= @LN_S@
 RANLIB		= @RANLIB@
 RM		= @RM@
@@ -97,17 +95,14 @@ all: qdecoder
 qdecoder: ${OBJ}
 	${AR} ${ARFLAGS} ${LIBNAME} ${OBJ}
 	${RANLIB} ${LIBNAME}
-	${LD} ${LDFLAGS} ${OBJ} -o ${SLIBREALNAME}
-	${CHMOD} 0644 ${SLIBREALNAME}
-	${RM} -f ${SLIBNAME}
-	${LN_S} ${SLIBREALNAME} ${SLIBNAME}
+	${CC} -shared -Wl,-soname,${SLIBREALNAME} -o ${SLIBREALNAME} ${OBJ}
+	${LN_S} -f ${SLIBREALNAME} ${SLIBNAME}
 
 install: all
 	${INSTALL_DATA} qDecoder.h ${HEADERDIR}/qDecoder.h
 	${INSTALL_DATA} ${LIBNAME} ${LIBDIR}/${LIBNAME}
 	${INSTALL_DATA} ${SLIBREALNAME} ${LIBDIR}/${SLIBREALNAME}
-	${RM} -f ${LIBDIR}/${SLIBNAME}
-	${LN_S} ${LIBDIR}/${SLIBREALNAME} ${LIBDIR}/${SLIBNAME}
+	${LN_S} -f ${LIBDIR}/${SLIBREALNAME} ${LIBDIR}/${SLIBNAME}
 
 deinstall: uninstall
 uninstall:
