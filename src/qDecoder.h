@@ -408,7 +408,7 @@ extern	ssize_t		qSocketPuts(int sockfd, const char *str);
 extern	ssize_t		qSocketPrintf(int sockfd, const char *format, ...);
 extern	off_t		qSocketSendfile(int sockfd, int fd, off_t offset, off_t nbytes);
 extern	off_t		qSocketSaveIntoFile(int fd, int sockfd, off_t nbytes, int timeoutms);
-extern	ssize_t		qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutms);
+extern	ssize_t		qSocketSaveIntoMemory(void *mem, int sockfd, size_t nbytes, int timeoutms);
 
 /*
  * qSem.c

@@ -393,10 +393,10 @@ off_t qSocketSaveIntoFile(int fd, int sockfd, off_t nbytes, int timeoutms) {
  *		only affected if no data reached to socket until timeoutms reached.
  *		if some data are received, it will wait until timeoutms reached again.
  */
-ssize_t qSocketSaveIntoMemory(char *mem, int sockfd, size_t nbytes, int timeoutms) {
+ssize_t qSocketSaveIntoMemory(void *mem, int sockfd, size_t nbytes, int timeoutms) {
 	if(nbytes <= 0) return 0;
 
-	char *mp;
+	void *mp;
 	ssize_t readbytes, readed;
 	for (readbytes = 0, mp = mem; readbytes < nbytes; readbytes += readed, mp += readed) {
 		// calculate reading size
