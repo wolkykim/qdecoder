@@ -105,7 +105,7 @@ char *qHashMd5Str(const void *data, size_t nbytes) {
  * @param filepath	file path
  * @param nbytes	size of data. Set to NULL to digest end of file
  *
- * @return		malloced 32+1 bytes digested ASCII string which is terminated by NULL character
+ * @return		malloced 33(16*2+1) bytes digested ASCII string which is terminated by NULL character
  *
  * @note
  * If the nbytes is set, qHashMd5File() will try to digest at lease nbytes then

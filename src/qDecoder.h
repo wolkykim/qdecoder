@@ -501,6 +501,7 @@ extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const 
 extern	bool		qFileLock(int fd);
 extern	bool		qFileUnlock(int fd);
 extern	bool		qFileExist(const char *filepath);
+extern	bool		qMkdir(const char *dirpath, mode_t mode, bool recursive);
 extern	char*		qFileGetName(const char *filepath);
 extern	char*		qFileGetDir(const char *filepath);
 extern	char*		qFileGetExt(const char *filepath);

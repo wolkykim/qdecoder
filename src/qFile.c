@@ -33,6 +33,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include "qDecoder.h"
@@ -94,10 +95,36 @@ bool qFileUnlock(int fd) {
  *
  * @param filepath	file or directory path
  *
- * @return		true if exists, otherwise returns false;
+ * @return		true if exists, otherwise returns false.
  */
 bool qFileExist(const char *filepath) {
 	if(access(filepath, F_OK) == 0) return true;
+	return false;
+}
+
+/**
+ * Attempts to create a directory recursively.
+ *
+ * @param dirpath	directory path
+ * @param mode		permissions to use
+ * @param recursive	whether or not to create parent directories automatically
+ *
+ * @return		true if successful, otherwise returns false.
+ */
+bool qMkdir(const char *dirpath, mode_t mode, bool recursive) {
+	printf("%s\n", dirpath);
+	if(mkdir(dirpath, mode) == 0) return true;
+
+	if(recursive == true && errno == ENOENT) {
+		char *parentpath = qFileGetDir(dirpath);
+		if(qMkdir(parentpath, mode, recursive) == true
+		&& qMkdir(dirpath, mode, recursive) == true) {
+			free(parentpath);
+			return true;
+		}
+		free(parentpath);
+	}
+
 	return false;
 }
 
