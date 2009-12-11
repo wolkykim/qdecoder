@@ -48,8 +48,6 @@ static bool _close(Q_HTTPCLIENT *client);
 static void _free(Q_HTTPCLIENT *client);
 
 // internal usages
-static int _parseResponse(const char *str);
-
 #define HTTP_NO_RESPONSE			(0)
 #define HTTP_CODE_CONTINUE			(100)
 #define HTTP_CODE_OK				(200)
@@ -70,6 +68,8 @@ static int _parseResponse(const char *str);
 
 #define	HTTP_PROTOCOL_10			"HTTP/1.0"
 #define	HTTP_PROTOCOL_11			"HTTP/1.1"
+
+static int _readResponse(int socket, int timeoutms);
 
 #endif
 
@@ -221,14 +221,7 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, i
 	}
 
 	// read response
-	char buf[1024];
-	if(qSocketGets(buf, sizeof(buf), client->socket, timeoutms) <= 0) {
-		_close(client);
-		return false;
-	}
-
-	// parse response
-	int rescode = _parseResponse(buf);
+	int rescode = _readResponse(client->socket, timeoutms);
 	if(rescode != HTTP_CODE_CONTINUE) {
 		if(retcode != NULL) *retcode = rescode;
 		_close(client);
@@ -246,11 +239,11 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, i
 	}
 
 	// read response
-	if(qSocketGets(buf, sizeof(buf), client->socket, timeoutms) <= 0) {
-		_close(client);
-		return false;
+	rescode = _readResponse(client->socket, timeoutms);
+	if(rescode == HTTP_NO_RESPONSE) {
+			_close(client);
+			return false;
 	}
-	rescode = _parseResponse(buf);
 	if(retcode != NULL) *retcode = rescode;
 
 	if(rescode != HTTP_CODE_CREATED) {
@@ -301,16 +294,24 @@ static void _free(Q_HTTPCLIENT *client) {
 	free(client);
 }
 
-static int _parseResponse(const char *str) {
-	if(strncmp(str, "HTTP/", CONST_STRLEN("HTTP/"))) return HTTP_NO_RESPONSE;
+static int _readResponse(int socket, int timeoutms) {
+	// read response
+	char buf[1024];
+	if(qSocketGets(buf, sizeof(buf),socket, timeoutms) <= 0) return HTTP_NO_RESPONSE;
 
-	char *tmp = strstr(str, " ");
+	// parse response code
+	if(strncmp(buf, "HTTP/", CONST_STRLEN("HTTP/"))) return HTTP_NO_RESPONSE;
+	char *tmp = strstr(buf, " ");
 	if(tmp == NULL) return HTTP_NO_RESPONSE;
+	int rescode = atoi(tmp+1);
+	if(rescode == 0) return HTTP_NO_RESPONSE;
 
-	int code = atoi(tmp+1);
-	if(code == 0) return HTTP_NO_RESPONSE;
+	// read header until CRLF
+	while(qSocketGets(buf, sizeof(buf),socket, timeoutms) > 0) {
+		if(strlen(buf) == 0) break;
+	}
 
-	return code;
+	return rescode;
 }
 
 #endif /* DISABLE_SOCKET */
