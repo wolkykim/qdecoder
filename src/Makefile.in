@@ -76,6 +76,7 @@ OBJ		= qCgiRequest.o		\
 					\
 		qConfig.o		\
 		qLog.o			\
+		qHttpClient.o		\
 					\
 		qString.o		\
 		qFile.o			\

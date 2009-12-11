@@ -53,6 +53,8 @@ typedef struct _Q_LOG		Q_LOG;
 typedef struct _Q_DB		Q_DB;
 typedef struct _Q_DBRESULT	Q_DBRESULT;
 
+typedef struct _Q_HTTPCLIENT	Q_HTTPCLIENT;
+
 /**
  * Variable type for named object
  */
@@ -350,6 +352,29 @@ struct _Q_DBRESULT {
 #endif
 };
 
+/**
+ * Structure for http client.
+ */
+#include <netdb.h>
+struct _Q_HTTPCLIENT {
+	int		socket;			/*!< socket descriptor */
+
+	struct sockaddr_in addr;
+	char		*hostname;
+	int		port;
+
+	bool		keepalive;
+	char*		useragent;		/*< user-agent name */
+
+	/* public member methods */
+	bool		(*open)			(Q_HTTPCLIENT *client, int timeoutms);
+	void		(*setKeepalive)		(Q_HTTPCLIENT *client, bool keepalive);
+	void		(*setUseragent)		(Q_HTTPCLIENT *client, const char *useragent);
+	bool		(*put)			(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode);
+	bool		(*close)		(Q_HTTPCLIENT *client);
+	void		(*free)			(Q_HTTPCLIENT *client);
+};
+
 #ifndef _DOXYGEN_SKIP
 
 /* qDecoder C++ support */
@@ -402,13 +427,14 @@ extern	bool		qSocketClose(int sockfd);
 extern	int		qSocketWaitReadable(int sockfd, int timeoutms);
 extern	int		qSocketWaitWritable(int sockfd, int timeoutms);
 extern	ssize_t		qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms);
-extern	ssize_t		qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms);
+extern	ssize_t		qSocketGets(char *buf, size_t bufsize, int sockfd, int timeoutms);
 extern	ssize_t		qSocketWrite(int sockfd, const void *binary, size_t nbytes);
 extern	ssize_t		qSocketPuts(int sockfd, const char *str);
 extern	ssize_t		qSocketPrintf(int sockfd, const char *format, ...);
 extern	off_t		qSocketSendfile(int sockfd, int fd, off_t offset, off_t nbytes);
 extern	off_t		qSocketSaveIntoFile(int fd, int sockfd, off_t nbytes, int timeoutms);
 extern	ssize_t		qSocketSaveIntoMemory(void *mem, int sockfd, size_t nbytes, int timeoutms);
+extern	bool		qSocketGetAddr(struct sockaddr_in *addr, const char *hostname, int port);
 
 /*
  * qSem.c
@@ -474,6 +500,11 @@ extern	Q_ENTRY*	qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar);
 extern	Q_LOG*		qLog(const char *filepathfmt, int rotateinterval, bool flush);
 
 /*
+ * qHttpClient.c
+ */
+extern	Q_HTTPCLIENT*	qHttpClient(const char *hostname, int port);
+
+/*
  * qString.c
  */
 extern	char*		qStrTrim(char *str);
@@ -485,7 +516,7 @@ extern	char*		qStrUpper(char *str);
 extern	char*		qStrLower(char *str);
 extern	char*		qStrRev(char *str);
 extern	char*		qStrTok(char *str, const char *token, char *retstop);
-extern	Q_ENTRY*	qStrTokenizer(char *str, const char *delimiters);
+extern	Q_ENTRY*	qStrTokenizer(const char *str, const char *delimiters);
 extern	char*		qStrCommaNumber(int number);
 extern	char*		qStrCatf(char *str, const char *format, ...);
 extern	char*		qStrDupBetween(const char *str, const char *start, const char *end);

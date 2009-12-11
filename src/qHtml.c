@@ -27,6 +27,8 @@
  * @file qHtml.c HTML documentation API
  */
 
+#ifndef DISABLE_CGI
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -34,8 +36,6 @@
 #include <string.h>
 #include "qDecoder.h"
 #include "qInternal.h"
-
-#ifndef DISABLE_CGI
 
 /**
  * Print out HTML contents into stream

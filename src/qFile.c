@@ -247,7 +247,6 @@ off_t qFileSend(int outfd, int infd, off_t nbytes) {
  * @param filepath	file path
  * @param nbytes	has two purpost, one is to set how many bytes are readed. the other is actual the number loaded bytes will be stored. nbytes must be point 0 or NULL to read entire file.
  *
- *
  * @return		allocated memory pointer if successful, otherwise returns NULL.
  *
  * @code

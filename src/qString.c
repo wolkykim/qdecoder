@@ -376,15 +376,17 @@ char *qStrTok(char *str, const char *delimiters, char *retstop) {
  *   fclose(fp);
  * @endcode
  */
-Q_ENTRY *qStrTokenizer(char *str, const char *delimiters) {
+Q_ENTRY *qStrTokenizer(const char *str, const char *delimiters) {
 	Q_ENTRY *entry = qEntry();
 	char *token;
 	int i;
-	for(i = 1, token = qStrTok(str, delimiters, NULL); token != NULL; token = qStrTok(NULL, delimiters, NULL), i++) {
+	char *dupstr = strdup(str);
+	for(i = 1, token = qStrTok(dupstr, delimiters, NULL); token != NULL; token = qStrTok(NULL, delimiters, NULL), i++) {
 		char key[10+1];
 		sprintf(key, "%d", i);
 		entry->putStr(entry, key, token, false);
 	}
+	free(dupstr);
 
 	return entry;
 }

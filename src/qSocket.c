@@ -56,7 +56,6 @@
 #endif
 #define MAX_SAVEINTOFILE_CHUNK_SIZE	(64 * 1024)
 
-static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port);
 /**
  * Create a TCP socket for the remote host and port.
  *
@@ -71,7 +70,7 @@ static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port);
 int qSocketOpen(const char *hostname, int port, int timeoutms) {
 	/* host conversion */
 	struct sockaddr_in addr;
-	if (_getAddr(&addr, hostname, port) == false) return -1; /* invalid hostname */
+	if (qSocketGetAddr(&addr, hostname, port) == false) return -1; /* invalid hostname */
 
 	/* create new socket */
 	int sockfd;
@@ -84,7 +83,7 @@ int qSocketOpen(const char *hostname, int port, int timeoutms) {
 	/* try to connect */
 	int status = connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 	if( status < 0 && (errno != EINPROGRESS || qSocketWaitWritable(sockfd, timeoutms) <= 0) ) {
-		qSocketClose(sockfd);
+		close(sockfd);
 		return -3; /* connection failed */
 	}
 
@@ -104,6 +103,16 @@ int qSocketOpen(const char *hostname, int port, int timeoutms) {
  * @since	8.1R
  */
 bool qSocketClose(int sockfd) {
+	// close connection
+	if(shutdown(sockfd, SHUT_WR) == 0) {
+		char buf[1024];
+		while(true) {
+			ssize_t read = qSocketRead(buf, sockfd, sizeof(buf), 1);
+			if(read <= 0) break;
+			DEBUG("Throw %zu bytes from dummy input stream.", read);
+		}
+	}
+
 	if(close(sockfd) == 0) return true;
 	return false;
 }
@@ -197,9 +206,9 @@ ssize_t qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms) {
  * Read line from the stream.
  * New-line characters(CR, LF ) will not be stored into buffer.
  *
- * @param	str		data buffer pointer
+ * @param	buf		data buffer pointer
+ * @param	bufsize		buffer size
  * @param	sockfd		socket descriptor
- * @param	nbytes		read size
  * @param	timeoutms	wait timeout milliseconds
  *
  * @return	the length of data readed on success, or 0 on timeout, or -1 if an error(ex:socket closed) occurred.
@@ -210,10 +219,10 @@ ssize_t qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms) {
  *		it means how many bytes are readed from the socket.
  *		so the new-line characters will be counted, but not be stored.
  */
-ssize_t qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms) {
+ssize_t qSocketGets(char *buf, size_t bufsize, int sockfd, int timeoutms) {
 	char *ptr;
 	ssize_t readcnt = 0;
-	for (ptr = str; readcnt < (nbytes - 1); ptr++) {
+	for (ptr = buf; readcnt < (bufsize - 1); ptr++) {
 		int sockstatus = qSocketWaitReadable(sockfd, timeoutms);
 		if (sockstatus <= 0) {
 			*ptr = '\0';
@@ -221,7 +230,7 @@ ssize_t qSocketGets(char *str, int sockfd, size_t nbytes, int timeoutms) {
 		}
 
 		if (read(sockfd, ptr, 1) != 1) {
-			if (ptr == str) return -1;
+			if (ptr == buf) return -1;
 			break;
 		}
 
@@ -430,7 +439,7 @@ ssize_t qSocketSaveIntoMemory(void *mem, int sockfd, size_t nbytes, int timeoutm
  *
  * @since	8.1R
  */
-static bool _getAddr(struct sockaddr_in *addr, const char *hostname, int port) {
+bool qSocketGetAddr(struct sockaddr_in *addr, const char *hostname, int port) {
 	/* here we assume that the hostname argument contains ip address */
 	memset((void*)addr, 0, sizeof(struct sockaddr_in));
 	if (!inet_aton(hostname, &addr->sin_addr)) { /* fail then try another way */
