@@ -370,7 +370,7 @@ struct _Q_HTTPCLIENT {
 	bool		(*open)			(Q_HTTPCLIENT *client, int timeoutms);
 	void		(*setKeepalive)		(Q_HTTPCLIENT *client, bool keepalive);
 	void		(*setUseragent)		(Q_HTTPCLIENT *client, const char *useragent);
-	bool		(*put)			(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode);
+	bool		(*put)			(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
 	bool		(*close)		(Q_HTTPCLIENT *client);
 	void		(*free)			(Q_HTTPCLIENT *client);
 };
@@ -515,7 +515,7 @@ extern	char*		qStrCpy(char *dst, size_t size, const char *src);
 extern	char*		qStrUpper(char *str);
 extern	char*		qStrLower(char *str);
 extern	char*		qStrRev(char *str);
-extern	char*		qStrTok(char *str, const char *token, char *retstop);
+extern	char*		qStrTok(char *str, const char *delimiters, char *retstop, int *offset);
 extern	Q_ENTRY*	qStrTokenizer(const char *str, const char *delimiters);
 extern	char*		qStrCommaNumber(int number);
 extern	char*		qStrCatf(char *str, const char *format, ...);

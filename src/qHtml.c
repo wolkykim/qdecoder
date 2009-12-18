@@ -130,7 +130,7 @@ bool qHtmlPuts(FILE *stream, int mode, char *buf) {
 		}
 	} else {
 		char *ptr, retstop, lastretstop, *target, *deftarget, *token;
-		int printhtml, autolink, convert, linkflag, ignoreflag;
+		int printhtml, autolink, convert, linkflag, ignoreflag, offset;
 
 		/* set defaults, mode 2*/
 		printhtml = 1;
@@ -234,7 +234,8 @@ bool qHtmlPuts(FILE *stream, int mode, char *buf) {
 
 		token = " `(){}[]<>\"',\r\n";
 		lastretstop = '0'; /* any character except space */
-		ptr = qStrTok(buf, token, &retstop);
+		offset = 0;
+		ptr = qStrTok(buf, token, &retstop, &offset);
 
 		for (linkflag = ignoreflag = 0; ptr != NULL;) {
 			/* auto link */
@@ -281,7 +282,7 @@ bool qHtmlPuts(FILE *stream, int mode, char *buf) {
 			}
 
 			lastretstop = retstop;
-			ptr = qStrTok(NULL, token, &retstop);
+			ptr = qStrTok(buf, token, &retstop, &offset);
 		}
 	}
 

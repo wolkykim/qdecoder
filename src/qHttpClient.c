@@ -43,7 +43,8 @@
 static bool _open(Q_HTTPCLIENT *client, int timeoutms);
 static void _setKeepalive(Q_HTTPCLIENT *client, bool keepalive);
 static void _setUseragent(Q_HTTPCLIENT *client, const char *agentname);
-static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode);
+static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
+
 static bool _close(Q_HTTPCLIENT *client);
 static void _free(Q_HTTPCLIENT *client);
 
@@ -182,7 +183,9 @@ static void _setUseragent(Q_HTTPCLIENT *client, const char *useragent) {
 	client->useragent = strdup(useragent);
 }
 
-static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode) {
+#define MAX_SENDSIZE	(32 * 1024)
+static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode,
+		bool (*callback)(void *userdata, off_t sentbytes), void *userdata) {
 	// reset retcode
 	if(retcode != NULL) *retcode = 0;
 
@@ -230,11 +233,40 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, i
 
 	// send data
 	off_t sent = 0;
+	if(callback != NULL) {
+		if(callback(userdata, sent) == false) {
+			_close(client);
+			return false;
+		}
+	}
 	if(length > 0) {
-		sent = qSocketSendfile(client->socket, fd, 0, length);
+		while(sent < length) {
+			size_t sendsize;	// this time sending size
+			if(length - sent <= MAX_SENDSIZE) sendsize = length - sent;
+			else sendsize = MAX_SENDSIZE;
+
+			ssize_t ret = qFileSend(client->socket, fd, sendsize);
+			if(ret <= 0) break; // Connection closed by peer
+			sent += ret;
+
+			if(callback != NULL) {
+				if(callback(userdata, sent) == false) {
+					_close(client);
+					return false;
+				}
+			}
+		}
+
 		if(sent != length) {
 			_close(client);
 			return false;
+		}
+
+		if(callback != NULL) {
+			if(callback(userdata, sent) == false) {
+				_close(client);
+				return false;
+			}
 		}
 	}
 

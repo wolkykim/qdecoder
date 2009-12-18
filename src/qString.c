@@ -323,34 +323,46 @@ char *qStrRev(char *str) {
  * @param str		source string
  * @param delimiters	string that specifies a set of delimiters that may surround the token being extracted
  * @param retstop	stop delimiter character will be stored. it can be NULL if you don't want to know.
+ * @param offset	integer pointer used for store last position. (must be reset to 0)
  *
  * @return	a pointer to the first byte of a token if successful, otherwise returns NULL.
+ *
+ * @code
+ *   char *str = strdup("Hello,world|Thank,you");
+ *   char *token;
+ *   int offset = 0;
+ *   for(token = qStrTok(str, "|,", NULL, &offset); token != NULL; token = qStrTok(str, "|,", NULL, &offset)) {
+ *     printf("%s\n", token);
+ *  }
+ * @endcode
  *
  * @note
  * The major difference between qStrTok() and standard strtok() is that qStrTok() can returns empty string tokens.
  * If the str is "a:b::d", qStrTok() returns "a", "b", "", "d". But strtok() returns "a","b","d".
  */
-char *qStrTok(char *str, const char *delimiters, char *retstop) {
-	static char *tokenep;
-	char *tokensp;
-	int i, j;
+char *qStrTok(char *str, const char *delimiters, char *retstop, int *offset) {
+	char *tokensp, *tokenep;
 
-	if (str != NULL) tokensp = tokenep = str;
-	else tokensp = tokenep;
-
-	for (i = strlen(delimiters); *tokenep; tokenep++) {
-		for (j = 0; j < i; j++) {
+	tokensp = tokenep = (char*)(str + *offset);
+	int numdel = strlen(delimiters);
+	for( ; *tokenep; tokenep++) {
+		int j;
+		for(j = 0; j < numdel; j++) {
 			if (*tokenep == delimiters[j]) {
 				if (retstop != NULL) *retstop = delimiters[j];
 				*tokenep = '\0';
 				tokenep++;
+				*offset = tokenep - str;
 				return tokensp;
 			}
 		}
 	}
 
 	if (retstop != NULL) *retstop = '\0';
-	if (tokensp != tokenep) return tokensp;
+	if (tokensp != tokenep) {
+		*offset = tokenep - str;
+		return tokensp;
+	}
 	return NULL;
 }
 
@@ -378,10 +390,11 @@ char *qStrTok(char *str, const char *delimiters, char *retstop) {
  */
 Q_ENTRY *qStrTokenizer(const char *str, const char *delimiters) {
 	Q_ENTRY *entry = qEntry();
-	char *token;
 	int i;
 	char *dupstr = strdup(str);
-	for(i = 1, token = qStrTok(dupstr, delimiters, NULL); token != NULL; token = qStrTok(NULL, delimiters, NULL), i++) {
+	char *token;
+	int offset = 0;
+	for(i = 1, token = qStrTok(dupstr, delimiters, NULL, &offset); token != NULL; token = qStrTok(dupstr, delimiters, NULL, &offset), i++) {
 		char key[10+1];
 		sprintf(key, "%d", i);
 		entry->putStr(entry, key, token, false);

@@ -329,11 +329,10 @@ off_t qSocketSendfile(int sockfd, int fd, off_t offset, off_t nbytes) {
 		if(rangesize - sent <= MAX_SENDFILE_CHUNK_SIZE) sendsize = rangesize - sent;
 		else sendsize = MAX_SENDFILE_CHUNK_SIZE;
 
-		ssize_t ret = 0;
 #if defined(ENABLE_SENDFILE) && defined(__linux__)
-		ret = sendfile(sockfd, fd, &offset, sendsize);
+		ssize_t ret = sendfile(sockfd, fd, &offset, sendsize);
 #else
-		ret = qFileSend(sockfd, fd, sendsize);
+		ssize_t ret = qFileSend(sockfd, fd, sendsize);
 #endif
 		if(ret <= 0) break; // Connection closed by peer
 		sent += ret;
