@@ -112,7 +112,7 @@ bool qFileExist(const char *filepath) {
  * @return		true if successful, otherwise returns false.
  */
 bool qMkdir(const char *dirpath, mode_t mode, bool recursive) {
-	printf("%s\n", dirpath);
+	DEBUG("try to create directory %s\n", dirpath);
 	if(mkdir(dirpath, mode) == 0) return true;
 
 	if(recursive == true && errno == ENOENT) {

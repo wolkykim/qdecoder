@@ -242,7 +242,7 @@ static bool _realOpen(Q_LOG *log) {
 	/* open or re-open log file */
 	if (log->fp == NULL) {
 		mode_t oldmask = umask(022);
-		log->fp = fopen(newfilepath, "a")
+		log->fp = fopen(newfilepath, "a");
 		umask(oldmask);
 		if (log->fp == NULL) {
 			DEBUG("_realOpen: Can't open log file '%s'.", newfilepath);
