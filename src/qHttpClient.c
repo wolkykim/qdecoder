@@ -49,6 +49,10 @@ static bool _close(Q_HTTPCLIENT *client);
 static void _free(Q_HTTPCLIENT *client);
 
 // internal usages
+static int _readResponse(int socket, int timeoutms);
+
+#endif
+
 #define HTTP_NO_RESPONSE			(0)
 #define HTTP_CODE_CONTINUE			(100)
 #define HTTP_CODE_OK				(200)
@@ -70,12 +74,37 @@ static void _free(Q_HTTPCLIENT *client);
 #define	HTTP_PROTOCOL_10			"HTTP/1.0"
 #define	HTTP_PROTOCOL_11			"HTTP/1.1"
 
-static int _readResponse(int socket, int timeoutms);
-
-#endif
+#define MAX_SENDING_DATA_SIZE			(32 * 1024)	/*< Maximum sending bytes, used in PUT method */
 
 /**
+ * Initialize & create new HTTP client.
  *
+ * @param hostname	remote IP or FQDN domain name
+ * @param port		remote port number
+ *
+ * @return		HTTP client object if succcessful, otherwise returns NULL.
+ *
+ * @code
+ *   // create new HTTP client
+ *   Q_HTTPCLIENT *httpClient = qHttpClient("www.qdecoder.org", 80);
+ *   if(httpClient == NULL) return;
+ *
+ *   // set options
+ *   httpClient->setKeepalive(httpClient, true);
+ *
+ *   // make a connection
+ *   if(httpClient->open(httpClient) == false) return;
+ *
+ *   // upload files
+ *   httpClient->put(httpClient, ...);
+ *   httpClient->put(httpClient, ...); // this will be done within same connection using KEEP-ALIVE
+ *
+ *   // close connection - not necessary, just for example
+ *   httpClient->close(httpClient);
+ *
+ *   // de-allocate HTTP client object
+ *   httpClient->free(httpClient);
+ * @endcode
  */
 Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 	// get remote address
@@ -100,9 +129,10 @@ Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 	client->useragent = strdup("qDecoder/" _Q_VERSION);
 
 	// member methods
-	client->open		= _open;
 	client->setKeepalive	= _setKeepalive;
 	client->setUseragent	= _setUseragent;
+
+	client->open		= _open;
 	client->put		= _put;
 	client->close		= _close;
 	client->free		= _free;
@@ -111,29 +141,50 @@ Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 }
 
 /**
- * Try to establish the connection.
+ * Q_HTTPCLIENT->setKeepalive(): Set KEEP-ALIVE feature on/off.
  *
- * @param Q_HTTPCLIENT	HTTP object pointer
+ * @param client	Q_HTTPCLIENT object pointer
+ * @param keepalive	true to set keep-alive on, false to set keep-alive off
+ *
+ * @code
+ *   httpClient->setKeepalive(httpClient, true);  // keep-alive on
+ *   httpClient->setKeepalive(httpClient, false); // keep-alive off
+ * @endcode
+ */
+static void _setKeepalive(Q_HTTPCLIENT *client, bool keepalive) {
+	client->keepalive = keepalive;
+}
+
+/**
+ * Q_HTTPCLIENT->setUseragent(): Set user-agent string.
+ *
+ * @param client	Q_HTTPCLIENT object pointer
+ * @param useragent	user-agent string
+ *
+ * @code
+ *   httpClient->setUseragent(httpClient, "qDecoderAgent/1.0");
+ * @endcode
+ */
+static void _setUseragent(Q_HTTPCLIENT *client, const char *useragent) {
+	if(client->useragent != NULL) free(client->useragent);
+	client->useragent = strdup(useragent);
+}
+
+/**
+ * Q_HTTPCLIENT->open(): Open(establish) connection to the remote host.
+ *
+ * @param client	Q_HTTPCLIENT object pointer
  * @param timeoutms	if timeoutms is greater than 0, connection timeout will be applied. (0 for default behavior)
  *
  * @return	true if successful, otherwise returns false
  *
- * @code
- *   // example for KEEP-ALIVE connection
- *   Q_HTTPCLIENT *client = qHttpClient("www.qdecoder.org", 80);
- *   if(client == NULL) return;
- *
- *   if(client->open(client) == false) return; // not necessary
- *   ...
- *   client->put(client, ...);
- *   ...
- *   client->close(client); // not necessary
- *   client->free(client);
- * @endcode
- *
  * @note
- * Don't need to open a connection explicitly, because it will make a connection automatically when it is necessary.
- * But you can still open a connection explicitily to check connection problem.
+ * Don't need to open a connection unless you definitely need to do this, because qHttpClient open a connection automatically when it's needed.
+ * This function also can be used to veryfy a connection failure with remote host.
+ *
+ * @code
+ *   if(httpClient->open(httpClient) == false) return;
+ * @endcode
  */
 static bool _open(Q_HTTPCLIENT *client, int timeoutms) {
 	if(client->socket >= 0) {
@@ -174,16 +225,76 @@ static bool _open(Q_HTTPCLIENT *client, int timeoutms) {
 	return true;
 }
 
-static void _setKeepalive(Q_HTTPCLIENT *client, bool keepalive) {
-	client->keepalive = keepalive;
-}
-
-static void _setUseragent(Q_HTTPCLIENT *client, const char *useragent) {
-	if(client->useragent != NULL) free(client->useragent);
-	client->useragent = strdup(useragent);
-}
-
-#define MAX_SENDSIZE	(32 * 1024)
+/**
+ * Q_HTTPCLIENT->put(): Upload file to remote host using PUT method.
+ *
+ * @param client	Q_HTTPCLIENT object pointer
+ * @param putpath	remote URL path for uploading file
+ * @param xheaders	Q_ENTRY pointer which contains additional user headers
+ * @param fd		opened local file descriptor
+ * @param length	send size
+ * @param timeoutms	if timeoutms is greater than 0, connection timeout will be applied. (0 for default behavior)
+ * @param retcode	if not NULL, remote response code will be stored
+ * @param callback	set user call-back function. (can be NULL)
+ * @param userdata	set user data for call-back. (can be NULL)
+ *
+ * @return	true if successful, otherwise returns false
+ *
+ * @note
+ * The call-back function will be called peridically whenever it send data as much as MAX_SENDING_DATA_SIZE.
+ * To stop uploading, return false in the call-back function, then PUT process will be stopped immediately.
+ * If a connection was not opened, it will open a connection automatically.
+ *
+ * @code
+ *   #define HTTP_TIMEOUTMS  (5000) // 5 secs
+ *
+ *   struct userdata {
+ *     ...
+ *   };
+ *
+ *   static bool callback(void *userdata, off_t sentbytes) {
+ *     struct userdata *mydata = (struct userdata*)userdata;
+ *     ...(codes)...
+ *     if(need_to_stop) return false; // stop file uploading immediately
+ *     return true;
+ *   }
+ *
+ *   main() {
+ *     // create new HTTP client
+ *     Q_HTTPCLIENT *httpClient = qHttpClient("www.qdecoder.org", 80);
+ *     if(httpClient == NULL) return;
+ *
+ *     // open file
+ *     int nFd = open(...);
+ *     off_t nFileSize = ...;
+ *     char *pFileMd5sum = ...;
+ *     time_t nFileDate = ...;
+ *
+ *     // set additional custom headers
+ *     Q_ENTRY *pXheaders = qEntry();
+ *     pXheaders->putStr(pXheaders, "X-FILE-MD5SUM", pFileMd5sum, true);
+ *     pXheaders->putInt(pXheaders, "X-FILE-DATE", nFileDate, true);
+ *
+ *     // set userdata
+ *     struct userdata mydata;
+ *     ...(codes)...
+ *
+ *     // send file
+ *     int retcode = 0;
+ *     bool retstatus = httpClient->put(httpClient, "/img/qdecoder.png", pXheaders, nFd, nFileSize, HTTP_TIMEOUTMS, &retcode, callback, (void*)&mydata);
+ *
+ *     // check results
+ *     if(retstatus == false) {
+ *       ...(error occured)...
+ *     }
+ *
+ *     // free resources
+ *     httpClient->free(httpClient);
+ *     pXheaders->free(pXheaders);
+ *     close(nFd);
+ *   }
+ * @endcode
+ */
 static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode,
 		bool (*callback)(void *userdata, off_t sentbytes), void *userdata) {
 	// reset retcode
@@ -242,8 +353,8 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, i
 	if(length > 0) {
 		while(sent < length) {
 			size_t sendsize;	// this time sending size
-			if(length - sent <= MAX_SENDSIZE) sendsize = length - sent;
-			else sendsize = MAX_SENDSIZE;
+			if(length - sent <= MAX_SENDING_DATA_SIZE) sendsize = length - sent;
+			else sendsize = MAX_SENDING_DATA_SIZE;
 
 			ssize_t ret = qFileSend(client->socket, fd, sendsize);
 			if(ret <= 0) break; // Connection closed by peer
@@ -292,11 +403,15 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, i
 }
 
 /**
- * Close the connection.
+ * Q_HTTPCLIENT->close(): Close the connection.
  *
  * @param Q_HTTPCLIENT	HTTP object pointer
  *
- * @note	A connection will be automatically closed.
+ * @return	true if successful, otherwise returns false
+ *
+ * @code
+ *   httpClient->close(httpClient);
+ * @endcode
  */
 static bool _close(Q_HTTPCLIENT *client) {
 	if(client->socket < 0) return true;
@@ -309,11 +424,16 @@ static bool _close(Q_HTTPCLIENT *client) {
 }
 
 /**
- * De-allocate object.
+ * Q_HTTPCLIENT->free(): De-allocate object.
  *
  * @param Q_HTTPCLIENT	HTTP object pointer
  *
- * @note	A connection will be automatically closed.
+ * @note
+ * If the connection was not closed, it will close the connection first prior to de-allocate object.
+ *
+ * @code
+ *   httpClient->free(httpClient);
+ * @endcode
  */
 static void _free(Q_HTTPCLIENT *client) {
 	if(client->socket >= 0) {
@@ -325,6 +445,8 @@ static void _free(Q_HTTPCLIENT *client) {
 
 	free(client);
 }
+
+#ifndef _DOXYGEN_SKIP
 
 static int _readResponse(int socket, int timeoutms) {
 	// read response
@@ -345,5 +467,7 @@ static int _readResponse(int socket, int timeoutms) {
 
 	return rescode;
 }
+
+#endif
 
 #endif /* DISABLE_SOCKET */

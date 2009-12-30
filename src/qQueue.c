@@ -122,14 +122,14 @@ static void _freeUsrmem(Q_QUEUE *queue);
  * @return		maximum number of queuing objects
  *
  * @code
- *     Q_QUEUE *queue = qQueue(100, sizeof(struct myobj));
- *     if(queue == NULL) {
- *       printf("Can't initialize queue.\n");
- *       return -1;
- *     }
+ *   Q_QUEUE *queue = qQueue(100, sizeof(struct myobj));
+ *   if(queue == NULL) {
+ *     printf("Can't initialize queue.\n");
+ *     return -1;
+ *   }
  *
- *     // free
- *     queue.free(); // this will de-allocate every thing
+ *   // free
+ *   queue.free(); // this will de-allocate every thing
  * @endcode
  */
 Q_QUEUE *qQueue(int max, size_t objsize) {
@@ -170,16 +170,16 @@ Q_QUEUE *qQueue(int max, size_t objsize) {
  * @return		maximum number of queuable objects
  *
  * @code
- *     size_t memsize = sizeof(obj) * 100;
- *     void *datamem = malloc(memsize);
- *     Q_QUEUE queue;
- *     if(qQueueUsrmem(&queue, datamem, memsize, sizeof(obj)) == 0) {
- *       printf("Can't initialize queue.\n");
- *       return -1;
- *     }
+ *   size_t memsize = sizeof(obj) * 100;
+ *   void *datamem = malloc(memsize);
+ *   Q_QUEUE queue;
+ *   if(qQueueUsrmem(&queue, datamem, memsize, sizeof(obj)) == 0) {
+ *     printf("Can't initialize queue.\n");
+ *     return -1;
+ *   }
  *
- *     // free
- *     queue.free(); // this will not de-allocate structure but de-allocate internal MUTEX if it's compiled with thread-safe feature
+ *   // free
+ *   queue.free(); // this will not de-allocate structure but de-allocate internal MUTEX if it's compiled with thread-safe feature
  * @endcode
  *
  * @note

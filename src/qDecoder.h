@@ -367,9 +367,10 @@ struct _Q_HTTPCLIENT {
 	char*		useragent;		/*< user-agent name */
 
 	/* public member methods */
-	bool		(*open)			(Q_HTTPCLIENT *client, int timeoutms);
 	void		(*setKeepalive)		(Q_HTTPCLIENT *client, bool keepalive);
 	void		(*setUseragent)		(Q_HTTPCLIENT *client, const char *useragent);
+
+	bool		(*open)			(Q_HTTPCLIENT *client, int timeoutms);
 	bool		(*put)			(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
 	bool		(*close)		(Q_HTTPCLIENT *client);
 	void		(*free)			(Q_HTTPCLIENT *client);
