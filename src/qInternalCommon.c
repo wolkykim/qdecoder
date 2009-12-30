@@ -34,6 +34,21 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
+// exit with failure status
+void _q_die(const char *errstr) {
+	fprintf(stderr, "%s\n", errstr);
+	exit(EXIT_FAILURE);
+}
+
+// exit when allocation is failed
+void *_q_malloc(size_t size) {
+	void *mem = malloc(size);
+	if(mem == NULL) {
+		_q_die("malloc");
+	}
+	return mem;
+}
+
 // Change two hex character to one hex value.
 char _q_x2c(char hex_up, char hex_low) {
 	char digit;
@@ -98,7 +113,7 @@ ssize_t _q_write(int fd, const void *buf, size_t nbytes) {
 	return -1;
 }
 
-ssize_t _q_writef(int fd, char *format, ...) {
+ssize_t _q_writef(int fd, const char *format, ...) {
 	char *buf;
 	DYNAMIC_VSPRINTF(buf, format);
 	if(buf == NULL) return -1;

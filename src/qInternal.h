@@ -148,10 +148,12 @@ do {											\
 /*
  * qInternalCommon.c
  */
+extern	void	_q_die(const char *errstr);
+extern	void*	_q_malloc(size_t size);
 extern	char	_q_x2c(char hex_up, char hex_low);
 extern	char*	_q_makeword(char *str, char stop);
 extern	char*	_q_fgets(char *str, int size, FILE *stream);
-extern	ssize_t	_q_writef(int fd, char *format, ...);
+extern	ssize_t	_q_writef(int fd, const char *format, ...);
 extern	ssize_t	_q_write(int fd, const void *buf, size_t nbytes);
 extern	int	_q_unlink(const char *pathname);
 
