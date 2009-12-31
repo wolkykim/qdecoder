@@ -546,7 +546,7 @@ extern	char*		qFileGetExt(const char *filepath);
 extern	off_t		qFileGetSize(const char *filepath);
 
 extern	bool		qFileCheckPath(const char *path);
-extern	void		qFileCorrectPath(char *path);
+extern	char*		qFileCorrectPath(char *path);
 extern	char*		qFileGetAbsPath(char *buf, size_t bufsize, const char *path);
 
 /*

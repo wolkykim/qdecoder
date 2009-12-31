@@ -462,7 +462,7 @@ off_t qFileGetSize(const char *filepath) {
  *
  * @param path		path string
  *
- * @return		true if ok, otherwise returns false.
+ * @return		path string pointer
  *
  * @note
  * This modify path argument itself.
@@ -473,7 +473,9 @@ off_t qFileGetSize(const char *filepath) {
  *   "/../hello//world" => "/hello/world"
  * @endcode
  */
-void qFileCorrectPath(char *path) {
+char *qFileCorrectPath(char *path) {
+	if(path == NULL) return NULL;
+
 	// take off heading & tailing white spaces
 	qStrTrim(path);
 
@@ -543,6 +545,8 @@ void qFileCorrectPath(char *path) {
 
 		break;
 	}
+
+	return path;
 }
 
 /**
