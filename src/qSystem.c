@@ -31,7 +31,20 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "qDecoder.h"
+
+/**
+ * Get the version string of qDecoder library
+ *
+ * @return		a pointer of version string
+ */
+const char *qDecoderVersion(void) {
+	return _Q_VERSION;
+}
 
 /**
  * Get system environment variable
@@ -67,10 +80,19 @@ char *qSysCmd(const char *cmd) {
 }
 
 /**
- * Get the version string of qDecoder library
+ * Get system IP address string.
  *
- * @return		a pointer of version string
+ * @return		malloced string pointer which contains IP address string if successful, otherwise returns NULL
  */
-const char *qDecoderVersion(void) {
-	return _Q_VERSION;
+char *qSysGetIp(void) {
+	char szHostname[63+1];
+	if(gethostname(szHostname, sizeof(szHostname)) != 0) return NULL;
+
+	struct hostent *pHostEntry = gethostbyname(szHostname);
+	if(pHostEntry == NULL) return NULL;
+
+	char *pszLocalIp = inet_ntoa(*(struct in_addr *)*pHostEntry->h_addr_list);
+	free(pHostEntry);
+	if(pszLocalIp == NULL) return NULL;
+	return strdup(pszLocalIp);
 }

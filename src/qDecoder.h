@@ -591,9 +591,10 @@ extern	time_t		qTimeParseGmtStr(const char *gmtstr);
 /*
  * qSystem.c
  */
+extern	const char*	qDecoderVersion(void);
 extern	const char*	qSysGetEnv(const char *envname, const char *nullstr);
 extern	char*		qSysCmd(const char *cmd);
-extern	const char*	qDecoderVersion(void);
+extern	char*		qSysGetIp(void);
 
 #ifdef __cplusplus
 }
