@@ -44,12 +44,12 @@ static bool _open(Q_HTTPCLIENT *client);
 static void _setTimeout(Q_HTTPCLIENT *client, int timeoutms);
 static void _setKeepalive(Q_HTTPCLIENT *client, bool keepalive);
 static void _setUseragent(Q_HTTPCLIENT *client, const char *agentname);
-static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length, int *rescode,
-		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
-		bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
 static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *savesize, int *rescode,
 		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
 		bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
+static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length, int *rescode,
+		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
+		bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
 static bool _close(Q_HTTPCLIENT *client);
 static void _free(Q_HTTPCLIENT *client);
 
@@ -251,13 +251,187 @@ static bool _open(Q_HTTPCLIENT *client) {
 }
 
 /**
+ * Q_HTTPCLIENT->get(): Download file from remote host using GET method.
+ *
+ * @param client	Q_HTTPCLIENT object pointer.
+ * @param getpath	remote URL path for downloading file.
+ * @param fd		opened file descriptor for writing.
+ * @param savesize	if not NULL, the length of stored bytes will be stored. (can be NULL)
+ * @param rescode	if not NULL, remote response code will be stored. (can be NULL)
+ * @param reqheaders	Q_ENTRY pointer which contains additional user request headers. (can be NULL)
+ * @param resheaders	Q_ENTRY pointer for storing response headers. (can be NULL)
+ * @param callback	set user call-back function. (can be NULL)
+ * @param userdata	set user data for call-back. (can be NULL)
+ *
+ * @return	true if successful, otherwise returns false
+ *
+ * @note
+ * The call-back function will be called peridically whenever it send data as much as MAX_ATOMIC_DATA_SIZE.
+ * To stop uploading, return false in the call-back function, then PUT process will be stopped immediately.
+ * If a connection was not opened, it will open a connection automatically.
+ *
+ * @code
+ *   struct userdata {
+ *     ...
+ *   };
+ *
+ *   static bool callback(void *userdata, off_t sentbytes) {
+ *     struct userdata *mydata = (struct userdata*)userdata;
+ *     ...(codes)...
+ *     if(need_to_stop) return false; // stop file uploading immediately
+ *     return true;
+ *   }
+ *
+ *   main() {
+ *     // create new HTTP client
+ *     Q_HTTPCLIENT *httpClient = qHttpClient("www.qdecoder.org", 80);
+ *     if(httpClient == NULL) return;
+ *
+ *     // open file
+ *     int nFd = open("/tmp/test.data", O_WRONLY | O_CREAT, 0644);
+ *
+ *     // set additional custom headers
+ *     Q_ENTRY *pReqHeaders = qEntry();
+ *     Q_ENTRY *pResHeaders = qEntry();
+ *
+ *     // set userdata
+ *     struct userdata mydata;
+ *     ...(codes)...
+ *
+ *     // send file
+ *     int nRescode = 0;
+ *     off_t nSavesize = 0;
+ *     bool bRet = httpClient->get(httpClient, "/img/qdecoder.png", nFd, &nSavesize, &nRescode,
+ *                                 pReqHeaders, pResHeaders,
+ *                                 callback, (void*)&mydata);
+ *     // to print out request, response headers
+ *     pReqHeaders->print(pReqHeaders, stdout, true);
+ *     pResHeaders->print(pResHeaders, stdout, true);
+ *
+ *     // check results
+ *     if(bRet == false) {
+ *       ...(error occured)...
+ *     }
+ *
+ *     // free resources
+ *     httpClient->free(httpClient);
+ *     pReqHeaders->free(pReqHeaders);
+ *     pResHeaders->free(pResHeaders);
+ *     close(nFd);
+ *   }
+ * @endcode
+ */
+static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *savesize, int *rescode,
+		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
+		bool (*callback)(void *userdata, off_t recvbytes), void *userdata) {
+
+	// reset rescode
+	if(rescode != NULL) *rescode = 0;
+	if(savesize != NULL) *savesize = 0;
+
+	// get or open connection
+	if(_open(client) == false) {
+		return false;
+	}
+
+	// generate request headers if necessary
+	bool freeReqHeaders = false;
+	if(reqheaders == NULL) {
+		reqheaders = qEntry();
+		freeReqHeaders = true;
+	}
+
+	reqheaders->putStrf(reqheaders, "Host", true,		"%s:%d", client->hostname, client->port);
+	reqheaders->putStr(reqheaders,	"User-Agent",		client->useragent, true);
+	reqheaders->putStr(reqheaders,  "Accept",		"*/*", true);
+	reqheaders->putStr(reqheaders,  "Connection",		(client->keepalive==true)?"Keep-Alive":"close", true);
+	//reqheaders->putStr(reqheaders,  "Date",			qTimeGetGmtStaticStr(0), true);
+
+	// send request
+	_sendRequest(client, "GET", getpath, reqheaders);
+	if(freeReqHeaders == true) reqheaders->free(reqheaders);
+
+	// generate response headers if necessary
+	bool freeResHeaders = false;
+	if(resheaders == NULL) {
+		resheaders = qEntry();
+		freeResHeaders = true;
+	}
+
+	// read response
+	int resno = _readResponse(client, resheaders);
+	if(rescode != NULL) *rescode = resno;
+
+	// parse contents-length
+	const char *clen_header = resheaders->getStrCase(resheaders, "Content-Length", false);
+	off_t length = 0;
+	if(clen_header != NULL) length = atoll(clen_header);
+
+	if(freeResHeaders == true) resheaders->free(resheaders);
+
+	// check response code
+	if(resno != HTTP_CODE_OK) {
+		_close(client);
+		if(freeResHeaders == true) resheaders->free(resheaders);
+		return false;
+	}
+
+	// retrieve data
+	off_t recv = 0;
+	if(callback != NULL) {
+		if(callback(userdata, recv) == false) {
+			_close(client);
+			return false;
+		}
+	}
+	if(length > 0) {
+		while(recv < length) {
+			size_t recvsize;	// this time receive size
+			if(length - recv < MAX_ATOMIC_DATA_SIZE) recvsize = length - recv;
+			else recvsize = MAX_ATOMIC_DATA_SIZE;
+
+			ssize_t ret = qFileSend(fd, client->socket, recvsize);
+			if(ret <= 0) break; // Connection closed by peer
+			recv += ret;
+			if(savesize != NULL) *savesize = recv;
+
+			if(callback != NULL) {
+				if(callback(userdata, recv) == false) {
+					_close(client);
+					return false;
+				}
+			}
+		}
+
+		if(recv != length) {
+			_close(client);
+			return false;
+		}
+
+		if(callback != NULL) {
+			if(callback(userdata, recv) == false) {
+				_close(client);
+				return false;
+			}
+		}
+	}
+
+	// close connection
+	if(client->keepalive == false) {
+		_close(client);
+	}
+
+	return true;
+}
+
+/**
  * Q_HTTPCLIENT->put(): Upload file to remote host using PUT method.
  *
  * @param client	Q_HTTPCLIENT object pointer.
  * @param putpath	remote URL path for uploading file.
- * @param fd		opened local file descriptor.
+ * @param fd		opened file descriptor for reading.
  * @param length	send size.
- * @param rescode	if not NULL, remote response code will be stored.
+ * @param rescode	if not NULL, remote response code will be stored. (can be NULL)
  * @param reqheaders	Q_ENTRY pointer which contains additional user request headers. (can be NULL)
  * @param resheaders	Q_ENTRY pointer for storing response headers. (can be NULL)
  * @param callback	set user call-back function. (can be NULL)
@@ -303,9 +477,9 @@ static bool _open(Q_HTTPCLIENT *client) {
  *     ...(codes)...
  *
  *     // send file
- *     int rescode = 0;
+ *     int nRescode = 0;
  *     Q_ENTRY *pResHeaders = qEntry();
- *     bool retstatus = httpClient->put(httpClient, "/img/qdecoder.png", nFd, nFileSize, &rescode,
+ *     bool bRet = httpClient->put(httpClient, "/img/qdecoder.png", nFd, nFileSize, &nRescode,
  *                                      pReqHeaders, pResHeaders,
  *                                      callback, (void*)&mydata);
  *     // to print out request, response headers
@@ -313,7 +487,7 @@ static bool _open(Q_HTTPCLIENT *client) {
  *     pResHeaders->print(pResHeaders, stdout, true);
  *
  *     // check results
- *     if(retstatus == false) {
+ *     if(bRet == false) {
  *       ...(error occured)...
  *     }
  *
@@ -421,109 +595,6 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length
 	if(resno != HTTP_CODE_CREATED) {
 		_close(client);
 		return false;
-	}
-
-	// close connection
-	if(client->keepalive == false) {
-		_close(client);
-	}
-
-	return true;
-}
-
-static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *savesize, int *rescode,
-		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
-		bool (*callback)(void *userdata, off_t recvbytes), void *userdata) {
-
-	// reset rescode
-	if(rescode != NULL) *rescode = 0;
-	if(savesize != NULL) *savesize = 0;
-
-	// get or open connection
-	if(_open(client) == false) {
-		return false;
-	}
-
-	// generate request headers if necessary
-	bool freeReqHeaders = false;
-	if(reqheaders == NULL) {
-		reqheaders = qEntry();
-		freeReqHeaders = true;
-	}
-
-	reqheaders->putStrf(reqheaders, "Host", true,		"%s:%d", client->hostname, client->port);
-	reqheaders->putStr(reqheaders,	"User-Agent",		client->useragent, true);
-	reqheaders->putStr(reqheaders,  "Accept",		"*/*", true);
-	reqheaders->putStr(reqheaders,  "Connection",		(client->keepalive==true)?"Keep-Alive":"close", true);
-	//reqheaders->putStr(reqheaders,  "Date",			qTimeGetGmtStaticStr(0), true);
-
-	// send request
-	_sendRequest(client, "GET", getpath, reqheaders);
-	if(freeReqHeaders == true) reqheaders->free(reqheaders);
-
-	// generate response headers if necessary
-	bool freeResHeaders = false;
-	if(resheaders == NULL) {
-		resheaders = qEntry();
-		freeResHeaders = true;
-	}
-
-	// read response
-	int resno = _readResponse(client, resheaders);
-	if(rescode != NULL) *rescode = resno;
-
-	// parse contents-length
-	const char *clen_header = resheaders->getStrCase(resheaders, "Content-Length", false);
-	off_t length = 0;
-	if(clen_header != NULL) length = atoll(clen_header);
-
-	if(freeResHeaders == true) resheaders->free(resheaders);
-
-	// check response code
-	if(resno != HTTP_CODE_OK) {
-		_close(client);
-		if(freeResHeaders == true) resheaders->free(resheaders);
-		return false;
-	}
-
-	// retrieve data
-	off_t recv = 0;
-	if(callback != NULL) {
-		if(callback(userdata, recv) == false) {
-			_close(client);
-			return false;
-		}
-	}
-	if(length > 0) {
-		while(recv < length) {
-			size_t recvsize;	// this time receive size
-			if(length - recv < MAX_ATOMIC_DATA_SIZE) recvsize = length - recv;
-			else recvsize = MAX_ATOMIC_DATA_SIZE;
-
-			ssize_t ret = qFileSend(fd, client->socket, recvsize);
-			if(ret <= 0) break; // Connection closed by peer
-			recv += ret;
-			if(savesize != NULL) *savesize = recv;
-
-			if(callback != NULL) {
-				if(callback(userdata, recv) == false) {
-					_close(client);
-					return false;
-				}
-			}
-		}
-
-		if(recv != length) {
-			_close(client);
-			return false;
-		}
-
-		if(callback != NULL) {
-			if(callback(userdata, recv) == false) {
-				_close(client);
-				return false;
-			}
-		}
 	}
 
 	// close connection

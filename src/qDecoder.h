@@ -376,8 +376,8 @@ struct _Q_HTTPCLIENT {
 	void		(*setUseragent)		(Q_HTTPCLIENT *client, const char *useragent);
 
 	bool		(*open)			(Q_HTTPCLIENT *client);
-	bool		(*put)			(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length, int *retcode, Q_ENTRY *userheaders, Q_ENTRY *resheaders, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
 	bool		(*get)			(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *savesize, int *rescode, Q_ENTRY *reqheaders, Q_ENTRY *resheaders, bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
+	bool		(*put)			(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length, int *retcode, Q_ENTRY *userheaders, Q_ENTRY *resheaders, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
 	bool		(*close)		(Q_HTTPCLIENT *client);
 	void		(*free)			(Q_HTTPCLIENT *client);
 };
