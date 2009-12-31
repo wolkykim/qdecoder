@@ -533,16 +533,21 @@ extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const 
 extern	bool		qFileLock(int fd);
 extern	bool		qFileUnlock(int fd);
 extern	bool		qFileExist(const char *filepath);
-extern	bool		qMkdir(const char *dirpath, mode_t mode, bool recursive);
-extern	char*		qFileGetName(const char *filepath);
-extern	char*		qFileGetDir(const char *filepath);
-extern	char*		qFileGetExt(const char *filepath);
-extern	off_t		qFileGetSize(const char *filepath);
 extern	off_t		qFileSend(int outfd, int infd, off_t nbytes);
 extern	void*		qFileLoad(const char *filepath, size_t *nbytes);
 extern	void*		qFileRead(FILE *fp, size_t *nbytes);
 extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bool append);
 extern	char*		qFileReadLine(FILE *fp);
+extern	bool		qFileMkdir(const char *dirpath, mode_t mode, bool recursive);
+
+extern	char*		qFileGetName(const char *filepath);
+extern	char*		qFileGetDir(const char *filepath);
+extern	char*		qFileGetExt(const char *filepath);
+extern	off_t		qFileGetSize(const char *filepath);
+
+extern	bool		qFileCheckPath(const char *path);
+extern	void		qFileCorrectPath(char *path);
+extern	char*		qFileGetAbsPath(char *buf, size_t bufsize, const char *path);
 
 /*
  * qEncode.c

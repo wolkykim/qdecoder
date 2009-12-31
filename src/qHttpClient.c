@@ -401,7 +401,113 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, i
 
 	return true;
 }
+/*
+static bool _get(Q_HTTPCLIENT *client, const char *getpath, Q_ENTRY *resheaders, int fd, int timeoutms, int *retcode,
+		bool (*callback)(void *userdata, off_t sentbytes), void *userdata) {
+	// reset retcode
+	if(retcode != NULL) *retcode = 0;
 
+	// get or open connection
+	if(_open(client, timeoutms) == false) {
+		return false;
+	}
+
+	// print out headers
+	qSocketPrintf(client->socket, "GET %s %s\r\n", getpath, (client->keepalive==true)?HTTP_PROTOCOL_11:HTTP_PROTOCOL_10);
+
+	qSocketPrintf(client->socket, "Host: %s:%d\r\n", client->hostname, client->port);
+	qSocketPrintf(client->socket, "Content-Length: %jd\r\n", length);
+	qSocketPrintf(client->socket, "User-Agent: %s\r\n", client->useragent);
+	qSocketPrintf(client->socket, "Connection: %s\r\n", (client->keepalive==true)?"Keep-Alive":"close");
+	qSocketPrintf(client->socket, "Date: %s\r\n", qTimeGetGmtStaticStr(0));
+
+	// print out custom headers
+	if(xheaders != NULL) {
+		Q_NLOBJ_T obj;
+		memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
+		xheaders->lock(xheaders);
+		while(xheaders->getNext(xheaders, &obj, NULL, false) == true) {
+			qSocketPrintf(client->socket, "%s: %s\r\n", obj.name, (char*)obj.data);
+		}
+		xheaders->unlock(xheaders);
+	}
+
+	qSocketPrintf(client->socket, "\r\n");
+
+	// wait 100-continue
+	if(qSocketWaitReadable(client->socket, timeoutms) <= 0) {
+		_close(client);
+		return false;
+	}
+
+	// read response
+	int rescode = _readResponse(client->socket, timeoutms);
+	if(rescode != HTTP_CODE_CONTINUE) {
+		if(retcode != NULL) *retcode = rescode;
+		_close(client);
+		return false;
+	}
+
+	// send data
+	off_t sent = 0;
+	if(callback != NULL) {
+		if(callback(userdata, sent) == false) {
+			_close(client);
+			return false;
+		}
+	}
+	if(length > 0) {
+		while(sent < length) {
+			size_t sendsize;	// this time sending size
+			if(length - sent <= MAX_SENDING_DATA_SIZE) sendsize = length - sent;
+			else sendsize = MAX_SENDING_DATA_SIZE;
+
+			ssize_t ret = qFileSend(client->socket, fd, sendsize);
+			if(ret <= 0) break; // Connection closed by peer
+			sent += ret;
+
+			if(callback != NULL) {
+				if(callback(userdata, sent) == false) {
+					_close(client);
+					return false;
+				}
+			}
+		}
+
+		if(sent != length) {
+			_close(client);
+			return false;
+		}
+
+		if(callback != NULL) {
+			if(callback(userdata, sent) == false) {
+				_close(client);
+				return false;
+			}
+		}
+	}
+
+	// read response
+	rescode = _readResponse(client->socket, timeoutms);
+	if(rescode == HTTP_NO_RESPONSE) {
+			_close(client);
+			return false;
+	}
+	if(retcode != NULL) *retcode = rescode;
+
+	if(rescode != HTTP_CODE_CREATED) {
+		_close(client);
+		return false;
+	}
+
+	// close connection
+	if(client->keepalive == false) {
+		_close(client);
+	}
+
+	return true;
+}
+*/
 /**
  * Q_HTTPCLIENT->close(): Close the connection.
  *
@@ -462,6 +568,7 @@ static int _readResponse(int socket, int timeoutms) {
 
 	// read header until CRLF
 	while(qSocketGets(buf, sizeof(buf),socket, timeoutms) > 0) {
+		DEBUG("%s", buf);
 		if(strlen(buf) == 0) break;
 	}
 

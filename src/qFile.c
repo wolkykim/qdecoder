@@ -103,98 +103,6 @@ bool qFileExist(const char *filepath) {
 }
 
 /**
- * Attempts to create a directory recursively.
- *
- * @param dirpath	directory path
- * @param mode		permissions to use
- * @param recursive	whether or not to create parent directories automatically
- *
- * @return		true if successful, otherwise returns false.
- */
-bool qMkdir(const char *dirpath, mode_t mode, bool recursive) {
-	DEBUG("try to create directory %s\n", dirpath);
-	if(mkdir(dirpath, mode) == 0) return true;
-
-	if(recursive == true && errno == ENOENT) {
-		char *parentpath = qFileGetDir(dirpath);
-		if(qMkdir(parentpath, mode, recursive) == true
-		&& qMkdir(dirpath, mode, recursive) == true) {
-			free(parentpath);
-			return true;
-		}
-		free(parentpath);
-	}
-
-	return false;
-}
-
-/**
- * Get filename from filepath
- *
- * @param filepath	file or directory path
- *
- * @return		malloced filename string
- */
-char *qFileGetName(const char *filepath) {
-	char *path = strdup(filepath);
-	char *bname = basename(path);
-	char *filename = strdup(bname);
-	free(path);
-	return filename;
-}
-
-/**
- * Get directory suffix from filepath
- *
- * @param filepath	file or directory path
- *
- * @return		malloced filepath string
- */
-char *qFileGetDir(const char *filepath) {
-	char *path = strdup(filepath);
-	char *dname = dirname(path);
-	char *dir = strdup(dname);
-	free(path);
-	return dir;
-}
-
-/**
- * Get extension from filepath.
- *
- * @param filepath	file or directory path
- *
- * @return		malloced extension string which is converted to lower case.
- */
-char *qFileGetExt(const char *filepath) {
-#define MAX_EXTENSION_LENGTH		(5)
-	char *filename = qFileGetName(filepath);
-	char *p = strrchr(filename, '.');
-	char *ext = NULL;
-	if(p != NULL && strlen(p+1) <= MAX_EXTENSION_LENGTH && qStrIsAlnum(p+1) == true) {
-		ext = strdup(p+1);
-		qStrLower(ext);
-	} else {
-		ext = strdup("");
-	}
-
-	free(filename);
-	return ext;
-}
-
-/**
- * Get file size.
- *
- * @param filepath	file or directory path
- *
- * @return		the file size if exists, otherwise returns -1.
- */
-off_t qFileGetSize(const char *filepath) {
-	struct stat finfo;
-	if (stat(filepath, &finfo) < 0) return -1;
-	return finfo.st_size;
-}
-
-/**
  * Transfer data between file descriptors
  *
  * @param outfd		output file descriptor
@@ -311,8 +219,7 @@ void *qFileLoad(const char *filepath, size_t *nbytes) {
  * @return		allocated memory pointer if successful, otherwise returns NULL.
  *
  * @note
- * This method append NULL character at the end of stream. but nbytes only counts
- * actual readed bytes.
+ * This method append NULL character at the end of stream. but nbytes only counts actual readed bytes.
  */
 void *qFileRead(FILE *fp, size_t *nbytes) {
 	size_t memsize = 1024;
@@ -361,11 +268,47 @@ void *qFileRead(FILE *fp, size_t *nbytes) {
 }
 
 /**
- * Read string. Same as fgets but can be used for unlimited string line.
+ * Save data into file.
+ *
+ * @param filepath	file path
+ * @param buf		data
+ * @param size		the number of bytes to save
+ * @param append	false for new(if exists truncate), true for appending
+ *
+ * @return		the number of bytes written if successful, otherwise returns -1.
+ *
+ * @code
+ *   // save text
+ *   char *text = "hello";
+ *   qFileSave("/tmp/text.txt", (void*)text, strlen(text), false);
+ *
+ *   // save binary
+ *   int integer1 = 75;
+ *   qFileSave("/tmp/integer.bin, (void*)&integer, sizeof(int));
+ * @endcode
+ */
+ssize_t qFileSave(const char *filepath, const void *buf, size_t size, bool append) {
+	int fd;
+
+	if(append == false) fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
+	else fd = open(filepath, O_CREAT|O_WRONLY|O_APPEND, DEF_FILE_MODE);
+	if(fd < 0) return -1;
+
+	ssize_t count = write(fd, buf, size);
+	close(fd);
+
+	return count;
+}
+
+/**
+ * Read one line from file.
  *
  * @param fp		FILE pointer
  *
  * @return		allocated memory pointer if successful, otherwise returns NULL.
+ *
+ * @note
+ * Basically it's same as fgets() but can read line without length limitation.
  */
 char *qFileReadLine(FILE *fp) {
 	int memsize;
@@ -406,34 +349,231 @@ char *qFileReadLine(FILE *fp) {
 }
 
 /**
- * Save to file.
+ * Attempts to create a directory recursively.
  *
- * @param filepath	file path
- * @param buf		data
- * @param size		the number of bytes to save
- * @param append	false for new(if exists truncate), true for appending
+ * @param dirpath	directory path
+ * @param mode		permissions to use
+ * @param recursive	whether or not to create parent directories automatically
  *
- * @return		the number of bytes written if successful, otherwise returns -1.
+ * @return		true if successful, otherwise returns false.
+ */
+bool qFileMkdir(const char *dirpath, mode_t mode, bool recursive) {
+	DEBUG("try to create directory %s\n", dirpath);
+	if(mkdir(dirpath, mode) == 0) return true;
+
+	if(recursive == true && errno == ENOENT) {
+		char *parentpath = qFileGetDir(dirpath);
+		if(qFileMkdir(parentpath, mode, recursive) == true
+		&& qFileMkdir(dirpath, mode, recursive) == true) {
+			free(parentpath);
+			return true;
+		}
+		free(parentpath);
+	}
+
+	return false;
+}
+
+/**
+ * Check path string contains invalid characters.
+ *
+ * @param path		path string
+ *
+ * @return		true if ok, otherwise returns false.
+ */
+ bool qFileCheckPath(const char *path) {
+	if(path == NULL) return false;
+
+	int nLen = strlen(path);
+	if(nLen == 0 || nLen >= PATH_MAX) return false;
+	else if(strpbrk(path, "\\:*?\"<>|") != NULL) return false;
+	return true;
+}
+
+
+/**
+ * Get filename from filepath
+ *
+ * @param filepath	file or directory path
+ *
+ * @return		malloced filename string
+ */
+char *qFileGetName(const char *filepath) {
+	char *path = strdup(filepath);
+	char *bname = basename(path);
+	char *filename = strdup(bname);
+	free(path);
+	return filename;
+}
+
+/**
+ * Get directory suffix from filepath
+ *
+ * @param filepath	file or directory path
+ *
+ * @return		malloced filepath string
+ */
+char *qFileGetDir(const char *filepath) {
+	char *path = strdup(filepath);
+	char *dname = dirname(path);
+	char *dir = strdup(dname);
+	free(path);
+	return dir;
+}
+
+/**
+ * Get extension from filepath.
+ *
+ * @param filepath	file or directory path
+ *
+ * @return		malloced extension string which is converted to lower case.
+ */
+char *qFileGetExt(const char *filepath) {
+#define MAX_EXTENSION_LENGTH		(5)
+	char *filename = qFileGetName(filepath);
+	char *p = strrchr(filename, '.');
+	char *ext = NULL;
+	if(p != NULL && strlen(p+1) <= MAX_EXTENSION_LENGTH && qStrIsAlnum(p+1) == true) {
+		ext = strdup(p+1);
+		qStrLower(ext);
+	} else {
+		ext = strdup("");
+	}
+
+	free(filename);
+	return ext;
+}
+
+/**
+ * Get file size.
+ *
+ * @param filepath	file or directory path
+ *
+ * @return		the file size if exists, otherwise returns -1.
+ */
+off_t qFileGetSize(const char *filepath) {
+	struct stat finfo;
+	if (stat(filepath, &finfo) < 0) return -1;
+	return finfo.st_size;
+}
+
+/**
+ * Correct path string.
+ *
+ * @param path		path string
+ *
+ * @return		true if ok, otherwise returns false.
+ *
+ * @note
+ * This modify path argument itself.
  *
  * @code
- *   // save text
- *   char *text = "hello";
- *   qFileSave("/tmp/text.txt", (void*)text, strlen(text), false);
- *
- *   // save binary
- *   int integer1 = 75;
- *   qFileSave("/tmp/integer.bin, (void*)&integer, sizeof(int));
+ *   "/hello//my/../world" => "/hello/world"
+ *   "././././hello/./world" => "./hello/world"
+ *   "/../hello//world" => "/hello/world"
  * @endcode
  */
-ssize_t qFileSave(const char *filepath, const void *buf, size_t size, bool append) {
-	int fd;
+void qFileCorrectPath(char *path) {
+	// take off heading & tailing white spaces
+	qStrTrim(path);
 
-	if(append == false) fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
-	else fd = open(filepath, O_CREAT|O_WRONLY|O_APPEND, DEF_FILE_MODE);
-	if(fd < 0) return -1;
+	while(true) {
+		// take off double slashes
+		if(strstr(path, "//") != NULL) {
+			qStrReplace("sr", path, "//", "/");
+			continue;
+		}
 
-	ssize_t count = write(fd, buf, size);
-	close(fd);
+		if(strstr(path, "/./") != NULL) {
+			qStrReplace("sr", path, "/./", "/");
+			continue;
+		}
 
-	return count;
+		if(strstr(path, "/../") != NULL) {
+			char *pszTmp = strstr(path, "/../");
+			if(pszTmp == path) {
+				// /../hello => /hello
+				strcpy(path, pszTmp + 3);
+			} else {
+				// /hello/../world => /world
+				*pszTmp = '\0';
+				char *pszNewPrefix = qFileGetDir(path);
+				strcpy(path, pszNewPrefix);
+				strcat(path, pszTmp + 3);
+				free(pszNewPrefix);
+			}
+			continue;
+		}
+
+		// take off tailing slash
+		size_t nLen = strlen(path);
+		if(nLen > 1) {
+			if(path[nLen - 1] == '/') {
+				path[nLen - 1] = '\0';
+				continue;
+			}
+		}
+
+		// take off tailing /.
+		if(nLen > 2) {
+			if(!strcmp(path + (nLen - 2), "/.")) {
+				path[nLen - 2] = '\0';
+				continue;
+			}
+		}
+
+		// take off tailing /.
+		if(nLen > 2) {
+			if(!strcmp(path + (nLen - 2), "/.")) {
+				path[nLen - 2] = '\0';
+				continue;
+			}
+		}
+
+		// take off tailing /.
+		if(nLen > 3) {
+			if(!strcmp(path + (nLen - 3), "/..")) {
+				path[nLen - 3] = '\0';
+				char *pszNewPath = qFileGetDir(path);
+				strcpy(path, pszNewPath);
+				free(pszNewPath);
+				continue;
+			}
+		}
+
+		break;
+	}
+}
+
+/**
+ * Make full absolute system path string.
+ *
+ * @param buf		buffer string pointer
+ * @param bufsize	buffer size
+ * @param path		path string
+ *
+ * @return		buffer pointer if successful, otherwise returns NULL.
+ *
+ * @code
+ *   char buf[PATH_MAX];
+ *   chdir("/usr/local");
+ *   qFileGetAbsPathFullPathGetAbs(buf, sizeof(buf), ".");    // returns "/usr/local"
+ *   qFileGetAbsPathFullPathGetAbs(buf, sizeof(buf), "..");   // returns "/usr"
+ *   qFileGetAbsPathFullPathGetAbs(buf, sizeof(buf), "etc");  // returns "/usr/local/etc"
+ *   qFileGetAbsPathFullPathGetAbs(buf, sizeof(buf), "/etc"); // returns "/etc"
+ * @endcode
+ */
+char *qFileGetAbsPath(char *buf, size_t bufsize, const char *path) {
+	if(bufsize == 0) return NULL;
+
+	if(path[0] == '/') {
+		qStrCpy(buf, bufsize, path);
+	} else {
+		if(getcwd(buf, bufsize) == NULL) return NULL;
+		strcat(buf, "/");
+		strcat(buf, path);
+	}
+	qFileCorrectPath(buf);
+
+	return buf;
 }
