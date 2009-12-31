@@ -81,6 +81,7 @@ static	void		_unlock(Q_ENTRY *entry);
 
 static bool		_put(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace);
 static bool		_putStr(Q_ENTRY *entry, const char *name, const char *str, bool replace);
+static bool		_putStrf(Q_ENTRY *entry, const char *name, bool replace, const char *format, ...);
 static bool		_putStrParsed(Q_ENTRY *entry, const char *name, const char *str, bool replace);
 static bool		_putInt(Q_ENTRY *entry, const char *name, int num, bool replace);
 
@@ -102,6 +103,7 @@ static int		_getNo(Q_ENTRY *entry, const char *name);
 static char*		_parseStr(Q_ENTRY *entry, const char *str);
 static void*		_merge(Q_ENTRY *entry, size_t *size);
 
+static bool		_truncate(Q_ENTRY *entry);
 static bool		_save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode);
 static int		_load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode);
 static bool		_reverse(Q_ENTRY *entry);
@@ -131,6 +133,7 @@ Q_ENTRY *qEntry(void) {
 
 	entry->put		= _put;
 	entry->putStr		= _putStr;
+	entry->putStrf		= _putStrf;
 	entry->putStrParsed	= _putStrParsed;
 	entry->putInt		= _putInt;
 
@@ -154,6 +157,7 @@ Q_ENTRY *qEntry(void) {
 	entry->parseStr		= _parseStr;
 	entry->merge		= _merge;
 
+	entry->truncate		= _truncate;
 	entry->save		= _save;
 	entry->load		= _load;
 	entry->reverse		= _reverse;
@@ -256,6 +260,23 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size
 static bool _putStr(Q_ENTRY *entry, const char *name, const char *str, bool replace) {
 	size_t size = (str!=NULL) ? (strlen(str) + 1) : 0;
 	return _put(entry, name, (const void *)str, size, replace);
+}
+
+/**
+ * Q_ENTRY->putStrf(): Add formatted string object into linked-list structure.
+ *
+ * @param entry		Q_ENTRY pointer
+ * @param name		key name.
+ * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param format	formatted value string
+ *
+ * @return		true if successful, otherwise returns false.
+ */
+static bool _putStrf(Q_ENTRY *entry, const char *name, bool replace, const char *format, ...) {
+	char *str;
+	DYNAMIC_VSPRINTF(str, format);
+
+	return _putStr(entry, name, str, replace);
 }
 
 /**
@@ -830,6 +851,35 @@ static void *_merge(Q_ENTRY *entry, size_t *size) {
 }
 
 /**
+ * Q_ENTRY->truncate(): Truncate Q_ENTRY
+ *
+ * @param entry		Q_ENTRY pointer
+ *
+ * @return		always returns true.
+ */
+static bool _truncate(Q_ENTRY *entry) {
+	if(entry == NULL) return false;
+
+	Q_LOCK_ENTER(entry->qlock);
+	Q_NLOBJ_T *obj;
+	for(obj = entry->first; obj;) {
+		Q_NLOBJ_T *next = obj->next;
+		free(obj->name);
+		free(obj->data);
+		free(obj);
+		obj = next;
+	}
+
+	entry->num = 0;
+	entry->size = 0;
+	entry->first = NULL;
+	entry->last = NULL;
+	Q_LOCK_LEAVE(entry->qlock);
+
+	return true;
+}
+
+/**
  * Q_ENTRY->save(): Save Q_ENTRY as plain text format
  *
  * @param entry		Q_ENTRY pointer
@@ -960,16 +1010,7 @@ static bool _print(Q_ENTRY *entry, FILE *out, bool print_data) {
 static bool _free(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
 
-	Q_LOCK_ENTER(entry->qlock);
-	Q_NLOBJ_T *obj;
-	for(obj = entry->first; obj;) {
-		Q_NLOBJ_T *next = obj->next;
-		free(obj->name);
-		free(obj->data);
-		free(obj);
-		obj = next;
-	}
-	Q_LOCK_LEAVE(entry->qlock);
+	_truncate(entry);
 	Q_LOCK_DESTROY(entry->qlock);
 
 	free(entry);

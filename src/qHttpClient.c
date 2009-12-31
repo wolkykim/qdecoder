@@ -40,16 +40,22 @@
 
 #ifndef _DOXYGEN_SKIP
 
-static bool _open(Q_HTTPCLIENT *client, int timeoutms);
+static bool _open(Q_HTTPCLIENT *client);
+static void _setTimeout(Q_HTTPCLIENT *client, int timeoutms);
 static void _setKeepalive(Q_HTTPCLIENT *client, bool keepalive);
 static void _setUseragent(Q_HTTPCLIENT *client, const char *agentname);
-static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
-
+static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length, int *rescode,
+		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
+		bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
+static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *savesize, int *rescode,
+		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
+		bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
 static bool _close(Q_HTTPCLIENT *client);
 static void _free(Q_HTTPCLIENT *client);
 
 // internal usages
-static int _readResponse(int socket, int timeoutms);
+static void _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_ENTRY *reqheaders);
+static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders);
 
 #endif
 
@@ -74,7 +80,7 @@ static int _readResponse(int socket, int timeoutms);
 #define	HTTP_PROTOCOL_10			"HTTP/1.0"
 #define	HTTP_PROTOCOL_11			"HTTP/1.1"
 
-#define MAX_SENDING_DATA_SIZE			(32 * 1024)	/*< Maximum sending bytes, used in PUT method */
+#define MAX_ATOMIC_DATA_SIZE			(32 * 1024)	/*< Maximum sending bytes, used in PUT method */
 
 /**
  * Initialize & create new HTTP client.
@@ -125,19 +131,39 @@ Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 	client->hostname = strdup(hostname);
 	client->port = port;
 
-	client->keepalive = false;
-	client->useragent = strdup("qDecoder/" _Q_VERSION);
-
 	// member methods
+	client->setTimeout	= _setTimeout;
 	client->setKeepalive	= _setKeepalive;
 	client->setUseragent	= _setUseragent;
 
 	client->open		= _open;
 	client->put		= _put;
+	client->get		= _get;
 	client->close		= _close;
 	client->free		= _free;
 
+	// init client
+	_setTimeout(client, 0);
+	_setKeepalive(client, false);
+	_setUseragent(client, _Q_PRGNAME "/" _Q_VERSION);
+
 	return client;
+}
+
+/**
+ * Q_HTTPCLIENT->setTimeout(): Set connection wait timeout.
+ *
+ * @param client	Q_HTTPCLIENT object pointer
+ * @param timeoutms	timeout mili-seconds. 0 for system defaults
+ *
+ * @code
+ *   httpClient->setTimeout(httpClient, 0);    // default
+ *   httpClient->setTimeout(httpClient, 5000); // 5 seconds
+ * @endcode
+ */
+static void _setTimeout(Q_HTTPCLIENT *client, int timeoutms) {
+	if(timeoutms <= 0) timeoutms = -1;
+	client->timeoutms = timeoutms;
 }
 
 /**
@@ -174,7 +200,6 @@ static void _setUseragent(Q_HTTPCLIENT *client, const char *useragent) {
  * Q_HTTPCLIENT->open(): Open(establish) connection to the remote host.
  *
  * @param client	Q_HTTPCLIENT object pointer
- * @param timeoutms	if timeoutms is greater than 0, connection timeout will be applied. (0 for default behavior)
  *
  * @return	true if successful, otherwise returns false
  *
@@ -186,7 +211,7 @@ static void _setUseragent(Q_HTTPCLIENT *client, const char *useragent) {
  *   if(httpClient->open(httpClient) == false) return;
  * @endcode
  */
-static bool _open(Q_HTTPCLIENT *client, int timeoutms) {
+static bool _open(Q_HTTPCLIENT *client) {
 	if(client->socket >= 0) {
 		if(qSocketWaitWritable(client->socket, 0) > 0) return true;
 		_close(client);
@@ -195,27 +220,27 @@ static bool _open(Q_HTTPCLIENT *client, int timeoutms) {
 	// create new socket
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) {
-	 	// sockfd creation fail
+	 	DEBUG("sockfd creation failed.");
 		return false;
 	}
 
 	// set to non-block socket
 	int sockflag = 0;
-	if(timeoutms >= 0) {
+	if(client->timeoutms > 0) {
 		sockflag = fcntl(sockfd, F_GETFL, 0);
 		fcntl(sockfd, F_SETFL, sockflag | O_NONBLOCK);
 	}
 
 	// try to connect
 	int status = connect(sockfd, (struct sockaddr *)&client->addr, sizeof(client->addr));
-	if(status < 0 && (errno != EINPROGRESS || qSocketWaitWritable(sockfd, timeoutms) <= 0) ) {
-		// connection failed
+	if(status < 0 && (errno != EINPROGRESS || qSocketWaitWritable(sockfd, client->timeoutms) <= 0) ) {
+	 	DEBUG("connection failed.");
 		close(client->socket);
 		return false;
 	}
 
 	// restore to block socket
-	if(timeoutms >= 0) {
+	if(client->timeoutms > 0) {
 		fcntl(sockfd, F_SETFL, sockflag);
 	}
 
@@ -228,26 +253,24 @@ static bool _open(Q_HTTPCLIENT *client, int timeoutms) {
 /**
  * Q_HTTPCLIENT->put(): Upload file to remote host using PUT method.
  *
- * @param client	Q_HTTPCLIENT object pointer
- * @param putpath	remote URL path for uploading file
- * @param xheaders	Q_ENTRY pointer which contains additional user headers
- * @param fd		opened local file descriptor
- * @param length	send size
- * @param timeoutms	if timeoutms is greater than 0, connection timeout will be applied. (0 for default behavior)
- * @param retcode	if not NULL, remote response code will be stored
+ * @param client	Q_HTTPCLIENT object pointer.
+ * @param putpath	remote URL path for uploading file.
+ * @param fd		opened local file descriptor.
+ * @param length	send size.
+ * @param rescode	if not NULL, remote response code will be stored.
+ * @param reqheaders	Q_ENTRY pointer which contains additional user request headers. (can be NULL)
+ * @param resheaders	Q_ENTRY pointer for storing response headers. (can be NULL)
  * @param callback	set user call-back function. (can be NULL)
  * @param userdata	set user data for call-back. (can be NULL)
  *
  * @return	true if successful, otherwise returns false
  *
  * @note
- * The call-back function will be called peridically whenever it send data as much as MAX_SENDING_DATA_SIZE.
+ * The call-back function will be called peridically whenever it send data as much as MAX_ATOMIC_DATA_SIZE.
  * To stop uploading, return false in the call-back function, then PUT process will be stopped immediately.
  * If a connection was not opened, it will open a connection automatically.
  *
  * @code
- *   #define HTTP_TIMEOUTMS  (5000) // 5 secs
- *
  *   struct userdata {
  *     ...
  *   };
@@ -271,17 +294,23 @@ static bool _open(Q_HTTPCLIENT *client, int timeoutms) {
  *     time_t nFileDate = ...;
  *
  *     // set additional custom headers
- *     Q_ENTRY *pXheaders = qEntry();
- *     pXheaders->putStr(pXheaders, "X-FILE-MD5SUM", pFileMd5sum, true);
- *     pXheaders->putInt(pXheaders, "X-FILE-DATE", nFileDate, true);
+ *     Q_ENTRY *pReqHeaders = qEntry();
+ *     pReqHeaders->putStr(pReqHeaders, "X-FILE-MD5SUM", pFileMd5sum, true);
+ *     pReqHeaders->putInt(pReqHeaders, "X-FILE-DATE", nFileDate, true);
  *
  *     // set userdata
  *     struct userdata mydata;
  *     ...(codes)...
  *
  *     // send file
- *     int retcode = 0;
- *     bool retstatus = httpClient->put(httpClient, "/img/qdecoder.png", pXheaders, nFd, nFileSize, HTTP_TIMEOUTMS, &retcode, callback, (void*)&mydata);
+ *     int rescode = 0;
+ *     Q_ENTRY *pResHeaders = qEntry();
+ *     bool retstatus = httpClient->put(httpClient, "/img/qdecoder.png", nFd, nFileSize, &rescode,
+ *                                      pReqHeaders, pResHeaders,
+ *                                      callback, (void*)&mydata);
+ *     // to print out request, response headers
+ *     pReqHeaders->print(pReqHeaders, stdout, true);
+ *     pResHeaders->print(pResHeaders, stdout, true);
  *
  *     // check results
  *     if(retstatus == false) {
@@ -290,54 +319,53 @@ static bool _open(Q_HTTPCLIENT *client, int timeoutms) {
  *
  *     // free resources
  *     httpClient->free(httpClient);
- *     pXheaders->free(pXheaders);
+ *     pReqHeaders->free(pReqHeaders);
+ *     pResHeaders->free(pResHeaders);
  *     close(nFd);
  *   }
  * @endcode
  */
-static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode,
+static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length, int *rescode,
+		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
 		bool (*callback)(void *userdata, off_t sentbytes), void *userdata) {
-	// reset retcode
-	if(retcode != NULL) *retcode = 0;
+
+	// reset rescode
+	if(rescode != NULL) *rescode = 0;
 
 	// get or open connection
-	if(_open(client, timeoutms) == false) {
+	if(_open(client) == false) {
 		return false;
 	}
 
-	// print out headers
-	qSocketPrintf(client->socket, "PUT %s %s\r\n", putpath, (client->keepalive==true)?HTTP_PROTOCOL_11:HTTP_PROTOCOL_10);
-
-	qSocketPrintf(client->socket, "Host: %s:%d\r\n", client->hostname, client->port);
-	qSocketPrintf(client->socket, "Content-Length: %jd\r\n", length);
-	qSocketPrintf(client->socket, "User-Agent: %s\r\n", client->useragent);
-	qSocketPrintf(client->socket, "Connection: %s\r\n", (client->keepalive==true)?"Keep-Alive":"close");
-	qSocketPrintf(client->socket, "Expect: 100-continue\r\n");
-	qSocketPrintf(client->socket, "Date: %s\r\n", qTimeGetGmtStaticStr(0));
-
-	// print out custom headers
-	if(xheaders != NULL) {
-		Q_NLOBJ_T obj;
-		memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
-		xheaders->lock(xheaders);
-		while(xheaders->getNext(xheaders, &obj, NULL, false) == true) {
-			qSocketPrintf(client->socket, "%s: %s\r\n", obj.name, (char*)obj.data);
-		}
-		xheaders->unlock(xheaders);
+	// generate request headers
+	bool freeReqHeaders = false;
+	if(reqheaders == NULL) {
+		reqheaders = qEntry();
+		freeReqHeaders = true;
 	}
 
-	qSocketPrintf(client->socket, "\r\n");
+	reqheaders->putStrf(reqheaders, "Host", true,		"%s:%d", client->hostname, client->port);
+	reqheaders->putStrf(reqheaders, "Content-Length", true,	"%jd", length);
+	reqheaders->putStr(reqheaders,	"User-Agent",		client->useragent, true);
+	reqheaders->putStr(reqheaders,  "Connection",		(client->keepalive==true)?"Keep-Alive":"close", true);
+	reqheaders->putStr(reqheaders,  "Expect",		"100-continue", true);
+	//reqheaders->putStr(reqheaders,  "Date",			qTimeGetGmtStaticStr(0), true);
+
+	// send request
+	_sendRequest(client, "PUT", putpath, reqheaders);
+	if(freeReqHeaders == true) reqheaders->free(reqheaders);
 
 	// wait 100-continue
-	if(qSocketWaitReadable(client->socket, timeoutms) <= 0) {
+	if(qSocketWaitReadable(client->socket, client->timeoutms) <= 0) {
+		DEBUG("timed out %d", client->timeoutms);
 		_close(client);
 		return false;
 	}
 
 	// read response
-	int rescode = _readResponse(client->socket, timeoutms);
-	if(rescode != HTTP_CODE_CONTINUE) {
-		if(retcode != NULL) *retcode = rescode;
+	int resno = _readResponse(client, resheaders);
+	if(resno != HTTP_CODE_CONTINUE) {
+		if(rescode != NULL) *rescode = resno;
 		_close(client);
 		return false;
 	}
@@ -353,8 +381,8 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, i
 	if(length > 0) {
 		while(sent < length) {
 			size_t sendsize;	// this time sending size
-			if(length - sent <= MAX_SENDING_DATA_SIZE) sendsize = length - sent;
-			else sendsize = MAX_SENDING_DATA_SIZE;
+			if(length - sent < MAX_ATOMIC_DATA_SIZE) sendsize = length - sent;
+			else sendsize = MAX_ATOMIC_DATA_SIZE;
 
 			ssize_t ret = qFileSend(client->socket, fd, sendsize);
 			if(ret <= 0) break; // Connection closed by peer
@@ -382,14 +410,15 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, i
 	}
 
 	// read response
-	rescode = _readResponse(client->socket, timeoutms);
-	if(rescode == HTTP_NO_RESPONSE) {
-			_close(client);
-			return false;
-	}
-	if(retcode != NULL) *retcode = rescode;
+	resno = _readResponse(client, resheaders);
+	if(rescode != NULL) *rescode = resno;
 
-	if(rescode != HTTP_CODE_CREATED) {
+	if(resno == HTTP_NO_RESPONSE) {
+		_close(client);
+		return false;
+	}
+
+	if(resno != HTTP_CODE_CREATED) {
 		_close(client);
 		return false;
 	}
@@ -401,103 +430,100 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, i
 
 	return true;
 }
-/*
-static bool _get(Q_HTTPCLIENT *client, const char *getpath, Q_ENTRY *resheaders, int fd, int timeoutms, int *retcode,
-		bool (*callback)(void *userdata, off_t sentbytes), void *userdata) {
-	// reset retcode
-	if(retcode != NULL) *retcode = 0;
+
+static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *savesize, int *rescode,
+		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
+		bool (*callback)(void *userdata, off_t recvbytes), void *userdata) {
+
+	// reset rescode
+	if(rescode != NULL) *rescode = 0;
+	if(savesize != NULL) *savesize = 0;
 
 	// get or open connection
-	if(_open(client, timeoutms) == false) {
+	if(_open(client) == false) {
 		return false;
 	}
 
-	// print out headers
-	qSocketPrintf(client->socket, "GET %s %s\r\n", getpath, (client->keepalive==true)?HTTP_PROTOCOL_11:HTTP_PROTOCOL_10);
-
-	qSocketPrintf(client->socket, "Host: %s:%d\r\n", client->hostname, client->port);
-	qSocketPrintf(client->socket, "Content-Length: %jd\r\n", length);
-	qSocketPrintf(client->socket, "User-Agent: %s\r\n", client->useragent);
-	qSocketPrintf(client->socket, "Connection: %s\r\n", (client->keepalive==true)?"Keep-Alive":"close");
-	qSocketPrintf(client->socket, "Date: %s\r\n", qTimeGetGmtStaticStr(0));
-
-	// print out custom headers
-	if(xheaders != NULL) {
-		Q_NLOBJ_T obj;
-		memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
-		xheaders->lock(xheaders);
-		while(xheaders->getNext(xheaders, &obj, NULL, false) == true) {
-			qSocketPrintf(client->socket, "%s: %s\r\n", obj.name, (char*)obj.data);
-		}
-		xheaders->unlock(xheaders);
+	// generate request headers if necessary
+	bool freeReqHeaders = false;
+	if(reqheaders == NULL) {
+		reqheaders = qEntry();
+		freeReqHeaders = true;
 	}
 
-	qSocketPrintf(client->socket, "\r\n");
+	reqheaders->putStrf(reqheaders, "Host", true,		"%s:%d", client->hostname, client->port);
+	reqheaders->putStr(reqheaders,	"User-Agent",		client->useragent, true);
+	reqheaders->putStr(reqheaders,  "Accept",		"*/*", true);
+	reqheaders->putStr(reqheaders,  "Connection",		(client->keepalive==true)?"Keep-Alive":"close", true);
+	//reqheaders->putStr(reqheaders,  "Date",			qTimeGetGmtStaticStr(0), true);
 
-	// wait 100-continue
-	if(qSocketWaitReadable(client->socket, timeoutms) <= 0) {
-		_close(client);
-		return false;
+	// send request
+	_sendRequest(client, "GET", getpath, reqheaders);
+	if(freeReqHeaders == true) reqheaders->free(reqheaders);
+
+	// generate response headers if necessary
+	bool freeResHeaders = false;
+	if(resheaders == NULL) {
+		resheaders = qEntry();
+		freeResHeaders = true;
 	}
 
 	// read response
-	int rescode = _readResponse(client->socket, timeoutms);
-	if(rescode != HTTP_CODE_CONTINUE) {
-		if(retcode != NULL) *retcode = rescode;
+	int resno = _readResponse(client, resheaders);
+	if(rescode != NULL) *rescode = resno;
+
+	// parse contents-length
+	const char *clen_header = resheaders->getStrCase(resheaders, "Content-Length", false);
+	off_t length = 0;
+	if(clen_header != NULL) length = atoll(clen_header);
+
+	if(freeResHeaders == true) resheaders->free(resheaders);
+
+	// check response code
+	if(resno != HTTP_CODE_OK) {
 		_close(client);
+		if(freeResHeaders == true) resheaders->free(resheaders);
 		return false;
 	}
 
-	// send data
-	off_t sent = 0;
+	// retrieve data
+	off_t recv = 0;
 	if(callback != NULL) {
-		if(callback(userdata, sent) == false) {
+		if(callback(userdata, recv) == false) {
 			_close(client);
 			return false;
 		}
 	}
 	if(length > 0) {
-		while(sent < length) {
-			size_t sendsize;	// this time sending size
-			if(length - sent <= MAX_SENDING_DATA_SIZE) sendsize = length - sent;
-			else sendsize = MAX_SENDING_DATA_SIZE;
+		while(recv < length) {
+			size_t recvsize;	// this time receive size
+			if(length - recv < MAX_ATOMIC_DATA_SIZE) recvsize = length - recv;
+			else recvsize = MAX_ATOMIC_DATA_SIZE;
 
-			ssize_t ret = qFileSend(client->socket, fd, sendsize);
+			ssize_t ret = qFileSend(fd, client->socket, recvsize);
 			if(ret <= 0) break; // Connection closed by peer
-			sent += ret;
+			recv += ret;
+			if(savesize != NULL) *savesize = recv;
 
 			if(callback != NULL) {
-				if(callback(userdata, sent) == false) {
+				if(callback(userdata, recv) == false) {
 					_close(client);
 					return false;
 				}
 			}
 		}
 
-		if(sent != length) {
+		if(recv != length) {
 			_close(client);
 			return false;
 		}
 
 		if(callback != NULL) {
-			if(callback(userdata, sent) == false) {
+			if(callback(userdata, recv) == false) {
 				_close(client);
 				return false;
 			}
 		}
-	}
-
-	// read response
-	rescode = _readResponse(client->socket, timeoutms);
-	if(rescode == HTTP_NO_RESPONSE) {
-			_close(client);
-			return false;
-	}
-	if(retcode != NULL) *retcode = rescode;
-
-	if(rescode != HTTP_CODE_CREATED) {
-		_close(client);
-		return false;
 	}
 
 	// close connection
@@ -507,7 +533,7 @@ static bool _get(Q_HTTPCLIENT *client, const char *getpath, Q_ENTRY *resheaders,
 
 	return true;
 }
-*/
+
 /**
  * Q_HTTPCLIENT->close(): Close the connection.
  *
@@ -554,10 +580,30 @@ static void _free(Q_HTTPCLIENT *client) {
 
 #ifndef _DOXYGEN_SKIP
 
-static int _readResponse(int socket, int timeoutms) {
+static void _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_ENTRY *reqheaders) {
+
+	//
+	qSocketPrintf(client->socket, "%s %s %s\r\n", method, uri, (client->keepalive==true)?HTTP_PROTOCOL_11:HTTP_PROTOCOL_10);
+
+	// print out headers
+	if(reqheaders != NULL) {
+		Q_NLOBJ_T obj;
+		memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
+		reqheaders->lock(reqheaders);
+		while(reqheaders->getNext(reqheaders, &obj, NULL, false) == true) {
+			qSocketPrintf(client->socket, "%s: %s\r\n", obj.name, (char*)obj.data);
+		}
+		reqheaders->unlock(reqheaders);
+	}
+
+	qSocketPrintf(client->socket, "\r\n");
+}
+
+static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders) {
+
 	// read response
 	char buf[1024];
-	if(qSocketGets(buf, sizeof(buf),socket, timeoutms) <= 0) return HTTP_NO_RESPONSE;
+	if(qSocketGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) return HTTP_NO_RESPONSE;
 
 	// parse response code
 	if(strncmp(buf, "HTTP/", CONST_STRLEN("HTTP/"))) return HTTP_NO_RESPONSE;
@@ -566,10 +612,22 @@ static int _readResponse(int socket, int timeoutms) {
 	int rescode = atoi(tmp+1);
 	if(rescode == 0) return HTTP_NO_RESPONSE;
 
-	// read header until CRLF
-	while(qSocketGets(buf, sizeof(buf),socket, timeoutms) > 0) {
-		DEBUG("%s", buf);
-		if(strlen(buf) == 0) break;
+	// read headers
+	while(qSocketGets(buf, sizeof(buf), client->socket, client->timeoutms) > 0) {
+		if(buf[0] == '\0') break;
+		if(resheaders != NULL) {
+			// parse header
+			char *value = strstr(buf, ":");
+			if(value != NULL) {
+				*value = '\0';
+				value += 1;
+				qStrTrim(value);
+			} else {
+				// missing colon
+				value = "";
+			}
+			resheaders->putStr(resheaders, buf, value, true);
+		}
 	}
 
 	return rescode;

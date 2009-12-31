@@ -326,7 +326,7 @@ off_t qSocketSendfile(int sockfd, int fd, off_t offset, off_t nbytes) {
 
 	while(sent < rangesize) {
 		size_t sendsize;	// this time sending size
-		if(rangesize - sent <= MAX_SENDFILE_CHUNK_SIZE) sendsize = rangesize - sent;
+		if(rangesize - sent < MAX_SENDFILE_CHUNK_SIZE) sendsize = rangesize - sent;
 		else sendsize = MAX_SENDFILE_CHUNK_SIZE;
 
 #if defined(ENABLE_SENDFILE) && defined(__linux__)

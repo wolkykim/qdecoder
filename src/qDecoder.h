@@ -32,12 +32,14 @@
 #ifndef _QDECODER_H
 #define _QDECODER_H
 
+#define _Q_PRGNAME			"qDecoder"
 #define _Q_VERSION			"9.1.0"
 
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
 #include <limits.h>
+#include <netdb.h>
 #include <sys/types.h>
 
 typedef struct _Q_NOBJ_T	Q_NOBJ_T;
@@ -100,6 +102,7 @@ struct _Q_ENTRY {
 
 	bool		(*put)		(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace);
 	bool		(*putStr)	(Q_ENTRY *entry, const char *name, const char *str, bool replace);
+	bool		(*putStrf)	(Q_ENTRY *entry, const char *name, bool replace, const char *format, ...);
 	bool		(*putStrParsed)	(Q_ENTRY *entry, const char *name, const char *str, bool replace);
 	bool		(*putInt)	(Q_ENTRY *entry, const char *name, int num, bool replace);
 
@@ -121,6 +124,7 @@ struct _Q_ENTRY {
 	char*		(*parseStr)	(Q_ENTRY *entry, const char *str);
 	void*		(*merge)	(Q_ENTRY *entry, size_t *size);
 
+	bool		(*truncate)	(Q_ENTRY *entry);
 	bool		(*save)		(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode);
 	int		(*load)		(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode);
 	bool		(*reverse)	(Q_ENTRY *entry);
@@ -355,7 +359,6 @@ struct _Q_DBRESULT {
 /**
  * Structure for http client.
  */
-#include <netdb.h>
 struct _Q_HTTPCLIENT {
 	int		socket;			/*!< socket descriptor */
 
@@ -363,15 +366,18 @@ struct _Q_HTTPCLIENT {
 	char		*hostname;
 	int		port;
 
-	bool		keepalive;
+	int		timeoutms;		/*< wait timeout miliseconds*/
+	bool		keepalive;		/*< keep-alive flag */
 	char*		useragent;		/*< user-agent name */
 
 	/* public member methods */
+	void		(*setTimeout)		(Q_HTTPCLIENT *client, int timeoutms);
 	void		(*setKeepalive)		(Q_HTTPCLIENT *client, bool keepalive);
 	void		(*setUseragent)		(Q_HTTPCLIENT *client, const char *useragent);
 
-	bool		(*open)			(Q_HTTPCLIENT *client, int timeoutms);
-	bool		(*put)			(Q_HTTPCLIENT *client, const char *putpath, Q_ENTRY *xheaders, int fd, off_t length, int timeoutms, int *retcode, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
+	bool		(*open)			(Q_HTTPCLIENT *client);
+	bool		(*put)			(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length, int *retcode, Q_ENTRY *userheaders, Q_ENTRY *resheaders, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
+	bool		(*get)			(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *savesize, int *rescode, Q_ENTRY *reqheaders, Q_ENTRY *resheaders, bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
 	bool		(*close)		(Q_HTTPCLIENT *client);
 	void		(*free)			(Q_HTTPCLIENT *client);
 };
