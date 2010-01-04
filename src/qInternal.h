@@ -42,22 +42,23 @@
  */
 #define	CONST_STRLEN(x)		(sizeof(x) - 1)
 
-#define	DYNAMIC_VSPRINTF(s, f)	{							\
-	size_t _strsize;								\
-	for(_strsize = 1024; ; _strsize *= 2) {						\
-		s = (char*)malloc(_strsize);						\
-		if(s == NULL) {								\
-			DEBUG("DYNAMIC_VSPRINTF(): can't allocate memory.");		\
-			break;								\
-		}									\
-		va_list _arglist;							\
-		va_start(_arglist, f);							\
-		int _n = vsnprintf(s, _strsize, f, _arglist);				\
-		va_end(_arglist);							\
-		if(_n >= 0 && _n < _strsize) break;					\
-		free(s);								\
-	}										\
-}
+#define	DYNAMIC_VSPRINTF(s, f)						\
+do {									\
+	size_t _strsize;						\
+	for(_strsize = 1024; ; _strsize *= 2) {				\
+		s = (char*)malloc(_strsize);				\
+		if(s == NULL) {						\
+			DEBUG("DYNAMIC_VSPRINTF(): can't allocate memory."); \
+			break;						\
+		}							\
+		va_list _arglist;					\
+		va_start(_arglist, f);					\
+		int _n = vsnprintf(s, _strsize, f, _arglist);		\
+		va_end(_arglist);					\
+		if(_n >= 0 && _n < _strsize) break;			\
+		free(s);						\
+	}								\
+} while(0)
 
 /*
  * Q_LOCK Macros

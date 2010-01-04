@@ -40,44 +40,44 @@ TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download
 all:	${TARGETS}
 
 query.cgi: query.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ query.o ${LIB}
 
 cookie.cgi: cookie.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ cookie.o ${LIB}
 
 multivalue.cgi:	multivalue.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ multivalue.o ${LIB}
 
 upload.cgi: upload.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ upload.o ${LIB}
 	chmod 6755 upload.cgi
 
 uploadfile.cgi: uploadfile.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ uploadfile.o ${LIB}
 	chmod 6755 uploadfile.cgi
 	mkdir -p -m 755 upload tmp
 
 download.cgi: download.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ download.o ${LIB}
 
 streamedit.cgi: streamedit.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ streamedit.o ${LIB}
 
 session.cgi: session.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ session.o ${LIB}
 	chmod 6755 session.cgi
 
 config.cgi: config.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ config.o ${LIB}
 
 socket.cgi: socket.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ socket.o ${LIB}
 
 obstack.cgi: obstack.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ obstack.o ${LIB}
 
 hashtable.cgi: hashtable.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ $< ${LIB}
+	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ hashtable.o ${LIB}
 
 ## Clear Module
 clean:

@@ -82,7 +82,7 @@
 bool qHtmlPrintf(FILE *stream, int mode, const char *format, ...) {
 	char *buf;
 	DYNAMIC_VSPRINTF(buf, format);
-	if(buf == NULL) false;
+	if(buf == NULL) return false;
 
 	bool ret = qHtmlPuts(stream, mode, buf);
 	free(buf);

@@ -41,6 +41,7 @@
 #include <limits.h>
 #include <netdb.h>
 #include <sys/types.h>
+#include <netinet/in.h>
 
 typedef struct _Q_NOBJ_T	Q_NOBJ_T;
 typedef struct _Q_NLOBJ_T	Q_NLOBJ_T;
