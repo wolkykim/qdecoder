@@ -38,7 +38,7 @@ void stringSample(void) {
 	obstack->grow(obstack, "(object)", sizeof("(object)"));	// same effects as above but this can be used for object or binary
 
 	// final
-	char *final = (char *)obstack->getFinal(obstack);
+	char *final = (char *)obstack->getFinal(obstack, NULL);
 
 	// print out
 	printf("[String Sample]\n");
@@ -72,7 +72,7 @@ void objectSample(void) {
 	}
 
 	// final
-	final = (struct sampleobj *)obstack->getFinal(obstack);
+	final = (struct sampleobj *)obstack->getFinal(obstack, NULL);
 
 	// print out
 	printf("[Object Sample]\n");

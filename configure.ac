@@ -64,8 +64,8 @@ AC_DEFUN([Q_ARG_DISABLE], [
 ])
 
 ## Initialize
-#PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib:/usr/libexec:/usr/ccs/bin:/usr/local/bin:/usr/local/sbin:/usr/local/lib:/usr/local/libexec:/usr/local/mysql/include
-PATH=$PATH:/usr/local/mysql/include
+PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib:/usr/libexec:/usr/ccs/bin:/usr/local/bin:/usr/local/sbin:/usr/local/lib:/usr/local/libexec:/usr/local/mysql/include
+#PATH=$PATH:/usr/local/mysql/include
 
 AC_INIT([qDecoder], [9 RELEASE], [http://www.qDecoder.org/])
 AC_CONFIG_SRCDIR([config.h.in])
@@ -113,9 +113,15 @@ AC_TYPE_OFF_T
 ## Set additional arguments
 opt_defs="-D_GNU_SOURCE"
 opt_incs=""
+opt_libs=""
 
 Q_ARG_ENABLE([debug], [enable debugging output], [-DBUILD_DEBUG])
 Q_ARG_ENABLE([threadsafe], [enable thread-safe feature], [-DENABLE_THREADSAFE])
+if test "$enableval" = yes; then
+	AC_MSG_NOTICE(['threadsafe' feature is enabled])
+	opt_libs="-lpthread"
+fi
+
 Q_ARG_ENABLE([lfs], [enable large file supports], [-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
 Q_ARG_ENABLE([sendfile], [use sendfile() if possible], [-DENABLE_SENDFILE])
 
@@ -148,9 +154,10 @@ Q_ARG_DISABLE([socket], [disable socket APIs], [-DDISABLE_SOCKET])
 Q_ARG_DISABLE([ipc], [disable IPC APIs], [-DDISABLE_IPC])
 Q_ARG_DISABLE([datastructure], [disable data-structure APIs], [-DDISABLE_DATASTRUCTURE])
 
-AC_MSG_NOTICE([optional flags: $opt_defs $opt_incs])
+AC_MSG_NOTICE([optional flags: $opt_defs $opt_incs $opt_libs])
 AC_SUBST([OPT_DEFS], [$opt_defs] )
 AC_SUBST([OPT_INCS], [$opt_incs] )
+AC_SUBST([OPT_LIBS], [$opt_libs] )
 
 ## Create Makefile
 AC_OUTPUT

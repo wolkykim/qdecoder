@@ -31,7 +31,7 @@ CC	= @CC@
 CFLAGS	= @CFLAGS@
 DEFS	= @DEFS@ @OPT_DEFS@
 INCLUDE	= -I./ -I../src/ -I@includedir@
-LIB	= ../src/libqDecoder.a -lpthread
+LIB	= ../src/libqDecoder.a @OPT_LIBS@
 
 TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi session.cgi config.cgi socket.cgi obstack.cgi \
 	hashtable.cgi

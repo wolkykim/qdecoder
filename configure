@@ -337,7 +337,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S SET_MAKE RANLIB ac_ct_RANLIB AR CHMOD LD RM CPP EGREP OPT_DEFS OPT_INCS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S SET_MAKE RANLIB ac_ct_RANLIB AR CHMOD LD RM CPP EGREP OPT_DEFS OPT_INCS OPT_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3956,6 +3956,7 @@ fi
 ## Set additional arguments
 opt_defs="-D_GNU_SOURCE"
 opt_incs=""
+opt_libs=""
 
 
 	# Check whether --enable-debug or --disable-debug was given.
@@ -3984,6 +3985,12 @@ fi;
 echo "$as_me: 'threadsafe' feature is enabled" >&6;}
 		opt_defs="$opt_defs -DENABLE_THREADSAFE"
 	fi
+
+if test "$enableval" = yes; then
+	{ echo "$as_me:$LINENO: 'threadsafe' feature is enabled" >&5
+echo "$as_me: 'threadsafe' feature is enabled" >&6;}
+	opt_libs="-lpthread"
+fi
 
 
 	# Check whether --enable-lfs or --disable-lfs was given.
@@ -4163,11 +4170,13 @@ echo "$as_me: 'datastructure' feature is disabled" >&6;}
 	fi
 
 
-{ echo "$as_me:$LINENO: optional flags: $opt_defs $opt_incs" >&5
-echo "$as_me: optional flags: $opt_defs $opt_incs" >&6;}
+{ echo "$as_me:$LINENO: optional flags: $opt_defs $opt_incs $opt_libs" >&5
+echo "$as_me: optional flags: $opt_defs $opt_incs $opt_libs" >&6;}
 OPT_DEFS=$opt_defs
 
 OPT_INCS=$opt_incs
+
+OPT_LIBS=$opt_libs
 
 
 ## Create Makefile
@@ -4806,6 +4815,7 @@ s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
 s,@OPT_DEFS@,$OPT_DEFS,;t t
 s,@OPT_INCS@,$OPT_INCS,;t t
+s,@OPT_LIBS@,$OPT_LIBS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
