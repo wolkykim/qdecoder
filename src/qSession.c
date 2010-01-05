@@ -254,7 +254,7 @@ bool qSessionSave(Q_ENTRY *session) {
  */
 bool qSessionDestroy(Q_ENTRY *session) {
 	const char *sessionkey = session->getStr(session, INTER_SESSIONID, false);
-	const char *session_repository_path = session->getStr(session, "INTER_SESSION_REPO", false);
+	const char *session_repository_path = session->getStr(session, INTER_SESSION_REPO, false);
 	if(sessionkey == NULL || session_repository_path == NULL) {
 		if(session != NULL) session->free(session);
 		return false;

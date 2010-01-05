@@ -47,7 +47,7 @@ int dumpHttp(const char *hostname, int port) {
 	// read data
 	char buf[1024];
 	int lineno;
-	for (lineno = 1; qSocketGets(buf, sockfd, sizeof(buf), SOCKET_TIMEOUT) >= 0; lineno++) {
+	for (lineno = 1; qSocketGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) >= 0; lineno++) {
 		printf("%03d: %s\n", lineno, buf);
 	}
 

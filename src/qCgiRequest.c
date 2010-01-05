@@ -168,18 +168,17 @@
 #include "qDecoder.h"
 #include "qInternal.h"
 
-/*
- * static function prototypes
- */
+#ifndef _DOXYGEN_SKIP
 static int  _parse_multipart(Q_ENTRY *request);
 static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, bool *finish);
 static char *_parse_multipart_value_into_disk(const char *boundary, const char *savedir, const char *filename, int *filelen, bool *finish);
 
 static char *_upload_getsavedir(char *upload_savedir, int size, const char *upload_id, const char *upload_basepath);
 static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const char *upload_basepath);
-static bool _upload_getstatus(const char *upload_id, const char *upload_basepath, int *upload_tsize, int *upload_csize, char *upload_cname, int upload_cname_size);
+static int  _upload_getstatus(const char *upload_id, const char *upload_basepath, int *upload_tsize, int *upload_csize, char *upload_cname, size_t upload_cname_size);
 static bool _upload_clear_savedir(char *dirpath);
 static bool _upload_clear_base(const char *upload_basepath, int upload_clearold);
+#endif
 
 /**
  * Set request parsing option for file uploading in case of multipart/form-data encoding.
@@ -404,6 +403,8 @@ char *qCgiRequestGetQueryString(const char *query_type) {
 
 	return NULL;
 }
+
+#ifndef _DOXYGEN_SKIP
 
 /* For decode multipart/form-data, used by qRequestInit() */
 static int _parse_multipart(Q_ENTRY *request) {
@@ -894,13 +895,18 @@ static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const c
 	while(failcnt < 5) {
 		upload_tsize = upload_csize = 0;
 
-		if(_upload_getstatus(upload_id, upload_basepath, &upload_tsize, &upload_csize, upload_cname, sizeof(upload_cname)) == false) {
+		int upload_status = _upload_getstatus(upload_id, upload_basepath, &upload_tsize, &upload_csize, upload_cname, sizeof(upload_cname));
+		if (upload_status < 0) {
+			break;
+		} if (upload_status == 0) {
 			failcnt++;
 			sleep(1);
 			continue;
 		}
 
-		if(upload_tsize == 0 && upload_csize > 0) break; /* tsize file is removed. upload ended */
+		/* check already done */
+		if (upload_tsize == 0 && upload_csize > 0) break; /* tsize file is removed. upload ended */
+		if (upload_tsize > 0 && upload_csize >= upload_tsize) break;
 
 		if (last_csize < upload_csize) {
 			qStrReplace("tr", upload_cname, "'", "`");
@@ -911,11 +917,9 @@ static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const c
 
 			last_csize = upload_csize;
 			freezetime = 0;
-		} else if (last_csize > upload_csize) {
-			break; /* upload ended */
-		} else {
+		} else if (last_csize == upload_csize) {
 			if (freezetime > 10000) {
-				break; /* maybe upload connection is closed */
+				break; /* maybe upload connection was closed */
 			}
 
 			if (upload_csize > 0) {
@@ -925,6 +929,8 @@ static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const c
 			}
 
 			freezetime += drawrate;
+		} else {
+			break;
 		}
 
 		fflush(stdout);
@@ -938,7 +944,11 @@ static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const c
 	fflush(stdout);
 }
 
-static bool _upload_getstatus(const char *upload_id, const char *upload_basepath, int *upload_tsize, int *upload_csize, char *upload_cname, int upload_cname_size) {
+// returns 1 : success
+// returns 0 : repository not created
+// returns -1 : finished session
+// returns -2 : unknown error
+static int _upload_getstatus(const char *upload_id, const char *upload_basepath, int *upload_tsize, int *upload_csize, char *upload_cname, size_t upload_cname_size) {
 #ifdef _WIN32
 	return false;
 #else
@@ -949,15 +959,26 @@ static bool _upload_getstatus(const char *upload_id, const char *upload_basepath
 	/* get basepath */
 	if (_upload_getsavedir(upload_savedir, sizeof(upload_savedir), upload_id, upload_basepath) == NULL) {
 		DEBUG("Q_UPLOAD_ID is not set.");
-		return false;
+		return -2;
+	}
+
+	/* check finished session */
+	snprintf(tmppath, sizeof(tmppath), "%s/Q_UPLOAD_END", upload_savedir);
+	if(qCountRead(tmppath) > 0) {
+		return -1;
 	}
 
 	/* open upload folder */
 	dp = opendir(upload_savedir);
 	if (dp == NULL) {
 		DEBUG("Can't open %s", upload_savedir);
-		return false;
+		return 0;
 	}
+
+	/* clear variables */
+	if(upload_tsize != NULL) *upload_tsize = 0;
+	if(upload_csize != NULL) *upload_csize = 0;
+	if(upload_cname	!= NULL) upload_cname[0] = '\0';
 
 	/* read tsize */
 	snprintf(tmppath, sizeof(tmppath), "%s/Q_UPLOAD_TSIZE", upload_savedir);
@@ -983,7 +1004,7 @@ static bool _upload_getstatus(const char *upload_id, const char *upload_basepath
 	}
 	closedir(dp);
 
-	return true;
+	return 1;
 #endif
 }
 
@@ -1046,5 +1067,7 @@ static bool _upload_clear_base(const char *upload_basepath, int upload_clearold)
 	return true;
 #endif
 }
+
+#endif /* _DOXYGEN_SKIP */
 
 #endif /* DISABLE_CGI */
