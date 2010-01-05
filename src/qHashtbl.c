@@ -316,7 +316,7 @@ static bool _putInt(Q_HASHTBL *tbl, const char *name, const int num) {
  *
  *   // with newmem flag set
  *   size_t size;
- *   const char *data = tbl->get(tbl, "key_name", &size, true);
+ *   char *data = tbl->get(tbl, "key_name", &size, true);
  *   if(data != NULL) free(data);
  * @endcode
  *
@@ -428,6 +428,7 @@ static int _getInt(Q_HASHTBL *tbl, const char *name) {
  *     free(obj.data);
  *   }
  *   tbl->unlock();
+ * @endcode
  */
 static bool _getNext(Q_HASHTBL *tbl, Q_NOBJ_T *obj, int *idx, bool newmem) {
 	if(tbl == NULL || obj == NULL || idx == NULL) return NULL;

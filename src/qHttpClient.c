@@ -282,7 +282,7 @@ static bool _open(Q_HTTPCLIENT *client) {
  *   static bool callback(void *userdata, off_t sentbytes) {
  *     struct userdata *mydata = (struct userdata*)userdata;
  *     ...(codes)...
- *     if(need_to_stop) return false; // stop file uploading immediately
+ *     if(need_to_cancel) return false; // stop file uploading immediately
  *     return true;
  *   }
  *
