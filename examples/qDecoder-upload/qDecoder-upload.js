@@ -18,11 +18,6 @@ var Q_UPLOAD_TEMPLATE="qDecoder-upload/qDecoder-upload.html";	// set progress te
 //
 
 function qUpload(qForm) {
-  var q_upload_action;
-  var q_upload_id;
-
-  var qBrowserVersion;
-
   // check field
   if(!eval(qForm.Q_UPLOAD_ID)) {
     alert("Q_UPLOAD_ID must be defined.");
@@ -30,22 +25,20 @@ function qUpload(qForm) {
   }
 
   // set q_upload_action
-  q_upload_action = qForm.action;
+  var q_upload_action = qForm.action;
 
   // generate q_upload_id
-  q_upload_id = (new Date()).getTime() % 1000000000;
+  var q_upload_id = (new Date()).getTime() % 1000000000;
   qForm.Q_UPLOAD_ID.value = q_upload_id;
 
   // check browser
-  qBrowserVersion = navigator.appVersion;
+  var qBrowserVersion = navigator.appVersion;
+  winstyle = "dialogWidth="+Q_UPLOAD_DIALOGUE_WIDTH+"px; dialogHeight:"+Q_UPLOAD_DIALOGUE_HEIGHT+"px; center:yes; help:no; scroll:no; status:no;";
+
   if (qBrowserVersion.indexOf('MSIE') != -1 && qBrowserVersion.substr(qBrowserVersion.indexOf('MSIE')+5,1) > 4) {
-    winstyle = "dialogWidth="+Q_UPLOAD_DIALOGUE_WIDTH+"px; dialogHeight:"+Q_UPLOAD_DIALOGUE_HEIGHT+"px; center:yes; help:no; scroll:no; status:no;";
     window.showModelessDialog(q_upload_action+"?Q_UPLOAD_ID="+q_upload_id+"&Q_UPLOAD_DRAWRATE="+Q_UPLOAD_DRAWRATE+"&Q_UPLOAD_TEMPLATE="+Q_UPLOAD_TEMPLATE, null, winstyle);
-    //window.open(q_upload_action+"?Q_UPLOAD_ID="+q_upload_id+"&Q_UPLOAD_DRAWRATE="+Q_UPLOAD_DRAWRATE+"&Q_UPLOAD_TEMPLATE="+Q_UPLOAD_TEMPLATE, null, "width=380,height=110,status=no,toolbar=no,menubar=no,location=no,resizable=no,scrollbars=no,copyhistory=no");
-  }
-  else {
-    alert("Sorry, only supports Microsoft Explorer.");
-    return false;
+  } else {
+    window.open(q_upload_action+"?Q_UPLOAD_ID="+q_upload_id+"&Q_UPLOAD_DRAWRATE="+Q_UPLOAD_DRAWRATE+"&Q_UPLOAD_TEMPLATE="+Q_UPLOAD_TEMPLATE, null, "width=380,height=110,status=no,toolbar=no,menubar=no,location=no,resizable=no,scrollbars=no,copyhistory=no");
   }
 
   return true;

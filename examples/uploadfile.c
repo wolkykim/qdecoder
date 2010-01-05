@@ -31,21 +31,22 @@
 #define TMPPATH		"tmp"
 
 int main(void) {
-	int i;
-
-	/* parse queries. */
+	// parse queries
 	Q_ENTRY *req = qCgiRequestParseOption(true, TMPPATH, (1 * 60 * 60));
 	if(req == NULL) qCgiResponseError(req, "Can't set option.");
 	req = qCgiRequestParse(req);
+	if(req == NULL) return 0;
 
-	/* get queries */
+	// get queries
 	const char *text = req->getStr(req, "text", false);
+	if (text == NULL) return 0;
 	if (text == NULL) qCgiResponseError(req, "Invalid usages.");
 
-	/* result out */
+	// result out
 	qCgiResponseSetContentType(req, "text/html");
 	printf("You entered: <b>%s</b>\n", text);
 
+	int i;
 	for (i = 1; i <= 3; i++) {
 		char name[31+1];
 		sprintf(name, "binary%d.length", i);
@@ -66,12 +67,13 @@ int main(void) {
 		}
 	}
 
-	/* dump */
+	// dump
 	printf("\n<p><hr>--[ DUMP INTERNAL DATA STRUCTURE ]--\n<pre>");
 	req->print(req, stdout, true);
 	printf("\n</pre>\n");
 
-	/* de-allocate */
+	// de-allocate
 	req->free(req);
+
 	return 0;
 }
