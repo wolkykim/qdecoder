@@ -95,21 +95,24 @@ bool qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout) {
 
 		/* Pattern Matching */
 		int flag = 0;
- 		Q_NLOBJ_T obj;
-		memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
-		entry->lock(entry);
- 		while(entry->getNext(entry, &obj, NULL, false) == true) {
-			if (!strncmp(sp, obj.name, strlen(obj.name))) {
-				fprintf(fpout, "%s", (char *)obj.data);
-				sp += strlen(obj.name);
-				flag = 1;
-				break;
+
+		if(entry != NULL) {
+ 			Q_NLOBJ_T obj;
+			memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
+			entry->lock(entry);
+ 			while(entry->getNext(entry, &obj, NULL, false) == true) {
+				if (!strncmp(sp, obj.name, strlen(obj.name))) {
+					fprintf(fpout, "%s", (char *)obj.data);
+					sp += strlen(obj.name);
+					flag = 1;
+					break;
+				}
 			}
+ 			entry->unlock(entry);
 		}
- 		entry->unlock(entry);
 
 		if (flag == 0) {
-			fprintf(fpout, "%c", *sp);
+			fputc(*sp, fpout);
 			sp++;
 		}
 	}
