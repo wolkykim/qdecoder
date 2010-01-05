@@ -33,7 +33,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <fcntl.h>
 #include <errno.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include "qDecoder.h"
