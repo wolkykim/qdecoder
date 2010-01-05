@@ -153,7 +153,9 @@ Q_HASHTBL *qHashtbl(int max, bool resize, int threshold) {
 }
 
 /**
- * Q_HASHtbl->qlock(): Enter critical section.
+ * Q_HASHtbl->lock(): Enter critical section.
+ *
+ * @return	none
  *
  * @note
  * Q_HASHTBL uses recursive mutex lock mechanism. And it uses lock at least as possible.
@@ -165,6 +167,8 @@ static void _lock(Q_HASHTBL *tbl) {
 
 /**
  * Q_HASHTBL->unlock(): Leave critical section.
+ *
+ * @return	none
  */
 static void _unlock(Q_HASHTBL *tbl) {
 	Q_LOCK_LEAVE(tbl->qlock);
