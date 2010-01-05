@@ -63,7 +63,7 @@ char *qTimeGetLocalStrf(char *buf, int size, time_t utctime, const char *format)
 	return buf;
 }
 
- /**
+/**
  * Get local time string formatted like '02-Nov-2007 16:37:39 +0900'.
  *
  * @param utctime	0 for current time, universal time for specific time
@@ -87,7 +87,7 @@ char *qTimeGetLocalStr(time_t utctime) {
 	return timestr;
 }
 
- /**
+/**
  * Get local time string formatted like '02-Nov-2007 16:37:39 +0900'.
  *
  * @param utctime	0 for current time, universal time for specific time
