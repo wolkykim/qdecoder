@@ -84,15 +84,17 @@ char *qSysCmd(const char *cmd) {
  *
  * @return		malloced string pointer which contains IP address string if successful, otherwise returns NULL
  */
-char *qSysGetIp(void) {
+bool qSysGetIp(char *buf, size_t bufsize) {
 	char szHostname[63+1];
-	if(gethostname(szHostname, sizeof(szHostname)) != 0) return NULL;
+	if(gethostname(szHostname, sizeof(szHostname)) != 0) return false;
 
 	struct hostent *pHostEntry = gethostbyname(szHostname);
-	if(pHostEntry == NULL) return NULL;
+	if(pHostEntry == NULL) return false;
 
 	char *pszLocalIp = inet_ntoa(*(struct in_addr *)*pHostEntry->h_addr_list);
 	free(pHostEntry);
-	if(pszLocalIp == NULL) return NULL;
-	return strdup(pszLocalIp);
+	if(pszLocalIp == NULL) return false;
+
+	qStrCpy(buf, bufsize, pszLocalIp);
+	return true;
 }

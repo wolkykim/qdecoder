@@ -33,7 +33,7 @@
 #define _QDECODER_H
 
 #define _Q_PRGNAME			"qDecoder"
-#define _Q_VERSION			"10.0.0"
+#define _Q_VERSION			"10.0.1"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -601,7 +601,7 @@ extern	time_t		qTimeParseGmtStr(const char *gmtstr);
 extern	const char*	qDecoderVersion(void);
 extern	const char*	qSysGetEnv(const char *envname, const char *nullstr);
 extern	char*		qSysCmd(const char *cmd);
-extern	char*		qSysGetIp(void);
+extern	bool		qSysGetIp(char *buf, size_t bufsize);
 
 #ifdef __cplusplus
 }
