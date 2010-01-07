@@ -98,12 +98,7 @@ ssize_t _q_write(int fd, const void *buf, size_t nbytes) {
 	if(nbytes == 0) return 0;
 
 	ssize_t sent = 0;
-
 	while(sent < nbytes) {
-		int status = qSocketWaitWritable(fd, 1000);
-		if(status == 0) continue;
-		else if(status < 0) break;
-
 		ssize_t wsize = write(fd, buf+sent, nbytes-sent);
 		if(wsize <= 0) break;
 		sent += wsize;

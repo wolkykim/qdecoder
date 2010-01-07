@@ -255,7 +255,21 @@ ssize_t qSocketGets(char *buf, size_t bufsize, int sockfd, int timeoutms) {
  * @since	8.1R
  */
 ssize_t qSocketWrite(int sockfd, const void *binary, size_t nbytes) {
-	return _q_write(sockfd, binary, nbytes);
+	if(nbytes == 0) return 0;
+
+	ssize_t sent = 0;
+	while(sent < nbytes) {
+		int status = qSocketWaitWritable(sockfd, 1000);
+		if(status == 0) continue;
+		else if(status < 0) break;
+
+		ssize_t wsize = write(sockfd, binary+sent, nbytes-sent);
+		if(wsize <= 0) break;
+		sent += wsize;
+	}
+
+	if(sent > 0) return sent;
+	return -1;
 }
 
 /**
@@ -273,7 +287,7 @@ ssize_t qSocketPuts(int sockfd, const char *str) {
 	if(buf == NULL) return -1;
 	sprintf(buf, "%s\r\n", str);
 
-	ssize_t sent = _q_write(sockfd, buf, strlen(buf));
+	ssize_t sent = qSocketWrite(sockfd, buf, strlen(buf));
 	free(buf);
 
 	return sent;
@@ -294,7 +308,7 @@ ssize_t qSocketPrintf(int sockfd, const char *format, ...) {
 	DYNAMIC_VSPRINTF(buf, format);
 	if(buf == NULL) return -1;
 
-	ssize_t ret = _q_write(sockfd, buf, strlen(buf));
+	ssize_t ret = qSocketWrite(sockfd, buf, strlen(buf));
 	free(buf);
 	return ret;
 }
