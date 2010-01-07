@@ -201,14 +201,14 @@ static void _unlock(Q_ENTRY *entry) {
  */
 static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace) {
 	/* check arguments */
-	if(entry == NULL || name == NULL || data == NULL || size < 0) return false;
+	if(entry == NULL || name == NULL || data == NULL || size <= 0) return false;
 
 	/* duplicate name */
 	char *dup_name = strdup(name);
 	if(dup_name == NULL) return false;
 
 	/* duplicate object */
-	void *dup_data = (size>0?malloc(size):strdup(""));
+	void *dup_data = malloc(size);
 	if(dup_data == NULL) {
 		free(dup_name);
 		return false;
@@ -580,7 +580,7 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
  *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
  *   entry->qlock();
  *   while(entry->getNext(entry, &obj, "key2", false) == true) {
- *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
+ *     printf("NAME=%s, DATA=%s, SIZE=%zu", obj.name, obj.data, obj.size);
  *   }
  *   entry->unlock();
  *
