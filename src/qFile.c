@@ -384,7 +384,7 @@ char *qFileGetDir(const char *filepath) {
  * @return		malloced extension string which is converted to lower case.
  */
 char *qFileGetExt(const char *filepath) {
-#define MAX_EXTENSION_LENGTH		(5)
+#define MAX_EXTENSION_LENGTH		(8)
 	char *filename = qFileGetName(filepath);
 	char *p = strrchr(filename, '.');
 	char *ext = NULL;

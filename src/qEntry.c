@@ -578,22 +578,22 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
  *   // thread model with specific key search
  *   Q_NLOBJ_T obj;
  *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
- *   entry->lock();
+ *   entry->lock(entry);
  *   while(entry->getNext(entry, &obj, "key2", false) == true) {
  *     printf("NAME=%s, DATA=%s, SIZE=%zu", obj.name, obj.data, obj.size);
  *   }
- *   entry->unlock();
+ *   entry->unlock(entry);
  *
  *   // thread model 2 with newmem flag
  *   Q_NLOBJ_T obj;
  *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
- *   entry->lock();
+ *   entry->lock(entry);
  *   while(entry->getNext(entry, &obj, NULL, true) == true) {
  *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
  *     free(obj.name);
  *     free(obj.data);
  *   }
- *   entry->unlock();
+ *   entry->unlock(entry);
  */
 static bool _getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newmem) {
 	if(entry == NULL || obj == NULL) return NULL;
