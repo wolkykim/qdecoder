@@ -63,7 +63,7 @@ int qCountRead(const char *filepath) {
 	if(fd < 0) return 0;
 
 	char buf[10+1];
-	ssize_t readed = qIoRead(buf, sizeof(buf), fd, 0);
+	ssize_t readed = qIoRead(buf, fd, sizeof(buf), 0);
 	close(fd);
 
 	if(readed > 0) return atoi(buf);

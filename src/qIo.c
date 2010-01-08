@@ -88,13 +88,14 @@ int qIoWaitWritable(int fd, int timeoutms) {
 /**
  * Read from a file descriptor.
  *
+ * @param	buf		data buffer pointer to write to
  * @param	fd		file descriptor
- * @param	nbytes		the number of bytes to read
+ * @param	nbytes		the number of bytes to read from file descriptor & write into buffer
  * @param	timeoutms	wait timeout milliseconds. 0 for no wait, -1 for infinite wait
  *
  * @return	the number of bytes read if successful, otherwise returns -1.
  */
-ssize_t qIoRead(void *buf, size_t nbytes, int fd, int timeoutms) {
+ssize_t qIoRead(void *buf, int fd, size_t nbytes, int timeoutms) {
 	if(nbytes == 0) return 0;
 
 	ssize_t total  = 0;
@@ -113,7 +114,8 @@ ssize_t qIoRead(void *buf, size_t nbytes, int fd, int timeoutms) {
  * Write to a file descriptor.
  *
  * @param	fd		file descriptor
- * @param	nbytes		the number of bytes to read
+ * @param	buf		data buffer pointer to read from
+ * @param	nbytes		the number of bytes to write to file descriptor & read from buffer
  * @param	timeoutms	wait timeout milliseconds. 0 for no wait, -1 for infinite wait
  *
  * @return	the number of bytes written if successful, otherwise returns -1.
@@ -155,7 +157,7 @@ off_t qIoSend(int outfd, int infd, off_t nbytes, int timeoutms) {
 		else chunksize = sizeof(buf);
 
 		// read
-		ssize_t rsize = qIoRead(buf, chunksize, infd, timeoutms);
+		ssize_t rsize = qIoRead(buf, infd, chunksize, timeoutms);
 		if (rsize <= 0) break;
 		DEBUG("read %zd", rsize);
 

@@ -500,8 +500,8 @@ extern	Q_HTTPCLIENT*	qHttpClient(const char *hostname, int port);
  */
 extern	int		qIoWaitReadable(int fd, int timeoutms);
 extern	int		qIoWaitWritable(int fd, int timeoutms);
-extern	ssize_t		qIoRead(void *buf, size_t nbytes, int fd, int timeoutms);
-extern	ssize_t		qIoWrite(int fd, const void *buf, size_t nbytes, int timeoutms);
+extern	ssize_t		qIoRead(void *buf, int fd, size_t nbytes, int timeoutms);
+extern	ssize_t		qIoWrite(int fd, const void *data, size_t nbytes, int timeoutms);
 extern	off_t		qIoSend(int outfd, int infd, off_t nbytes, int timeoutms);
 extern	ssize_t		qIoGets(char *buf, size_t bufsize, int fd, int timeoutms);
 extern	ssize_t		qIoPuts(int fd, const char *str, int timeoutms);
