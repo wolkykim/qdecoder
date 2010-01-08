@@ -37,17 +37,17 @@ int dumpHttp(const char *hostname, int port) {
 	if (sockfd < 0) return sockfd;
 
 	// send data
-	qSocketPrintf(sockfd, "GET / HTTP/1.1\n");
-	qSocketPrintf(sockfd, "Host: %s\n", hostname);
-	qSocketPrintf(sockfd, "Accept: */*\n");
-	qSocketPrintf(sockfd, "User-Agent: qDecoder Bot\n");
-	qSocketPrintf(sockfd, "Connection: close\n");
-	qSocketPrintf(sockfd, "\n");
+	qIoPrintf(sockfd, 0, "GET / HTTP/1.1\n");
+	qIoPrintf(sockfd, 0, "Host: %s\n", hostname);
+	qIoPrintf(sockfd, 0, "Accept: */*\n");
+	qIoPrintf(sockfd, 0, "User-Agent: qDecoder Bot\n");
+	qIoPrintf(sockfd, 0, "Connection: close\n");
+	qIoPrintf(sockfd, 0, "\n");
 
 	// read data
 	char buf[1024];
 	int lineno;
-	for (lineno = 1; qSocketGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) >= 0; lineno++) {
+	for (lineno = 1; qIoGets(buf, sizeof(buf), sockfd, SOCKET_TIMEOUT) >= 0; lineno++) {
 		printf("%03d: %s\n", lineno, buf);
 	}
 
