@@ -105,53 +105,6 @@ bool qFileExist(const char *filepath) {
 }
 
 /**
- * Transfer data between file descriptors
- *
- * @param outfd		output file descriptor
- * @param infd		input file descriptor
- * @param nbytes	the number of bytes to copy between file descriptors. 0 means transfer until end of infd.
- *
- * @return		the number of bytes written to outfd.
- */
-off_t qFileSend(int outfd, int infd, off_t nbytes) {
-#define MAX_FILESEND_CHUNK_SIZE		(32 * 1024)
-	if(nbytes == 0) return 0;
-
-	char buf[MAX_FILESEND_CHUNK_SIZE];
-
-	off_t sent = 0; // total size sent
-	while(sent < nbytes) {
-		size_t sendsize;	// this time sending size
-		if(nbytes - sent <= sizeof(buf)) sendsize = nbytes - sent;
-		else sendsize = sizeof(buf);
-
-		// read
-		ssize_t retr = read(infd, buf, sendsize);
-		DEBUG("read %zd", retr);
-		if (retr <= 0) {
-			if(sent == 0) return -1;
-			break;
-		}
-
-		// write
-		ssize_t retw = _q_write(outfd, buf, retr);
-		DEBUG("write %zd", retw);
-		if(retw <= 0) {
-			if(sent == 0) return -1;
-			break;
-		}
-
-		sent += retw;
-		if(retr != retw) {
-			DEBUG("size mismatch %zd, %zd", retr, retw);
-			break;
-		}
-	}
-
-	return sent;
-}
-
-/**
  * Load file into memory.
  *
  * @param filepath	file path

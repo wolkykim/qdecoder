@@ -428,23 +428,6 @@ extern	bool		qHtmlPrintf(FILE *stream, int mode, const char *format, ...);
 extern	bool		qHtmlPuts(FILE *stream, int mode, char *buf);
 
 /*
- * qSocket.c
- */
-extern	int		qSocketOpen(const char *hostname, int port, int timeoutms);
-extern	bool		qSocketClose(int sockfd);
-extern	int		qSocketWaitReadable(int sockfd, int timeoutms);
-extern	int		qSocketWaitWritable(int sockfd, int timeoutms);
-extern	ssize_t		qSocketRead(void *binary, int sockfd, size_t nbytes, int timeoutms);
-extern	ssize_t		qSocketGets(char *buf, size_t bufsize, int sockfd, int timeoutms);
-extern	ssize_t		qSocketWrite(int sockfd, const void *binary, size_t nbytes);
-extern	ssize_t		qSocketPuts(int sockfd, const char *str);
-extern	ssize_t		qSocketPrintf(int sockfd, const char *format, ...);
-extern	off_t		qSocketSendfile(int sockfd, int fd, off_t offset, off_t nbytes);
-extern	off_t		qSocketSaveIntoFile(int fd, int sockfd, off_t nbytes, int timeoutms);
-extern	ssize_t		qSocketSaveIntoMemory(void *mem, int sockfd, size_t nbytes, int timeoutms);
-extern	bool		qSocketGetAddr(struct sockaddr_in *addr, const char *hostname, int port);
-
-/*
  * qSem.c
  */
 extern	int		qSemInit(const char *keyfile, int keyid, int nsems, bool ifexistdestroy);
@@ -513,6 +496,46 @@ extern	Q_LOG*		qLog(const char *filepathfmt, int rotateinterval, bool flush);
 extern	Q_HTTPCLIENT*	qHttpClient(const char *hostname, int port);
 
 /*
+ * qIo.c
+ */
+extern	int		qIoWaitReadable(int fd, int timeoutms);
+extern	int		qIoWaitWritable(int fd, int timeoutms);
+extern	ssize_t		qIoRead(void *buf, size_t nbytes, int fd, int timeoutms);
+extern	ssize_t		qIoWrite(int fd, const void *buf, size_t nbytes, int timeoutms);
+extern	off_t		qIoSend(int outfd, int infd, off_t nbytes, int timeoutms);
+extern	ssize_t		qIoGets(char *buf, size_t bufsize, int fd, int timeoutms);
+extern	ssize_t		qIoPuts(int fd, const char *str, int timeoutms);
+extern	ssize_t		qIoPrintf(int fd, int timeoutms, const char *format, ...);
+
+/*
+ * qSocket.c
+ */
+extern	int		qSocketOpen(const char *hostname, int port, int timeoutms);
+extern	bool		qSocketClose(int sockfd);
+extern	bool		qSocketGetAddr(struct sockaddr_in *addr, const char *hostname, int port);
+
+/*
+ * qFile.c
+ */
+extern	bool		qFileLock(int fd);
+extern	bool		qFileUnlock(int fd);
+extern	bool		qFileExist(const char *filepath);
+extern	void*		qFileLoad(const char *filepath, size_t *nbytes);
+extern	void*		qFileRead(FILE *fp, size_t *nbytes);
+extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bool append);
+extern	char*		qFileReadLine(FILE *fp);
+extern	bool		qFileMkdir(const char *dirpath, mode_t mode, bool recursive);
+
+extern	char*		qFileGetName(const char *filepath);
+extern	char*		qFileGetDir(const char *filepath);
+extern	char*		qFileGetExt(const char *filepath);
+extern	off_t		qFileGetSize(const char *filepath);
+
+extern	bool		qFileCheckPath(const char *path);
+extern	char*		qFileCorrectPath(char *path);
+extern	char*		qFileGetAbsPath(char *buf, size_t bufsize, const char *path);
+
+/*
  * qString.c
  */
 extern	char*		qStrTrim(char *str);
@@ -533,28 +556,6 @@ extern	bool		qStrIsAlnum(const char *str);
 extern	bool		qStrIsEmail(const char *email);
 extern	bool		qStrIsUrl(const char *url);
 extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const char *tocode, float mag);
-
-/*
- * qFile.c
- */
-extern	bool		qFileLock(int fd);
-extern	bool		qFileUnlock(int fd);
-extern	bool		qFileExist(const char *filepath);
-extern	off_t		qFileSend(int outfd, int infd, off_t nbytes);
-extern	void*		qFileLoad(const char *filepath, size_t *nbytes);
-extern	void*		qFileRead(FILE *fp, size_t *nbytes);
-extern	ssize_t		qFileSave(const char *filepath, const void *buf, size_t size, bool append);
-extern	char*		qFileReadLine(FILE *fp);
-extern	bool		qFileMkdir(const char *dirpath, mode_t mode, bool recursive);
-
-extern	char*		qFileGetName(const char *filepath);
-extern	char*		qFileGetDir(const char *filepath);
-extern	char*		qFileGetExt(const char *filepath);
-extern	off_t		qFileGetSize(const char *filepath);
-
-extern	bool		qFileCheckPath(const char *path);
-extern	char*		qFileCorrectPath(char *path);
-extern	char*		qFileGetAbsPath(char *buf, size_t bufsize, const char *path);
 
 /*
  * qEncode.c

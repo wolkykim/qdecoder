@@ -217,7 +217,7 @@ static void _setUseragent(Q_HTTPCLIENT *client, const char *useragent) {
  */
 static bool _open(Q_HTTPCLIENT *client) {
 	if(client->socket >= 0) {
-		if(qSocketWaitWritable(client->socket, 0) > 0) return true;
+		if(qIoWaitWritable(client->socket, 0) > 0) return true;
 		_close(client);
 	}
 
@@ -237,7 +237,7 @@ static bool _open(Q_HTTPCLIENT *client) {
 
 	// try to connect
 	int status = connect(sockfd, (struct sockaddr *)&client->addr, sizeof(client->addr));
-	if(status < 0 && (errno != EINPROGRESS || qSocketWaitWritable(sockfd, client->timeoutms) <= 0) ) {
+	if(status < 0 && (errno != EINPROGRESS || qIoWaitWritable(sockfd, client->timeoutms) <= 0) ) {
 	 	DEBUG("connection failed.");
 		close(client->socket);
 		return false;
@@ -394,7 +394,7 @@ static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *saves
 			if(length - recv < MAX_ATOMIC_DATA_SIZE) recvsize = length - recv;
 			else recvsize = MAX_ATOMIC_DATA_SIZE;
 
-			ssize_t ret = qFileSend(fd, client->socket, recvsize);
+			ssize_t ret = qIoSend(fd, client->socket, recvsize, client->timeoutms);
 			if(ret <= 0) break; // Connection closed by peer
 			recv += ret;
 			if(savesize != NULL) *savesize = recv;
@@ -534,7 +534,7 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length
 	if(freeReqHeaders == true) reqheaders->free(reqheaders);
 
 	// wait 100-continue
-	if(qSocketWaitReadable(client->socket, client->timeoutms) <= 0) {
+	if(qIoWaitReadable(client->socket, client->timeoutms) <= 0) {
 		DEBUG("timed out %d", client->timeoutms);
 		_close(client);
 		return false;
@@ -562,7 +562,7 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length
 			if(length - sent < MAX_ATOMIC_DATA_SIZE) sendsize = length - sent;
 			else sendsize = MAX_ATOMIC_DATA_SIZE;
 
-			ssize_t ret = qFileSend(client->socket, fd, sendsize);
+			ssize_t ret = qIoSend(client->socket, fd, sendsize, client->timeoutms);
 			if(ret <= 0) break; // Connection closed by peer
 			sent += ret;
 
@@ -656,9 +656,8 @@ static void _free(Q_HTTPCLIENT *client) {
 #ifndef _DOXYGEN_SKIP
 
 static void _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_ENTRY *reqheaders) {
-
-	//
-	qSocketPrintf(client->socket, "%s %s %s\r\n", method, uri, (client->keepalive==true)?HTTP_PROTOCOL_11:HTTP_PROTOCOL_10);
+	// print out command
+	qIoPrintf(client->socket, client->timeoutms, "%s %s %s\r\n", method, uri, (client->keepalive==true)?HTTP_PROTOCOL_11:HTTP_PROTOCOL_10);
 
 	// print out headers
 	if(reqheaders != NULL) {
@@ -666,19 +665,19 @@ static void _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
 		memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
 		reqheaders->lock(reqheaders);
 		while(reqheaders->getNext(reqheaders, &obj, NULL, false) == true) {
-			qSocketPrintf(client->socket, "%s: %s\r\n", obj.name, (char*)obj.data);
+			qIoPrintf(client->socket, client->timeoutms, "%s: %s\r\n", obj.name, (char*)obj.data);
 		}
 		reqheaders->unlock(reqheaders);
 	}
 
-	qSocketPrintf(client->socket, "\r\n");
+	qIoPrintf(client->socket, client->timeoutms, "\r\n");
 }
 
 static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders) {
 
 	// read response
 	char buf[1024];
-	if(qSocketGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) return HTTP_NO_RESPONSE;
+	if(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) return HTTP_NO_RESPONSE;
 
 	// parse response code
 	if(strncmp(buf, "HTTP/", CONST_STRLEN("HTTP/"))) return HTTP_NO_RESPONSE;
@@ -688,7 +687,7 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders) {
 	if(rescode == 0) return HTTP_NO_RESPONSE;
 
 	// read headers
-	while(qSocketGets(buf, sizeof(buf), client->socket, client->timeoutms) > 0) {
+	while(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) > 0) {
 		if(buf[0] == '\0') break;
 		if(resheaders != NULL) {
 			// parse header

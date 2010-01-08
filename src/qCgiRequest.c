@@ -1022,7 +1022,7 @@ static bool _upload_clear_savedir(char *dirpath) {
 
 		char filepath[PATH_MAX];
 		snprintf(filepath, sizeof(filepath), "%s/%s", dirpath, dirp->d_name);
-		unlink(filepath);
+		_q_unlink(filepath);
 	}
 	closedir(dp);
 

@@ -63,7 +63,7 @@ int qCountRead(const char *filepath) {
 	if(fd < 0) return 0;
 
 	char buf[10+1];
-	ssize_t readed = read(fd, buf, sizeof(buf));
+	ssize_t readed = qIoRead(buf, sizeof(buf), fd, 0);
 	close(fd);
 
 	if(readed > 0) return atoi(buf);
@@ -87,7 +87,7 @@ bool qCountSave(const char *filepath, int number) {
 	int fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
 	if(fd < 0) return false;
 
-	ssize_t updated = _q_writef(fd, "%d", number);
+	ssize_t updated = qIoPrintf(fd, 0, "%d", number);
 	close(fd);
 
 	if(updated > 0) return true;

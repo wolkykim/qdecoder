@@ -94,30 +94,6 @@ char *_q_fgets(char *str, int size, FILE *stream) {
 	return str;
 }
 
-ssize_t _q_write(int fd, const void *buf, size_t nbytes) {
-	if(nbytes == 0) return 0;
-
-	ssize_t sent = 0;
-	while(sent < nbytes) {
-		ssize_t wsize = write(fd, buf+sent, nbytes-sent);
-		if(wsize <= 0) break;
-		sent += wsize;
-	}
-
-	if(sent > 0) return sent;
-	return -1;
-}
-
-ssize_t _q_writef(int fd, const char *format, ...) {
-	char *buf;
-	DYNAMIC_VSPRINTF(buf, format);
-	if(buf == NULL) return -1;
-
-	ssize_t ret = _q_write(fd, buf, strlen(buf));
-	free(buf);
-	return ret;
-}
-
 /* win32 compatible */
 int _q_unlink(const char *pathname) {
 #ifdef _WIN32
