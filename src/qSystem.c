@@ -92,7 +92,6 @@ bool qSysGetIp(char *buf, size_t bufsize) {
 	if(pHostEntry == NULL) return false;
 
 	char *pszLocalIp = inet_ntoa(*(struct in_addr *)*pHostEntry->h_addr_list);
-	free(pHostEntry);
 	if(pszLocalIp == NULL) return false;
 
 	qStrCpy(buf, bufsize, pszLocalIp);
