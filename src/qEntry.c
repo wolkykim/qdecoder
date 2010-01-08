@@ -171,7 +171,7 @@ Q_ENTRY *qEntry(void) {
 }
 
 /**
- * Q_ENTRY->qlock(): Enter critical section.
+ * Q_ENTRY->lock(): Enter critical section.
  *
  * @note
  * Q_ENTRY uses recursive mutex lock mechanism. And it uses lock at least as possible.
@@ -578,7 +578,7 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
  *   // thread model with specific key search
  *   Q_NLOBJ_T obj;
  *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
- *   entry->qlock();
+ *   entry->lock();
  *   while(entry->getNext(entry, &obj, "key2", false) == true) {
  *     printf("NAME=%s, DATA=%s, SIZE=%zu", obj.name, obj.data, obj.size);
  *   }
@@ -587,7 +587,7 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
  *   // thread model 2 with newmem flag
  *   Q_NLOBJ_T obj;
  *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
- *   entry->qlock();
+ *   entry->lock();
  *   while(entry->getNext(entry, &obj, NULL, true) == true) {
  *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
  *     free(obj.name);
