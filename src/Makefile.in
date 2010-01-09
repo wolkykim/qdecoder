@@ -63,7 +63,6 @@ OBJ		= qCgiRequest.o		\
 		qSession.o		\
 		qHtml.o			\
 					\
-		qSocket.o		\
 		qSem.o			\
 		qShm.o			\
 		qDatabase.o		\
@@ -78,6 +77,8 @@ OBJ		= qCgiRequest.o		\
 		qLog.o			\
 		qHttpClient.o		\
 					\
+		qIo.o			\
+		qSocket.o		\
 		qString.o		\
 		qFile.o			\
 		qEncode.o		\
