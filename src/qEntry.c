@@ -594,6 +594,7 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
  *     free(obj.data);
  *   }
  *   entry->unlock(entry);
+ * @endcode
  */
 static bool _getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newmem) {
 	if(entry == NULL || obj == NULL) return NULL;
