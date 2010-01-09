@@ -331,12 +331,13 @@ char *qStrRev(char *str) {
  *   char *str = strdup("Hello,world|Thank,you");
  *   char *token;
  *   int offset = 0;
- *   for(token = qStrTok(str, "|,", NULL, &offset); token != NULL; token = qStrTok(str, "|,", NULL, &offset)) {
+ *   for((token = qStrTok(str, "|,", NULL, &offset)) != NULL) {
  *     printf("%s\n", token);
  *  }
  * @endcode
  *
  * @note
+ * This mau modify str argument.
  * The major difference between qStrTok() and standard strtok() is that qStrTok() can returns empty string tokens.
  * If the str is "a:b::d", qStrTok() returns "a", "b", "", "d". But strtok() returns "a","b","d".
  */
