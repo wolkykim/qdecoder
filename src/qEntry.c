@@ -89,6 +89,7 @@ static void*		_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 static void*		_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 static void*		_getLast(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 static char*		_getStr(Q_ENTRY *entry, const char *name, bool newmem);
+static char*		_getStrf(Q_ENTRY *entry, bool newmem, const char *namefmt, ...);
 static char*		_getStrCase(Q_ENTRY *entry, const char *name, bool newmem);
 static char*		_getStrLast(Q_ENTRY *entry, const char *name, bool newmem);
 static int		_getInt(Q_ENTRY *entry, const char *name);
@@ -142,6 +143,7 @@ Q_ENTRY *qEntry(void) {
 	entry->getLast		= _getLast;
 
 	entry->getStr		= _getStr;
+	entry->getStrf		= _getStrf;
 	entry->getStrCase	= _getStrCase;
 	entry->getStrLast	= _getStrLast;
 	entry->getInt		= _getInt;
@@ -191,13 +193,13 @@ static void _unlock(Q_ENTRY *entry) {
 /**
  * Q_ENTRY->put(): Store object into linked-list structure.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name.
- * @param object	object pointer
- * @param size		size of the object
- * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name.
+ * @param	object	object pointer
+ * @param	size	size of the object
+ * @param	replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
  *
- * @return		true if successful, otherwise returns false.
+ * @return	true if successful, otherwise returns false.
  */
 static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace) {
 	/* check arguments */
@@ -250,12 +252,12 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size
 /**
  * Q_ENTRY->putStr(): Add string object into linked-list structure.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name.
- * @param str		string value
- * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name.
+ * @param	str	string value
+ * @param	replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
  *
- * @return		true if successful, otherwise returns false.
+ * @return	true if successful, otherwise returns false.
  */
 static bool _putStr(Q_ENTRY *entry, const char *name, const char *str, bool replace) {
 	size_t size = (str!=NULL) ? (strlen(str) + 1) : 0;
@@ -265,12 +267,12 @@ static bool _putStr(Q_ENTRY *entry, const char *name, const char *str, bool repl
 /**
  * Q_ENTRY->putStrf(): Add formatted string object into linked-list structure.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name.
- * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
- * @param format	formatted value string
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name.
+ * @param	replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param	format	formatted value string
  *
- * @return		true if successful, otherwise returns false.
+ * @return	true if successful, otherwise returns false.
  */
 static bool _putStrf(Q_ENTRY *entry, const char *name, bool replace, const char *format, ...) {
 	char *str;
@@ -282,12 +284,12 @@ static bool _putStrf(Q_ENTRY *entry, const char *name, bool replace, const char 
 /**
  * Q_ENTRY->putStrParsed(): Add string object with parsed into linked-list structure.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name.
- * @param str		string value which may contain variables like ${...}
- * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name.
+ * @param	str	string value which may contain variables like ${...}
+ * @param	replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
  *
- * @return		true if successful, otherwise returns false.
+ * @return	true if successful, otherwise returns false.
  *
  * @code
  *   ${key_name}		variable replacement
@@ -313,12 +315,12 @@ static bool _putStrParsed(Q_ENTRY *entry, const char *name, const char *str, boo
 /**
  * Q_ENTRY->putInt(): Add integer object into linked-list structure.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name.
- * @param num		number value
- * @param replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name.
+ * @param	num	number value
+ * @param	replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
  *
- * @return		true if successful, otherwise returns false.
+ * @return	true if successful, otherwise returns false.
  */
 static bool _putInt(Q_ENTRY *entry, const char *name, int num, bool replace) {
 	char str[10+1];
@@ -329,12 +331,12 @@ static bool _putInt(Q_ENTRY *entry, const char *name, int num, bool replace) {
 /**
  * Q_ENTRY->get(): Find object with given name
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
- * @param size		if size is not NULL, object size will be stored.
- * @param newmem	whether or not to allocate memory for the data.
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
+ * @param	size	if size is not NULL, object size will be stored.
+ * @param	newmem	whether or not to allocate memory for the data.
  *
- * @return		a pointer of data if key is found, otherwise returns NULL.
+ * @return	a pointer of data if key is found, otherwise returns NULL.
  *
  * @code
  *   Q_ENTRY *entry = qEntry();
@@ -383,12 +385,12 @@ static void *_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 /**
  * Q_ENTRY->getCase(): Find object with given name. (case-insensitive)
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
- * @param size		if size is not NULL, object size will be stored.
- * @param newmem	whether or not to allocate memory for the data.
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
+ * @param	size	if size is not NULL, object size will be stored.
+ * @param	newmem	whether or not to allocate memory for the data.
  *
- * @return		a pointer of malloced data if key is found, otherwise returns NULL.
+ * @return	a pointer of malloced data if key is found, otherwise returns NULL.
  */
 static void *_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 	if(entry == NULL || name == NULL) return NULL;
@@ -417,12 +419,12 @@ static void *_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newme
 /**
  * Q_ENTRY->getLast(): Find lastest matched object with given name.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
- * @param size		if size is not NULL, object size will be stored.
- * @param newmem	whether or not to allocate memory for the data.
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
+ * @param	size	if size is not NULL, object size will be stored.
+ * @param	newmem	whether or not to allocate memory for the data.
  *
- * @return		a pointer of malloced data if key is found, otherwise returns NULL.
+ * @return	a pointer of malloced data if key is found, otherwise returns NULL.
  *
  * @note
  * If you have multiple objects with same name. this method can be used to
@@ -455,26 +457,42 @@ static void *_getLast(Q_ENTRY *entry, const char *name, size_t *size, bool newme
 }
 
 /**
- * Q_ENTRY->getStr(): Find string object with given name.
+ * Q_ENTRY->getStr():  Find string object with given name.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
- * @param newmem	whether or not to allocate memory for the data.
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
+ * @param	newmem	whether or not to allocate memory for the data.
  *
- * @return		a pointer of malloced data if key is found, otherwise returns NULL.
+ * @return	a pointer of malloced data if key is found, otherwise returns NULL.
  */
 static char *_getStr(Q_ENTRY *entry, const char *name, bool newmem) {
 	return (char *)_get(entry, name, NULL, newmem);
 }
 
 /**
+ * Q_ENTRY->_getStrf():  Find string object with given formatted name.
+ *
+ * @param	entry	Q_ENTRY pointer
+ * @param	newmem	whether or not to allocate memory for the data.
+ * @param	namefmt	formatted name string
+ *
+ * @return	a pointer of malloced data if key is found, otherwise returns NULL.
+ */
+static char *_getStrf(Q_ENTRY *entry, bool newmem, const char *namefmt, ...) {
+	char *name;
+	DYNAMIC_VSPRINTF(name, namefmt);
+
+	return (char *)_get(entry, name, NULL, newmem);
+}
+
+/**
  * Q_ENTRY->getStrCase(): Find string object with given name. (case-insensitive)
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
- * @param newmem	whether or not to allocate memory for the data.
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
+ * @param	newmem	whether or not to allocate memory for the data.
  *
- * @return		a pointer of malloced data if key is found, otherwise returns NULL.
+ * @return	a pointer of malloced data if key is found, otherwise returns NULL.
  */
 static char *_getStrCase(Q_ENTRY *entry, const char *name, bool newmem) {
 	return (char *)_getCase(entry, name, NULL, newmem);
@@ -483,11 +501,11 @@ static char *_getStrCase(Q_ENTRY *entry, const char *name, bool newmem) {
 /**
  * Q_ENTRY->getStrLast(): Find lastest matched string object with given name.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
- * @param newmem	whether or not to allocate memory for the data.
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
+ * @param	newmem	whether or not to allocate memory for the data.
  *
- * @return		a pointer of malloced data if key is found, otherwise returns NULL.
+ * @return	a pointer of malloced data if key is found, otherwise returns NULL.
  */
 static char *_getStrLast(Q_ENTRY *entry, const char *name, bool newmem) {
 	return (char *)_getLast(entry, name, NULL, newmem);
@@ -496,10 +514,10 @@ static char *_getStrLast(Q_ENTRY *entry, const char *name, bool newmem) {
 /**
  * Q_ENTRY->getInt(): Find integer object with given name.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
  *
- * @return		a integer value of the integer object, otherwise returns 0.
+ * @return	a integer value of the integer object, otherwise returns 0.
  */
 static int _getInt(Q_ENTRY *entry, const char *name) {
 	char *str = _get(entry, name, NULL, true);
@@ -514,10 +532,10 @@ static int _getInt(Q_ENTRY *entry, const char *name) {
 /**
  * Q_ENTRY->getIntCase(): Find integer object with given name. (case-insensitive)
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
  *
- * @return		a integer value of the object.
+ * @return	a integer value of the object.
  */
 static int _getIntCase(Q_ENTRY *entry, const char *name) {
 	char *str =_getCase(entry, name, NULL, true);
@@ -532,10 +550,10 @@ static int _getIntCase(Q_ENTRY *entry, const char *name) {
 /**
  * Q_ENTRY->getIntLast(): Find lastest matched integer object with given name.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
  *
- * @return		a integer value of the object.
+ * @return	a integer value of the object.
  */
 static int _getIntLast(Q_ENTRY *entry, const char *name) {
 	char *str =_getLast(entry, name, NULL, true);
@@ -551,12 +569,12 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
 /**
  * Q_ENTRY->getNext(): Get next object structure.
  *
- * @param entry		Q_ENTRY pointer
- * @param obj		found data will be stored in this object
- * @param name		key name, if key name is NULL search every key in the list.
- * @param newmem	whether or not to allocate memory for the data.
+ * @param	entry	Q_ENTRY pointer
+ * @param	obj	found data will be stored in this object
+ * @param	name	key name, if key name is NULL search every key in the list.
+ * @param	newmem	whether or not to allocate memory for the data.
  *
- * @return		true if found otherwise returns false
+ * @return	true if found otherwise returns false
  *
  * @note
  * obj should be filled with 0 by using memset() before first call.
@@ -631,10 +649,10 @@ static bool _getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newm
 /**
  * Q_ENTRY->remove(): Remove matched objects as given name.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
  *
- * @return		a number of removed objects.
+ * @return	a number of removed objects.
  */
 static int _remove(Q_ENTRY *entry, const char *name) {
 	if(entry == NULL || name == NULL) return 0;
@@ -681,9 +699,9 @@ static int _remove(Q_ENTRY *entry, const char *name) {
 /**
  * Q_ENTRY->getNum(): Get total number of stored objects
  *
- * @param entry		Q_ENTRY pointer
+ * @param	entry	Q_ENTRY pointer
  *
- * @return		total number of stored objects.
+ * @return	total number of stored objects.
  */
 static int _getNum(Q_ENTRY *entry) {
 	if(entry == NULL) return 0;
@@ -694,10 +712,10 @@ static int _getNum(Q_ENTRY *entry) {
 /**
  * Q_ENTRY->getNo(): Get stored logical sequence number for the object.
  *
- * @param entry		Q_ENTRY pointer
- * @param name		key name
+ * @param	entry	Q_ENTRY pointer
+ * @param	name	key name
  *
- * @return		stored sequence number of the object if found, otherwise 0 will be returned.
+ * @return	stored sequence number of the object if found, otherwise 0 will be returned.
  *
  * @note
  * Sequence number starts from 1.
@@ -722,15 +740,15 @@ static int _getNo(Q_ENTRY *entry, const char *name) {
 /**
  * Q_ENTRY->parseStr(): Parse string with given entries.
  *
- * @param entry		Q_ENTRY pointer
- * @param str		string value which may contain variables like ${...}
+ * @param	entry	Q_ENTRY pointer
+ * @param	str	string value which may contain variables like ${...}
  *
- * @return		malloced string if successful, otherwise returns NULL.
+ * @return	malloced string if successful, otherwise returns NULL.
  *
  * @code
- *   ${key_name}		variable replacement
- *   ${!system_command}		external command results
- *   ${%PATH}			get environments
+ *   ${key_name}          - variable replacement
+ *   ${!system_command}   - external command results
+ *   ${%PATH}             - get environments
  * @endcode
  *
  * @code
@@ -821,10 +839,10 @@ static char *_parseStr(Q_ENTRY *entry, const char *str) {
 /**
  * Q_ENTRY->merge(): Merge all objects data into single object.
  *
- * @param entry		Q_ENTRY pointer
- * @param size		if size is not NULL, merged object size will be stored.
+ * @param	entry	Q_ENTRY pointer
+ * @param	size	if size is not NULL, merged object size will be stored.
  *
- * @return		a malloced pointer, otherwise(if there is no data to merge) returns NULL.
+ * @return	a malloced pointer, otherwise(if there is no data to merge) returns NULL.
  *
  * @note
  * For the convenience, it allocates 1 byte more than actual total data size and store '\0' at the end.
@@ -854,9 +872,9 @@ static void *_merge(Q_ENTRY *entry, size_t *size) {
 /**
  * Q_ENTRY->truncate(): Truncate Q_ENTRY
  *
- * @param entry		Q_ENTRY pointer
+ * @param	entry	Q_ENTRY pointer
  *
- * @return		always returns true.
+ * @return	always returns true.
  */
 static bool _truncate(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
@@ -883,13 +901,13 @@ static bool _truncate(Q_ENTRY *entry) {
 /**
  * Q_ENTRY->save(): Save Q_ENTRY as plain text format
  *
- * @param entry		Q_ENTRY pointer
- * @param filepath	save file path
- * @param sepchar	separator character between name and value. normally '=' is used.
- * @param encode	flag for encoding value object. false can be used if the value object
+ * @param	entry	Q_ENTRY pointer
+ * @param	filepath save file path
+ * @param	sepchar	separator character between name and value. normally '=' is used.
+ * @param	encode	flag for encoding value object. false can be used if the value object
  *			is string or integer and has no new line. otherwise true must be set.
  *
- * @return		true if successful, otherwise returns false.
+ * @return	true if successful, otherwise returns false.
  */
 static bool _save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode) {
 	if(entry == NULL) return false;
@@ -924,12 +942,12 @@ static bool _save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encod
 /**
  * Q_ENTRY->load(): Load and append entries from given filepath
  *
- * @param entry		Q_ENTRY pointer
- * @param filepath	save file path
- * @param sepchar	separator character between name and value. normally '=' is used
- * @param decode	flag for decoding value object
+ * @param	entry	Q_ENTRY pointer
+ * @param	filepath save file path
+ * @param	sepchar	separator character between name and value. normally '=' is used
+ * @param	decode	flag for decoding value object
  *
- * @return		a number of loaded entries.
+ * @return	a number of loaded entries.
  */
 static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode) {
 	if(entry == NULL) return 0;
@@ -955,7 +973,9 @@ static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode
 /**
  * Q_ENTRY->reverse(): Reverse-sort internal stored object.
  *
- * @param entry		Q_ENTRY pointer
+ * @param	entry	Q_ENTRY pointer
+ *
+ * @return	true if successful otherwise returns false.
  *
  * @note
  * This method can be used to improve look up performance.
@@ -984,9 +1004,9 @@ static bool _reverse(Q_ENTRY *entry) {
 /**
  * Q_ENTRY->print(): Print out stored objects for debugging purpose.
  *
- * @param entry		Q_ENTRY pointer
- * @param out		output stream FILE descriptor such like stdout, stderr.
- * @param print_data	true for printing out object value, false for disable printing out object value.
+ * @param	entry		Q_ENTRY pointer
+ * @param	out		output stream FILE descriptor such like stdout, stderr.
+ * @param	print_data	true for printing out object value, false for disable printing out object value.
  */
 static bool _print(Q_ENTRY *entry, FILE *out, bool print_data) {
 	if(entry == NULL || out == NULL) return false;
@@ -1004,9 +1024,9 @@ static bool _print(Q_ENTRY *entry, FILE *out, bool print_data) {
 /**
  * Q_ENTRY->free(): Free Q_ENTRY
  *
- * @param entry		Q_ENTRY pointer
+ * @param	entry	Q_ENTRY pointer
  *
- * @return		always returns true.
+ * @return	always returns true.
  */
 static bool _free(Q_ENTRY *entry) {
 	if(entry == NULL) return false;

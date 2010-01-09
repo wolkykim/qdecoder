@@ -111,6 +111,7 @@ struct _Q_ENTRY {
 	void*		(*getCase)	(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 	void*		(*getLast)	(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
 	char*		(*getStr)	(Q_ENTRY *entry, const char *name, bool newmem);
+	char*		(*getStrf)	(Q_ENTRY *entry, bool newmem, const char *namefmt, ...);
 	char*		(*getStrCase)	(Q_ENTRY *entry, const char *name, bool newmem);
 	char*		(*getStrLast)	(Q_ENTRY *entry, const char *name, bool newmem);
 	int		(*getInt)	(Q_ENTRY *entry, const char *name);
