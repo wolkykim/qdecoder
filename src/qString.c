@@ -331,7 +331,7 @@ char *qStrRev(char *str) {
  *   char *str = strdup("Hello,world|Thank,you");
  *   char *token;
  *   int offset = 0;
- *   for((token = qStrTok(str, "|,", NULL, &offset)) != NULL) {
+ *   while((token = qStrTok(str, "|,", NULL, &offset)) != NULL) {
  *     printf("%s\n", token);
  *  }
  * @endcode
