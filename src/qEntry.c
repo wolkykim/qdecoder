@@ -70,11 +70,11 @@
  */
 #ifndef _DOXYGEN_SKIP
 
-#define _VAR			'$'
-#define _VAR_OPEN		'{'
-#define _VAR_CLOSE		'}'
-#define _VAR_CMD		'!'
-#define _VAR_ENV		'%'
+#define _VAR		'$'
+#define _VAR_OPEN	'{'
+#define _VAR_CLOSE	'}'
+#define _VAR_CMD	'!'
+#define _VAR_ENV	'%'
 
 static	void		_lock(Q_ENTRY *entry);
 static	void		_unlock(Q_ENTRY *entry);

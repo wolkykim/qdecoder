@@ -48,18 +48,21 @@ static bool _open(Q_HTTPCLIENT *client);
 static void _setTimeout(Q_HTTPCLIENT *client, int timeoutms);
 static void _setKeepalive(Q_HTTPCLIENT *client, bool keepalive);
 static void _setUseragent(Q_HTTPCLIENT *client, const char *agentname);
-static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *savesize, int *rescode,
+static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_ENTRY *reqheaders);
+static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders);
+static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize, int *rescode,
 		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
 		bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
-static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length, int *rescode,
+static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, int *rescode,
 		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
 		bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
+static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
+		int *rescode, size_t *contentslength,
+		Q_ENTRY *reqheaders, Q_ENTRY *resheaders);
 static bool _close(Q_HTTPCLIENT *client);
 static void _free(Q_HTTPCLIENT *client);
 
 // internal usages
-static void _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_ENTRY *reqheaders);
-static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders);
 
 #endif
 
@@ -141,8 +144,11 @@ Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 	client->setUseragent	= _setUseragent;
 
 	client->open		= _open;
-	client->put		= _put;
+	client->sendRequest	= _sendRequest;
+	client->readResponse	= _readResponse;
 	client->get		= _get;
+	client->put		= _put;
+	client->cmd		= _cmd;
 	client->close		= _close;
 	client->free		= _free;
 
@@ -255,10 +261,124 @@ static bool _open(Q_HTTPCLIENT *client) {
 }
 
 /**
+ * Q_HTTPCLIENT->sendRequest(): Send HTTP request to the remote host.
+ *
+ * @param client	Q_HTTPCLIENT object pointer
+ * @param method	HTTP method name
+ * @param uri		URI string for the method. ("/path" or "http://.../path")
+ * @param reqheaders	Q_ENTRY pointer which contains additional user request headers. (can be NULL)
+ *
+ * @return	true if successful, otherwise returns false
+ *
+ * @note
+ * 3 default headers(Host, User-Agent, Connection) will be sent if reqheaders does not have those headers in it.
+ *
+ * @code
+ *   Q_ENTRY *reqheaders = qEntry();
+ *   reqheaders->putStr(reqheaders,  "Date", qTimeGetGmtStaticStr(0), true);
+ *
+ *   httpClient->sendRequest(client, "DELETE", "/img/qdecoder.png", reqheaders);
+ * @endcode
+ */
+static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_ENTRY *reqheaders) {
+	if(_open(client) == false) {
+		return false;
+	}
+
+	// generate request headers if necessary
+	bool freeReqHeaders = false;
+	if(reqheaders == NULL) {
+		reqheaders = qEntry();
+		if(reqheaders == NULL) return false;
+		freeReqHeaders = true;
+	}
+
+	// append default headers
+	if(reqheaders->getCase(reqheaders, "Host", NULL, false) == NULL) {
+		reqheaders->putStrf(reqheaders, "Host", true, "%s:%d", client->hostname, client->port);
+	}
+	if(reqheaders->getCase(reqheaders, "User-Agent", NULL, false) == NULL) {
+		reqheaders->putStr(reqheaders, "User-Agent", client->useragent, true);
+	}
+	if(reqheaders->getCase(reqheaders, "Connection", NULL, false) == NULL) {
+		reqheaders->putStr(reqheaders, "Connection", (client->keepalive==true)?"Keep-Alive":"close", true);
+	}
+
+	// print out command
+	qIoPrintf(client->socket, client->timeoutms, "%s %s %s\r\n", method, uri, (client->keepalive==true)?HTTP_PROTOCOL_11:HTTP_PROTOCOL_10);
+
+	// print out headers
+	Q_NLOBJ_T obj;
+	memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
+	reqheaders->lock(reqheaders);
+	while(reqheaders->getNext(reqheaders, &obj, NULL, false) == true) {
+		qIoPrintf(client->socket, client->timeoutms, "%s: %s\r\n", obj.name, (char*)obj.data);
+	}
+	reqheaders->unlock(reqheaders);
+
+	qIoPrintf(client->socket, client->timeoutms, "\r\n");
+
+	// de-allocate
+	if(freeReqHeaders == true) reqheaders->free(reqheaders);
+
+	return true;
+}
+
+/**
+ * Q_HTTPCLIENT->readResponse(): Read and parse HTTP response from the remote host.
+ *
+ * @param client	Q_HTTPCLIENT object pointer
+ * @param resheaders	Q_ENTRY pointer for storing response headers. (can be NULL)
+ *
+ * @return	numeric HTTP response code if successful, otherwise returns 0.
+ *
+ * @code
+ *   // send request
+ *   httpClient->sendRequest(client, "DELETE", "/img/qdecoder.png", NULL);
+ *
+ *   // read response
+ *   Q_ENTRY *resheaders = qEntry();
+ *   int rescode = httpClient->readResponse(client, resheaders);
+ * @endcode
+ */
+static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders) {
+	// read response
+	char buf[1024];
+	if(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) return HTTP_NO_RESPONSE;
+
+	// parse response code
+	if(strncmp(buf, "HTTP/", CONST_STRLEN("HTTP/"))) return HTTP_NO_RESPONSE;
+	char *tmp = strstr(buf, " ");
+	if(tmp == NULL) return HTTP_NO_RESPONSE;
+	int rescode = atoi(tmp+1);
+	if(rescode == 0) return HTTP_NO_RESPONSE;
+
+	// read headers
+	while(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) > 0) {
+		if(buf[0] == '\0') break;
+		if(resheaders != NULL) {
+			// parse header
+			char *value = strstr(buf, ":");
+			if(value != NULL) {
+				*value = '\0';
+				value += 1;
+				qStrTrim(value);
+			} else {
+				// missing colon
+				value = "";
+			}
+			resheaders->putStr(resheaders, buf, value, true);
+		}
+	}
+
+	return rescode;
+}
+
+/**
  * Q_HTTPCLIENT->get(): Download file from remote host using GET method.
  *
  * @param client	Q_HTTPCLIENT object pointer.
- * @param getpath	remote URL path for downloading file.
+ * @param uri		remote URL for downloading file. ("/path" or "http://.../path")
  * @param fd		opened file descriptor for writing.
  * @param savesize	if not NULL, the length of stored bytes will be stored. (can be NULL)
  * @param rescode	if not NULL, remote response code will be stored. (can be NULL)
@@ -325,7 +445,7 @@ static bool _open(Q_HTTPCLIENT *client) {
  *   }
  * @endcode
  */
-static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *savesize, int *rescode,
+static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize, int *rescode,
 		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
 		bool (*callback)(void *userdata, off_t recvbytes), void *userdata) {
 
@@ -345,14 +465,11 @@ static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *saves
 		freeReqHeaders = true;
 	}
 
-	reqheaders->putStrf(reqheaders, "Host", true,		"%s:%d", client->hostname, client->port);
-	reqheaders->putStr(reqheaders,	"User-Agent",		client->useragent, true);
-	reqheaders->putStr(reqheaders,  "Accept",		"*/*", true);
-	reqheaders->putStr(reqheaders,  "Connection",		(client->keepalive==true)?"Keep-Alive":"close", true);
-	//reqheaders->putStr(reqheaders,  "Date",			qTimeGetGmtStaticStr(0), true);
+	// add additional headers
+	reqheaders->putStr(reqheaders,  "Accept", "*/*", true);
 
 	// send request
-	_sendRequest(client, "GET", getpath, reqheaders);
+	_sendRequest(client, "GET", uri, reqheaders);
 	if(freeReqHeaders == true) reqheaders->free(reqheaders);
 
 	// generate response headers if necessary
@@ -432,7 +549,7 @@ static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *saves
  * Q_HTTPCLIENT->put(): Upload file to remote host using PUT method.
  *
  * @param client	Q_HTTPCLIENT object pointer.
- * @param putpath	remote URL path for uploading file.
+ * @param uri		remote URL for uploading file. ("/path" or "http://.../path")
  * @param fd		opened file descriptor for reading.
  * @param length	send size.
  * @param rescode	if not NULL, remote response code will be stored. (can be NULL)
@@ -503,7 +620,7 @@ static bool _get(Q_HTTPCLIENT *client, const char *getpath, int fd, off_t *saves
  *   }
  * @endcode
  */
-static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length, int *rescode,
+static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, int *rescode,
 		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
 		bool (*callback)(void *userdata, off_t sentbytes), void *userdata) {
 
@@ -522,15 +639,12 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length
 		freeReqHeaders = true;
 	}
 
-	reqheaders->putStrf(reqheaders, "Host", true,		"%s:%d", client->hostname, client->port);
+	// add additional headers
 	reqheaders->putStrf(reqheaders, "Content-Length", true,	"%jd", length);
-	reqheaders->putStr(reqheaders,	"User-Agent",		client->useragent, true);
-	reqheaders->putStr(reqheaders,  "Connection",		(client->keepalive==true)?"Keep-Alive":"close", true);
 	reqheaders->putStr(reqheaders,  "Expect",		"100-continue", true);
-	//reqheaders->putStr(reqheaders,  "Date",			qTimeGetGmtStaticStr(0), true);
 
 	// send request
-	_sendRequest(client, "PUT", putpath, reqheaders);
+	_sendRequest(client, "PUT", uri, reqheaders);
 	if(freeReqHeaders == true) reqheaders->free(reqheaders);
 
 	// wait 100-continue
@@ -610,6 +724,95 @@ static bool _put(Q_HTTPCLIENT *client, const char *putpath, int fd, off_t length
 }
 
 /**
+ * Q_HTTPCLIENT->cmd(): Send custom method to remote host.
+ *
+ * @param client	Q_HTTPCLIENT object pointer.
+ * @param method	method name.
+ * @param uri		remote URL for uploading file. ("/path" or "http://.../path")
+ * @param rescode	if not NULL, remote response code will be stored. (can be NULL)
+ * @param contentslength if not NULL, the contents length will be stored. (can be NULL)
+ * @param reqheaders	Q_ENTRY pointer which contains additional user request headers. (can be NULL)
+ * @param resheaders	Q_ENTRY pointer for storing response headers. (can be NULL)
+ *
+ * @return	malloced contents data if successful, otherwise returns NULL
+ *
+ * @code
+ *   int nResCode;
+ *   size_t nContentsLength;
+ *   void *contents = httpClient->cmd(httpClient, "DELETE" "/img/qdecoder.png",
+ *                                      &nRescode, &nContentsLength
+ *                                      NULL, NULL);
+ *   if(contents == NULL) {
+ *     ...(error occured)...
+ *   } else {
+ *     printf("Response code : %d\n", nResCode);
+ *     printf("Contents length : %zu\n", nContentsLength);
+ *     printf("Contents : %s\n", (char*)contents);  // if contents is printable
+ *     free(contents);  // de-allocate
+ *   }
+ * @endcode
+ */
+static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
+		int *rescode, size_t *contentslength,
+		Q_ENTRY *reqheaders, Q_ENTRY *resheaders) {
+
+	// reset rescode
+	if(rescode != NULL) *rescode = 0;
+	if(contentslength != NULL) *contentslength = 0;
+
+	// get or open connection
+	if(_open(client) == false) {
+		return NULL;
+	}
+
+	// send request
+	if(_sendRequest(client, method, uri, reqheaders) == false) {
+		return NULL;
+	}
+
+	// read response
+	bool freeResHeaders = false;
+	if(resheaders == NULL) {
+		resheaders = qEntry();
+		freeResHeaders = true;
+	}
+
+	int resno = _readResponse(client, resheaders);
+	if(rescode != NULL) *rescode = resno;
+
+	// parse contents-length
+	size_t length = resheaders->getInt(resheaders, "Content-Length");
+	if(freeResHeaders == true) resheaders->free(resheaders);
+
+	// malloc data
+	void *contents = NULL;
+	if(length > 0) {
+		contents = malloc(length + 1);
+		if(contents != NULL) {
+			if(qIoRead(contents, client->socket, length, client->timeoutms) != length) {
+				free(contents);
+				contents = NULL;
+			} else {
+				*(char*)(contents + length) = '\0';
+			}
+		}
+	}
+
+	// close connection
+	if(client->keepalive == false) {
+		_close(client);
+	}
+
+	if(contents == NULL) {
+		contents = strdup("");
+		length = strlen(contents);
+	}
+	if(contentslength != NULL) *contentslength = length;
+
+	return contents;
+}
+
+/**
  * Q_HTTPCLIENT->close(): Close the connection.
  *
  * @param Q_HTTPCLIENT	HTTP object pointer
@@ -652,61 +855,5 @@ static void _free(Q_HTTPCLIENT *client) {
 
 	free(client);
 }
-
-#ifndef _DOXYGEN_SKIP
-
-static void _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_ENTRY *reqheaders) {
-	// print out command
-	qIoPrintf(client->socket, client->timeoutms, "%s %s %s\r\n", method, uri, (client->keepalive==true)?HTTP_PROTOCOL_11:HTTP_PROTOCOL_10);
-
-	// print out headers
-	if(reqheaders != NULL) {
-		Q_NLOBJ_T obj;
-		memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
-		reqheaders->lock(reqheaders);
-		while(reqheaders->getNext(reqheaders, &obj, NULL, false) == true) {
-			qIoPrintf(client->socket, client->timeoutms, "%s: %s\r\n", obj.name, (char*)obj.data);
-		}
-		reqheaders->unlock(reqheaders);
-	}
-
-	qIoPrintf(client->socket, client->timeoutms, "\r\n");
-}
-
-static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders) {
-
-	// read response
-	char buf[1024];
-	if(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) return HTTP_NO_RESPONSE;
-
-	// parse response code
-	if(strncmp(buf, "HTTP/", CONST_STRLEN("HTTP/"))) return HTTP_NO_RESPONSE;
-	char *tmp = strstr(buf, " ");
-	if(tmp == NULL) return HTTP_NO_RESPONSE;
-	int rescode = atoi(tmp+1);
-	if(rescode == 0) return HTTP_NO_RESPONSE;
-
-	// read headers
-	while(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) > 0) {
-		if(buf[0] == '\0') break;
-		if(resheaders != NULL) {
-			// parse header
-			char *value = strstr(buf, ":");
-			if(value != NULL) {
-				*value = '\0';
-				value += 1;
-				qStrTrim(value);
-			} else {
-				// missing colon
-				value = "";
-			}
-			resheaders->putStr(resheaders, buf, value, true);
-		}
-	}
-
-	return rescode;
-}
-
-#endif
 
 #endif /* DISABLE_SOCKET */
