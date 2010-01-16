@@ -453,11 +453,6 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 	if(rescode != NULL) *rescode = 0;
 	if(savesize != NULL) *savesize = 0;
 
-	// get or open connection
-	if(_open(client) == false) {
-		return false;
-	}
-
 	// generate request headers if necessary
 	bool freeReqHeaders = false;
 	if(reqheaders == NULL) {
@@ -469,8 +464,9 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 	reqheaders->putStr(reqheaders,  "Accept", "*/*", true);
 
 	// send request
-	_sendRequest(client, "GET", uri, reqheaders);
+	bool sendRet = _sendRequest(client, "GET", uri, reqheaders);
 	if(freeReqHeaders == true) reqheaders->free(reqheaders);
+	if(sendRet == false) return false;
 
 	// generate response headers if necessary
 	bool freeResHeaders = false;
@@ -627,11 +623,6 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 	// reset rescode
 	if(rescode != NULL) *rescode = 0;
 
-	// get or open connection
-	if(_open(client) == false) {
-		return false;
-	}
-
 	// generate request headers
 	bool freeReqHeaders = false;
 	if(reqheaders == NULL) {
@@ -644,8 +635,9 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 	reqheaders->putStr(reqheaders,  "Expect",		"100-continue", true);
 
 	// send request
-	_sendRequest(client, "PUT", uri, reqheaders);
+	bool sendRet =_sendRequest(client, "PUT", uri, reqheaders);
 	if(freeReqHeaders == true) reqheaders->free(reqheaders);
+	if(sendRet == false) return false;
 
 	// wait 100-continue
 	if(qIoWaitReadable(client->socket, client->timeoutms) <= 0) {
@@ -759,11 +751,6 @@ static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
 	// reset rescode
 	if(rescode != NULL) *rescode = 0;
 	if(contentslength != NULL) *contentslength = 0;
-
-	// get or open connection
-	if(_open(client) == false) {
-		return NULL;
-	}
 
 	// send request
 	if(_sendRequest(client, method, uri, reqheaders) == false) {
