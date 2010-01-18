@@ -103,7 +103,7 @@ struct _Q_ENTRY {
 
 	bool		(*put)		(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace);
 	bool		(*putStr)	(Q_ENTRY *entry, const char *name, const char *str, bool replace);
-	bool		(*putStrf)	(Q_ENTRY *entry, const char *name, bool replace, const char *format, ...);
+	bool		(*putStrf)	(Q_ENTRY *entry, bool replace, const char *name, const char *format, ...);
 	bool		(*putStrParsed)	(Q_ENTRY *entry, const char *name, const char *str, bool replace);
 	bool		(*putInt)	(Q_ENTRY *entry, const char *name, int num, bool replace);
 

@@ -295,7 +295,7 @@ static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
 
 	// append default headers
 	if(reqheaders->getCase(reqheaders, "Host", NULL, false) == NULL) {
-		reqheaders->putStrf(reqheaders, "Host", true, "%s:%d", client->hostname, client->port);
+		reqheaders->putStrf(reqheaders, true, "Host", "%s:%d", client->hostname, client->port);
 	}
 	if(reqheaders->getCase(reqheaders, "User-Agent", NULL, false) == NULL) {
 		reqheaders->putStr(reqheaders, "User-Agent", client->useragent, true);
@@ -631,8 +631,8 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 	}
 
 	// add additional headers
-	reqheaders->putStrf(reqheaders, "Content-Length", true,	"%jd", length);
-	reqheaders->putStr(reqheaders,  "Expect",		"100-continue", true);
+	reqheaders->putStrf(reqheaders, true, "Content-Length", "%jd", length);
+	reqheaders->putStr(reqheaders,  "Expect", "100-continue", true);
 
 	// send request
 	bool sendRet =_sendRequest(client, "PUT", uri, reqheaders);

@@ -81,7 +81,7 @@ static	void		_unlock(Q_ENTRY *entry);
 
 static bool		_put(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace);
 static bool		_putStr(Q_ENTRY *entry, const char *name, const char *str, bool replace);
-static bool		_putStrf(Q_ENTRY *entry, const char *name, bool replace, const char *format, ...);
+static bool		_putStrf(Q_ENTRY *entry, bool replace, const char *name, const char *format, ...);
 static bool		_putStrParsed(Q_ENTRY *entry, const char *name, const char *str, bool replace);
 static bool		_putInt(Q_ENTRY *entry, const char *name, int num, bool replace);
 
@@ -268,13 +268,13 @@ static bool _putStr(Q_ENTRY *entry, const char *name, const char *str, bool repl
  * Q_ENTRY->putStrf(): Add formatted string object into linked-list structure.
  *
  * @param	entry	Q_ENTRY pointer
- * @param	name	key name.
  * @param	replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
+ * @param	name	key name.
  * @param	format	formatted value string
  *
  * @return	true if successful, otherwise returns false.
  */
-static bool _putStrf(Q_ENTRY *entry, const char *name, bool replace, const char *format, ...) {
+static bool _putStrf(Q_ENTRY *entry, bool replace, const char *name, const char *format, ...) {
 	char *str;
 	DYNAMIC_VSPRINTF(str, format);
 
