@@ -117,7 +117,7 @@ doc:
 	doxygen doxygen.conf
 
 cleandoc:
-	${RM} -rf ../doc/html ../doc/man
+	${RM} -rf ../doc/html
 
 clean:
 	${RM} -f ${OBJ} ${LIBNAME} ${SLIBREALNAME} ${SLIBNAME}
