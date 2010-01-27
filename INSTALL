@@ -1,5 +1,5 @@
-                          [The qDecoder Project]
-  ------------------------------------------------------------------------
+                            [The qDecoder Project]
+-------------------------------------------------------------------------------
 
 qDecoder Installation Guide
 
@@ -8,216 +8,173 @@ qDecoder Installation Guide
      * Compile
      * Install
      * Deinstall
-     * Test
+     * Test & Examples
 
-  Step 1. Getting qDecoder Package
+Step 1. Getting qDecoder Package
 
-   The   latest   version   of   qDecoder   can   be   downloaded  from
-   http://www.qDecoder.org/ or ftp://ftp.qDecoder.org/pub/qDecoder/.
+  The latest version of qDecoder can be downloaded from http://www.qDecoder.org/
+  or ftp://ftp.qDecoder.org/pub/qDecoder/.
+  To get working current : svn co svn://svn.qdecoder.org/qdecoder/trunk qdecoder
 
-   To get working current : svn co svn://svn.qdecoder.org/qdecoder/trunk
-   qdecoder
+Step 2. Unpacking qDecoder Package
 
-  Step 2. Unpacking qDecoder Package
+  Basically, qDecoder is provided being compressed with tar on Unix. Follow the
+  below procedure to decompress it.
 
-   Basically, qDecoder is provided being compressed with tar on Unix. Follow
-   the below procedure to decompress it.
+    $ tar xvfz qDecoder-VERSION.tar.gz
 
+  A directory corresponding to qDecoder-VERSION will be created. And the files
+  will be unpacked like the following:
 
-	$ uncompress qDecoder-VERSION.tar.Z
-	$ tar xvf qDecoder-VERSION.tar
+    $ cd qDecoder-VERSION
 
-   On a system installed with GNU TAR, it can be decompressed at once as
-   follows:
+    $ ls -asCF
+      4 ./              32 config.sub*    12 INSTALL
+      4 ../            160 configure*     16 install-sh*
+      4 AUTHORS          8 configure.ac    4 Makefile.in
+     16 CHANGES          4 COPYING         4 qDecoder.jpg
+     44 config.guess*    4 doc/            4 src/
+      4 config.h.in      4 examples/
 
+    AUTHORS    - List of manufacturers' names
+    CHANGES    - Changes of each version
+    COPYING    - Copyright-related documents
+    INSTALL    - Installation guide
+    README     - General guide
+    REFERENCE  - Manual on how to use functions
+    qDecoder.jpg - Logotype picture
 
-	$ tar xvfZ qDecoder-VERSION.tar.Z
+    Makefile.in --+
+    configure     +
+    configure.ac  +
+    install-sh    +--> Autoconf-related files
+    config.guess  +
+    config.sub    +
+    config.h.in --+
 
-   A directory corresponding to qDecoder-VERSION is created. And the package
-   is unpacked like the following:
+    doc/... - Documentations
+    examples/... - Collection of example sources.
+    src/... - qDecoder main sources.
 
+Step 3. Compile
 
-	$ cd qDecoder-VERSION
+  qDecoder makes the compilation between different platforms more convenient by
+  applying Autoconf (6.0.1 and above) which almost all the GNU software and
+  free/open source software adopt. The compilation method is, like that of general
+  open sources, through "make" after configuration, which checks to see if the
+  compiler environment, needed functions and commands of the pertinent system can
+  be used, and then constructs Makefile for them to be compiled in the system most
+  efficiently.
 
-	$ ls -asCF
-	  1 ./                    3 Makefile.in           6 install-sh*
-	  1 ../                   7 README                2 qDecoder.jpg
-	  1 AUTHORS              48 REFERENCE             1 rfc/
-	  9 CHANGES              55 configure*            1 src/
-	 26 COPYING               3 configure.in          1 win32/
-	  2 DISCLAIMER            1 contrib/
-	 12 INSTALL               1 examples/
+    $ cd qDecoder-VERSION
 
-	  4 ./               4 config.h.in     4 doc/           4 qDecoder.jpg
-	  4 ../             32 config.sub*     4 examples/      8 README
-	  4 AUTHORS        164 configure*     16 INSTALL        4 REFERENCE
-	 16 CHANGES          8 configure.ac   16 install-sh*    4 src/
-	 44 config.guess*    8 COPYING         4 Makefile.in    4 .svn/
+    $ ./configure --help
+    (...some messages...)
+    Optional Features:
 
-	AUTHORS    - List of manufacturers' names
-	CHANGES    - Changes of each version
-	COPYING    - Copyright-related documents
-	INSTALL    - Installation guide
-	README     - General guide
-	REFERENCE  - Manual on how to use functions
-	qDecoder.jpg - Logotype picture
+      --enable-debug          enable debugging output
+      --enable-threadsafe     enable thread-safe feature
+      --enable-lfs            enable large file supports
+      --enable-fastcgi=/FASTCGI_INCLUDE_DIR_PATH/
+                              enable FastCGI supports
+      --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
+                              enable MySQL database supports
+      --disable-cgi           disable CGI APIs
+      --disable-socket        disable socket APIs
+      --disable-ipc           disable IPC APIs
+      --disable-datastructure disable data-structure APIs
 
-	Makefile.in --+
-	configure     +
-	configure.ac  +
-	install-sh    +--> Autoconf-related files
-	config.guess  +
-	config.sub    +
-	config.h.in --+
+    $ ./configure (for general purpose)
+    ex) $ ./configure --disable-cgi (for general application library)
+    ex) $ ./configure --disable-cgi --enable-threadsafe (for general thread application library)
+    ex) $ ./configure --disable-socket --disable-ipc --disable-datastructure (only for CGI usages)
 
-	doc/... - Documentations
-	examples/... - Collection of example sources.
-	src/... - qDecoder main sources.
+    creating cache ./config.cache
+    checking for gcc... gcc
+    checking whether the C compiler (gcc  ) works... yes
+    checking whether the C compiler (gcc  ) is a cross-compiler... no
+    ...(skip)...
+    configure: optional flags:
+    configure: creating ./config.status
+    config.status: creating Makefile
+    config.status: creating src/Makefile
+    config.status: creating examples/Makefile
+    config.status: creating config.h
 
-  Step 3. Compile
+    $ ls -asCF
+     4 ./               4 config.h.in       8 COPYING        4 Makefile.in
+     4 ../             16 config.log        4 doc/           4 qDecoder.jpg
+     4 AUTHORS         24 config.status*    4 examples/      8 README
+    16 CHANGES         32 config.sub*      16 INSTALL        4 REFERENCE
+    44 config.guess*  164 configure*       16 install-sh*    4 src/
+     4 config.h         8 configure.ac      4 Makefile       4 .svn/
 
-   qDecoder makes the compilation between different platforms more convenient
-   by applying Autoconf (6.0.1 and above) which almost all the GNU software
-   and free/open source software adopt. The compilation method is, like that
-   of general open sources, through "make" after configuration, which checks
-   to see if the compiler environment, needed functions and commands of the
-   pertinent system can be used, and then constructs Makefile for them to be
-   compiled in the system most efficiently.
+    $ make
 
+  NOTE) Type "make distclean", if you wish to clean up the library and object as
+  it was.
 
-	$ cd qDecoder-VERSION
+Step 4. Install
 
-	$ ./configure -h
-	(...some messages...)
-	Optional Features:
+  Type "make install" to install a library on the system.
 
-	  --enable-debug          enable debugging output
-	  --enable-lfs            enable large file supports
-	  --enable-sendfile       use sendfile() if possible
-	  --enable-fastcgi=/FASTCGI_INCLUDE_DIR_PATH/
-	                          enable FastCGI supports
-	  --enable-mysql=/MYSQL_INCLUDE_DIR_PATH/
-	                          enable MySQL database supports
-	  --disable-cgi           disable CGI APIs
-	  --disable-socket        disable socket APIs
-	  --disable-ipc           disable IPC APIs
-	  --disable-datastructure disable data-structure APIs
+    $ cd qDecoder-VERSION
 
-	$ ./configure
-	creating cache ./config.cache
-	checking for gcc... gcc
-	checking whether the C compiler (gcc  ) works... yes
-	checking whether the C compiler (gcc  ) is a cross-compiler... no
-	...(skip)...
-	configure: optional flags:
-	configure: creating ./config.status
-	config.status: creating Makefile
-	config.status: creating src/Makefile
-	config.status: creating examples/Makefile
-	config.status: creating config.h
+    $ make install
+    The installation path of headers and libraries can be adjusted by the --prefix,
+    --libdir, --includedir configure options. The default locations will be
+    /usr/local/lib, /usr/local/include when configured with no specific options.
+    ${prefix}          ===> /usr/local        (default)
+    ${libdir}          ===> ${prefix}/lib     (default)
+    ${includedir}      ===> ${prefix}/include (default)
 
-	$ ls -asCF (We can note that Makefile is created.)
-	 4 ./               4 config.h.in       8 COPYING        4 Makefile.in
-	 4 ../             16 config.log        4 doc/           4 qDecoder.jpg
-	 4 AUTHORS         24 config.status*    4 examples/      8 README
-	16 CHANGES         32 config.sub*      16 INSTALL        4 REFERENCE
-	44 config.guess*  164 configure*       16 install-sh*    4 src/
-	 4 config.h         8 configure.ac      4 Makefile       4 .svn/
+    libqDecoder.a      ===> ${libdir}/libqDecoder.a
+    libqDecoder.so.[n] ===> ${libdir}/libqDecoder.so.[n]
+    libqDecoder.so     ===> ${libdir}/libqDecoder.so
+    qDecoder.h         ===> ${includedir}/include/qDecoder.h
 
-	$ make
-	...(omission)...
+    ex) $ ./configure --prefix=/usr
+    ex) $ ./configure --libdir=/home/qdecoder/mylib --includedir=/home/qdecoder/myinclude
 
-   NOTE) In case of Solaris, it is often the case that "make" is not set up
-   in  the primary path. In this case, try after adding to the path the
-   '/usr/ccs/bin/" directory where "make" is located.
+  NOTE) libqDecoder.so is a symbolic link that refers to libqDecoder.so.[n] which
+  is the actual shared library. The number n increases when the downward
+  compatibility lacks.
 
-   NOTE) If you wish to delete the library and object created by compilation
-   and maintain the condition of the early distributed edition, enter "make
-   clean". In this case, "make clean" does not delete Makefile created by the
-   configuration  for  the  convenience purpose. If you wish to make an
-   environment  to be exactly the same as that of the early distributed
-   edition, use "make distclean".
+  NOTE) A root privilege is required for an installation in the system area.
 
-   NOTE)   Compiled   packages   of   each  platform  are  provided  on
-   ftp://ftp.qDecoder.org/pub/qDecoder/precompiled/ for those users that are
-   not able to perform the procedure or for those cases in which there is no
-   compiler in the system.
+Step 5. Deinstall
 
-  Step 4. Install
+  The installed qDecoder can be completely deleted by "make deinstall".
 
-   The "make install" command is used in order to install a library. "make
-   install" installs a library on the system. And the installation location
-   of  headers  and  libraries  is  adjusted by the --prefix, --libdir,
-   --includedir options during the configuration. The relationship between
-   the  installation  location  and  the options is as follows, and the
-   installation location comes to be /usr/local/lib, /usr/local/include when
-   the configuration is performed without any argument.
+    $ cd qDecoder-VERSION
 
+    $ make deinstall
 
-	${prefix}          ===> /usr/local        (default)
-	${libdir}          ===> ${prefix}/lib     (default)
-	${includedir}      ===> ${prefix}/include (default)
+Step 6. Test & Examples
 
-	libqDecoder.a      ===> ${libdir}/libqDecoder.a
-	libqDecoder.so.[n] ===> ${libdir}/libqDecoder.so.[n]
-	libqDecoder.so     ===> ${libdir}/libqDecoder.so
-	qDecoder.h         ===> ${includedir}/include/qDecoder.h
+  There are some of examples in the examples directory. After compiling the
+  examples, test can be performed by opening examples.html by your web browser.
+  For your convenience, all examples have been written in CGI executable, but some
+  of them also can be executed on command line if it does not require CGI inputs.
+  (ex: config.cgi, obstack.cgi, ...)
 
-	ex) $ ./configure --prefix=/usr
-	ex) $ ./configure --libdir=/home/wolkykim/mylib \
-	                  --includedir=/home/wolkykim/myinclude
+    $ cd examples
 
-   NOTE) libqDecoder.so is a symbolic link that refers to libqDecoder.so.[n]
-   which is the actual shared library. Here, n is an integer that increases
-   from 1. It increases when the downward compatibility lacks. Let's take
-   version 6.0.1 for example, in which it is libqDecoder.so.1. Even if the
-   qDecoder version increases to 7.0 and 8.0, the shared library will be
-   created as libqDecoder.so.1 when the downward compatibility is maintained.
+    $ make
 
+    $ ls -al *.cgi
+    -rwxr-xr-x 1 qdecoder qdecoder 193582 Jan  4 19:56 config.cgi
+    -rwxr-xr-x 1 qdecoder qdecoder 194382 Jan  4 19:56 cookie.cgi
+    -rwxr-xr-x 1 qdecoder qdecoder 192904 Jan  4 19:56 download.cgi
+    -rwxr-xr-x 1 qdecoder qdecoder 173796 Jan  4 19:56 hashtable.cgi
+    -rwxr-xr-x 1 qdecoder qdecoder 193130 Jan  4 19:56 multivalue.cgi
+    -rwxr-xr-x 1 qdecoder qdecoder 163111 Jan  4 19:56 obstack.cgi
+    -rwxr-xr-x 1 qdecoder qdecoder 193109 Jan  4 19:56 query.cgi
+    -rwsr-sr-x 1 qdecoder qdecoder 204774 Jan  4 19:56 session.cgi
+    -rwxr-xr-x 1 qdecoder qdecoder 194519 Jan  4 19:56 socket.cgi
+    -rwxr-xr-x 1 qdecoder qdecoder 193266 Jan  4 19:56 streamedit.cgi
+    -rwsr-sr-x 1 qdecoder qdecoder 194070 Jan  4 19:56 upload.cgi
+    -rwsr-sr-x 1 qdecoder qdecoder 194758 Jan  4 19:56 uploadfile.cgi
 
-	$ cd qDecoder-VERSION
-
-	$ make install
-
-   NOTE) A root privilege is required for an installation in the system area.
-
-  Step 5. Deinstall
-
-   The installed qDecoder can be completely deleted by "make deinstall".
-
-
-	$ cd qDecoder-VERSION
-
-	$ make deinstall
-
-  Step 6. Test
-
-   In  the examples directory, there are example sources that have been
-   produced  in  advance. Since sources are automatically compiled when
-   packages  are  compiled,  tests  can  be performed immediately after
-   examples.html  of the corresponding directory is opened by browsers.
-   Referring  to  source codes and Makefile, think how you should apply
-   qDecoder to your program.
-
-   The example is linked to the static library (libqDecoder.a). If a shared
-   library (libqDecoder.so) is linked, the program gets more compact and
-   works efficiently.
-
-
-	$ cd examples
-	$ make
-	$ ls -al *.cgi
-	-rwxr-xr-x  1 www  www   97004  2 26 17:10 config.cgi
-	-rwxr-xr-x  1 www  www   97248  2 26 17:10 cookie.cgi
-	-rwxr-xr-x  1 www  www   96218  2 26 17:10 download.cgi
-	-rwxr-xr-x  1 www  www   96260  2 26 17:10 multivalue.cgi
-	-rwxr-xr-x  1 www  www  100073  2 26 17:10 obstack.cgi
-	-rwxr-xr-x  1 www  www   96251  2 26 17:10 query.cgi
-	-rwsr-sr-x  1 www  www  102884  2 26 17:10 session.cgi
-	-rwxr-xr-x  1 www  www   96585  2 26 17:10 socket.cgi
-	-rwxr-xr-x  1 www  www   96992  2 26 17:10 streamedit.cgi
-	-rwsr-sr-x  1 www  www   97180  2 26 17:10 upload.cgi
-	-rwsr-sr-x  1 www  www   97407  2 26 17:10 uploadfile.cgi
-
-  ------------------------------------------------------------------------
-                          [The qDecoder Project]
+-------------------------------------------------------------------------------
+                            [The qDecoder Project]

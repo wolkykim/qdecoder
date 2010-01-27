@@ -99,7 +99,7 @@ AC_PATH_PROG(RM, rm)
 AC_HEADER_STDC
 AC_HEADER_STDBOOL
 AC_HEADER_DIRENT
-AC_CHECK_HEADER([sys/sendfile.h])
+#AC_CHECK_HEADER([sys/sendfile.h])
 
 ## Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
@@ -123,7 +123,7 @@ if test "$enableval" = yes; then
 fi
 
 Q_ARG_ENABLE([lfs], [enable large file supports], [-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
-Q_ARG_ENABLE([sendfile], [use sendfile() if possible], [-DENABLE_SENDFILE])
+#Q_ARG_ENABLE([sendfile], [use sendfile() if possible], [-DENABLE_SENDFILE])
 
 AC_ARG_ENABLE([fastcgi],[AS_HELP_STRING([--enable-fastcgi=/FASTCGI_INCLUDE_DIR_PATH/], [enable FastCGI supports])],[enableval=yes],[enableval=no])
 if test "$enableval" = yes; then
