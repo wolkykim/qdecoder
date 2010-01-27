@@ -6,6 +6,18 @@ qDecoder Changes
 ``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``New'', ``Replaced'' and ``Removed''.
 
+  Release 10.1.0
+    ADD) qIo.c
+      REP) qSocketWaitReadable() => qIoWaitReadable()
+      REP) qSocketWaitWritable() => qIoWaitWritable()
+      REP) qSocketRead() => qIoRead()
+      REP) qSocketWrite() => qIoWrite()
+      REP) qSocketGets() => qIoGets()
+      REP) qSocketPuts() => qIoPuts()
+      REP) qSocketPrintf() => qIoPrintf()
+      REP) qSocketSendfile() => qIoSend()
+      REP) qSocketSaveIntoFile() => qIoSend()
+      REP) qSocketSaveIntoMemory() => qIoRead()
   Release 10.0.0
     ADD) Added "--enable-threadsafe" option to support multi-thread program
     model.
