@@ -45,7 +45,7 @@
  * @param	fd		file descriptor
  * @param	timeoutms	wait timeout milliseconds. 0 for no wait, -1 for infinite wait
  *
- * @return	1 if writable, 0 on timeout, -1 if an error occurred.
+ * @return	1 if readable, 0 on timeout, -1 if an error occurred.
  *
  * @note
  * The argument timeoutms can be used to set maximum wait time for a socket descriptor.
@@ -211,7 +211,6 @@ ssize_t qIoGets(char *buf, size_t bufsize, int fd, int timeoutms) {
 	if(readcnt >0) return readcnt;
 	return -1;
 }
-
 
 /**
  * Writes the string and a trailing newline to file descriptor.
