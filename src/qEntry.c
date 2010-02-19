@@ -277,8 +277,12 @@ static bool _putStr(Q_ENTRY *entry, const char *name, const char *str, bool repl
 static bool _putStrf(Q_ENTRY *entry, bool replace, const char *name, const char *format, ...) {
 	char *str;
 	DYNAMIC_VSPRINTF(str, format);
+	if(str == NULL) return false;
 
-	return _putStr(entry, name, str, replace);
+	bool ret = _putStr(entry, name, str, replace);
+	free(str);
+
+	return ret;
 }
 
 /**
@@ -481,8 +485,12 @@ static char *_getStr(Q_ENTRY *entry, const char *name, bool newmem) {
 static char *_getStrf(Q_ENTRY *entry, bool newmem, const char *namefmt, ...) {
 	char *name;
 	DYNAMIC_VSPRINTF(name, namefmt);
+	if(name == NULL) return NULL;
 
-	return (char *)_get(entry, name, NULL, newmem);
+	char *data = (char*)_get(entry, name, NULL, newmem);
+	free(name);
+
+	return data;
 }
 
 /**
@@ -852,12 +860,12 @@ static char *_parseStr(Q_ENTRY *entry, const char *str) {
 static void *_merge(Q_ENTRY *entry, size_t *size) {
 	if(entry == NULL || entry->num <= 0) return NULL;
 
-	void *dp;
-	void *final;
-	final = dp = (void*)malloc(entry->size + 1);
+	void *final = (void*)malloc(entry->size + 1);
+	if(final == NULL) return NULL;
+	void *dp = final;
 
 	Q_LOCK_ENTER(entry->qlock);
-	const Q_NLOBJ_T *obj;
+	Q_NLOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		memcpy(dp, obj->data, obj->size);
 		dp += obj->size;
@@ -1012,7 +1020,7 @@ static bool _print(Q_ENTRY *entry, FILE *out, bool print_data) {
 	if(entry == NULL || out == NULL) return false;
 
 	Q_LOCK_ENTER(entry->qlock);
-	const Q_NLOBJ_T *obj;
+	Q_NLOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		fprintf(out, "%s=%s (%zu)\n" , obj->name, (print_data?(char*)obj->data:"(data)"), obj->size);
 	}

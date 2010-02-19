@@ -118,6 +118,7 @@ static bool _grow(Q_OBSTACK *obstack, const void *object, size_t size);
 static bool _growStr(Q_OBSTACK *obstack, const char *str);
 static bool _growStrf(Q_OBSTACK *obstack, const char *format, ...);
 static void *_getFinal(Q_OBSTACK *obstack, size_t *size);
+static ssize_t _writeFinal(Q_OBSTACK *obstack, int nFd);
 static size_t _getSize(Q_OBSTACK *obstack);
 static int _getNum(Q_OBSTACK *obstack);
 static bool _free(Q_OBSTACK *obstack);
@@ -152,6 +153,7 @@ Q_OBSTACK *qObstack(void) {
 	obstack->growStr	= _growStr;
 	obstack->growStrf	= _growStrf;
 	obstack->getFinal	= _getFinal;
+	obstack->writeFinal	= _writeFinal;
 	obstack->getSize	= _getSize;
 	obstack->getNum		= _getNum;
 	obstack->free		= _free;
@@ -224,6 +226,56 @@ static void *_getFinal(Q_OBSTACK *obstack, size_t *size) {
 	if(final == NULL) return NULL;
 
 	return final;
+}
+
+/**
+ * Q_OBSTACK->writeFinal(): Write out merged final data to the file descriptor
+ *
+ * @param obstack	a pointer of Q_OBSTACK
+ * @param nFd		a file descriptor for writing out.
+ *
+ * @return		the number of bytes written, otherwise returns -1;
+ *
+ * @note
+ * It writes out merged data with only one system call.
+ * To do this, it uses writev(), so the operation does not cost much.
+ */
+static ssize_t _writeFinal(Q_OBSTACK *obstack, int nFd) {
+	if(obstack == NULL) return -1;
+
+	// get obstack info
+	size_t size = _getSize(obstack);
+	int num = _getNum(obstack);
+	if(size == 0 || num == 0) return 0;
+
+	// allocate iovector
+	struct iovec *vectors = (struct iovec *)malloc(sizeof(struct iovec) * num);
+	if(vectors == NULL) return -1;
+
+	// map data to vector
+	Q_ENTRY *entry = obstack->stack;
+	Q_LOCK_ENTER(entry->qlock);
+	Q_NLOBJ_T *obj;
+	int objcnt;
+	for(objcnt = 0, obj = entry->first; obj; obj = obj->next, objcnt++) {
+		vectors[objcnt].iov_base = obj->data;
+		vectors[objcnt].iov_len = obj->size;
+	}
+	Q_LOCK_LEAVE(entry->qlock);
+
+	// double check
+	if(objcnt != num) {
+		free(vectors);
+		return -1;
+	}
+
+	// write
+	ssize_t written = writev(nFd, vectors, objcnt);
+
+	// free
+	free(vectors);
+
+	return written;
 }
 
 /**
