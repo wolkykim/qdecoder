@@ -518,7 +518,7 @@ extern	ssize_t		qIoPrintf(int fd, int timeoutms, const char *format, ...);
  * qSocket.c
  */
 extern	int		qSocketOpen(const char *hostname, int port, int timeoutms);
-extern	bool		qSocketClose(int sockfd);
+extern	bool		qSocketClose(int sockfd, int timeoutms);
 extern	bool		qSocketGetAddr(struct sockaddr_in *addr, const char *hostname, int port);
 
 /*

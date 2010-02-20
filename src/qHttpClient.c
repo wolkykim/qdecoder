@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include "qDecoder.h"
 #include "qInternal.h"
@@ -63,9 +64,13 @@ static bool _close(Q_HTTPCLIENT *client);
 static void _free(Q_HTTPCLIENT *client);
 
 // internal usages
+static bool _setSocketOption(int socket);
 
 #endif
 
+//
+// HTTP RESPONSE CODE
+//
 #define HTTP_NO_RESPONSE			(0)
 #define HTTP_CODE_CONTINUE			(100)
 #define HTTP_CODE_OK				(200)
@@ -84,10 +89,15 @@ static void _free(Q_HTTPCLIENT *client);
 #define HTTP_CODE_NOT_IMPLEMENTED		(501)
 #define HTTP_CODE_SERVICE_UNAVAILABLE		(503)
 
-#define	HTTP_PROTOCOL_10			"HTTP/1.0"
 #define	HTTP_PROTOCOL_11			"HTTP/1.1"
 
-#define MAX_ATOMIC_DATA_SIZE			(32 * 1024)	/*< Maximum sending bytes, used in PUT method */
+//
+// TCP SOCKET DEFINITION
+//
+#define	SET_TCP_LINGER_TIMEOUT			(15)		/*< linger seconds, 0 for disable */
+#define SET_TCP_NODELAY				(1)		/*< 0 for disable */
+#define	MAX_SHUTDOWN_WAIT			(5 * 1000)	/*< maximum shutdown wait, unit is ms */
+#define MAX_ATOMIC_DATA_SIZE			(32 * 1024)	/*< maximum sending bytes, used in PUT method */
 
 /**
  * Initialize & create new HTTP client.
@@ -234,7 +244,7 @@ static bool _open(Q_HTTPCLIENT *client) {
 		return false;
 	}
 
-	// set to non-block socket
+	// set to non-block socket if timeout is set
 	int sockflag = 0;
 	if(client->timeoutms > 0) {
 		sockflag = fcntl(sockfd, F_GETFL, 0);
@@ -253,6 +263,9 @@ static bool _open(Q_HTTPCLIENT *client) {
 	if(client->timeoutms > 0) {
 		fcntl(sockfd, F_SETFL, sockflag);
 	}
+
+	// set socket option
+	_setSocketOption(sockfd);
 
 	// store socket descriptor
 	client->socket = sockfd;
@@ -304,24 +317,38 @@ static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
 		reqheaders->putStr(reqheaders, "Connection", (client->keepalive==true)?"Keep-Alive":"close", true);
 	}
 
-	// print out command
-	qIoPrintf(client->socket, client->timeoutms, "%s %s %s\r\n", method, uri, (client->keepalive==true)?HTTP_PROTOCOL_11:HTTP_PROTOCOL_10);
+	// create stream buffer
+	Q_OBSTACK *outBuf = qObstack();
+	if(outBuf == NULL) return false;
 
-	// print out headers
+	// buffer out command
+	outBuf->growStrf(outBuf, "%s %s %s\r\n",
+		method,
+		uri,
+		HTTP_PROTOCOL_11
+	);
+
+	// buffer out headers
 	Q_NLOBJ_T obj;
 	memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
 	reqheaders->lock(reqheaders);
 	while(reqheaders->getNext(reqheaders, &obj, NULL, false) == true) {
-		qIoPrintf(client->socket, client->timeoutms, "%s: %s\r\n", obj.name, (char*)obj.data);
+		outBuf->growStrf(outBuf, "%s: %s\r\n", obj.name, (char*)obj.data);
 	}
 	reqheaders->unlock(reqheaders);
 
-	qIoPrintf(client->socket, client->timeoutms, "\r\n");
+	outBuf->growStrf(outBuf, "\r\n");
+
+	// stream out
+	size_t towrite = outBuf->getSize(outBuf);
+	ssize_t written = outBuf->writeFinal(outBuf, client->socket);
 
 	// de-allocate
+	outBuf->free(outBuf);
 	if(freeReqHeaders == true) reqheaders->free(reqheaders);
 
-	return true;
+	if(written > 0 && written == towrite) return true;
+	return false;
 }
 
 /**
@@ -811,10 +838,14 @@ static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
  * @endcode
  */
 static bool _close(Q_HTTPCLIENT *client) {
-	if(client->socket < 0) return true;
+	if(client->socket < 0) return false;
 
 	// shutdown connection
-	qSocketClose(client->socket);
+	if(MAX_SHUTDOWN_WAIT >= 0 && shutdown(client->socket, SHUT_WR) == 0) {
+		char buf[1024];
+		while(qIoRead(buf, client->socket, sizeof(buf), MAX_SHUTDOWN_WAIT) > 0);
+	}
+	close(client->socket);
 	client->socket = -1;
 
 	return true;
@@ -842,5 +873,32 @@ static void _free(Q_HTTPCLIENT *client) {
 
 	free(client);
 }
+
+
+#ifndef _DOXYGEN_SKIP
+static bool _setSocketOption(int socket) {
+	bool ret = true;
+
+	// linger option
+	if(SET_TCP_LINGER_TIMEOUT > 0) {
+		struct linger li;
+		li.l_onoff = 1;
+		li.l_linger = SET_TCP_LINGER_TIMEOUT;
+		if(setsockopt(socket, SOL_SOCKET, SO_LINGER, &li, sizeof(struct linger)) < 0) {
+			ret = false;
+		}
+	}
+
+	// nodelay option
+	if(SET_TCP_NODELAY > 0) {
+		int so_tcpnodelay = 1;
+		if(setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, &so_tcpnodelay, sizeof(so_tcpnodelay)) < 0) {
+			ret = false;
+		}
+	}
+
+	return ret;
+}
+#endif /* _DOXYGEN_SKIP */
 
 #endif /* DISABLE_SOCKET */

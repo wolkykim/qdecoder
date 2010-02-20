@@ -53,8 +53,6 @@
  * @param	timeoutms	wait timeout milliseconds. if set to negative value, wait indefinitely.
  *
  * @return	the new socket descriptor, or -1 in case of invalid hostname, -2 in case of socket creation failure, -3 in case of connection failure.
- *
- * @since	8.1R
  */
 int qSocketOpen(const char *hostname, int port, int timeoutms) {
 	/* host conversion */
@@ -85,18 +83,17 @@ int qSocketOpen(const char *hostname, int port, int timeoutms) {
 /**
  * Close socket.
  *
- * @param	sockfd	socket descriptor
+ * @param	sockfd		socket descriptor
+ * @param	timeoutms	if timeoutms >= 0, shut down write connection first then wait and throw out input stream data. set to -1 to close socket immediately.
  *
  * @return	true on success, or false if an error occurred.
- *
- * @since	8.1R
  */
-bool qSocketClose(int sockfd) {
+bool qSocketClose(int sockfd, int timeoutms) {
 	// close connection
-	if(shutdown(sockfd, SHUT_WR) == 0) {
+	if(timeoutms >= 0 && shutdown(sockfd, SHUT_WR) == 0) {
 		char buf[1024];
 		while(true) {
-			ssize_t read = qIoRead(buf, sockfd, sizeof(buf), 0);
+			ssize_t read = qIoRead(buf, sockfd, sizeof(buf), timeoutms);
 			if(read <= 0) break;
 			DEBUG("Throw %zu bytes from dummy input stream.", read);
 		}
@@ -114,8 +111,6 @@ bool qSocketClose(int sockfd) {
  * @param	port		port number
  *
  * @return	true if successful, otherwise returns false.
- *
- * @since	8.1R
  */
 bool qSocketGetAddr(struct sockaddr_in *addr, const char *hostname, int port) {
 	/* here we assume that the hostname argument contains ip address */
