@@ -52,7 +52,7 @@ int dumpHttp(const char *hostname, int port) {
 	}
 
 	// close socket
-	qSocketClose(sockfd);
+	qSocketClose(sockfd, 0);
 
 	return 0;
 }

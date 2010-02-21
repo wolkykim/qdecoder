@@ -6,6 +6,13 @@ qDecoder Changes
 ``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``New'', ``Replaced'' and ``Removed''.
 
+  Release 10.1.1
+    FIX) Q_HTTPCLIENT uses TCP_NODELAY socket to improve performance.
+    FIX) Q_HTTPCLIENT performance improvements.
+    ADD) Add qStrDupf() - duplicate a formatted string.
+    FIX) qSocketClose() - added timeoutms parameter.
+    ADD) Q_OBSTACK->writeFinal() - write out merged final data to the file descriptor.
+    FIX) Q_ENTRY->putStrf() - fix memory leak
   Release 10.1.0
     ADD) qIo.c
       REP) qSocketWaitReadable() => qIoWaitReadable()
