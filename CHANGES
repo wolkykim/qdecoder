@@ -13,6 +13,7 @@ qDecoder Changes
     FIX) qSocketClose() - added timeoutms parameter.
     ADD) Q_OBSTACK->writeFinal() - write out merged final data to the file descriptor.
     FIX) Q_ENTRY->putStrf() - fix memory leak
+    FIX) merge qCount.c and qSed.c into qUtil.c
   Release 10.1.0
     ADD) qIo.c
       REP) qSocketWaitReadable() => qIoWaitReadable()
