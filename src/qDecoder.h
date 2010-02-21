@@ -581,19 +581,6 @@ extern	char*		qHashMd5File(const char *filepath, size_t *nbytes);
 extern	unsigned int	qHashFnv32(unsigned int max, const void *data, size_t nbytes);
 
 /*
- * qSed.c
- */
-extern	bool		qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout);
-extern	bool		qSedFile(Q_ENTRY *entry, const char *filepath, FILE *fpout);
-
-/*
- * qCount.c
- */
-extern	int		qCountRead(const char *filepath);
-extern	bool		qCountSave(const char *filepath, int number);
-extern	int		qCountUpdate(const char *filepath, int number);
-
-/*
  * qTime.c
  */
 extern	char*		qTimeGetLocalStrf(char *buf, int size, time_t utctime, const char *format);
@@ -611,6 +598,15 @@ extern	const char*	qDecoderVersion(void);
 extern	const char*	qSysGetEnv(const char *envname, const char *nullstr);
 extern	char*		qSysCmd(const char *cmd);
 extern	bool		qSysGetIp(char *buf, size_t bufsize);
+
+/*
+ * qUtil.c
+ */
+extern	int		qCountRead(const char *filepath);
+extern	bool		qCountSave(const char *filepath, int number);
+extern	int		qCountUpdate(const char *filepath, int number);
+extern	bool		qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout);
+extern	bool		qSedFile(Q_ENTRY *entry, const char *filepath, FILE *fpout);
 
 #ifdef __cplusplus
 }
