@@ -83,10 +83,9 @@ OBJ		= qCgiRequest.o		\
 		qFile.o			\
 		qEncode.o		\
 		qHash.o			\
-		qSed.o			\
-		qCount.o		\
 		qTime.o			\
 		qSystem.o		\
+		qUtil.o			\
 					\
 		qInternalCommon.o	\
 		md5/md5c.o

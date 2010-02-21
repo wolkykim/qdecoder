@@ -24,37 +24,98 @@
  */
 
 /**
- * @file qSed.c Server Side Include and Variable Replacement API
- *
-
- *
- * filename is an input(target) file while fpout stands for output streams.
- * When you wish to display the results in files, open files in "w" and then, hand over the corresponding file pointers.
- * And if you wish to display them on-screen, just specify stdout.
- *
- * It interprets the SSI grammar. (Currently, only [an error occurred while processing this directive] is supported.)
- * If there is the following lines in a document, the corresponding document is included in the display. And the replacement and SSI functions are valid for the included document. (Cascading)
- *
- * <!--#include file="streamedit-header.html.in"-->
- *
- * Note) The included file can be marked by relative paths on the basis of the location where CGI is executed. Or it may be marked by system absolute paths.
- *
- * If you wish to use the SSI function only without replacing character strings, transmit the NULL value using the arg argument as follows:
- *
- * ex) qSedFile(NULL, "streamedit.html.in", stdout);
+ * @file qUtil.c Miscellaneous utilities API
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <stdarg.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "qDecoder.h"
 #include "qInternal.h"
 
-#define	SSI_INCLUDE_START	"<!--#include file=\""
-#define SSI_INCLUDE_END		"\"-->"
+/**
+ * Read counter(integer) from file with advisory file locking.
+ *
+ * @param filepath	file path
+ *
+ * @return		counter value readed from file. in case of failure, returns 0.
+ *
+ * @code
+ *   qCountSave("number.dat", 75);
+ *   int count = qCountRead("number.dat");
+ * @endcode
+ *
+ * @code
+ *   ---- number.dat ----
+ *   75
+ *   --------------------
+ * @endcode
+ */
+int qCountRead(const char *filepath) {
+	int fd = open(filepath, O_RDONLY, 0);
+	if(fd < 0) return 0;
 
+	char buf[10+1];
+	ssize_t readed = qIoRead(buf, fd, sizeof(buf), 0);
+	close(fd);
+
+	if(readed > 0) return atoi(buf);
+	return 0;
+}
+
+/**
+ * Save counter(integer) to file with advisory file locking.
+ *
+ * @param filepath	file path
+ * @param number	counter integer value
+ *
+ * @return		true if successful, otherwise returns false.
+ *
+ * @note
+ * @code
+ *   qCountSave("number.dat", 75);
+ * @endcode
+ */
+bool qCountSave(const char *filepath, int number) {
+	int fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE);
+	if(fd < 0) return false;
+
+	ssize_t updated = qIoPrintf(fd, 0, "%d", number);
+	close(fd);
+
+	if(updated > 0) return true;
+	return false;
+}
+
+/**
+ * Increases(or decrease) the counter value as much as specified number
+ * with advisory file locking.
+ *
+ * @param filepath	file path
+ * @param number	how much increase or decrease
+ *
+ * @return		updated counter value. in case of failure, returns 0.
+ *
+ * @note
+ * @code
+ *   int count;
+ *   count = qCountUpdate("number.dat", -3);
+ * @endcode
+ */
+int qCountUpdate(const char *filepath, int number) {
+	int counter = qCountRead(filepath);
+	counter += number;
+	if(qCountSave(filepath, counter) == true) return counter;
+	return 0;
+}
+
+#define	SED_INCLUDE_START	"<!--#include file=\""
+#define SED_INCLUDE_END		"\"-->"
 /**
  * Perform text transformations on input string
  *
@@ -79,13 +140,13 @@ bool qSedStr(Q_ENTRY *entry, const char *srcstr, FILE *fpout) {
 	char *sp = (char *)srcstr;
 	while (*sp != '\0') {
 		/* SSI invocation */
-		if (!strncmp(sp, SSI_INCLUDE_START, strlen(SSI_INCLUDE_START))) {
+		if (!strncmp(sp, SED_INCLUDE_START, strlen(SED_INCLUDE_START))) {
 			char ssi_inc_file[MAX_LINEBUF], *endp;
-			if ((endp = strstr(sp, SSI_INCLUDE_END)) != NULL) {
-				sp += strlen(SSI_INCLUDE_START);
+			if ((endp = strstr(sp, SED_INCLUDE_END)) != NULL) {
+				sp += strlen(SED_INCLUDE_START);
 				strncpy(ssi_inc_file, sp, endp - sp);
 				ssi_inc_file[endp - sp] = '\0';
-				sp = (endp + strlen(SSI_INCLUDE_END));
+				sp = (endp + strlen(SED_INCLUDE_END));
 
 				if (qFileExist(ssi_inc_file) == true) qSedFile(entry, ssi_inc_file, fpout);
 				else fprintf(fpout, "[qSedStr: an error occurred while processing 'include' directive - file(%s) open fail]", ssi_inc_file);
