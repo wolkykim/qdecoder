@@ -262,6 +262,24 @@ char *qStrCpy(char *dst, size_t size, const char *src) {
 }
 
 /**
+ * Duplicate a formatted string
+ *
+ * @param format	string format
+ *
+ * @return		a pointer of malloced string if successful, otherwise returns NULL
+ */
+char *qStrDupf(const char *format, ...) {
+	char *str;
+	DYNAMIC_VSPRINTF(str, format);
+	if(str == NULL) return NULL;
+
+	char *dup = strdup(str);
+	free(str);
+
+	return dup;
+}
+
+/**
  * Convert character to bigger character.
  *
  * @param str		a pointer of source string

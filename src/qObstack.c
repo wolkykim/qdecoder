@@ -107,6 +107,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/uio.h>
 #include "qDecoder.h"
 #include "qInternal.h"
 

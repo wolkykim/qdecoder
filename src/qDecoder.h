@@ -550,6 +550,7 @@ extern	char*		qStrTrimTail(char *str);
 extern	char*		qStrUnchar(char *str, char head, char tail);
 extern	char*		qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char *word);
 extern	char*		qStrCpy(char *dst, size_t size, const char *src);
+extern	char*		qStrDupf(const char *format, ...);
 extern	char*		qStrUpper(char *str);
 extern	char*		qStrLower(char *str);
 extern	char*		qStrRev(char *str);
