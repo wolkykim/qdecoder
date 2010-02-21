@@ -32,12 +32,11 @@
  * or ENABLE_SOME_DATABASE option.
  *
  * @code
- *   [include order at your source codes]
+ *   [mysql.h header should be included prior to qDecoder.h header to let qDecoder know that.]
  *   #include "mysql.h"
  *   #include "qDecoder.h"
  * @endcode
  *
- * Not documented yet, please refer below sample codes.
  * @code
  *   Q_DB *db = NULL;
  *   Q_DBRESULT *result = NULL;
@@ -77,7 +76,7 @@
  * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
  */
 
-#if defined(ENABLE_MYSQL)
+#if defined(ENABLE_MYSQL) || defined( _DOXYGEN_SKIP)
 
 #ifdef ENABLE_MYSQL
 #include "mysql.h"
