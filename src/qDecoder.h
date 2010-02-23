@@ -33,7 +33,7 @@
 #define _QDECODER_H
 
 #define _Q_PRGNAME			"qDecoder"
-#define _Q_VERSION			"10.1.1"
+#define _Q_VERSION			"10.1.2"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -551,6 +551,7 @@ extern	char*		qStrUnchar(char *str, char head, char tail);
 extern	char*		qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char *word);
 extern	char*		qStrCpy(char *dst, size_t size, const char *src);
 extern	char*		qStrDupf(const char *format, ...);
+extern	char*		qStrGets(char *buf, size_t size, char **offset);
 extern	char*		qStrUpper(char *str);
 extern	char*		qStrLower(char *str);
 extern	char*		qStrRev(char *str);

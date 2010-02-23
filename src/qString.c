@@ -262,7 +262,7 @@ char *qStrCpy(char *dst, size_t size, const char *src) {
 }
 
 /**
- * Duplicate a formatted string
+ * Duplicate a formatted string.
  *
  * @param format	string format
  *
@@ -277,6 +277,49 @@ char *qStrDupf(const char *format, ...) {
 	free(str);
 
 	return dup;
+}
+
+/**
+ * Get one line from the string offset.
+ *
+ * @param buf		buffer pointer
+ * @param size		buffer size
+ * @param offset	a offset pointer which point source string
+  *
+ * @return		a pointer of buffer if successful, otherwise(EOF) returns NULL
+ *
+ * @note
+ *   CR and LF will not be stored.
+ *
+ * @code
+ *   char *text="Hello\nWorld";
+ *
+ *   char *offset = text;
+ *   char buf[1024];
+ *   while(qStrGets(buf, sizeof(buf), &offset) == NULL) {
+ *     printf("%s\n", buf);
+ *   }
+ * @endcode
+ */
+char *qStrGets(char *buf, size_t size, char **offset) {
+	if(offset == NULL || *offset == NULL || **offset == '\0') return NULL;
+
+	size_t i;
+	char *from = *offset;
+	char *to = buf;
+	for(i = 0; *from != '\0' && i < (size - 1); i++, from++) {
+		if(*from == '\r') continue;
+		if(*from == '\n') {
+			from++;
+			break;
+		}
+		*to = *from;
+		to++;
+	}
+	*to = '\0';
+	*offset = from;
+
+	return buf;
 }
 
 /**
