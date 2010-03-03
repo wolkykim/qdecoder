@@ -564,6 +564,7 @@ extern	char*		qStrUnique(const char *seed);
 extern	bool		qStrIsAlnum(const char *str);
 extern	bool		qStrIsEmail(const char *email);
 extern	bool		qStrIsUrl(const char *url);
+extern	bool		qStrIsIpv4Addr(const char *str);
 extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const char *tocode, float mag);
 
 /*

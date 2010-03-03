@@ -576,10 +576,10 @@ char *qStrUnique(const char *seed) {
  * @endcode
  */
 bool qStrIsAlnum(const char *str) {
-        for (; *str; str++) {
-                if(isalnum(*str) == 0) return false;
-        }
-        return true;
+	for (; *str; str++) {
+		if(isalnum(*str) == 0) return false;
+	}
+	return true;
 }
 
 /**
@@ -638,6 +638,33 @@ bool qStrIsUrl(const char *url) {
 	else if (!strncmp(url, "mailto:", CONST_STRLEN("mailto:"))) return true;
 	else if (!strncmp(url, "news:", CONST_STRLEN("news:"))) return true;
 	return false;
+}
+
+/**
+ * Test for an IPv4 address string
+ *
+ * @param url		IPv4 address string
+ *
+ * @return		true if successful, otherwise returns false
+ *
+ * @code
+ *   if(qStrIsIpv4Addr("1.2.3.4") == true) {
+ *     printf("It is IPv4 address string.");
+ *   }
+ * @endcode
+ */
+bool qStrIsIpv4Addr(const char *str) {
+	int periodcnt = 0;
+	for (; *str; str++) {
+		if(*str == '.') {
+			periodcnt++;
+		} else if(isdigit(*str) == 0) {
+			return false;
+		}
+	}
+
+	if(periodcnt != 3) return false;
+	return true;
 }
 
 #ifdef __linux__
