@@ -561,7 +561,7 @@ extern	char*		qStrCommaNumber(int number);
 extern	char*		qStrCatf(char *str, const char *format, ...);
 extern	char*		qStrDupBetween(const char *str, const char *start, const char *end);
 extern	char*		qStrUnique(const char *seed);
-extern	bool		qStrIsAlnum(const char *str);
+extern	bool		qStrTest(int (*testfunc)(int), const char *str);
 extern	bool		qStrIsEmail(const char *email);
 extern	bool		qStrIsUrl(const char *url);
 extern	bool		qStrIsIpv4Addr(const char *str);

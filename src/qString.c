@@ -565,19 +565,41 @@ char *qStrUnique(const char *seed) {
 /**
  * Test for an alpha-numeric string
  *
+ * @param testfunc	test function for individual character
  * @param str		a pointer of string
  *
  * @return		true for ok, otherwise returns false
  *
  * @code
- *   if(qStrIsAlnum("hello1234") == true) {
+ *   if(qStrTest(isalnum, "hello1234") == true) {
+ *     printf("It is alpha-numeric string.");
+ *   }
+ *
+ *   if(qStrTest(isdigit, "0123456789") == true) {
  *     printf("It is alpha-numeric string.");
  *   }
  * @endcode
+ *
+ * @note Basically you can use below test functios without creating your own version.
+ * Make sure <ctype.h> header should be included before using any of these functions.
+ *   isalnum - checks for an alphanumeric character.
+ *   isalpha - checks for an alphabetic character.
+ *   isascii - checks  whether  c is a 7-bit unsigned char value that fits into the ASCII character set.
+ *   isblank - checks for a blank character; that is, a space or a tab.
+ *   iscntrl - checks for a control character.
+ *   isdigit - checks for a digit (0 through 9).
+ *   isgraph - checks for any printable character except space.
+ *   islower - checks for a lower-case character.
+ *   isprint - checks for any printable character including space.
+ *   ispunct - checks for any printable character which is not a  space  or  an alphanumeric character.
+ *   isspace - checks  for  white-space  characters.
+ *   isupper - checks for an uppercase letter.
+ *   isxdigit -  checks for a hexadecimal digits.
+ * Please refer "man isalnum" for more details about these functions.
  */
-bool qStrIsAlnum(const char *str) {
+bool qStrTest(int (*testfunc)(int), const char *str) {
 	for (; *str; str++) {
-		if(isalnum(*str) == 0) return false;
+		if(testfunc(*str) == 0) return false;
 	}
 	return true;
 }
@@ -654,15 +676,22 @@ bool qStrIsUrl(const char *url) {
  * @endcode
  */
 bool qStrIsIpv4Addr(const char *str) {
-	int periodcnt = 0;
-	for (; *str; str++) {
-		if(*str == '.') {
-			periodcnt++;
-		} else if(isdigit(*str) == 0) {
+	char *dupstr = strdup(str);
+
+	char *s1, *s2;
+	int periodcnt;
+	for (s1 = dupstr, periodcnt = 0; (s2 = strchr(s1, '.')) != NULL; s1 = s2 + 1, periodcnt++) {
+		*s2 = '\0';
+
+		int n;
+		if(qStrTest(isdigit, s1) == false
+		|| (n = atoi(s1)) <= 0 || n >= 256) {
+			free(dupstr);
 			return false;
 		}
 	}
 
+	free(dupstr);
 	if(periodcnt != 3) return false;
 	return true;
 }

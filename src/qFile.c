@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <libgen.h>
 #include <fcntl.h>
@@ -388,7 +389,7 @@ char *qFileGetExt(const char *filepath) {
 	char *filename = qFileGetName(filepath);
 	char *p = strrchr(filename, '.');
 	char *ext = NULL;
-	if(p != NULL && strlen(p+1) <= MAX_EXTENSION_LENGTH && qStrIsAlnum(p+1) == true) {
+	if(p != NULL && strlen(p+1) <= MAX_EXTENSION_LENGTH && qStrTest(isalnum, p+1) == true) {
 		ext = strdup(p+1);
 		qStrLower(ext);
 	} else {
