@@ -1,7 +1,7 @@
 //--------------------------------------------------------------
-//-- The qDecoder Project             http://www.qDecoder.org --
+//-- The qDecoder Project             http://www.qdecoder.org --
 //--                                                          --
-//--           Copyright (C) 2007 Seung-young Kim             --
+//--        Copyright (C) 2000-2010 Seung-young Kim           --
 //--------------------------------------------------------------
 
 //
