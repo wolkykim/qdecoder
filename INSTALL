@@ -12,8 +12,8 @@ qDecoder Installation Guide
 
 Step 1. Getting qDecoder Package
 
-  The latest version of qDecoder can be downloaded from http://www.qDecoder.org/
-  or ftp://ftp.qDecoder.org/pub/qDecoder/.
+  The latest version of qDecoder can be downloaded from http://www.qdecoder.org/
+  or ftp://ftp.qdecoder.org/pub/qDecoder/.
   To get working current : svn co svn://svn.qdecoder.org/qdecoder/trunk qdecoder
 
 Step 2. Unpacking qDecoder Package

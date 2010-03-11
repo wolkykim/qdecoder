@@ -154,31 +154,31 @@ char *qStrUnchar(char *str, char head, char tail) {
  *   char mode[4][2+1] = {"tn", "tr", "sn", "sr"};
  *
  *   for(i = 0; i < 4; i++) {
- *     strcpy(srcstr, "Welcome to the qDecoder project.");
- *     printf("before %s : srcstr = %s\n", mode[i], srcstr);
+ *     strcpy(srcstr, "Welcome to The qDecoder Project.");
  *
- *     retstr = qStrReplace(mode[i], srcstr, "the", "_");
+ *     printf("before %s : srcstr = %s\n", mode[i], srcstr);
+ *     retstr = qStrReplace(mode[i], srcstr, "The", "_");
  *     printf("after  %s : srcstr = %s\n", mode[i], srcstr);
  *     printf("            retstr = %s\n\n", retstr);
  *     if(mode[i][1] == 'n') free(retstr);
  *   }
  *
  *   --[Result]--
- *   before tn : srcstr = Welcome to the qDecoder project.
- *   after  tn : srcstr = Welcome to the qDecoder project.
- *               retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+ *   before tn : srcstr = Welcome to The qDecoder Project.
+ *   after  tn : srcstr = Welcome to The qDecoder Project.
+ *               retstr = W_lcom_ _o ___ qD_cod_r Proj_c_.
  *
- *   before tr : srcstr = Welcome to the qDecoder project.
- *   after  tr : srcstr = W_lcom_ _o ___ qD_cod_r proj_c_.
- *               retstr = W_lcom_ _o ___ qD_cod_r proj_c_.
+ *   before tr : srcstr = Welcome to The qDecoder Project.
+ *   after  tr : srcstr = W_lcom_ _o ___ qD_cod_r Proj_c_.
+ *               retstr = W_lcom_ _o ___ qD_cod_r Proj_c_.
  *
- *   before sn : srcstr = Welcome to the qDecoder project.
- *   after  sn : srcstr = Welcome to the qDecoder project.
- *               retstr = Welcome to _ qDecoder project.
+ *   before sn : srcstr = Welcome to The qDecoder Project.
+ *   after  sn : srcstr = Welcome to The qDecoder Project.
+ *               retstr = Welcome to _ qDecoder Project.
  *
- *   before sr : srcstr = Welcome to the qDecoder project.
- *   after  sr : srcstr = Welcome to _ qDecoder project.
- *               retstr = Welcome to _ qDecoder project.
+ *   before sr : srcstr = Welcome to The qDecoder Project.
+ *   after  sr : srcstr = Welcome to _ qDecoder Project.
+ *               retstr = Welcome to _ qDecoder Project.
  * @endcode
  */
 char *qStrReplace(const char *mode, char *srcstr, const char *tokstr, const char *word) {

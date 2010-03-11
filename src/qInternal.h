@@ -143,7 +143,7 @@ do {											\
 /*
  * Internal Definitions
  */
-#define QDECODER_PRIVATEKEY	"qDecoder-by-Seungyoung_Kim"
+#define QDECODER_PRIVATEKEY	"qDecoder-by-SEUNGYOUNG.KIM"
 #define	MAX_LINEBUF		(1023+1)
 #define	DEF_DIR_MODE		(S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #define	DEF_FILE_MODE		(S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
