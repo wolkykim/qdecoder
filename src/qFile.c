@@ -519,10 +519,11 @@ char *qFileCorrectPath(char *path) {
  * @code
  *   char buf[PATH_MAX];
  *   chdir("/usr/local");
- *   qFileGetAbsPathFullPathGetAbs(buf, sizeof(buf), ".");    // returns "/usr/local"
- *   qFileGetAbsPathFullPathGetAbs(buf, sizeof(buf), "..");   // returns "/usr"
- *   qFileGetAbsPathFullPathGetAbs(buf, sizeof(buf), "etc");  // returns "/usr/local/etc"
- *   qFileGetAbsPathFullPathGetAbs(buf, sizeof(buf), "/etc"); // returns "/etc"
+ *   qFileGetAbsPath(buf, sizeof(buf), ".");    // returns "/usr/local"
+ *   qFileGetAbsPath(buf, sizeof(buf), "..");   // returns "/usr"
+ *   qFileGetAbsPath(buf, sizeof(buf), "etc");  // returns "/usr/local/etc"
+ *   qFileGetAbsPath(buf, sizeof(buf), "/etc"); // returns "/etc"
+ *   qFileGetAbsPath(buf, sizeof(buf), "/etc/"); // returns "/etc/"
  * @endcode
  */
 char *qFileGetAbsPath(char *buf, size_t bufsize, const char *path) {
