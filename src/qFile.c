@@ -429,6 +429,7 @@ off_t qFileGetSize(const char *filepath) {
  *   "/hello//my/../world" => "/hello/world"
  *   "././././hello/./world" => "./hello/world"
  *   "/../hello//world" => "/hello/world"
+ *   "/../hello//world/" => "/hello/world"
  * @endcode
  */
 char *qFileCorrectPath(char *path) {

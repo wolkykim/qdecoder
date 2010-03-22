@@ -406,7 +406,7 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders) {
  * Q_HTTPCLIENT->get(): Download file from remote host using GET method.
  *
  * @param client	Q_HTTPCLIENT object pointer.
- * @param uri		remote URL for downloading file. ("/path" or "http://.../path")
+ * @param uri		URL encoded remote URI for downloading file. ("/path" or "http://.../path")
  * @param fd		opened file descriptor for writing.
  * @param savesize	if not NULL, the length of stored bytes will be stored. (can be NULL)
  * @param rescode	if not NULL, remote response code will be stored. (can be NULL)
@@ -453,9 +453,12 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders) {
  *     // send file
  *     int nRescode = 0;
  *     off_t nSavesize = 0;
- *     bool bRet = httpClient->get(httpClient, "/img/qdecoder.png", nFd, &nSavesize, &nRescode,
+ *     char *pszEncPath = qEncodeUrl("/img/qdecoder.png");
+ *     bool bRet = httpClient->get(httpClient, pszEncPath, nFd, &nSavesize, &nRescode,
  *                                 pReqHeaders, pResHeaders,
  *                                 callback, (void*)&mydata);
+ *     free(pszEncPath);
+ *
  *     // to print out request, response headers
  *     pReqHeaders->print(pReqHeaders, stdout, true);
  *     pResHeaders->print(pResHeaders, stdout, true);
