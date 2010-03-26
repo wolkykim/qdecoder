@@ -34,9 +34,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <unistd.h>
 #include <errno.h>
-#include "md5/md5.h"
 #include "qDecoder.h"
 #include "qInternal.h"
 
