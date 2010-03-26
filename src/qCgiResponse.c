@@ -82,8 +82,8 @@ bool qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value
 	}
 
 	/* name=value */
-	char *encname = qEncodeUrl(name);
-	char *encvalue = qEncodeUrl(value);
+	char *encname = qUrlEncode(name, strlen(name));
+	char *encvalue = qUrlEncode(value, strlen(value));
 	char cookie[(4 * 1024) + 256];
 	snprintf(cookie, sizeof(cookie), "%s=%s", encname, encvalue);
 	free(encname), free(encvalue);

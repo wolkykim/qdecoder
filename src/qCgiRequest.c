@@ -283,7 +283,7 @@ Q_ENTRY *qCgiRequestParseQueries(Q_ENTRY *request, const char *method) {
 	if(method == NULL || !strcmp(method, "GET")) { /* parse GET method */
 		char *query = qCgiRequestGetQueryString("GET");
 		if(query != NULL) {
-			qDecodeQueryString(request, query, '=', '&', NULL);
+			qParseQueries(request, query, '=', '&', NULL);
 			free(query);
 		}
 
@@ -305,7 +305,7 @@ Q_ENTRY *qCgiRequestParseQueries(Q_ENTRY *request, const char *method) {
 		if (!strncmp(content_type, "application/x-www-form-urlencoded", CONST_STRLEN("application/x-www-form-urlencoded"))) {
 			char *query = qCgiRequestGetQueryString("POST");
 			if(query != NULL) {
-				qDecodeQueryString(request, query, '=', '&', NULL);
+				qParseQueries(request, query, '=', '&', NULL);
 				free(query);
 			}
 		} else if (!strncmp(content_type, "multipart/form-data", CONST_STRLEN("multipart/form-data"))) {
@@ -339,7 +339,7 @@ Q_ENTRY *qCgiRequestParseCookies(Q_ENTRY *request) {
 	/* parse COOKIE */
 	char *query = qCgiRequestGetQueryString("COOKIE");
 	if(query != NULL) {
-		qDecodeQueryString(request, query, '=', ';', NULL);
+		qParseQueries(request, query, '=', ';', NULL);
 		free(query);
 	}
 

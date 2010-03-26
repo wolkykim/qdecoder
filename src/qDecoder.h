@@ -572,9 +572,11 @@ extern	char*		qStrConvEncoding(const char *fromstr, const char *fromcode, const 
 /*
  * qEncode.c
  */
-extern	Q_ENTRY*	qDecodeQueryString(Q_ENTRY *entry, const char *query, char equalchar, char sepchar, int *count);
-extern	char*		qEncodeUrl(const char *str);
-extern	char*		qDecodeUrl(char *str);
+extern	Q_ENTRY*	qParseQueries(Q_ENTRY *entry, const char *query, char equalchar, char sepchar, int *count);
+extern	char*		qUrlEncode(const void *bin, size_t size);
+extern	size_t		qUrlDecode(char *str);
+extern	char*		qBase64Encode(const void *bin, size_t size);
+extern	size_t		qBase64Decode(char *str);
 
 /*
  * qHash.c

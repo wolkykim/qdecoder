@@ -937,7 +937,7 @@ static bool _save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encod
 	Q_NLOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		char *encval;
-		if(encode == true) encval = qEncodeUrl(obj->data);
+		if(encode == true) encval = qUrlEncode(obj->data, obj->size);
 		else encval = obj->data;
 		qIoPrintf(fd, 0, "%s%c%s\n", obj->name, sepchar, encval);
 		if(encode == true) free(encval);
@@ -969,7 +969,7 @@ static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode
 	int cnt;
 	Q_NLOBJ_T *obj;
 	for(cnt = 0, obj = loaded->first; obj; obj = obj->next) {
-		if(decode == true) qDecodeUrl(obj->data);
+		if(decode == true) qUrlDecode(obj->data);
 		_put(entry, obj->name, obj->data, obj->size, false);
 		cnt++;
 	}
