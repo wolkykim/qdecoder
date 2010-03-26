@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <errno.h>
 #include "qDecoder.h"
 #include "qInternal.h"
 
