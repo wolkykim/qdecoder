@@ -306,10 +306,12 @@ size_t qBase64Decode(char *str) {
 			nIdxOfFour++;
 		} else if(nIdxOfFour == 2) {
 			// 00??8765 004321??
+			//*pBinPt++ = ( ((cLastByte << 4) & 0xF0) | ((cByte >> 2) & 0x0F) );
 			*pBinPt++ = ( (cLastByte << 4) | (cByte >> 2) );
 			nIdxOfFour++;
 		} else {
 			// 00????87 00654321
+			//*pBinPt++ = ( ((cLastByte << 6) & 0xC0) | (cByte & 0x3F) );
 			*pBinPt++ = ( (cLastByte << 6) | cByte );
 			nIdxOfFour = 0;
 		}
