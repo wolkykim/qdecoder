@@ -68,8 +68,7 @@ AC_DEFUN([Q_ARG_DISABLE], [
 ])
 
 ## Initialize
-PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib:/usr/libexec:/usr/ccs/bin:/usr/local/bin:/usr/local/sbin:/usr/local/lib:/usr/local/libexec:/usr/local/mysql/include
-#PATH=$PATH:/usr/local/mysql/include
+PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib:/usr/libexec:/usr/local/bin:/usr/local/sbin:/usr/local/lib:/usr/local/libexec
 
 AC_INIT([qDecoder], [10 RELEASE], [http://www.qdecoder.org/])
 AC_CONFIG_SRCDIR([config.h.in])
