@@ -1,6 +1,6 @@
 <!--#include file="streamedit-header.html.in"-->
 <p>Hi <b>${NAME}</b>.
-<p>You got a really cool hobby.
-<br>I'm sure that your hobby, <b>${HOBBY}</b>, can make your life more compatible.
-<p>Bye :)
+<p>I'm glad to hear that you have a really nice hobby.
+<br>I'd like to enjoy <b>${HOBBY}</b> with you.
+<p>Best Regards.
 <!--#include file="streamedit-tailer.html.in"-->
