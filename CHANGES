@@ -6,6 +6,14 @@ qDecoder Changes
 ``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``New'', ``Replaced'' and ``Removed''.
 
+  Release 10.1.2
+    ADD) qBase64Encode(), qBase64Decode()
+    ADD) qStrIsIpv4Addr()
+    ADD) qStrTest()
+    REP) qStrIsAlnum() -> qStrTest()
+    REP) qEncodeUrl() -> qUrlEncode()
+    REP) qDecodeUrl() -> qUrlDecode()
+
   Release 10.1.1
     FIX) Q_HTTPCLIENT uses TCP_NODELAY socket to improve performance.
     FIX) Q_HTTPCLIENT performance improvements.
