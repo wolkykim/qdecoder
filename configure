@@ -3819,7 +3819,7 @@ fi
 #AC_CHECK_FUNCS([socket sendfile])
 
 ## Set additional arguments
-opt_defs="-D_GNU_SOURCE"
+opt_defs=""
 opt_incs=""
 opt_libs=""
 
@@ -3854,7 +3854,7 @@ echo "$as_me: 'threadsafe' feature is enabled" >&6;}
 if test "$enableval" = yes; then
 	{ echo "$as_me:$LINENO: 'threadsafe' feature is enabled" >&5
 echo "$as_me: 'threadsafe' feature is enabled" >&6;}
-	opt_libs="-lpthread"
+	opt_libs="$opt_libs -lpthread"
 fi
 
 

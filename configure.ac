@@ -68,7 +68,7 @@ AC_DEFUN([Q_ARG_DISABLE], [
 ])
 
 ## Initialize
-PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib:/usr/libexec:/usr/local/bin:/usr/local/sbin:/usr/local/lib:/usr/local/libexec
+PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
 AC_INIT([qDecoder], [10 RELEASE], [http://www.qdecoder.org/])
 AC_CONFIG_SRCDIR([config.h.in])
@@ -114,7 +114,7 @@ AC_TYPE_OFF_T
 #AC_CHECK_FUNCS([socket sendfile])
 
 ## Set additional arguments
-opt_defs="-D_GNU_SOURCE"
+opt_defs=""
 opt_incs=""
 opt_libs=""
 
@@ -122,7 +122,7 @@ Q_ARG_ENABLE([debug], [enable debugging output], [-DBUILD_DEBUG])
 Q_ARG_ENABLE([threadsafe], [enable thread-safe feature], [-DENABLE_THREADSAFE])
 if test "$enableval" = yes; then
 	AC_MSG_NOTICE(['threadsafe' feature is enabled])
-	opt_libs="-lpthread"
+	opt_libs="$opt_libs -lpthread"
 fi
 
 Q_ARG_ENABLE([lfs], [enable large file supports], [-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
