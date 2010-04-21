@@ -35,7 +35,7 @@
 #define _QDECODER_H
 
 #define _Q_PRGNAME			"qDecoder"
-#define _Q_VERSION			"10.1.2"
+#define _Q_VERSION			"10.1.3"
 
 #include <stdio.h>
 #include <stdbool.h>
