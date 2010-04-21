@@ -257,7 +257,7 @@ char *qStrCpy(char *dst, size_t size, const char *src) {
 
 	size_t copylen = strlen(src);
 	if(copylen >= size) copylen = size - 1;
-	memcpy((void*)dst, (void*)src, copylen);
+	memmove((void*)dst, (void*)src, copylen);
 	dst[copylen] = '\0';
 
 	return dst;
