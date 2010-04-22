@@ -87,7 +87,9 @@ do {											\
 	int _ret = pthread_mutex_init(&x.mutex, &_mutexattr);				\
 	pthread_mutexattr_destroy(&_mutexattr);						\
 	if(_ret != 0) {									\
-		DEBUG("Q_LOCK: can't initialize mutex. [%d:%s]", _ret, strerror(_ret));	\
+		char _errmsg[64];							\
+		strerror_r(_ret, _errmsg, sizeof(_errmsg));				\
+		DEBUG("Q_LOCK: can't initialize mutex. [%d:%s]", _ret, _errmsg);	\
 		exit(EXIT_FAILURE);							\
 	}										\
 	DEBUG("Q_LOCK: initialized.");							\
@@ -112,7 +114,9 @@ do {											\
 			usleep(1);							\
 		}									\
 		if(_ret == 0) break;							\
-		DEBUG("Q_LOCK: can't get lock - force to unlock. [%d:%s]", _ret, strerror(_ret));	\
+		char _errmsg[64];							\
+		strerror_r(_ret, _errmsg, sizeof(_errmsg));				\
+		DEBUG("Q_LOCK: can't get lock - force to unlock. [%d:%s]", _ret, _errmsg);	\
 		Q_LOCK_LEAVE(x);							\
 	}										\
 	x.count++;									\
@@ -125,7 +129,9 @@ do {											\
 	if(x.count != 0) DEBUG("Q_LOCK: mutex counter is not 0.");			\
 	int _ret;									\
 	while((_ret = pthread_mutex_destroy(&x.mutex)) != 0) {				\
-		DEBUG("Q_LOCK: force to unlock mutex. [%d:%s]", _ret, strerror(_ret));	\
+		char _errmsg[64];							\
+		strerror_r(_ret, _errmsg, sizeof(_errmsg));				\
+		DEBUG("Q_LOCK: force to unlock mutex. [%d:%s]", _ret, _errmsg);		\
 		Q_LOCK_LEAVE(x);							\
 	}										\
 	DEBUG("Q_LOCK: destroyed.");							\
