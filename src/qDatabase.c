@@ -201,7 +201,7 @@ Q_DB *qDb(const char *dbtype, const char *addr, int port, const char *username, 
 	db->free		= _free;
 
 	// initialize recrusive mutex
-	Q_LOCK_INIT(db->qlock, true);
+	Q_MUTEX_INIT(db->qmutex, true);
 
 	return db;
 }
@@ -222,18 +222,18 @@ static bool _open(Q_DB *db) {
 	}
 
 #ifdef _Q_ENABLE_MYSQL
-	Q_LOCK_ENTER(queue->qlock);
+	Q_MUTEX_ENTER(db->qmutex);
 
 	// initialize handler
 	if(db->mysql != NULL) _close(db);
 
 	if(mysql_library_init(0, NULL, NULL) != 0) {
-		Q_LOCK_LEAVE(queue->qlock);
+		Q_MUTEX_LEAVE(db->qmutex);
 		return false;
 	}
 
 	if((db->mysql = mysql_init(NULL)) == NULL) {
-		Q_LOCK_LEAVE(queue->qlock);
+		Q_MUTEX_LEAVE(db->qmutex);
 		return false;
 	}
 
@@ -251,20 +251,20 @@ static bool _open(Q_DB *db) {
 	// try to connect
 	if(mysql_real_connect(db->mysql, db->info.addr, db->info.username, db->info.password, db->info.database, db->info.port, NULL, 0) == NULL) {
 		_close(db); // free mysql handler
-		Q_LOCK_LEAVE(queue->qlock);
+		Q_MUTEX_LEAVE(db->qmutex);
 		return false;
 	}
 
 	// set auto-commit
 	if (mysql_autocommit(db->mysql, db->info.autocommit) != 0) {
 		_close(db); // free mysql handler
-		Q_LOCK_LEAVE(queue->qlock);
+		Q_MUTEX_LEAVE(db->qmutex);
 		return false;
 	}
 
 	// set flag
 	db->connected = true;
-	Q_LOCK_LEAVE(queue->qlock);
+	Q_MUTEX_LEAVE(db->qmutex);
 	return true;
 #else
 	return false;
@@ -286,7 +286,7 @@ static bool _close(Q_DB *db) {
 	if (db == NULL) return false;
 
 #ifdef _Q_ENABLE_MYSQL
-	Q_LOCK_ENTER(queue->qlock);
+	Q_MUTEX_ENTER(db->qmutex);
 
 	if(db->mysql != NULL) {
 		mysql_close(db->mysql);
@@ -295,7 +295,7 @@ static bool _close(Q_DB *db) {
 	}
 	db->connected = false;
 
-	Q_LOCK_LEAVE(queue->qlock);
+	Q_MUTEX_LEAVE(db->qmutex);
 	return true;
 #else
 	return false;
@@ -314,7 +314,7 @@ static int _executeUpdate(Q_DB *db, const char *query) {
 	if (db == NULL || db->connected == false) return -1;
 
 #ifdef _Q_ENABLE_MYSQL
-	Q_LOCK_ENTER(queue->qlock);
+	Q_MUTEX_ENTER(db->qmutex);
 
 	int affected = -1;
 
@@ -325,7 +325,7 @@ static int _executeUpdate(Q_DB *db, const char *query) {
 		if ((affected = mysql_affected_rows(db->mysql)) < 0) affected = -1;
 	}
 
-	Q_LOCK_LEAVE(queue->qlock);
+	Q_MUTEX_LEAVE(db->qmutex);
 	return affected;
 #else
 	return -1;
@@ -447,16 +447,16 @@ static bool _beginTran(Q_DB *db) {
 	if (db == NULL) return false;
 
 #ifdef _Q_ENABLE_MYSQL
-	Q_LOCK_ENTER(queue->qlock);
-	if(db->qlock.count != 1) {
-		Q_LOCK_LEAVE(queue->qlock);
+	Q_MUTEX_ENTER(db->qmutex);
+	if(db->qmutex.count != 1) {
+		Q_MUTEX_LEAVE(db->qmutex);
 		return false;
 	}
 
 	Q_DBRESULT *result;
 	result = db->executeQuery(db, "START TRANSACTION");
 	if(result == NULL) {
-		Q_LOCK_LEAVE(queue->qlock);
+		Q_MUTEX_LEAVE(db->qmutex);
 		return false;
 	}
 	result->free(result);
@@ -482,8 +482,8 @@ static bool _commit(Q_DB *db) {
 		ret = true;
 	}
 
-	if(db->qlock.count > 0) {
-		Q_LOCK_LEAVE(queue->qlock);
+	if(db->qmutex.count > 0) {
+		Q_MUTEX_LEAVE(db->qmutex);
 	}
 	return ret;
 #else
@@ -507,8 +507,8 @@ static bool _rollback(Q_DB *db) {
 		ret = true;
 	}
 
-	if(db->qlock.count > 0) {
-		Q_LOCK_LEAVE(queue->qlock);
+	if(db->qmutex.count > 0) {
+		Q_MUTEX_LEAVE(db->qmutex);
 	}
 	return ret;
 #else
@@ -619,7 +619,7 @@ static const char *_getError(Q_DB *db, unsigned int *errorno) {
 static bool _free(Q_DB *db)  {
 	if (db == NULL) return false;
 
-	Q_LOCK_ENTER(queue->qlock);
+	Q_MUTEX_ENTER(db->qmutex);
 
 	_close(db);
 
@@ -630,8 +630,8 @@ static bool _free(Q_DB *db)  {
 	free(db->info.database);
 	free(db);
 
-	Q_LOCK_LEAVE(queue->qlock);
-	Q_LOCK_DESTROY(queue->qlock);
+	Q_MUTEX_LEAVE(db->qmutex);
+	Q_MUTEX_DESTROY(db->qmutex);
 
 	return true;
 }

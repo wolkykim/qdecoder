@@ -55,7 +55,7 @@ AC_DEFUN([Q_ARG_ENABLE], [
 	AC_ARG_ENABLE([$1],[AS_HELP_STRING([--enable-$1], [$2])],,[enableval=no])
 	if test "$enableval" = yes; then
 		AC_MSG_NOTICE(['$1' feature is enabled])
-		opt_defs="$opt_defs $3"
+		CPPFLAGS="$CPPFLAGS $3"
 	fi
 ])
 
@@ -63,17 +63,20 @@ AC_DEFUN([Q_ARG_DISABLE], [
 	AC_ARG_ENABLE([$1],[AS_HELP_STRING([--disable-$1], [$2])],,[enableval=yes])
 	if test "$enableval" = no; then
 		AC_MSG_NOTICE(['$1' feature is disabled])
-		opt_defs="$opt_defs $3"
+		CPPFLAGS="$CPPFLAGS $3"
 	fi
 ])
 
 ## Initialize
-PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
-
 AC_INIT([qDecoder], [10 RELEASE], [http://www.qdecoder.org/])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile])
+
+## Set path
+PATH="$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
+CPPFLAGS="$CPPFLAGS -I/usr/include -I/usr/local/include -I./ -D_GNU_SOURCE"
+LDFLAGS="$LDFLAGS -L/usr/lib -L/usr/local/lib"
 
 ## Set autoconf setting
 #AC_CANONICAL_TARGET
@@ -83,7 +86,7 @@ AC_PREFIX_DEFAULT([/usr/local])
 ## Checks for programs.
 AC_PROG_CC
 if test $ac_compiler_gnu = yes; then
-	CFLAGS="$CFLAGS -Wall -fPIC"
+	CFLAGS="-Wall -fPIC"
 #else
 #	AC_MSG_FAILURE([GCC is required to compile qDecoder.])
 fi
@@ -113,16 +116,16 @@ AC_TYPE_OFF_T
 ## Checks for library functions.
 #AC_CHECK_FUNCS([socket sendfile])
 
-## Set additional arguments
-opt_defs=""
-opt_incs=""
-opt_libs=""
-
 Q_ARG_ENABLE([debug], [enable debugging output], [-DBUILD_DEBUG])
+if test "$enableval" = yes; then
+	CFLAGS="$CFLAGS -g -O2"
+else
+	CFLAGS="$CFLAGS -O2"
+fi
+
 Q_ARG_ENABLE([threadsafe], [enable thread-safe feature], [-DENABLE_THREADSAFE])
 if test "$enableval" = yes; then
-	AC_MSG_NOTICE(['threadsafe' feature is enabled])
-	opt_libs="$opt_libs -lpthread"
+	AC_CHECK_LIB([pthread], [main], [], AC_MSG_ERROR([Can't find pthread library.]))
 fi
 
 Q_ARG_ENABLE([lfs], [enable large file supports], [-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64])
@@ -133,8 +136,7 @@ if test "$enableval" = yes; then
 	AC_CHECK_FILE([$enable_fastcgi/fcgi_stdio.h],[enableval=yes],[enableval=no])
 	if test "$enableval" = yes; then
 		AC_MSG_NOTICE(['fastcgi' feature is enabled])
-		opt_defs="$opt_defs -DENABLE_FASTCGI"
-		opt_incs="$opt_incs -I$enable_fastcgi"
+		CPPFLAGS="$CPPFLAGS -DENABLE_FASTCGI -I$enable_fastcgi"
 	else
 		AC_MSG_FAILURE([can't find 'fcgi_stdio.h' header file in '$enable_fastcgi' directory. can't enable fastcgi support.])
 	fi
@@ -145,8 +147,7 @@ if test "$enableval" = yes; then
 	AC_CHECK_FILE([$enable_mysql/mysql.h],[enableval=yes],[enableval=no])
 	if test "$enableval" = yes; then
 		AC_MSG_NOTICE(['mysql' feature is enabled])
-		opt_defs="$opt_defs -DENABLE_MYSQL"
-		opt_incs="$opt_incs -I$enable_mysql"
+		CPPFLAGS="$CPPFLAGS -DENABLE_MYSQL -I$enable_mysql"
 	else
 		AC_MSG_FAILURE([can't find 'mysql.h' header file in '$enable_mysql' directory. can't enable mysql support.])
 	fi
@@ -157,10 +158,9 @@ Q_ARG_DISABLE([socket], [disable socket APIs], [-DDISABLE_SOCKET])
 Q_ARG_DISABLE([ipc], [disable IPC APIs], [-DDISABLE_IPC])
 Q_ARG_DISABLE([datastructure], [disable data-structure APIs], [-DDISABLE_DATASTRUCTURE])
 
-AC_MSG_NOTICE([optional flags: $opt_defs $opt_incs $opt_libs])
-AC_SUBST([OPT_DEFS], [$opt_defs] )
-AC_SUBST([OPT_INCS], [$opt_incs] )
-AC_SUBST([OPT_LIBS], [$opt_libs] )
+AC_MSG_NOTICE([CFLAGS $CFLAGS])
+AC_MSG_NOTICE([CPPFLAGS $CPPFLAGS])
+#AC_MSG_NOTICE([LIBS $LIBS])
 
 ## Create Makefile
 AC_OUTPUT

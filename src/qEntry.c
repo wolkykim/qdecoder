@@ -169,7 +169,7 @@ Q_ENTRY *qEntry(void) {
 	entry->free		= _free;
 
 	/* initialize recrusive mutex */
-	Q_LOCK_INIT(entry->qlock, true);
+	Q_MUTEX_INIT(entry->qmutex, true);
 
 	return entry;
 }
@@ -182,14 +182,14 @@ Q_ENTRY *qEntry(void) {
  * User can raise lock to proctect data modification during Q_ENTRY->getNext() operation.
  */
 static void _lock(Q_ENTRY *entry) {
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 }
 
 /**
  * Q_ENTRY->unlock(): Leave critical section.
  */
 static void _unlock(Q_ENTRY *entry) {
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 }
 
 /**
@@ -231,7 +231,7 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size
 	obj->size = size;
 	obj->next = NULL;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 
 	/* if replace flag is set, remove same key */
 	if (replace == true) _remove(entry, dup_name);
@@ -246,7 +246,7 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size
 	entry->size += size;
 	entry->num++;
 
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return true;
 }
@@ -366,7 +366,7 @@ static bool _putInt(Q_ENTRY *entry, const char *name, int num, bool replace) {
 static void *_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 	if(entry == NULL || name == NULL) return NULL;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 	void *data = NULL;
 	Q_NLOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
@@ -383,7 +383,7 @@ static void *_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 			break;
 		}
 	}
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return data;
 }
@@ -401,7 +401,7 @@ static void *_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 static void *_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 	if(entry == NULL || name == NULL) return NULL;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 	void *data = NULL;
 	Q_NLOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
@@ -417,7 +417,7 @@ static void *_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newme
 			break;
 		}
 	}
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return data;
 }
@@ -439,7 +439,7 @@ static void *_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newme
 static void *_getLast(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 	if(entry == NULL || name == NULL) return NULL;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 
 	Q_NLOBJ_T *lastobj = NULL;
 	Q_NLOBJ_T *obj;
@@ -458,7 +458,7 @@ static void *_getLast(Q_ENTRY *entry, const char *name, size_t *size, bool newme
 		}
 	}
 
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 	return data;
 }
 
@@ -627,7 +627,7 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
 static bool _getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newmem) {
 	if(entry == NULL || obj == NULL) return NULL;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 
 	// if obj->name is NULL, it means this is first call.
 	if(obj->name == NULL) obj->next = entry->first;
@@ -652,7 +652,7 @@ static bool _getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newm
 		break;
 	}
 
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 	return ret;
 }
 
@@ -667,7 +667,7 @@ static bool _getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newm
 static int _remove(Q_ENTRY *entry, const char *name) {
 	if(entry == NULL || name == NULL) return 0;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 
 	int removed = 0;
 	Q_NLOBJ_T *prev, *obj;
@@ -702,7 +702,7 @@ static int _remove(Q_ENTRY *entry, const char *name) {
 		}
 	}
 
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 	return removed;
 }
 
@@ -733,7 +733,7 @@ static int _getNum(Q_ENTRY *entry) {
 static int _getNo(Q_ENTRY *entry, const char *name) {
 	if(entry == NULL || name == NULL) return 0;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 	int ret = 0;
 	int no;
 	Q_NLOBJ_T *obj;
@@ -743,7 +743,7 @@ static int _getNo(Q_ENTRY *entry, const char *name) {
 			break;
 		}
 	}
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 	return ret;
 }
 
@@ -770,7 +770,7 @@ static char *_parseStr(Q_ENTRY *entry, const char *str) {
 	if(str == NULL) return NULL;
 	if(entry == NULL) return strdup(str);
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 
 	bool loop;
 	char *value = strdup(str);
@@ -841,7 +841,7 @@ static char *_parseStr(Q_ENTRY *entry, const char *str) {
 		}
 	} while(loop == true);
 
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return value;
 }
@@ -866,14 +866,14 @@ static void *_merge(Q_ENTRY *entry, size_t *size) {
 	if(final == NULL) return NULL;
 	void *dp = final;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 	Q_NLOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		memcpy(dp, obj->data, obj->size);
 		dp += obj->size;
 	}
 	*((char *)dp) = '\0';
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	if(size != NULL) *size = entry->size;
 	return final;
@@ -889,7 +889,7 @@ static void *_merge(Q_ENTRY *entry, size_t *size) {
 static bool _truncate(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 	Q_NLOBJ_T *obj;
 	for(obj = entry->first; obj;) {
 		Q_NLOBJ_T *next = obj->next;
@@ -903,7 +903,7 @@ static bool _truncate(Q_ENTRY *entry) {
 	entry->size = 0;
 	entry->first = NULL;
 	entry->last = NULL;
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return true;
 }
@@ -933,7 +933,7 @@ static bool _save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encod
 	qIoPrintf(fd, 0, "# %s\n", filepath);
 	free(gmtstr);
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 	Q_NLOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		char *encval;
@@ -942,7 +942,7 @@ static bool _save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encod
 		qIoPrintf(fd, 0, "%s%c%s\n", obj->name, sepchar, encval);
 		if(encode == true) free(encval);
 	}
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	close(fd);
 
@@ -965,7 +965,7 @@ static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode
 	Q_ENTRY *loaded;
 	if ((loaded = qConfigParseFile(NULL, filepath, sepchar)) == NULL) return false;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 	int cnt;
 	Q_NLOBJ_T *obj;
 	for(cnt = 0, obj = loaded->first; obj; obj = obj->next) {
@@ -975,7 +975,7 @@ static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode
 	}
 
 	_free(loaded);
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return cnt;
 }
@@ -994,7 +994,7 @@ static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode
 static bool _reverse(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 	Q_NLOBJ_T *prev, *obj;
 	for (prev = NULL, obj = entry->first; obj;) {
 		Q_NLOBJ_T *next = obj->next;
@@ -1005,7 +1005,7 @@ static bool _reverse(Q_ENTRY *entry) {
 
 	entry->last = entry->first;
 	entry->first = prev;
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return true;
 }
@@ -1021,12 +1021,12 @@ static bool _reverse(Q_ENTRY *entry) {
 static bool _print(Q_ENTRY *entry, FILE *out, bool print_data) {
 	if(entry == NULL || out == NULL) return false;
 
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 	Q_NLOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		fprintf(out, "%s=%s (%zu)\n" , obj->name, (print_data?(char*)obj->data:"(data)"), obj->size);
 	}
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return true;
 }
@@ -1042,7 +1042,7 @@ static bool _free(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
 
 	_truncate(entry);
-	Q_LOCK_DESTROY(entry->qlock);
+	Q_MUTEX_DESTROY(entry->qmutex);
 
 	free(entry);
 	return true;

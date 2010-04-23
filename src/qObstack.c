@@ -257,14 +257,14 @@ static ssize_t _writeFinal(Q_OBSTACK *obstack, int nFd) {
 
 	// map data to vector
 	Q_ENTRY *entry = obstack->stack;
-	Q_LOCK_ENTER(entry->qlock);
+	Q_MUTEX_ENTER(entry->qmutex);
 	Q_NLOBJ_T *obj;
 	int objcnt;
 	for(objcnt = 0, obj = entry->first; obj; obj = obj->next, objcnt++) {
 		vectors[objcnt].iov_base = obj->data;
 		vectors[objcnt].iov_len = obj->size;
 	}
-	Q_LOCK_LEAVE(entry->qlock);
+	Q_MUTEX_LEAVE(entry->qmutex);
 
 	// double check
 	if(objcnt != num) {

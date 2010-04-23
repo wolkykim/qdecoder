@@ -35,7 +35,7 @@
 #define _QDECODER_H
 
 #define _Q_PRGNAME			"qDecoder"
-#define _Q_VERSION			"10.1.3"
+#define _Q_VERSION			"10.1.4"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -47,7 +47,7 @@
 
 typedef struct _Q_NOBJ_T	Q_NOBJ_T;
 typedef struct _Q_NLOBJ_T	Q_NLOBJ_T;
-typedef struct _Q_LOCK_T	Q_LOCK_T;
+typedef struct _Q_MUTEX_T	Q_MUTEX_T;
 
 typedef struct _Q_ENTRY		Q_ENTRY;
 typedef struct _Q_OBSTACK	Q_OBSTACK;
@@ -82,7 +82,7 @@ struct _Q_NLOBJ_T {
 /**
  * Variable type for lock management
  */
-struct _Q_LOCK_T {
+struct _Q_MUTEX_T {
 	pthread_mutex_t	mutex;
 	pthread_t	owner;
 	int		count;
@@ -92,7 +92,7 @@ struct _Q_LOCK_T {
  * Structure for linked-list data structure.
  */
 struct _Q_ENTRY {
-	Q_LOCK_T	qlock;		/*!< only used if compiled with --enable-threadsafe option */
+	Q_MUTEX_T	qmutex;		/*!< only used if compiled with --enable-threadsafe option */
 
 	int		num;		/*!< number of objects */
 	size_t		size;		/*!< total size of data objects, does not include name size */
@@ -160,7 +160,7 @@ struct _Q_OBSTACK {
  * Structure for hash-table data structure.
  */
 struct _Q_HASHTBL {
-	Q_LOCK_T	qlock;		/*!< only used if compiled with --enable-threadsafe option */
+	Q_MUTEX_T	qmutex;		/*!< only used if compiled with --enable-threadsafe option */
 
 	int		max;		/*!< maximum hashtable size */
 	int		num;		/*!< used slot counter */
@@ -234,7 +234,7 @@ struct _Q_HASHARR {
  * Structure for array-based circular-queue data structure.
  */
 struct _Q_QUEUE {
-	Q_LOCK_T	qlock;		/*!< only used if compiled with --enable-threadsafe option */
+	Q_MUTEX_T	qmutex;		/*!< only used if compiled with --enable-threadsafe option */
 
 	int		max;		/*!< maximum queue slots */
 	int		used;		/*!< used queue slots */
@@ -260,7 +260,7 @@ struct _Q_QUEUE {
  * Structure for file log.
  */
 struct _Q_LOG {
-	Q_LOCK_T	qlock;		/*!< only used if compiled with --enable-threadsafe option */
+	Q_MUTEX_T	qmutex;		/*!< only used if compiled with --enable-threadsafe option */
 
 	char	filepathfmt[PATH_MAX];	/*!< file file naming format like /somepath/qdecoder-%Y%m%d.log */
 	char	filepath[PATH_MAX];	/*!< generated system path of log file */
@@ -294,7 +294,7 @@ struct _Q_LOG {
  * Structure for independent database interface.
  */
 struct _Q_DB {
-	Q_LOCK_T	qlock;		/*!< only used if compiled with --enable-threadsafe option */
+	Q_MUTEX_T	qmutex;		/*!< only used if compiled with --enable-threadsafe option */
 
 	bool connected;			/*!< if opened true, if closed false */
 

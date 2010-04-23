@@ -205,7 +205,7 @@ int qQueueUsrmem(Q_QUEUE *queue, void* datamem, size_t memsize, size_t objsize) 
 	_truncate(queue);
 
 	// initialize recrusive mutex
-	Q_LOCK_INIT(queue->qlock, true);
+	Q_MUTEX_INIT(queue->qmutex, true);
 
 	// assign methods
 	queue->push	= _push;
@@ -229,12 +229,12 @@ int qQueueUsrmem(Q_QUEUE *queue, void* datamem, size_t memsize, size_t objsize) 
 static bool _push(Q_QUEUE *queue, const void *object) {
 	if(queue == NULL || object == NULL) return false;
 
-	Q_LOCK_ENTER(queue->qlock);
+	Q_MUTEX_ENTER(queue->qmutex);
 
 	// check full
 	if(queue->used == queue->max) {
 		DEBUG("Queue full.");
-		Q_LOCK_LEAVE(queue->qlock);
+		Q_MUTEX_LEAVE(queue->qmutex);
 		return false;
 	}
 
@@ -245,7 +245,7 @@ static bool _push(Q_QUEUE *queue, const void *object) {
 	// adjust pointer
 	queue->used++;
 	queue->tail = (queue->tail + 1) % queue->max;
-	Q_LOCK_LEAVE(queue->qlock);
+	Q_MUTEX_LEAVE(queue->qmutex);
 
 	return true;
 }
@@ -273,7 +273,7 @@ static void *_popFirst(Q_QUEUE *queue, bool remove) {
 	void *object = malloc(queue->objsize);
 	if(object == NULL) return NULL;
 
-	Q_LOCK_ENTER(queue->qlock);
+	Q_MUTEX_ENTER(queue->qmutex);
 
 	// pop object
 	void *dp = queue->objarr + (queue->objsize * queue->head);
@@ -285,7 +285,7 @@ static void *_popFirst(Q_QUEUE *queue, bool remove) {
 		queue->head = (queue->head + 1) % queue->max;
 	}
 
-	Q_LOCK_LEAVE(queue->qlock);
+	Q_MUTEX_LEAVE(queue->qmutex);
 
 	return object;
 }
@@ -313,7 +313,7 @@ static void *_popLast(Q_QUEUE *queue, bool remove) {
 	void *object = malloc(queue->objsize);
 	if(object == NULL) return NULL;
 
-	Q_LOCK_ENTER(queue->qlock);
+	Q_MUTEX_ENTER(queue->qmutex);
 
 	// pop object
 	int tail = (queue->tail > 0) ? (queue->tail - 1) : (queue->max - 1);
@@ -326,7 +326,7 @@ static void *_popLast(Q_QUEUE *queue, bool remove) {
 		queue->used--;
 	}
 
-	Q_LOCK_LEAVE(queue->qlock);
+	Q_MUTEX_LEAVE(queue->qmutex);
 
 	return object;
 }
@@ -367,11 +367,11 @@ static int _getAvail(Q_QUEUE *queue) {
  * reset all of data in the queue.
  */
 static void _truncate(Q_QUEUE *queue) {
-	Q_LOCK_ENTER(queue->qlock);
+	Q_MUTEX_ENTER(queue->qmutex);
 	queue->used = 0;
 	queue->head = 0;
 	queue->tail = 0;
-	Q_LOCK_LEAVE(queue->qlock);
+	Q_MUTEX_LEAVE(queue->qmutex);
 }
 
 /**
@@ -384,16 +384,16 @@ static void _truncate(Q_QUEUE *queue) {
 static void _free(Q_QUEUE *queue) {
 	if(queue == NULL) return;
 
-	Q_LOCK_ENTER(queue->qlock);
+	Q_MUTEX_ENTER(queue->qmutex);
 	if(queue->objarr != NULL) free(queue->objarr);
-	Q_LOCK_LEAVE(queue->qlock);
-	Q_LOCK_DESTROY(queue->qlock);
+	Q_MUTEX_LEAVE(queue->qmutex);
+	Q_MUTEX_DESTROY(queue->qmutex);
 
 	free(queue);
 }
 
 static void _freeUsrmem(Q_QUEUE *queue) {
-	Q_LOCK_DESTROY(queue->qlock);
+	Q_MUTEX_DESTROY(queue->qmutex);
 }
 
 #endif /* DISABLE_DATASTRUCTURE */

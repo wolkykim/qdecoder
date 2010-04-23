@@ -146,7 +146,7 @@ Q_HASHTBL *qHashtbl(int max, bool resize, int threshold) {
 	tbl->free	= _free;
 
 	// initialize recrusive mutex
-	Q_LOCK_INIT(tbl->qlock, true);
+	Q_MUTEX_INIT(tbl->qmutex, true);
 
 	// now table can be used
 	tbl->max = max;
@@ -164,7 +164,7 @@ Q_HASHTBL *qHashtbl(int max, bool resize, int threshold) {
  * User can raise lock to proctect data modification during Q_HASHTBL->getNext() operation.
  */
 static void _lock(Q_HASHTBL *tbl) {
-	Q_LOCK_ENTER(tbl->qlock);
+	Q_MUTEX_ENTER(tbl->qmutex);
 }
 
 /**
@@ -173,7 +173,7 @@ static void _lock(Q_HASHTBL *tbl) {
  * @return	none
  */
 static void _unlock(Q_HASHTBL *tbl) {
-	Q_LOCK_LEAVE(tbl->qlock);
+	Q_MUTEX_LEAVE(tbl->qmutex);
 }
 
 /**
@@ -196,13 +196,13 @@ static bool _put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size
 	obj.data = (char*)data;
 	obj.size = size;
 
-	Q_LOCK_ENTER(tbl->qlock);
+	Q_MUTEX_ENTER(tbl->qmutex);
 
 	// check, is slot empty
 	if (tbl->count[hash] == 0) { // empty slot
 		// put data
 		if(_putData(tbl, hash, hash, &obj, 1) == false) {
-			Q_LOCK_LEAVE(tbl->qlock);
+			Q_MUTEX_LEAVE(tbl->qmutex);
 			return false;
 		}
 
@@ -214,19 +214,19 @@ static bool _put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size
 			// remove and recall
 			_remove(tbl, name);
 			bool ret = _put(tbl, name, data, size);
-			Q_LOCK_LEAVE(tbl->qlock);
+			Q_MUTEX_LEAVE(tbl->qmutex);
 			return ret;
 		} else { // no same key, just hash collision
 			// find empty slot
 			int idx = _findEmpty(tbl, hash);
 			if (idx < 0) {
-				Q_LOCK_LEAVE(tbl->qlock);
+				Q_MUTEX_LEAVE(tbl->qmutex);
 				return false;
 			}
 
 			// put data
 			if(_putData(tbl, idx, hash, &obj, -1) == false) { // -1 is used for collision resolution idx != hash;
-				Q_LOCK_LEAVE(tbl->qlock);
+				Q_MUTEX_LEAVE(tbl->qmutex);
 				return false;
 			}
 
@@ -239,20 +239,20 @@ static bool _put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size
 		// find empty slot
 		int idx = _findEmpty(tbl, hash);
 		if (idx < 0) {
-			Q_LOCK_LEAVE(tbl->qlock);
+			Q_MUTEX_LEAVE(tbl->qmutex);
 			return false;
 		}
 
 		// move collided data
 		if(_putData(tbl, idx, tbl->hash[hash], &(tbl->obj[hash]), tbl->count[hash]) == false) {
-			Q_LOCK_LEAVE(tbl->qlock);
+			Q_MUTEX_LEAVE(tbl->qmutex);
 			return false;
 		}
 		_removeData(tbl, hash);
 
 		// store data
 		if(_putData(tbl, hash, hash, &obj, 1) == false) {
-			Q_LOCK_LEAVE(tbl->qlock);
+			Q_MUTEX_LEAVE(tbl->qmutex);
 			return false;
 		}
 
@@ -265,7 +265,7 @@ static bool _put(Q_HASHTBL *tbl, const char *name, const void *data, size_t size
 		_resize(tbl, (tbl->max * _Q_HASHTBL_RESIZE_MAG));
 	}
 
-	Q_LOCK_LEAVE(tbl->qlock);
+	Q_MUTEX_LEAVE(tbl->qmutex);
 	return true;
 }
 
@@ -330,12 +330,12 @@ static bool _putInt(Q_HASHTBL *tbl, const char *name, const int num) {
 static void *_get(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem) {
 	if(tbl == NULL || name == NULL) return NULL;
 
-	Q_LOCK_ENTER(tbl->qlock);
+	Q_MUTEX_ENTER(tbl->qmutex);
 
 	int hash = (int)qHashFnv32(tbl->max, name, strlen(name));
 	int idx = _getIdx(tbl, name, hash);
 	if (idx < 0) {
-		Q_LOCK_LEAVE(tbl->qlock);
+		Q_MUTEX_LEAVE(tbl->qmutex);
 		return NULL;
 	}
 
@@ -348,7 +348,7 @@ static void *_get(Q_HASHTBL *tbl, const char *name, size_t *size, bool newmem) {
 	}
 	if(size != NULL) *size = tbl->obj[idx].size;
 
-	Q_LOCK_LEAVE(tbl->qlock);
+	Q_MUTEX_LEAVE(tbl->qmutex);
 	return data;
 }
 
@@ -435,7 +435,7 @@ static int _getInt(Q_HASHTBL *tbl, const char *name) {
 static bool _getNext(Q_HASHTBL *tbl, Q_NOBJ_T *obj, int *idx, bool newmem) {
 	if(tbl == NULL || obj == NULL || idx == NULL) return NULL;
 
-	Q_LOCK_ENTER(tbl->qlock);
+	Q_MUTEX_ENTER(tbl->qmutex);
 	bool found = false;
 	for (; *idx < tbl->max; (*idx)++) {
 		if (tbl->count[*idx] == 0) continue;
@@ -461,7 +461,7 @@ static bool _getNext(Q_HASHTBL *tbl, Q_NOBJ_T *obj, int *idx, bool newmem) {
 		(*idx)++;
 		break;
 	}
-	Q_LOCK_LEAVE(tbl->qlock);
+	Q_MUTEX_LEAVE(tbl->qmutex);
 
 	return found;
 }
@@ -477,12 +477,12 @@ static bool _getNext(Q_HASHTBL *tbl, Q_NOBJ_T *obj, int *idx, bool newmem) {
 static bool _remove(Q_HASHTBL *tbl, const char *name) {
 	if(tbl == NULL || name == NULL) return false;
 
-	Q_LOCK_ENTER(tbl->qlock);
+	Q_MUTEX_ENTER(tbl->qmutex);
 
 	int hash = (int)qHashFnv32(tbl->max, name, strlen(name));
 	int idx = _getIdx(tbl, name, hash);
 	if (idx < 0) {
-		Q_LOCK_LEAVE(tbl->qlock);
+		Q_MUTEX_LEAVE(tbl->qmutex);
 		return false;
 	}
 
@@ -498,7 +498,7 @@ static bool _remove(Q_HASHTBL *tbl, const char *name) {
 			if (idx2 >= tbl->max) idx2 = 0;
 			if (idx2 == idx) {
 				DEBUG("hashtbl: BUG remove failed %s. dup not found.", name);
-				Q_LOCK_LEAVE(tbl->qlock);
+				Q_MUTEX_LEAVE(tbl->qmutex);
 				return false;
 			}
 			if (tbl->count[idx2] == -1 && tbl->hash[idx2] == idx) break;
@@ -508,7 +508,7 @@ static bool _remove(Q_HASHTBL *tbl, const char *name) {
 		int backupcount = tbl->count[idx];
 		_removeData(tbl, idx); // remove leading slot
 		if(_putData(tbl, idx, tbl->hash[idx2], &(tbl->obj[idx2]), backupcount - 1) == false) { // copy to leading slot
-			Q_LOCK_LEAVE(tbl->qlock);
+			Q_MUTEX_LEAVE(tbl->qmutex);
 			return false;
 		}
 		_removeData(tbl, idx2); // remove dup slot
@@ -518,7 +518,7 @@ static bool _remove(Q_HASHTBL *tbl, const char *name) {
 		// decrease counter from leading slot
 		if(tbl->count[tbl->hash[idx]] <= 1) {
 			DEBUG("hashtbl: BUG remove failed %s. counter of leading slot mismatch.", name);
-			Q_LOCK_LEAVE(tbl->qlock);
+			Q_MUTEX_LEAVE(tbl->qmutex);
 			return false;
 		}
 		tbl->count[tbl->hash[idx]]--;
@@ -529,7 +529,7 @@ static bool _remove(Q_HASHTBL *tbl, const char *name) {
 		DEBUG("hashtbl: rem(dup) %s (idx=%d,tot=%d)", name, idx, tbl->num);
 	}
 
-	Q_LOCK_LEAVE(tbl->qlock);
+	Q_MUTEX_LEAVE(tbl->qmutex);
 	return true;
 }
 
@@ -567,7 +567,7 @@ static int _getMax(Q_HASHTBL *tbl) {
 bool _truncate(Q_HASHTBL *tbl) {
 	if(tbl == NULL) return false;
 
-	Q_LOCK_ENTER(tbl->qlock);
+	Q_MUTEX_ENTER(tbl->qmutex);
 	int idx;
 	for (idx = 0; idx < tbl->max && tbl->num > 0; idx++) {
 		if (tbl->count[idx] == 0) continue;
@@ -580,7 +580,7 @@ bool _truncate(Q_HASHTBL *tbl) {
 		DEBUG("qHashtblTruncate: BUG DETECTED");
 		tbl->num = 0;
 	}
-	Q_LOCK_LEAVE(tbl->qlock);
+	Q_MUTEX_LEAVE(tbl->qmutex);
 
 	return true;
 }
@@ -604,17 +604,17 @@ bool _truncate(Q_HASHTBL *tbl) {
 bool _resize(Q_HASHTBL *tbl, int max) {
 	if(max <= 0) return false;
 
-	Q_LOCK_ENTER(tbl->qlock);
+	Q_MUTEX_ENTER(tbl->qmutex);
 
 	if(max == tbl->max) { // don't need to resize, just set threshold
-		Q_LOCK_LEAVE(tbl->qlock);
+		Q_MUTEX_LEAVE(tbl->qmutex);
 		return true;
 	}
 
 	// create new table
 	Q_HASHTBL *newtbl = qHashtbl(max, false, 0);
 	if(newtbl == NULL) {
-		Q_LOCK_LEAVE(tbl->qlock);
+		Q_MUTEX_LEAVE(tbl->qmutex);
 		return false;
 	}
 
@@ -625,7 +625,7 @@ bool _resize(Q_HASHTBL *tbl, int max) {
 		if(_put(newtbl, tbl->obj[idx].name, tbl->obj[idx].data, tbl->obj[idx].size) == false) {
 			DEBUG("hashtbl: resize failed");
 			_free(newtbl);
-			Q_LOCK_LEAVE(tbl->qlock);
+			Q_MUTEX_LEAVE(tbl->qmutex);
 			return false;
 		}
 		num++;
@@ -634,7 +634,7 @@ bool _resize(Q_HASHTBL *tbl, int max) {
 	if(tbl->num != newtbl->num) {
 		DEBUG("hashtbl: BUG DETECTED");
 		_free(newtbl);
-		Q_LOCK_LEAVE(tbl->qlock);
+		Q_MUTEX_LEAVE(tbl->qmutex);
 		return false;
 	}
 
@@ -659,10 +659,10 @@ bool _resize(Q_HASHTBL *tbl, int max) {
 	tbl->hash = newtbl->hash;
 	tbl->obj = newtbl->obj;
 
-	Q_LOCK_DESTROY(newtbl->qlock);
+	Q_MUTEX_DESTROY(newtbl->qmutex);
 	free(newtbl);
 
-	Q_LOCK_LEAVE(tbl->qlock);
+	Q_MUTEX_LEAVE(tbl->qmutex);
 	return true;
 }
 
@@ -678,14 +678,14 @@ bool _resize(Q_HASHTBL *tbl, int max) {
 bool _print(Q_HASHTBL *tbl, FILE *out, bool print_data) {
 	if(tbl == NULL || out == NULL) return false;
 
-	Q_LOCK_ENTER(tbl->qlock);
+	Q_MUTEX_ENTER(tbl->qmutex);
 	int idx, num;
 	for (idx = 0, num = 0; idx < tbl->max && num < tbl->num; idx++) {
 		if (tbl->count[idx] == 0) continue;
 		fprintf(out, "%s=%s (idx=%d,hash=%d,size=%zu,count=%d)\n", tbl->obj[idx].name, (print_data)?(char*)tbl->obj[idx].data:"_binary_", idx, tbl->hash[idx], tbl->obj[idx].size, tbl->count[idx]);
 		num++;
 	}
-	Q_LOCK_LEAVE(tbl->qlock);
+	Q_MUTEX_LEAVE(tbl->qmutex);
 
 	return true;
 }
@@ -700,13 +700,13 @@ bool _print(Q_HASHTBL *tbl, FILE *out, bool print_data) {
 bool _free(Q_HASHTBL *tbl) {
 	if(tbl == NULL) return false;
 
-	Q_LOCK_ENTER(tbl->qlock);
+	Q_MUTEX_ENTER(tbl->qmutex);
 	_truncate(tbl);
 	if(tbl->count != NULL) free(tbl->count);
 	if(tbl->hash != NULL) free(tbl->hash);
 	if(tbl->obj != NULL) free(tbl->obj);
-	Q_LOCK_LEAVE(tbl->qlock);
-	Q_LOCK_DESTROY(tbl->qlock);
+	Q_MUTEX_LEAVE(tbl->qmutex);
+	Q_MUTEX_DESTROY(tbl->qmutex);
 
 	free(tbl);
 

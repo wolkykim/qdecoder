@@ -100,7 +100,7 @@ Q_LOG *qLog(const char *filepathfmt, int rotateinterval, bool flush) {
 	log->free	= _free;
 
 	// initialize recursive lock
-	Q_LOCK_INIT(log->qlock, true);
+	Q_MUTEX_INIT(log->qmutex, true);
 
 	return log;
 }
@@ -116,7 +116,7 @@ Q_LOG *qLog(const char *filepathfmt, int rotateinterval, bool flush) {
 static bool _write(Q_LOG *log, const char *str) {
 	if (log == NULL || log->fp == NULL) return false;
 
-	Q_LOCK_ENTER(log->qlock);
+	Q_MUTEX_ENTER(log->qmutex);
 
 	/* duplicate stream */
 	if (log->outfp != NULL) {
@@ -136,7 +136,7 @@ static bool _write(Q_LOG *log, const char *str) {
 		ret = true;
 	}
 
-	Q_LOCK_LEAVE(log->qlock);
+	Q_MUTEX_LEAVE(log->qmutex);
 
 	return ret;
 }
@@ -180,10 +180,10 @@ static bool _writef(Q_LOG *log, const char *format, ...) {
 static bool _duplicate(Q_LOG *log, FILE *outfp, bool flush) {
 	if (log == NULL) return false;
 
-	Q_LOCK_ENTER(log->qlock);
+	Q_MUTEX_ENTER(log->qmutex);
 	log->outfp = outfp;
 	log->outflush = flush;
-	Q_LOCK_LEAVE(log->qlock);
+	Q_MUTEX_LEAVE(log->qmutex);
 
 	return true;
 }
@@ -199,10 +199,10 @@ static bool _flush(Q_LOG *log) {
 	if (log == NULL) return false;
 
 	// only flush if flush flag is disabled
-	Q_LOCK_ENTER(log->qlock);
+	Q_MUTEX_ENTER(log->qmutex);
 	if (log->fp != NULL && log->logflush == false) fflush(log->fp);
 	if (log->outfp != NULL && log->outflush == false) fflush(log->outfp);
-	Q_LOCK_LEAVE(log->qlock);
+	Q_MUTEX_LEAVE(log->qmutex);
 
 	return false;
 }
@@ -218,13 +218,13 @@ static bool _free(Q_LOG *log) {
 	if (log == NULL) return false;
 
 	_flush(log);
-	Q_LOCK_ENTER(log->qlock);
+	Q_MUTEX_ENTER(log->qmutex);
 	if (log->fp != NULL) {
 		fclose(log->fp);
 		log->fp = NULL;
 	}
-	Q_LOCK_LEAVE(log->qlock);
-	Q_LOCK_DESTROY(log->qlock);
+	Q_MUTEX_LEAVE(log->qmutex);
+	Q_MUTEX_DESTROY(log->qmutex);
 	free(log);
 	return true;
 }

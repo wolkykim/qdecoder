@@ -24,14 +24,12 @@
 ## $Id$
 
 prefix		= @prefix@
-exec_prefix	= ${prefix}
 
 ## Compiler options
 CC	= @CC@
 CFLAGS	= @CFLAGS@
-DEFS	= @DEFS@ -D_GNU_SOURCE @OPT_DEFS@
-INCLUDE	= -I./ -I../src/ -I@includedir@
-LIB	= ../src/libqDecoder.a @OPT_LIBS@
+CPPFLAGS= @CPPFLAGS@
+LIBS	= ../src/libqDecoder.a @LIBS@
 
 TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi session.cgi config.cgi socket.cgi obstack.cgi \
 	hashtable.cgi
@@ -40,44 +38,44 @@ TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download
 all:	${TARGETS}
 
 query.cgi: query.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ query.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ query.o ${LIBS}
 
 cookie.cgi: cookie.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ cookie.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ cookie.o ${LIBS}
 
 multivalue.cgi:	multivalue.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ multivalue.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ multivalue.o ${LIBS}
 
 upload.cgi: upload.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ upload.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ upload.o ${LIBS}
 	chmod 6755 upload.cgi
 
 uploadfile.cgi: uploadfile.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ uploadfile.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ uploadfile.o ${LIBS}
 	chmod 6755 uploadfile.cgi
 	mkdir -p -m 755 upload tmp
 
 download.cgi: download.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ download.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ download.o ${LIBS}
 
 streamedit.cgi: streamedit.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ streamedit.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ streamedit.o ${LIBS}
 
 session.cgi: session.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ session.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ session.o ${LIBS}
 	chmod 6755 session.cgi
 
 config.cgi: config.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ config.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ config.o ${LIBS}
 
 socket.cgi: socket.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ socket.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ socket.o ${LIBS}
 
 obstack.cgi: obstack.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ obstack.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ obstack.o ${LIBS}
 
 hashtable.cgi: hashtable.o
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -o $@ hashtable.o ${LIB}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ hashtable.o ${LIBS}
 
 ## Clear Module
 clean:
@@ -86,4 +84,4 @@ clean:
 
 ## Compile Module
 .c.o:
-	${CC} ${CFLAGS} ${DEFS} ${INCLUDE} -c -o $@ $<
+	${CC} ${CFLAGS} ${CPPFLAGS} -c -o $@ $<

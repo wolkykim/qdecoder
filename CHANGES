@@ -6,6 +6,11 @@ qDecoder Changes
 ``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``New'', ``Replaced'' and ``Removed''.
 
+  Release 10.1.4
+    FIX) qCountRead(), qCountUpdate() - bug fix.
+    FIX) replace strerror() to thread-safe strerror_r().
+    FIX) AutoConf and Makefile adjustments.
+
   Release 10.1.2
     ADD) qBase64Encode(), qBase64Decode()
     ADD) qStrIsIpv4Addr()

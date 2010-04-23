@@ -63,7 +63,7 @@ do {										\
 } while(0)
 
 /*
- * Q_LOCK Macros
+ * Q_MUTEX Macros
  */
 #ifdef ENABLE_THREADSAFE
 
@@ -76,9 +76,9 @@ do {										\
 #include <pthread.h>
 #include <errno.h>
 
-#define Q_LOCK_INIT(x,r)								\
+#define Q_MUTEX_INIT(x,r)								\
 do {											\
-	memset((void*)&x, 0, sizeof(Q_LOCK_T));						\
+	memset((void*)&x, 0, sizeof(Q_MUTEX_T));					\
 	pthread_mutexattr_t _mutexattr;							\
 	pthread_mutexattr_init(&_mutexattr);						\
 	if(r == true) {									\
@@ -89,60 +89,60 @@ do {											\
 	if(_ret != 0) {									\
 		char _errmsg[64];							\
 		strerror_r(_ret, _errmsg, sizeof(_errmsg));				\
-		DEBUG("Q_LOCK: can't initialize mutex. [%d:%s]", _ret, _errmsg);	\
+		DEBUG("Q_MUTEX: can't initialize mutex. [%d:%s]", _ret, _errmsg);	\
 		exit(EXIT_FAILURE);							\
 	}										\
-	DEBUG("Q_LOCK: initialized.");							\
+	DEBUG("Q_MUTEX: initialized.");							\
 } while(0)
 //pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);
 
-#define	Q_LOCK_LEAVE(x)									\
+#define	Q_MUTEX_LEAVE(x)								\
 do {											\
-	if(!pthread_equal(x.owner, pthread_self())) DEBUG("Q_LOCK: unlock - owner mismatch.");	\
+	if(!pthread_equal(x.owner, pthread_self())) DEBUG("Q_MUTEX: unlock - owner mismatch.");	\
 	x.count--;									\
 	pthread_mutex_unlock(&x.mutex);							\
 } while(0)
-//	DEBUG("Q_LOCK: unlock, cnt=%d", x.count);
+//	DEBUG("Q_MUTEX: unlock, cnt=%d", x.count);
 
 #define MAX_MUTEX_LOCK_WAIT	(5000)
-#define	Q_LOCK_ENTER(x)									\
+#define	Q_MUTEX_ENTER(x)								\
 do {											\
 	while(true) {									\
 		int _ret, i;								\
  		for(i = 0; (_ret = pthread_mutex_trylock(&x.mutex)) != 0 && i < MAX_MUTEX_LOCK_WAIT; i++) {	\
-			if(i == 0) DEBUG("Q_LOCK: mutex is already locked - try again");	\
+			if(i == 0) DEBUG("Q_MUTEX: mutex is already locked - try again");	\
 			usleep(1);							\
 		}									\
 		if(_ret == 0) break;							\
 		char _errmsg[64];							\
 		strerror_r(_ret, _errmsg, sizeof(_errmsg));				\
-		DEBUG("Q_LOCK: can't get lock - force to unlock. [%d:%s]", _ret, _errmsg);	\
-		Q_LOCK_LEAVE(x);							\
+		DEBUG("Q_MUTEX: can't get lock - force to unlock. [%d:%s]", _ret, _errmsg);	\
+		Q_MUTEX_LEAVE(x);							\
 	}										\
 	x.count++;									\
 	x.owner = pthread_self();							\
 } while(0)
-//	DEBUG("Q_LOCK: locked, cnt=%d", x.count);
+//	DEBUG("Q_MUTEX: locked, cnt=%d", x.count);
 
-#define Q_LOCK_DESTROY(x)								\
+#define Q_MUTEX_DESTROY(x)								\
 do {											\
-	if(x.count != 0) DEBUG("Q_LOCK: mutex counter is not 0.");			\
+	if(x.count != 0) DEBUG("Q_MUTEX: mutex counter is not 0.");			\
 	int _ret;									\
 	while((_ret = pthread_mutex_destroy(&x.mutex)) != 0) {				\
 		char _errmsg[64];							\
 		strerror_r(_ret, _errmsg, sizeof(_errmsg));				\
-		DEBUG("Q_LOCK: force to unlock mutex. [%d:%s]", _ret, _errmsg);		\
-		Q_LOCK_LEAVE(x);							\
+		DEBUG("Q_MUTEX: force to unlock mutex. [%d:%s]", _ret, _errmsg);	\
+		Q_MUTEX_LEAVE(x);							\
 	}										\
-	DEBUG("Q_LOCK: destroyed.");							\
+	DEBUG("Q_MUTEX: destroyed.");							\
 } while(0)
 
 #else
 
-#define	Q_LOCK_INIT(x,y)
-#define	Q_LOCK_LEAVE(x)
-#define	Q_LOCK_ENTER(x)
-#define	Q_LOCK_DESTROY(x)
+#define	Q_MUTEX_INIT(x,y)
+#define	Q_MUTEX_LEAVE(x)
+#define	Q_MUTEX_ENTER(x)
+#define	Q_MUTEX_DESTROY(x)
 
 #endif	/* ENABLE_THREADSAFE */
 
