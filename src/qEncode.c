@@ -92,7 +92,7 @@ Q_ENTRY *qParseQueries(Q_ENTRY *entry, const char *query, char equalchar, char s
  * @return	a malloced string pointer of URL encoded string in case of successful, otherwise returns NULL
  *
  * @code
- *   const char *text = strdup("hello 'qDecoder' world");
+ *   const char *text = "hello 'qDecoder' world";
  *
  *   char *encstr = qUrlEncode(text, strlen(text));
  *   if(encstr == NULL) return -1;
@@ -202,7 +202,7 @@ size_t qUrlDecode(char *str) {
  * @return	a malloced string pointer of BASE64 encoded string in case of successful, otherwise returns NULL
  *
  * @code
- *   const char *text = strdup("hello 'qDecoder' world");
+ *   const char *text = "hello 'qDecoder' world";
  *
  *   char *encstr = qBase64Encode(text, strlen(text));
  *   if(encstr == NULL) return -1;
@@ -217,7 +217,7 @@ size_t qUrlDecode(char *str) {
  *
  *   --[output]--
  *   Original: hello 'qDecoder' world
- *   Encoded:  hello%20%27qDecoder%27%20world
+ *   Encoded:  aGVsbG8gJ3FEZWNvZGVyJyB3b3JsZA==
  *   Decoded:  hello 'qDecoder' world (22 bytes)
  * @endcode
  */
