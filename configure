@@ -3840,7 +3840,7 @@ echo "$as_me: 'debug' feature is enabled" >&6;}
 if test "$enableval" = yes; then
 	CFLAGS="$CFLAGS -g -O2"
 else
-	CFLAGS="$CFLAGS -O2"
+	CFLAGS="$CFLAGS -g -O2"
 fi
 
 

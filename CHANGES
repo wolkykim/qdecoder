@@ -6,6 +6,10 @@ qDecoder Changes
 ``FIX'', ``NEW'', ``REP'' and ``REM'' are stand on ``Fixed or Modified'',
 ``New'', ``Replaced'' and ``Removed''.
 
+  Release 10.1.6
+    ADD) qHexEncode(), qHexDecode()
+    FIX) qHashMd5Str(), qHashMd5File - fix to use qHexEncode()
+
   Release 10.1.4
     FIX) qCountRead(), qCountUpdate() - bug fix.
     FIX) replace strerror() to thread-safe strerror_r().

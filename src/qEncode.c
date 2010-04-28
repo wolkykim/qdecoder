@@ -361,12 +361,12 @@ char *qHexEncode(const void *bin, size_t size) {
 	char *pHexStr = (char*)malloc(sizeof(char) * ((size * 2) + 1));
 	if (pHexStr == NULL) return NULL;
 
-	char *pSrc = (char*)bin;
+	unsigned char *pSrc = (unsigned char*)bin;
 	char *pHexPt = pHexStr;
 	int i;
 	for (i = 0; i < size; i++) {
-		*pHexPt++ = HEXCHARTBL[((char)pSrc[i] >> 4)];
-		*pHexPt++ = HEXCHARTBL[((char)pSrc[i] & 0x0F)];
+		*pHexPt++ = HEXCHARTBL[(pSrc[i] >> 4)];
+		*pHexPt++ = HEXCHARTBL[(pSrc[i] & 0x0F)];
 	}
 	*pHexPt = '\0';
 

@@ -120,7 +120,7 @@ Q_ARG_ENABLE([debug], [enable debugging output], [-DBUILD_DEBUG])
 if test "$enableval" = yes; then
 	CFLAGS="$CFLAGS -g -O2"
 else
-	CFLAGS="$CFLAGS -O2"
+	CFLAGS="$CFLAGS -g -O2"
 fi
 
 Q_ARG_ENABLE([threadsafe], [enable thread-safe feature], [-DENABLE_THREADSAFE])
