@@ -577,6 +577,8 @@ extern	char*		qUrlEncode(const void *bin, size_t size);
 extern	size_t		qUrlDecode(char *str);
 extern	char*		qBase64Encode(const void *bin, size_t size);
 extern	size_t		qBase64Decode(char *str);
+extern	char*		qHexEncode(const void *bin, size_t size);
+extern	size_t		qHexDecode(char *str);
 
 /*
  * qHash.c

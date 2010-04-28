@@ -160,7 +160,7 @@ char *qUrlEncode(const void *bin, size_t size) {
  *
  * @param str	a pointer of URL encoded string.
  *
- * @return	the length of bytes stored in str in case of successful, otherwise returns NULL
+ * @return	the length of bytes stored in the str memory in case of successful, otherwise returns NULL
  *
  * @note
  * This modify str directly. And the 'str' is always terminated by NULL character.
@@ -263,9 +263,9 @@ char *qBase64Encode(const void *bin, size_t size) {
 /**
  * Decode BASE64 encoded string.
  *
- * @param str	a pointer of URL encoded string.
+ * @param str	a pointer of Base64 encoded string.
  *
- * @return	the length of bytes stored in str in case of successful, otherwise returns NULL
+ * @return	the length of bytes stored in the str memory in case of successful, otherwise returns NULL
  *
  * @note
  * This modify str directly. And the 'str' is always terminated by NULL character.
@@ -317,6 +317,95 @@ size_t qBase64Decode(char *str) {
 		}
 
 		cLastByte = cByte;
+	}
+	*pBinPt = '\0';
+
+	return (pBinPt - str);
+}
+
+/**
+ * Encode data to Hexadecimal digit format.
+ *
+ * @param bin	a pointer of input data.
+ * @param size	the length of input data.
+ *
+ * @return	a malloced string pointer of Hexadecimal encoded string in case of successful, otherwise returns NULL
+ *
+ * @code
+ *   const char *text = "hello 'qDecoder' world";
+ *
+ *   char *encstr = qHexEncode(text, strlen(text));
+ *   if(encstr == NULL) return -1;
+ *
+ *   printf("Original: %s\n", text);
+ *   printf("Encoded : %s\n", encstr);
+ *
+ *   size_t decsize = qHexDecode(encstr);
+ *
+ *   printf("Decoded : %s (%zu bytes)\n", encstr, decsize);
+ *   free(encstr);
+ *
+ *   return 0;
+ *
+ *   --[output]--
+ *   Original: hello 'qDecoder' world
+ *   Encoded : 68656c6c6f2027714465636f6465722720776f726c64
+ *   Decoded : hello 'qDecoder' world (22 bytes)
+ * @endcode
+ */
+char *qHexEncode(const void *bin, size_t size) {
+	const char HEXCHARTBL[16] = {
+		'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'
+	};
+
+	char *pHexStr = (char*)malloc(sizeof(char) * ((size * 2) + 1));
+	if (pHexStr == NULL) return NULL;
+
+	char *pSrc = (char*)bin;
+	char *pHexPt = pHexStr;
+	int i;
+	for (i = 0; i < size; i++) {
+		*pHexPt++ = HEXCHARTBL[((char)pSrc[i] >> 4)];
+		*pHexPt++ = HEXCHARTBL[((char)pSrc[i] & 0x0F)];
+	}
+	*pHexPt = '\0';
+
+	return pHexStr;
+}
+
+/**
+ * Decode Hexadecimal encoded data.
+ *
+ * @param str	a pointer of Hexadecimal encoded string.
+ *
+ * @return	the length of bytes stored in the str memory in case of successful, otherwise returns NULL
+ *
+ * @note
+ * This modify str directly. And the 'str' is always terminated by NULL character.
+ */
+size_t qHexDecode(char *str) {
+	const char HEXMAPTBL[256] = {
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 00-0F */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 10-1F */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 20-2F */
+		 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, /* 30-3F */
+		 0,10,11,12,13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 40-4F */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 50-5F */
+		 0,10,11,12,13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 60-6f */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 70-7F */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 80-8F */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 90-9F */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* A0-AF */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* B0-BF */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* C0-CF */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* D0-DF */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* E0-EF */
+		 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0   /* F0-FF */
+	};
+
+	char *pEncPt, *pBinPt = str;
+	for(pEncPt = str; *pEncPt != '\0'; pEncPt += 2) {
+		*pBinPt++ = (HEXMAPTBL[(int)(*pEncPt)] << 4) + HEXMAPTBL[(int)(*(pEncPt+1))];
 	}
 	*pBinPt = '\0';
 

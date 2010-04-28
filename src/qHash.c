@@ -42,12 +42,12 @@
 #include "qInternal.h"
 
 /**
- * Get MD5 digested HEX string
+ * Get MD5 hash.
  *
  * @param data		source object
  * @param nbytes	size of data
  *
- * @return		malloced 16+1 bytes digested HEX string which is terminated by NULL character
+ * @return		128-bit(16-byte) long malloced digest binary data
  *
  * @code
  *   unsigned char *md5 = qHashMd5((void*)"hello", 5);
@@ -57,25 +57,25 @@
 unsigned char *qHashMd5(const void *data, size_t nbytes) {
 	if(data == NULL) return NULL;
 
-	unsigned char *digest = (unsigned char*)malloc(sizeof(char) * (16 + 1));
+	unsigned char *digest = (unsigned char*)malloc(sizeof(char) * 16);
 	if (digest == NULL) return NULL;
 
 	MD5_CTX context;
 	MD5Init(&context);
 	MD5Update(&context, (unsigned char*)data, (unsigned int)nbytes);
 	MD5Final(digest, &context);
-	digest[16] = '\0';
 
 	return digest;
 }
 
 /**
- * Get MD5 digested ASCII string
+ * Get MD5 hash string of a object data represented as a sequence of 32 hexadecimal digits.
  *
  * @param data		source object
  * @param nbytes	size of data
  *
- * @return		malloced 32+1 bytes digested ASCII string which is terminated by NULL character
+ * @return		32 bytes(128 bits) long malloced digest binary data
+ malloced 32+1 bytes digested ASCII string which is terminated by NULL character
  *
  * @code
  *   char *md5str = qHashMd5Str((void*)"hello", 5);
@@ -89,20 +89,15 @@ char *qHashMd5Str(const void *data, size_t nbytes) {
 	unsigned char *digest = qHashMd5(data, nbytes);
 	if (digest == NULL) return NULL;
 
-	char *md5hex = (char*)malloc(sizeof(char) * (16 * 2 + 1));
-	if (md5hex == NULL) return NULL;
-
-	int i;
-	for (i = 0; i < 16; i++) {
-		sprintf(md5hex + (i * 2), "%02x", digest[i]);
-	}
+	// hexadecimal encoding
+	char *md5hex = qHexEncode(digest, 16);
 	free(digest);
 
 	return md5hex;
 }
 
 /**
- * Get MD5 digested ASCII string
+ * Get MD5 hash string of a file contents represented as a sequence of 32 hexadecimal digits.
  *
  * @param filepath	file path
  * @param nbytes	size of data. Set to NULL to digest end of file
@@ -162,14 +157,8 @@ char *qHashMd5File(const char *filepath, size_t *nbytes) {
 
 	if(nbytes != NULL) *nbytes -= size;
 
-	char *md5hex = (char*)malloc(sizeof(char) * (16 * 2 + 1));
-	if (md5hex == NULL) return NULL;
-
-	int i;
-	for (i = 0; i < 16; i++) {
-		sprintf(md5hex + (i * 2), "%02x", szDigest[i]);
-	}
-
+	// hexadecimal encoding
+	char *md5hex = qHexEncode(szDigest, 16);
 	return md5hex;
 }
 
