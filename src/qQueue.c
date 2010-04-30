@@ -36,7 +36,7 @@
  *   };
  *
  *   int main(void) {
- *     Q_QUEUE *queue = qQueue(100, sizeof(struct myobj));
+ *     Q_QUEUE *queue = qQueue(10, sizeof(struct myobj));
  *
  *     // push object
  *     int i;
@@ -55,12 +55,15 @@
  *
  *     // pop object from head & tail
  *     while(true) {
- *       struct myobj pop;
- *       if(queue->popFirst(queue, &pop) == false) break;
- *       printf("PopFirst : %d, %s\n", pop.integer, pop.string);
+ *       struct myobj *pop;
  *
- *       if(queue->popLast(queue, &pop) == false) break;
- *       printf("PopLast  : %d, %s\n", pop.integer, pop.string);
+ *       if((pop = queue->popFirst(queue, true)) == NULL) break;
+ *       printf("PopFirst : %d, %s\n", pop->integer, pop->string);
+ *       free(pop);
+ *
+ *       if((pop = queue->popLast(queue, true)) == NULL) break;
+ *       printf("PopLast  : %d, %s\n", pop->integer, pop->string);
+ *       free(pop);
  *     }
  *     return 0;
  *   }
@@ -317,7 +320,7 @@ static void *_popLast(Q_QUEUE *queue, bool remove) {
 
 	// pop object
 	int tail = (queue->tail > 0) ? (queue->tail - 1) : (queue->max - 1);
-	void *dp = queue->objarr + (queue->objsize * queue->tail);
+	void *dp = queue->objarr + (queue->objsize * tail);
 	memcpy(object, dp, queue->objsize);
 
 	// adjust pointer
