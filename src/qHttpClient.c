@@ -51,7 +51,8 @@ static void _setTimeout(Q_HTTPCLIENT *client, int timeoutms);
 static void _setKeepalive(Q_HTTPCLIENT *client, bool keepalive);
 static void _setUseragent(Q_HTTPCLIENT *client, const char *agentname);
 static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_ENTRY *reqheaders);
-static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders);
+static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders, off_t *contentlength);
+static off_t _readContent(Q_HTTPCLIENT *client, void *buf, off_t length);
 static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize, int *rescode,
 		Q_ENTRY *reqheaders, Q_ENTRY *resheaders,
 		bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
@@ -157,6 +158,7 @@ Q_HTTPCLIENT *qHttpClient(const char *hostname, int port) {
 	client->open		= _open;
 	client->sendRequest	= _sendRequest;
 	client->readResponse	= _readResponse;
+	client->readContent	= _readContent;
 	client->get		= _get;
 	client->put		= _put;
 	client->cmd		= _cmd;
@@ -357,6 +359,7 @@ static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
  *
  * @param client	Q_HTTPCLIENT object pointer
  * @param resheaders	Q_ENTRY pointer for storing response headers. (can be NULL)
+ * @param contentlength	length of content body will be stored. (can be NULL)
  *
  * @return	numeric HTTP response code if successful, otherwise returns 0.
  *
@@ -368,8 +371,16 @@ static bool _sendRequest(Q_HTTPCLIENT *client, const char *method, const char *u
  *   Q_ENTRY *resheaders = qEntry();
  *   int rescode = httpClient->readResponse(client, resheaders);
  * @endcode
+ *
+ * @note
+ * Data of content body must be read by a application side, if you want to use Keep-Alive session.
+ * Please refer Q_HTTPCLIENT->readContent().
  */
-static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders) {
+static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders, off_t *contentlength) {
+	if(contentlength != NULL) {
+		*contentlength = 0;
+	}
+
 	// read response
 	char buf[1024];
 	if(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) <= 0) return HTTP_NO_RESPONSE;
@@ -384,7 +395,7 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders) {
 	// read headers
 	while(qIoGets(buf, sizeof(buf), client->socket, client->timeoutms) > 0) {
 		if(buf[0] == '\0') break;
-		if(resheaders != NULL) {
+		if(resheaders != NULL || contentlength != NULL) {
 			// parse header
 			char *value = strstr(buf, ":");
 			if(value != NULL) {
@@ -395,11 +406,63 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders) {
 				// missing colon
 				value = "";
 			}
-			resheaders->putStr(resheaders, buf, value, true);
+
+			if(resheaders != NULL) {
+				resheaders->putStr(resheaders, buf, value, true);
+			}
+
+			if(contentlength != NULL) {
+				if(!strcasecmp(buf, "Content-Length")) {
+					*contentlength = atoll(value);
+				}
+			}
 		}
 	}
 
 	return rescode;
+}
+
+/**
+ * Q_HTTPCLIENT->readContent(): Read content data.
+ *
+ * @param client	Q_HTTPCLIENT object pointer.
+ * @param buf		a buffer pointer for storing content. (can be NULL, then read & throw out content)
+ * @param length	content size to read.
+ *
+ * @return	number of bytes readed
+ *
+ * @code
+ *   off_t clength = 0;
+ *   int resno = client->readResponse(client, NULL, &clength);
+ *   if(clength > 0) {
+ *     // throw out content
+ *     client->readContent(client, NULL, clength);
+ *   }
+ * @endcode
+ */
+static off_t _readContent(Q_HTTPCLIENT *client, void *buf, off_t length) {
+	off_t rsize = 0; // total read
+
+	if(length > 0) {
+		if(buf != NULL) {
+			rsize = qIoRead(buf, client->socket, length, client->timeoutms);
+		} else {
+			unsigned char thrash[1024 * 4];
+			while(rsize < length) {
+				size_t chunksize; // this time reading size
+				if(length - rsize <= sizeof(thrash)) chunksize = length - rsize;
+				else chunksize = sizeof(thrash);
+
+				// read
+				ssize_t rchunk = qIoRead(thrash, client->socket, chunksize, client->timeoutms);
+				if (rchunk <= 0) break;
+
+				rsize += rchunk;
+			}
+		}
+	}
+
+	return rsize;
 }
 
 /**
@@ -499,28 +562,14 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 	if(freeReqHeaders == true) reqheaders->free(reqheaders);
 	if(sendRet == false) return false;
 
-	// generate response headers if necessary
-	bool freeResHeaders = false;
-	if(resheaders == NULL) {
-		resheaders = qEntry();
-		freeResHeaders = true;
-	}
-
 	// read response
-	int resno = _readResponse(client, resheaders);
+	off_t clength = 0;
+	int resno = _readResponse(client, resheaders, &clength);
 	if(rescode != NULL) *rescode = resno;
-
-	// parse contents-length
-	const char *clen_header = resheaders->getStrCase(resheaders, "Content-Length", false);
-	off_t length = 0;
-	if(clen_header != NULL) length = atoll(clen_header);
-
-	if(freeResHeaders == true) resheaders->free(resheaders);
 
 	// check response code
 	if(resno != HTTP_CODE_OK) {
 		_close(client);
-		if(freeResHeaders == true) resheaders->free(resheaders);
 		return false;
 	}
 
@@ -532,10 +581,10 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 			return false;
 		}
 	}
-	if(length > 0) {
-		while(recv < length) {
+	if(clength > 0) {
+		while(recv < clength) {
 			size_t recvsize;	// this time receive size
-			if(length - recv < MAX_ATOMIC_DATA_SIZE) recvsize = length - recv;
+			if(clength - recv < MAX_ATOMIC_DATA_SIZE) recvsize = clength - recv;
 			else recvsize = MAX_ATOMIC_DATA_SIZE;
 
 			ssize_t ret = qIoSend(fd, client->socket, recvsize, client->timeoutms);
@@ -551,7 +600,7 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 			}
 		}
 
-		if(recv != length) {
+		if(recv != clength) {
 			_close(client);
 			return false;
 		}
@@ -667,7 +716,10 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 
 	// send request
 	bool sendRet =_sendRequest(client, "PUT", uri, reqheaders);
-	if(freeReqHeaders == true) reqheaders->free(reqheaders);
+	if(freeReqHeaders == true) {
+		reqheaders->free(reqheaders);
+		reqheaders = NULL;
+	}
 	if(sendRet == false) return false;
 
 	// wait 100-continue
@@ -678,10 +730,17 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 	}
 
 	// read response
-	int resno = _readResponse(client, resheaders);
+	off_t clength = 0;
+	int resno = _readResponse(client, resheaders, &clength);
 	if(resno != HTTP_CODE_CONTINUE) {
 		if(rescode != NULL) *rescode = resno;
-		_close(client);
+
+		if(clength > 0) {
+			if(_readContent(client, NULL, clength) != clength) {
+				_close(client);
+			}
+		}
+
 		return false;
 	}
 
@@ -725,7 +784,8 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 	}
 
 	// read response
-	resno = _readResponse(client, resheaders);
+	clength = 0;
+	resno = _readResponse(client, resheaders, &clength);
 	if(rescode != NULL) *rescode = resno;
 
 	if(resno == HTTP_NO_RESPONSE) {
@@ -733,9 +793,10 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 		return false;
 	}
 
-	if(resno != HTTP_CODE_CREATED) {
-		_close(client);
-		return false;
+	if(clength > 0) {
+		if(_readContent(client, NULL, clength) != clength) {
+			_close(client);
+		}
 	}
 
 	// close connection
@@ -743,7 +804,8 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 		_close(client);
 	}
 
-	return true;
+	if(resno == HTTP_CODE_CREATED) return true;
+	return false;
 }
 
 /**
@@ -757,7 +819,7 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
  * @param reqheaders	Q_ENTRY pointer which contains additional user request headers. (can be NULL)
  * @param resheaders	Q_ENTRY pointer for storing response headers. (can be NULL)
  *
- * @return	malloced contents data if successful, otherwise returns NULL
+ * @return	malloced content data if successful, otherwise returns NULL
  *
  * @code
  *   int nResCode;
@@ -774,6 +836,10 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
  *     free(contents);  // de-allocate
  *   }
  * @endcode
+ *
+ * @note
+ * The returning malloced content will be allocated +1 byte than actual content size
+ * for storing a null termination character for convinience uses in both binary and string content.
  */
 static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
 		int *rescode, size_t *contentslength,
@@ -788,30 +854,20 @@ static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
 		return NULL;
 	}
 
-	// read response
-	bool freeResHeaders = false;
-	if(resheaders == NULL) {
-		resheaders = qEntry();
-		freeResHeaders = true;
-	}
-
-	int resno = _readResponse(client, resheaders);
+	off_t clength = 0;
+	int resno = _readResponse(client, resheaders, &clength);
 	if(rescode != NULL) *rescode = resno;
 
-	// parse contents-length
-	size_t length = resheaders->getInt(resheaders, "Content-Length");
-	if(freeResHeaders == true) resheaders->free(resheaders);
-
 	// malloc data
-	void *contents = NULL;
-	if(length > 0) {
-		contents = malloc(length + 1);
-		if(contents != NULL) {
-			if(qIoRead(contents, client->socket, length, client->timeoutms) != length) {
-				free(contents);
-				contents = NULL;
+	void *content = NULL;
+	if(clength > 0) {
+		content = malloc(clength + 1);
+		if(content != NULL) {
+			if(_readContent(client, content, clength) != clength) {
+				free(content);
+				content = NULL;
 			} else {
-				*(char*)(contents + length) = '\0';
+				*(char*)(content + clength) = '\0';
 			}
 		}
 	}
@@ -821,13 +877,14 @@ static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
 		_close(client);
 	}
 
-	if(contents == NULL) {
-		contents = strdup("");
-		length = strlen(contents);
+	if(content == NULL) {
+		content = strdup("");
+		clength = strlen(content);
 	}
-	if(contentslength != NULL) *contentslength = length;
 
-	return contents;
+	if(contentslength != NULL) *contentslength = clength;
+
+	return content;
 }
 
 /**
