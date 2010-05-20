@@ -148,7 +148,7 @@ char *qTimeGetGmtStrf(char *buf, int size, time_t utctime, const char *format) {
  * @endcode
  */
 char *qTimeGetGmtStr(time_t utctime) {
-	int size = sizeof(char) * (CONST_STRLEN("Mon, 00-Jan-0000 00:00:00 GMT") + 1);
+	int size = sizeof(char) * (CONST_STRLEN("Mon, 00 Jan 0000 00:00:00 GMT") + 1);
 	char *timestr = (char*)malloc(size);
 	qTimeGetGmtStrf(timestr, size, utctime, "%a, %d %b %Y %H:%M:%S GMT");
 	return timestr;

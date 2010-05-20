@@ -150,7 +150,7 @@ ssize_t qIoWrite(int fd, const void *buf, size_t nbytes, int timeoutms) {
 off_t qIoSend(int outfd, int infd, off_t nbytes, int timeoutms) {
 	if(nbytes == 0) return 0;
 
-	char buf[MAX_IOSEND_SIZE];
+	unsigned char buf[MAX_IOSEND_SIZE];
 
 	off_t total = 0; // total size sent
 	while(total < nbytes) {
