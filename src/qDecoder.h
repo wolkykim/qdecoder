@@ -377,6 +377,8 @@ struct _Q_HTTPCLIENT {
 	bool		keepalive;		/*< keep-alive flag */
 	char*		useragent;		/*< user-agent name */
 
+	bool		connclose;		/*< response keep-alive flag for a last request */
+
 	/* public member methods */
 	void		(*setTimeout)		(Q_HTTPCLIENT *client, int timeoutms);
 	void		(*setKeepalive)		(Q_HTTPCLIENT *client, bool keepalive);

@@ -411,8 +411,15 @@ static int _readResponse(Q_HTTPCLIENT *client, Q_ENTRY *resheaders, off_t *conte
 				resheaders->putStr(resheaders, buf, value, true);
 			}
 
-			if(contentlength != NULL) {
-				if(!strcasecmp(buf, "Content-Length")) {
+			// check keep-alive header
+			if(!strcasecmp(buf, "Connection")) {
+				if(!strcasecmp(value, "close")) {
+					client->connclose = true;
+				}
+			}
+			// check content-length header
+			else if(!strcasecmp(buf, "Content-Length")) {
+				if(contentlength != NULL) {
 					*contentlength = atoll(value);
 				}
 			}
@@ -560,7 +567,10 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 	// send request
 	bool sendRet = _sendRequest(client, "GET", uri, reqheaders);
 	if(freeReqHeaders == true) reqheaders->free(reqheaders);
-	if(sendRet == false) return false;
+	if(sendRet == false) {
+		_close(client);
+		return false;
+	}
 
 	// read response
 	off_t clength = 0;
@@ -614,7 +624,7 @@ static bool _get(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize,
 	}
 
 	// close connection
-	if(client->keepalive == false) {
+	if(client->keepalive == false || client->connclose == true) {
 		_close(client);
 	}
 
@@ -720,7 +730,10 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 		reqheaders->free(reqheaders);
 		reqheaders = NULL;
 	}
-	if(sendRet == false) return false;
+	if(sendRet == false) {
+		_close(client);
+		return false;
+	}
 
 	// wait 100-continue
 	if(qIoWaitReadable(client->socket, client->timeoutms) <= 0) {
@@ -741,6 +754,10 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 			}
 		}
 
+		// close connection if required
+		if(client->keepalive == false || client->connclose == true) {
+			_close(client);
+		}
 		return false;
 	}
 
@@ -800,7 +817,7 @@ static bool _put(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, in
 	}
 
 	// close connection
-	if(client->keepalive == false) {
+	if(client->keepalive == false || client->connclose == true) {
 		_close(client);
 	}
 
@@ -851,6 +868,7 @@ static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
 
 	// send request
 	if(_sendRequest(client, method, uri, reqheaders) == false) {
+		_close(client);
 		return NULL;
 	}
 
@@ -873,7 +891,7 @@ static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
 	}
 
 	// close connection
-	if(client->keepalive == false) {
+	if(client->keepalive == false || client->connclose == true) {
 		_close(client);
 	}
 
@@ -900,14 +918,16 @@ static void *_cmd(Q_HTTPCLIENT *client, const char *method, const char *uri,
  */
 static bool _close(Q_HTTPCLIENT *client) {
 	if(client->socket < 0) return false;
+	int socket = client->socket;
+	client->socket = -1;
+	client->connclose = false;
 
 	// shutdown connection
-	if(MAX_SHUTDOWN_WAIT >= 0 && shutdown(client->socket, SHUT_WR) == 0) {
+	if(MAX_SHUTDOWN_WAIT >= 0 && shutdown(socket, SHUT_WR) == 0) {
 		char buf[1024];
-		while(qIoRead(buf, client->socket, sizeof(buf), MAX_SHUTDOWN_WAIT) > 0);
+		while(qIoRead(buf, socket, sizeof(buf), MAX_SHUTDOWN_WAIT) > 0);
 	}
-	close(client->socket);
-	client->socket = -1;
+	close(socket);
 
 	return true;
 }
