@@ -104,7 +104,13 @@ ssize_t qIoRead(void *buf, int fd, size_t nbytes, int timeoutms) {
 	while(total < nbytes) {
 		if(qIoWaitReadable(fd, timeoutms) <= 0) break;
 		ssize_t rsize = read(fd, buf + total, nbytes - total);
-		if(rsize <= 0) break;
+		if(rsize == 0) {
+			// possible with non-block socket
+			usleep(1);
+			continue;
+		} else if(rsize < 0) {
+			break;
+		}
 		total += rsize;
 	}
 
@@ -129,7 +135,13 @@ ssize_t qIoWrite(int fd, const void *buf, size_t nbytes, int timeoutms) {
 	while(total < nbytes) {
 		if(qIoWaitWritable(fd, timeoutms) <= 0) break;
 		ssize_t wsize = write(fd, buf + total, nbytes - total);
-		if(wsize <= 0) break;
+		if(wsize == 0) {
+			// possible with non-block socket
+			usleep(1);
+			continue;
+		} else if(wsize < 0){
+			 break;
+		}
 		total += wsize;
 	}
 
@@ -201,7 +213,14 @@ ssize_t qIoGets(char *buf, size_t bufsize, int fd, int timeoutms) {
 	char *ptr;
 	for (ptr = buf; readcnt < (bufsize - 1); ptr++) {
 		if(qIoWaitReadable(fd, timeoutms) <= 0) break;
-		if (read(fd, ptr, 1) != 1) break;
+		ssize_t rsize = read(fd, ptr, 1);
+		if(rsize == 0) {
+			// possible with non-block socket
+			usleep(1);
+			continue;
+		} else if(rsize != 1) {
+			break;
+		}
 
 		readcnt++;
 		if (*ptr == '\r') ptr--;
@@ -210,7 +229,7 @@ ssize_t qIoGets(char *buf, size_t bufsize, int fd, int timeoutms) {
 
 	*ptr = '\0';
 
-	if(readcnt >0) return readcnt;
+	if(readcnt > 0) return readcnt;
 	return -1;
 }
 
