@@ -385,13 +385,16 @@ struct _Q_HTTPCLIENT {
 	void		(*setUseragent)		(Q_HTTPCLIENT *client, const char *useragent);
 
 	bool		(*open)			(Q_HTTPCLIENT *client);
+
+	bool		(*head)			(Q_HTTPCLIENT *client, const char *uri, int *rescode, Q_ENTRY *reqheaders, Q_ENTRY *resheaders);
+	bool		(*get)			(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize, int *rescode, Q_ENTRY *reqheaders, Q_ENTRY *resheaders, bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
+	bool		(*put)			(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, int *retcode, Q_ENTRY *userheaders, Q_ENTRY *resheaders, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
+	void*		(*cmd)			(Q_HTTPCLIENT *client, const char *method, const char *uri, int *rescode, size_t *contentslength, Q_ENTRY *reqheaders, Q_ENTRY *resheaders);
+
 	bool		(*sendRequest)		(Q_HTTPCLIENT *client, const char *method, const char *uri, Q_ENTRY *reqheaders);
 	int		(*readResponse)		(Q_HTTPCLIENT *client, Q_ENTRY *resheaders, off_t *contentlength);
 	off_t		(*readContent)		(Q_HTTPCLIENT *client, void *buf, off_t length);
 
-	bool		(*get)			(Q_HTTPCLIENT *client, const char *uri, int fd, off_t *savesize, int *rescode, Q_ENTRY *reqheaders, Q_ENTRY *resheaders, bool (*callback)(void *userdata, off_t recvbytes), void *userdata);
-	bool		(*put)			(Q_HTTPCLIENT *client, const char *uri, int fd, off_t length, int *retcode, Q_ENTRY *userheaders, Q_ENTRY *resheaders, bool (*callback)(void *userdata, off_t sentbytes), void *userdata);
-	void*		(*cmd)			(Q_HTTPCLIENT *client, const char *method, const char *uri, int *rescode, size_t *contentslength, Q_ENTRY *reqheaders, Q_ENTRY *resheaders);
 	bool		(*close)		(Q_HTTPCLIENT *client);
 	void		(*free)			(Q_HTTPCLIENT *client);
 };
