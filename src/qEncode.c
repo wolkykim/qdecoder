@@ -145,9 +145,12 @@ char *qUrlEncode(const void *bin, size_t size) {
 		if(URLCHARTBL[(int)(*pBinPt)] != 0) {
 			*pszEncPt++ = *pBinPt;
 		} else {
+			char cUpper4 = (*pBinPt >> 4);
+			char cLower4 = (*pBinPt & 0x0F);
+
 			*pszEncPt++ = '%';
-			*pszEncPt++ = ((*pBinPt >> 4)   < 0x0A) ? ((*pBinPt >> 4) + '0')   : ((*pBinPt >> 4) + 'a');
-			*pszEncPt++ = ((*pBinPt & 0x0F) < 0x0A) ? ((*pBinPt & 0x0F) + '0') : ((*pBinPt & 0x0F) + 'a');
+			*pszEncPt++ = (cUpper4 < 0x0A) ? (cUpper4 + '0') : ((cUpper4 - 0x0A) + 'a');
+			*pszEncPt++ = (cLower4 < 0x0A) ? (cLower4 + '0') : ((cLower4 - 0x0A) + 'a');
 		}
 	}
 	*pszEncPt = '\0';
