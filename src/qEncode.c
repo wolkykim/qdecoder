@@ -145,8 +145,8 @@ char *qUrlEncode(const void *bin, size_t size) {
 		if(URLCHARTBL[(int)(*pBinPt)] != 0) {
 			*pszEncPt++ = *pBinPt;
 		} else {
-			char cUpper4 = (*pBinPt >> 4);
-			char cLower4 = (*pBinPt & 0x0F);
+			unsigned char cUpper4 = (*pBinPt >> 4);
+			unsigned char cLower4 = (*pBinPt & 0x0F);
 
 			*pszEncPt++ = '%';
 			*pszEncPt++ = (cUpper4 < 0x0A) ? (cUpper4 + '0') : ((cUpper4 - 0x0A) + 'a');

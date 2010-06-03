@@ -253,7 +253,9 @@ static bool _realOpen(Q_LOG *log) {
 		}
 		qStrCpy(log->filepath, sizeof(log->filepath), newfilepath);
 	} else if(strcmp(log->filepath, newfilepath)) { /* have opened stream, only reopen if new filename is different with existing one */
+		mode_t oldmask = umask(022);
 		FILE *newfp = fopen(newfilepath, "a");
+		umask(oldmask);
 		if (newfp != NULL) {
 			fclose(log->fp);
 			log->fp = newfp;
