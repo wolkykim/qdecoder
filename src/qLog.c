@@ -56,6 +56,7 @@ static bool _realOpen(Q_LOG *log);
  * Open ratating-log file
  *
  * @param filepathfmt		filename format. formatting argument is same as strftime()
+ * @param mode			new file mode. 0 for system default
  * @param rotateinterval	rotating interval seconds, set 0 to disable rotation
  * @param flush			set to true if you want to flush everytime logging. false for buffered logging
  *
@@ -68,14 +69,14 @@ static bool _realOpen(Q_LOG *log);
  * "/somepath/xxx-%H.log" for daily overrided log file.
  *
  * @code
- *   Q_LOG *log = qLogOpen("/tmp/qdecoder-%Y%m%d.err", 86400, false);
- *   qLogClose(log);
+ *   Q_LOG *log = qLog("/tmp/qdecoder-%Y%m%d.err", 0644, 86400, false);
+ *   log->free(log);
  * @endcode
  *
  * @note
  * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
  */
-Q_LOG *qLog(const char *filepathfmt, int rotateinterval, bool flush) {
+Q_LOG *qLog(const char *filepathfmt, mode_t mode, int rotateinterval, bool flush) {
 	Q_LOG *log;
 
 	/* malloc Q_LOG structure */
@@ -84,6 +85,7 @@ Q_LOG *qLog(const char *filepathfmt, int rotateinterval, bool flush) {
 	/* fill structure */
 	memset((void *)(log), 0, sizeof(Q_LOG));
 	qStrCpy(log->filepathfmt, sizeof(log->filepathfmt), filepathfmt);
+	log->mode = mode;
 	if(rotateinterval > 0) log->rotateinterval = rotateinterval;
 	log->logflush = flush;
 
@@ -244,19 +246,18 @@ static bool _realOpen(Q_LOG *log) {
 
 	/* open or re-open log file */
 	if (log->fp == NULL) {
-		mode_t oldmask = umask(022);
 		log->fp = fopen(newfilepath, "a");
-		umask(oldmask);
 		if (log->fp == NULL) {
 			DEBUG("_realOpen: Can't open log file '%s'.", newfilepath);
 			return false;
 		}
+
+		if(log->mode != 0) fchmod(fileno(log->fp), log->mode);
 		qStrCpy(log->filepath, sizeof(log->filepath), newfilepath);
 	} else if(strcmp(log->filepath, newfilepath)) { /* have opened stream, only reopen if new filename is different with existing one */
-		mode_t oldmask = umask(022);
 		FILE *newfp = fopen(newfilepath, "a");
-		umask(oldmask);
 		if (newfp != NULL) {
+			if(log->mode != 0) fchmod(fileno(newfp), log->mode);
 			fclose(log->fp);
 			log->fp = newfp;
 			qStrCpy(log->filepath, sizeof(log->filepath), newfilepath);

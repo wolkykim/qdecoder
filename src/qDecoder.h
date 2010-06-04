@@ -265,6 +265,7 @@ struct _Q_LOG {
 	char	filepathfmt[PATH_MAX];	/*!< file file naming format like /somepath/qdecoder-%Y%m%d.log */
 	char	filepath[PATH_MAX];	/*!< generated system path of log file */
 	FILE	*fp;			/*!< file pointer of logpath */
+	mode_t	mode;			/*!< file mode */
 	int	rotateinterval;		/*!< log file will be rotate in this interval seconds */
 	int	nextrotate;		/*!< next rotate universal time, seconds */
 	bool	logflush;		/*!< flag for immediate flushing */
@@ -504,7 +505,7 @@ extern	Q_ENTRY*	qConfigParseStr(Q_ENTRY *config, const char *str, char sepchar);
 /*
  * qLog.c
  */
-extern	Q_LOG*		qLog(const char *filepathfmt, int rotateinterval, bool flush);
+extern	Q_LOG*		qLog(const char *filepathfmt, mode_t mode, int rotateinterval, bool flush);
 
 /*
  * qHttpClient.c
