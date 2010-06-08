@@ -62,6 +62,24 @@ do {										\
 	}									\
 } while(0)
 
+// debug timer
+#include <sys/time.h>
+#define TIMER_START()									\
+	int _swno = 0;									\
+	struct timeval _tv1, _tv2;							\
+	gettimeofday(&_tv1, NULL)
+
+#define TIMER_STOP(prefix)	{							\
+	gettimeofday(&_tv2, NULL);							\
+	_swno++;									\
+	struct timeval _diff;								\
+	_diff.tv_sec = _tv2.tv_sec - _tv1.tv_sec;					\
+	if(_tv2.tv_usec >= _tv1.tv_usec) _diff.tv_usec = _tv2.tv_usec - _tv1.tv_usec;	\
+	else { _diff.tv_sec -= 1; _diff.tv_usec = 1000000 - _tv1.tv_usec + _tv2.tv_usec; }	\
+	printf("TIMER(%d,%s,%d): %zus %dus (%s:%d)\n", getpid(), prefix, _swno, _diff.tv_sec, (int)(_diff.tv_usec), __FILE__, __LINE__);	\
+	gettimeofday(&_tv1, NULL);							\
+}
+
 /*
  * Q_MUTEX Macros
  */
