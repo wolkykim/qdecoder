@@ -117,7 +117,7 @@ do {											\
 #define	Q_MUTEX_LEAVE(x)								\
 do {											\
 	if(!pthread_equal(x.owner, pthread_self())) DEBUG("Q_MUTEX: unlock - owner mismatch.");	\
-	x.count--;									\
+	if((x.count--) < 0) x.count = 0;						\
 	pthread_mutex_unlock(&x.mutex);							\
 } while(0)
 //	DEBUG("Q_MUTEX: unlock, cnt=%d", x.count);
