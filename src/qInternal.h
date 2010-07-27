@@ -54,7 +54,9 @@ do {										\
 			break;							\
 		}								\
 		va_list _arglist;						\
-		int _n = snprintf(s, _strsize, f, _arglist);			\
+		va_start(_arglist, f);						\
+		int _n = vsnprintf(s, _strsize, f, _arglist);			\
+		va_end(_arglist);						\
 		if(_n >= 0 && _n < _strsize) break;				\
 		free(s);							\
 	}									\
