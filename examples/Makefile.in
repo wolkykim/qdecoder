@@ -28,7 +28,7 @@ prefix		= @prefix@
 ## Compiler options
 CC	= @CC@
 CFLAGS	= @CFLAGS@
-CPPFLAGS= @CPPFLAGS@
+CPPFLAGS= -I../src/ @CPPFLAGS@
 LIBS	= ../src/libqDecoder.a @LIBS@
 
 TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi session.cgi config.cgi socket.cgi obstack.cgi \
