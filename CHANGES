@@ -9,12 +9,10 @@ qDecoder Changes
   Release 10.1.6
     ADD) qHexEncode(), qHexDecode()
     FIX) qHashMd5Str(), qHashMd5File - fix to use qHexEncode()
-
   Release 10.1.4
     FIX) qCountRead(), qCountUpdate() - bug fix.
     FIX) replace strerror() to thread-safe strerror_r().
     FIX) AutoConf and Makefile adjustments.
-
   Release 10.1.2
     ADD) qBase64Encode(), qBase64Decode()
     ADD) qStrIsIpv4Addr()
@@ -22,7 +20,6 @@ qDecoder Changes
     REP) qStrIsAlnum() -> qStrTest()
     REP) qEncodeUrl() -> qUrlEncode()
     REP) qDecodeUrl() -> qUrlDecode()
-
   Release 10.1.1
     FIX) Q_HTTPCLIENT uses TCP_NODELAY socket to improve performance.
     FIX) Q_HTTPCLIENT performance improvements.
