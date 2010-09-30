@@ -28,6 +28,24 @@
 /**
  * @file qHashtbl.c Hash-table Data Structure API
  *
+ * @code
+ *   // initial table size is 1000, enable resizing, use default threshold for resizing
+ *   Q_HASHTBL *hashtbl = qHashtbl(1000, true, 0);
+ *
+ *   // put string data into table
+ *   hashtbl->putStr(hashtbl, "qdecoder", "www.qdecoder.org");
+ *
+ *   // get string data(memory allocated) from table.
+ *   char *data = hashtbl->getStr(hashtbl, "qdecoder", true);
+ *   if(data != NULL) {
+ *     printf("%s\n", data);
+ *     free(data);
+ *   }
+ *
+ *   // release table
+ *   hashtbl->free(hashtbl);
+ * @code
+ *
  * @note
  * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
  */
@@ -85,9 +103,9 @@ static bool	_setThreshold(Q_HASHTBL *tbl, int max, int threshold);
  * @return		a pointer of malloced Q_HASHTBL, otherwise returns false
  *
  * @code
- *   // initial table size is 1000, enable resizing, use default threshold
+ *   // initial table size is 1000, enable resizing, use default threshold for resizing
  *   Q_HASHTBL *hashtbl = qHashtblInit(1000, true, 0);
- *   qHashtblFree(hashtbl);
+ *   hashtbl->free(hashtbl);
  * @endcode
  *
  * @note
