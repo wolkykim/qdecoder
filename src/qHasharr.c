@@ -72,6 +72,8 @@
  *   char *sample_bin = hasharr->get(hasharr, "sample1", &size);
  *   char *sample_str = hasharr->getStr(hasharr, "sample2");
  *   int  sample_int  = hasharr->getInt(hasharr, "sample3");
+ *   free(sample_bin); // returned data must be released by user after use.
+ *   free(sample_str);
  *
  *   // debug output
  *    hasharr->print(hasharr, stdout);
