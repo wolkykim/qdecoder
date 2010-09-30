@@ -47,7 +47,7 @@
  * @param data		source object
  * @param nbytes	size of data
  *
- * @return		128-bit(16-byte) long malloced digest binary data
+ * @return		128-bit(16-byte) malloced digest binary data
  *
  * @code
  *   unsigned char *md5 = qHashMd5((void*)"hello", 5);

@@ -200,24 +200,32 @@ struct _Q_HASHTBL {
 /**
  * Structure for hash-table data structure based on array.
  */
-struct _Q_HASHARR {
-	int		count;				/*!< hash collision counter. 0 indicates empty slot, -1 is used for collision resolution, -2 is used for indicating linked block */
-	int		hash;				/*!< key hash. we use qFnv32Hash() to generate hash integer */
+struct _Q_HASHARR_SLOT {
+	short		count;				/*!< hash collision counter. 0 indicates empty slot, -1 is used for collision resolution, -2 is used for indicating linked block */
+	unsigned int	hash;				/*!< key hash. we use qFnv32Hash() to generate hash integer */
 
 	char		key[_Q_HASHARR_MAX_KEYSIZE];	/*!< key string, it can be truncated */
-	int		keylen;				/*!< original key length */
-	unsigned char keymd5[16];			/*!< md5 hash of the key */
+	size_t		keylen;				/*!< original key length */
+	unsigned char	keymd5[16];			/*!< md5 hash of the key */
 
-	unsigned char value[_Q_HASHARR_DEF_VALUESIZE];	/*!< value */
-	int		size;				/*!< value size */
-	int		link;				/*!< next index of the value */
+	unsigned char	value[_Q_HASHARR_DEF_VALUESIZE]; /*!< value */
+	size_t		size;				/*!< value size */
+	int		link;				/*!< next link */
+};
+
+struct _Q_HASHARR {
+	int		maxslots;	/*!< number of maximum slots */
+	int		usedslots;	/*!< number of used slots */
+	int		num;		/*!< number of stored keys */
+
+	struct _Q_HASHARR_SLOT	*slots;	/*!< data area pointer */
 
 	/* public member methods */
-	bool		(*put)		(Q_HASHARR *tbl, const char *key, const void *value, int size);
+	bool		(*put)		(Q_HASHARR *tbl, const char *key, const void *value, size_t size);
 	bool		(*putStr)	(Q_HASHARR *tbl, const char *key, const char *str);
 	bool		(*putInt)	(Q_HASHARR *tbl, const char *key, int num);
 
-	void*		(*get)		(Q_HASHARR *tbl, const char *key, int *size);
+	void*		(*get)		(Q_HASHARR *tbl, const char *key, size_t *size);
 	char*		(*getStr)	(Q_HASHARR *tbl, const char *key);
 	int		(*getInt)	(Q_HASHARR *tbl, const char *key);
 	const char*	(*getNext)	(Q_HASHARR *tbl, int *idx);
@@ -227,7 +235,8 @@ struct _Q_HASHARR {
 
 	bool		(*print)	(Q_HASHARR *tbl, FILE *out);
 	int		(*getNum)	(Q_HASHARR *tbl);
-	int		(*getMax)	(Q_HASHARR *tbl);
+	int		(*getMaxSlots)	(Q_HASHARR *tbl);
+	int		(*getUsedSlots)	(Q_HASHARR *tbl);
 };
 
 /**
@@ -483,7 +492,7 @@ extern	Q_HASHTBL*	qHashtbl(int max, bool resize, int threshold);
  * qHasharr.c
  */
 extern	size_t		qHasharrSize(int max);
-extern	int		qHasharr(Q_HASHARR *tbl, size_t memsize);
+extern	Q_HASHARR*	qHasharr(void *memory, size_t memsize);
 
 /*
  * qQueue.c
