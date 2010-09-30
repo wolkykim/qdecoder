@@ -44,7 +44,7 @@
  *
  *   // release table
  *   hashtbl->free(hashtbl);
- * @code
+ * @endcode
  *
  * @note
  * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
