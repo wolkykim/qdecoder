@@ -76,7 +76,7 @@
  *   free(sample_str);
  *
  *   // debug output
- *    hasharr->print(hasharr, stdout);
+ *   hasharr->print(hasharr, stdout);
  *
  *   // release table
  *   free(memory);

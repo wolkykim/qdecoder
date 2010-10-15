@@ -72,7 +72,13 @@ bool qFileLock(int fd) {
 #ifdef _WIN32
 	return false;
 #else
-	int ret = flock(fd, LOCK_EX);
+	struct flock lock;
+	memset((void*)&lock, 0, sizeof(flock));
+	lock.l_type = F_WRLCK;
+	lock.l_whence = SEEK_SET;
+	lock.l_start = 0;
+	lock.l_len = 0;
+	int ret = fcntl(fd, F_SETLK, &lock);
 	if(ret == 0) return true;
 	return false;
 #endif
@@ -89,7 +95,13 @@ bool qFileUnlock(int fd) {
 #ifdef _WIN32
 	return false;
 #else
-	int ret = flock(fd, LOCK_EX);
+	struct flock lock;
+	memset((void*)&lock, 0, sizeof(flock));
+	lock.l_type = F_UNLCK;
+	lock.l_whence = SEEK_SET;
+	lock.l_start = 0;
+	lock.l_len = 0;
+	int ret = fcntl(fd, F_SETLK, &lock);
 	if(ret == 0) return true;
 	return false;
 #endif
