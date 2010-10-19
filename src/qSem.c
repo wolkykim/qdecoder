@@ -48,16 +48,16 @@
  *
  *   [forked child]
  *   // critical section for resource 0
- *   qSemEnter(0);
+ *   qSemEnter(semid, 0);
  *   (... guaranteed as atomic procedure ...)
- *   qSemLeave(0);
+ *   qSemLeave(semid, 0);
  *
  *   (... some codes ...)
  *
  *   // critical section for resource 1
- *   qSemEnter(1);
+ *   qSemEnter(semid, 1);
  *   (... guaranteed as atomic procedure ...)
- *   qSemLeave(1);
+ *   qSemLeave(semid, 1);
  *
  *   [other program which uses resource 1]
  *   int semid = qSemGetId("/some/file/for/generating/unique/key", 'q');
@@ -67,9 +67,9 @@
  *   }
  *
  *   // critical section for resource 1
- *   qSemEnter(1);
+ *   qSemEnter(semid, 1);
  *   (... guaranteed as atomic procedure ...)
- *   qSemLeave(1);
+ *   qSemLeave(semid, 1);
  *
  * @endcode
  */
@@ -89,7 +89,7 @@
  *
  * @param keyfile	seed for generating unique IPC key
  * @param keyid		seed for generating unique IPC key
- * @param nsems		number of semaphore to initialize
+ * @param nsems		number of semaphores to initialize
  * @param ifexistdestroy set to true to destroy if semaphore already exists
  *
  * @return		non-negative shared memory identifier if successful, otherwise returns -1
