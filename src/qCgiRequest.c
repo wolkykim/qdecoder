@@ -45,7 +45,7 @@
  *   </form>
  *
  *   [Your Source]
- *   Q_ENTRY *req = qCgiRequestParse(NULL);
+ *   Q_ENTRY *req = qCgiRequestParse(NULL, 0);
  *   const char *color = req->getStr(req, "color", false);
  *   printf("color = %s\n", color);
  *   req->free(req);
@@ -56,7 +56,7 @@
  *
  * If you would like to get POST queries only. See below sample codes.
  * @code
- *   Q_ENTRY *req = qCgiRequestParseQueries(NULL, "POST");
+ *   Q_ENTRY *req = qCgiRequestParse(NULL, Q_CGI_POST);
  *   const char *color = req->getStr(req, "color", false);
  *   printf("color = %s\n", color);
  *   req->free(req);
@@ -65,8 +65,8 @@
  * If you would like to get POST and COOKIE queries only. See below sample codes.
  * @code
  *   Q_ENTRY *req = NULL;
- *   req = qCgiRequestParseCookies(req);
- *   req = qCgiRequestParseQueries(req, "POST");
+ *   req = qCgiRequestParse(req, Q_CGI_COOKIE);
+ *   req = qCgiRequestParse(req, Q_CGI_POST);
  *   const char *color = req->getStr(req, "color", false);
  *   printf("color = %s\n", color);
  *   req->free(req);
@@ -85,10 +85,10 @@
  * in your uploading page, progressive window will be shown automatically.
  * (see examples/uploadprogress.c)
  *
- * You can switch to file mode by calling qCgiRequestParseOption().
+ * You can switch to file mode by calling qCgiRequestSetOption().
  * @code
- *   Q_ENTRY *req = qCgiRequestParseOption(true, "/tmp", 86400);
- *   req = qCgiRequestParse(req);
+ *   Q_ENTRY *req = qCgiRequestSetOption(NULL, true, "/tmp", 86400);
+ *   req = qCgiRequestParse(req, 0);
  *   (...your codes here...)
  *   req->free(req);
  * @endcode
@@ -134,13 +134,10 @@
  *     <br>Another file: <input type="file" name="binary2">
  *     <br><input type="submit">
  *   </form>
- *
- *   [Code sample]
  *   int main(...) {
- *     // if you use "progress mode", this codes should be located at
  *     // the first line in main().
- *     Q_ENTRY *req = qCgiRequestParseOption(true, "/tmp", 86400);
- *     req = qCgiRequestParse(req);
+ *     Q_ENTRY *req = qCgiRequestSetOption(NULL, true, "/tmp", 86400);
+ *     req = qCgiRequestParse(req, 0);
  *
  *     (...your codes here...)
  *
@@ -148,8 +145,6 @@
  *   }
  * @endcode
  */
-
-#ifndef DISABLE_CGI
 
 #ifdef ENABLE_FASTCGI
 #include "fcgi_stdio.h"
@@ -174,138 +169,111 @@
 static int  _parse_multipart(Q_ENTRY *request);
 static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, bool *finish);
 static char *_parse_multipart_value_into_disk(const char *boundary, const char *savedir, const char *filename, int *filelen, bool *finish);
-
-static char *_upload_getsavedir(char *upload_savedir, int size, const char *upload_id, const char *upload_basepath);
-static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const char *upload_basepath);
-static int  _upload_getstatus(const char *upload_id, const char *upload_basepath, int *upload_tsize, int *upload_csize, char *upload_cname, size_t upload_cname_size);
-static bool _upload_clear_savedir(char *dirpath);
-static bool _upload_clear_base(const char *upload_basepath, int upload_clearold);
+static int _upload_clear_base(const char *upload_basepath, int upload_clearold);
+static Q_ENTRY *_parse_query(Q_ENTRY *request, const char *query, char equalchar, char sepchar, int *count);
 #endif
 
 /**
  * Set request parsing option for file uploading in case of multipart/form-data encoding.
  *
- * @param request	if request is a NULL pointer, the function allocates, initializes, and returns a new object. otherwise use it.
- * @param filemode	false(default) for parsing in memory, true for storing attached files to file
- * @param basepath	the base path where the uploaded files are located.
- *			can be NULL if filemode is false.
- * @param clearold	automatically remove temporary uploading file older
- *			than this secconds. to disable, set to 0.
+ * @param request	Q_ENTRY container pointer that options will be set. NULL can be used to create a new container.
+ * @param filemode	false for parsing in memory, true for storing attached files into file-system directly.
+ * @param basepath	the base path where the uploaded files are located. Set to NULL if filemode is false.
+ * @param clearold	saved files older than this seconds will be removed automatically. Set to 0 to disable.
  *
- * @return	an initialized Q_ENTRY* handle, NULL if basepath can not be found.
+ * @return	Q_ENTRY container pointer, otherwise returns NULL.
  *
  * @note
- * This method should be called before qCgiRequestParse().
+ * This method should be called before calling qCgiRequestParse().
  *
  * @code
- *   Q_ENTRY *req = qCgiRequestParseOption(true, "/tmp", 86400);
- *   req = qCgiRequestParse(req);
+ *   Q_ENTRY *req = qCgiRequestSetOption(NULL, true, "/tmp", 86400);
+ *   req = qCgiRequestParse(req, 0);
+ *   req->free(req);
  * @endcode
  */
-Q_ENTRY *qCgiRequestParseOption(bool filemode, const char *basepath, int clearold) {
-	/* init entry structure */
-	Q_ENTRY *request = qEntry();
-	if(request == NULL) return NULL;
+Q_ENTRY *qCgiRequestSetOption(Q_ENTRY *request, bool filemode, const char *basepath, int clearold) {
+	// initialize entry structure
+	if(request == NULL) {
+		request = qEntry();
+		if(request == NULL) return NULL;
+	}
 
 	if(filemode == true) {
-		if(basepath == NULL || qFileExist(basepath) == false) {
+		if(basepath == NULL || access(basepath, R_OK|W_OK|X_OK) != 0) {
 			request->free(request);
 			return NULL;
 		}
+
+		// clear old files
+		if(_upload_clear_base(basepath, clearold) < 0) {
+			request->free(request);
+			return NULL;
+		}
+
+		// save info
 		request->putStr(request, "_Q_UPLOAD_BASEPATH", basepath, true);
 		request->putInt(request, "_Q_UPLOAD_CLEAROLD", clearold, true);
+
+	} else {
+		request->remove(request, "_Q_UPLOAD_BASEPATH");
+		request->remove(request, "_Q_UPLOAD_CLEAROLD");
 	}
 
 	return request;
 }
 
 /**
- * Parse web request(COOKIE/GET/POST) query into name and value fairs then store into the Q_ENTRY structure.
+ * Parse one or more request(COOKIE/GET/POST) queries.
  *
- * @param request	if request is a NULL pointer, the function allocates, initializes, and returns a new object.
- *			but if you called qCgiParseRequestOption() to set options, pass it's pointer.
+ * @param request	Q_ENTRY container pointer that parsed key/value pairs will be stored. NULL can be used to create a new container.
+ * @param method	Target mask consists of one or more of Q_CGI_COOKIE, Q_CGI_GET and Q_CGI_POST. Q_CGI_ALL or 0 can be used for parsing all of those types.
  *
  * @return		Q_ENTRY* handle if successful, NULL if there was insufficient memory to allocate a new object.
  *
  * @code
- *   Q_ENTRY *req = qCgiRequestParse(NULL);
- *   char *name = req->getStr(req, "name", true);
- *   if(name != NULL) {
- *     printf("%s\n", name);
- *     free(name)
- *   }
+ *   Q_ENTRY *req = qCgiRequestParse(NULL, 0);
+ *   char *name = req->getStr(req, "name", false);
+ *   if(name != NULL) printf("%s\n", name);
  *   req->free(req);
  * @endcode
  *
  * @note
- * The parsing sequence is (1)COOKIE, (2)GET (3)POST. Thus if same query names
- * (which are sent by different method) exist, qGetValue() will return the value
- * sent by GET method.
+ * The queries are parsed with sequence of (1)COOKIE, (2)GET (3)POST.
  */
-Q_ENTRY *qCgiRequestParse(Q_ENTRY *request) {
-	/* init entry structure */
+Q_ENTRY *qCgiRequestParse(Q_ENTRY *request, Q_CGI_T method) {
+	// initialize entry structure
 	if(request == NULL) {
 		request = qEntry();
 		if(request == NULL) return NULL;
 	}
 
-	qCgiRequestParseCookies(request);
-	qCgiRequestParseQueries(request, NULL);
-
-	return request;
-}
-
-/**
- * Parse GET/POST queries into name and value fairs then store into the Q_ENTRY structure.
- *
- * @param request	if request is a NULL pointer, the function allocates, initializes, and returns a new object.
- *			otherwise reuse(append at) Q_ENTRY* handle.
- * @param method	"GET" or "POST". NULL can be used for parse both GET/POST queries.
- *
- * @return		Q_ENTRY* handle if successful, NULL if there was insufficient memory to allocate a new object.
- *
- * @code
- *   Q_ENTRY *get_n_post = qCgiRequestParseQueries(NULL, NULL);
- *   printf("%s\n", get_n_post->getStr(get_n_post, "name", false));
- *
- *   // if you would like to parse only POST queries.
- *   Q_ENTRY *postonly = qCgiRequestParseQueries(NULL, "POST");
- *   printf("%s\n", postonly->getStr(postonly, "name", false));
- * @endcode
- */
-Q_ENTRY *qCgiRequestParseQueries(Q_ENTRY *request, const char *method) {
-	/* init entry structure */
-	if(request == NULL) {
-		request = qEntry();
-		if(request == NULL) return NULL;
-	}
-
-	if(method == NULL || !strcmp(method, "GET")) { /* parse GET method */
-		char *query = qCgiRequestGetQueryString("GET");
+	// parse COOKIE
+	if(method == Q_CGI_ALL || (method & Q_CGI_COOKIE) != 0) {
+		char *query = qCgiRequestGetQuery(Q_CGI_COOKIE);
 		if(query != NULL) {
-			qParseQueries(request, query, '=', '&', NULL);
+			_parse_query(request, query, '=', ';', NULL);
 			free(query);
 		}
+	}
 
-		/* check uploading progress dialog */
-		const char *upload_id = request->getStr(request, "Q_UPLOAD_ID", false);
-		if (upload_id != NULL) {
-			const char *upload_basepath = request->getStr(request, "_Q_UPLOAD_BASEPATH", false);
-			if (upload_basepath != NULL) {
-				_upload_progressbar(request, upload_id, upload_basepath);
-				exit(EXIT_SUCCESS);
-			} else {
-				DEBUG("Force to switch to memory operation mode.");
-			}
+	// parse GET method
+	if(method == Q_CGI_ALL || (method & Q_CGI_GET) != 0){
+		char *query = qCgiRequestGetQuery(Q_CGI_GET);
+		if(query != NULL) {
+			_parse_query(request, query, '=', '&', NULL);
+			free(query);
 		}
 	}
 
-	if(method == NULL || !strcmp(method, "POST")) { /* parse POST method */
-		const char *content_type = qSysGetEnv("CONTENT_TYPE", "");
+	//  parse POST method
+	if(method == Q_CGI_ALL || (method & Q_CGI_POST) != 0) {
+		const char *content_type = getenv("CONTENT_TYPE");
+		if(content_type == NULL) content_type = "";
 		if (!strncmp(content_type, "application/x-www-form-urlencoded", CONST_STRLEN("application/x-www-form-urlencoded"))) {
-			char *query = qCgiRequestGetQueryString("POST");
+			char *query = qCgiRequestGetQuery(Q_CGI_POST);
 			if(query != NULL) {
-				qParseQueries(request, query, '=', '&', NULL);
+				_parse_query(request, query, '=', '&', NULL);
 				free(query);
 			}
 		} else if (!strncmp(content_type, "multipart/form-data", CONST_STRLEN("multipart/form-data"))) {
@@ -317,52 +285,22 @@ Q_ENTRY *qCgiRequestParseQueries(Q_ENTRY *request, const char *method) {
 }
 
 /**
- * Parse cookies into name and value fairs then store into the Q_ENTRY structure.
+ * Get raw query string.
  *
- * @param request	if request is a NULL pointer, the function allocates, initializes, and returns a new object.
- *			otherwise cookie value will be appended at Q_ENTRY* handle.
+ * @param method	One of Q_CGI_COOKIE, Q_CGI_GET and Q_CGI_POST.
  *
- * @return		Q_ENTRY* handle if successful, NULL if there was insufficient memory to allocate a new object.
- *
- * @code
- *   Q_ENTRY *cookies = qCgiRequestParseCookies(NULL);
- *   printf("%s\n", cookies->getStr(cookies, "name", false));
- * @endcode
- */
-Q_ENTRY *qCgiRequestParseCookies(Q_ENTRY *request) {
-	/* init entry structure */
-	if(request == NULL) {
-		request = qEntry();
-		if(request == NULL) return NULL;
-	}
-
-	/* parse COOKIE */
-	char *query = qCgiRequestGetQueryString("COOKIE");
-	if(query != NULL) {
-		qParseQueries(request, query, '=', ';', NULL);
-		free(query);
-	}
-
-	return request;
-}
-
-/**
- * Get unparsed query string.
- *
- * @param query_type	GET, POST, COOKIE (case-sensitive)
- *
- * @return		query string which is memory allocated if successful, otherwise returns NULL;
+ * @return		malloced query string otherwise returns NULL;
  *
  * @code
- *   char *query = qCgiRequestGetQueryString("GET");
+ *   char *query = qCgiRequestGetQuery(Q_CGI_GET);
  *   if(query != NULL) {
  *     printf("%s\n", query);
  *     free(query);
  *   }
  * @endcode
  */
-char *qCgiRequestGetQueryString(const char *query_type) {
-	if (!strcmp(query_type, "GET")) {
+char *qCgiRequestGetQuery(Q_CGI_T method) {
+	if (method == Q_CGI_GET) {
 		char *request_method = getenv("REQUEST_METHOD");
 		if (request_method != NULL && strcmp(request_method, "GET")) return NULL;
 
@@ -371,7 +309,8 @@ char *qCgiRequestGetQueryString(const char *query_type) {
 		if (query_string == NULL) return NULL;
 
 		char *query = NULL;
-		/* SSI query handling */
+
+		// SSI query handling
 		if (strlen(query_string) == 0 && req_uri != NULL) {
 			char *cp;
 			for (cp = req_uri; *cp != '\0'; cp++) {
@@ -386,7 +325,7 @@ char *qCgiRequestGetQueryString(const char *query_type) {
 		}
 
 		return query;
-	} else if (!strcmp(query_type, "POST")) {
+	} else if (method == Q_CGI_POST) {
 		char *request_method = getenv("REQUEST_METHOD");
 		char *content_length = getenv("CONTENT_LENGTH");
 		if (request_method == NULL || strcmp(request_method, "POST") || content_length == NULL) return NULL;
@@ -396,7 +335,7 @@ char *qCgiRequestGetQueryString(const char *query_type) {
 		for (i = 0; i < cl; i++)query[i] = fgetc(stdin);
 		query[i] = '\0';
 		return query;
-	} else if (!strcmp(query_type, "COOKIE")) {
+	} else if (method == Q_CGI_COOKIE) {
 		char *http_cookie = getenv("HTTP_COOKIE");
 		if (http_cookie == NULL) return NULL;
 		char *query = strdup(http_cookie);
@@ -435,9 +374,9 @@ static int _parse_multipart(Q_ENTRY *request) {
 
 	/* find boundary string - Hidai Kenichi made this patch for handling quoted boundary string */
 	char boundary_orig[256];
-	qStrCpy(boundary_orig, sizeof(boundary_orig), strstr(getenv("CONTENT_TYPE"), "boundary=") + CONST_STRLEN("boundary="));
-	qStrTrim(boundary_orig);
-	qStrUnchar(boundary_orig, '"', '"');
+	_qdecoder_strcpy(boundary_orig, sizeof(boundary_orig), strstr(getenv("CONTENT_TYPE"), "boundary=") + CONST_STRLEN("boundary="));
+	_qdecoder_strtrim(boundary_orig);
+	_qdecoder_strunchar(boundary_orig, '"', '"');
 	snprintf(boundary, sizeof(boundary), "--%s", boundary_orig);
 
 	/* If you want to observe the string from stdin, enable this section. */
@@ -451,7 +390,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 		for (i = 0; boundary[i] != '\0'; i++) printf("%02X ", boundary[i]);
 		printf("<p>\n");
 
-		for (j = 1; _q_fgets(buf, sizeof(buf), stdin) != NULL; j++) {
+		for (j = 1; _qdecoder_fgets(buf, sizeof(buf), stdin) != NULL; j++) {
 			printf("Line %d, len %zu : %s<br>\n", j, strlen(buf), buf);
 			//for (i = 0; buf[i] != '\0'; i++) printf("%02X ", buf[i]);
 			printf("<br>\n");
@@ -460,90 +399,31 @@ static int _parse_multipart(Q_ENTRY *request) {
 	}
 
 	/* check boundary */
-	if (_q_fgets(buf, sizeof(buf), stdin) == NULL) {
+	if (_qdecoder_fgets(buf, sizeof(buf), stdin) == NULL) {
 		DEBUG("Bbrowser sent a non-HTTP compliant message.");
 		return amount;
 	}
 
 	/* for explore 4.0 of NT, it sent \r\n before starting, fucking Micro$oft */
-	if (!strcmp(buf, "\r\n")) _q_fgets(buf, sizeof(buf), stdin);
+	if (!strcmp(buf, "\r\n")) _qdecoder_fgets(buf, sizeof(buf), stdin);
 
 	if (strncmp(buf, boundary, strlen(boundary)) != 0) {
 		DEBUG("Invalid string format.");
 		return amount;
 	}
 
+	/* check file save mode */
 	bool upload_filesave = false; /* false: save into memory, true: save into file */
 	const char *upload_basepath = request->getStr(request, "_Q_UPLOAD_BASEPATH", false);
-	char upload_savedir[PATH_MAX];
+	if(upload_basepath != NULL) upload_filesave = true;
+
 	bool  finish;
 	for (finish = false; finish == false; amount++) {
-		/* check file save mode */
-		while(upload_filesave == false && upload_basepath != NULL && amount == 1) {
-			char *content_length = getenv("CONTENT_LENGTH");
-			if(content_length == NULL) {
-				break;
-			}
-
-			char upload_id_new[32+1];
-			char *upload_id = (char *)request->getStr(request, "Q_UPLOAD_ID", false);
-			if (upload_id == NULL || strlen(upload_id) == 0) {
-				/* not progress, just file mode */
-				char *uniq = qStrUnique(getenv("REMOTE_ADDR"));
-				qStrCpy(upload_id_new, sizeof(upload_id_new), uniq);
-				free(uniq);
-				upload_id = upload_id_new;
-			}
-
-			/* generate temporary uploading directory path */
-			if (_upload_getsavedir(upload_savedir, sizeof(upload_savedir), upload_id, upload_basepath) == NULL) {
-				DEBUG("Invalid base path %s", upload_basepath);
-				break;
-			}
-
-			/* first, we clear old temporary files */
-			int upload_clearold = request->getInt(request, "_Q_UPLOAD_CLEAROLD");
-			if (_upload_clear_base(upload_basepath, upload_clearold) == false) {
-				DEBUG("Can't remove old temporary files at %s", upload_basepath);
-			}
-
-			/* if exists, remove whole directory */
-			if (qFileExist(upload_savedir) == true && _upload_clear_savedir(upload_savedir) == false) {
-				DEBUG("Can not remove temporary uploading directory %s", upload_savedir);
-				break;
-			}
-
-			/* make temporary uploading directory */
-			if (mkdir(upload_savedir, DEF_DIR_MODE) != 0) {
-				DEBUG("Can not make temporary uploading directory %s", upload_savedir);
-				break;
-			}
-
-			/* save total contents length */
-			char upload_tmppath[PATH_MAX];
-			snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_TSIZE", upload_savedir);
-			if (qCountSave(upload_tmppath, atoi(content_length)) == false) {
-				DEBUG("Can not save uploading information at %s", upload_tmppath);
-				break;
-			}
-
-			/* save start time */
-			snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_START", upload_savedir);
-			if (qCountSave(upload_tmppath, time(NULL)) == false) {
-				DEBUG("Can't save uploading information at %s", upload_tmppath);
-				break;
-			}
-
-			/* turn on the flag - save into file directly */
-			upload_filesave = true;
-			break;
-		}
-
 		char *name = NULL, *value = NULL, *filename = NULL, *contenttype = NULL;
 		int valuelen = 0;
 
 		/* get information */
-		while (_q_fgets(buf, sizeof(buf), stdin)) {
+		while (_qdecoder_fgets(buf, sizeof(buf), stdin)) {
 			if (!strcmp(buf, "\r\n")) break;
 			else if (!strncasecmp(buf, "Content-Disposition: ", CONST_STRLEN("Content-Disposition: "))) {
 				int c_count;
@@ -569,7 +449,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 							}
 						}
 					}
-					qStrTrim(filename);
+					_qdecoder_strtrim(filename);
 
 					if(strlen(filename) == 0) { /* empty attachment */
 						free(filename);
@@ -578,7 +458,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 				}
 			} else if (!strncasecmp(buf, "Content-Type: ", CONST_STRLEN("Content-Type: "))) {
 				contenttype = strdup(buf + CONST_STRLEN("Content-Type: "));
-				qStrTrim(contenttype);
+				_qdecoder_strtrim(contenttype);
 			}
 		}
 
@@ -590,8 +470,9 @@ static int _parse_multipart(Q_ENTRY *request) {
 
 		/* get value field */
 		if (filename != NULL && upload_filesave == true) {
-			char *savename = qStrReplace("tn", filename, " ", "_");
-			value = _parse_multipart_value_into_disk(boundary, upload_savedir, savename, &valuelen, &finish);
+			char *tp, *savename = strdup(filename);
+			for(tp = savename; *tp != '\0'; tp++) if(*tp == ' ') *tp = '_'; // replace ' ' to '_'
+			value = _parse_multipart_value_into_disk(boundary, upload_basepath, savename, &valuelen, &finish);
 			free(savename);
 
 			if(value != NULL) request->putStr(request, name, value, false);
@@ -630,14 +511,6 @@ static int _parse_multipart(Q_ENTRY *request) {
 		if(value != NULL) free(value);
 		if(filename != NULL) free(filename);
 		if(contenttype != NULL) free(contenttype);
-	}
-
-	if (upload_filesave == true) { /* save end time */
-		char upload_tmppath[PATH_MAX];
-		snprintf(upload_tmppath, sizeof(upload_tmppath), "%s/Q_UPLOAD_END", upload_savedir);
-		if (qCountSave(upload_tmppath, time(NULL)) == false) {
-			DEBUG("Can't save uploading information at %s", upload_tmppath);
-		}
 	}
 
 	return amount;
@@ -758,14 +631,9 @@ static char *_parse_multipart_value_into_disk(const char *boundary, const char *
 	boundarylen    = strlen(boundary);
 	boundaryEOFlen = strlen(boundaryEOF);
 
-	/* save current upload file */
-	char upload_file[PATH_MAX];
-	snprintf(upload_file, sizeof(upload_file), "%s/Q_UPLOAD_FILE", savedir);
-	qFileSave(upload_file, filename, strlen(filename), false);
-
 	/* open temp file */
 	char upload_path[PATH_MAX];
-	snprintf(upload_path, sizeof(upload_path), "%s/Q_FILE_XXXXXX", savedir);
+	snprintf(upload_path, sizeof(upload_path), "%s/q_XXXXXX", savedir);
 
 	int upload_fd = mkstemp(upload_path);
 	if (upload_fd < 0) {
@@ -847,229 +715,63 @@ static char *_parse_multipart_value_into_disk(const char *boundary, const char *
 	return strdup(upload_path);
 }
 
-static char *_upload_getsavedir(char *upload_savedir, int size, const char *upload_id, const char *upload_basepath) {
-	if(upload_savedir == NULL || upload_id == NULL || upload_basepath == NULL || strlen(upload_basepath) == 0) return NULL;
-
-        char md5seed[1024];
-        snprintf(md5seed, sizeof(md5seed), "%s|%s|%s", QDECODER_PRIVATEKEY, qSysGetEnv("REMOTE_ADDR", ""), upload_id);
-        char *md5str = qHashMd5Str(md5seed, strlen(md5seed));
-        snprintf(upload_savedir, size, "%s/Q_%s", upload_basepath, md5str);
-        free(md5str);
-
-        return upload_savedir;
-}
-
-static void _upload_progressbar(Q_ENTRY *request, const char *upload_id, const char *upload_basepath) {
-	int  drawrate = request->getInt(request, "Q_UPLOAD_DRAWRATE");
-	const char *template = request->getStr(request, "Q_UPLOAD_TEMPLATE", false);
-
-	int last_csize = 0, freezetime = 0;
-	int upload_tsize = 0, upload_csize = 0;
-	char upload_cname[256];
-
-	/* adjust drawrate */
-	if(drawrate == 0) drawrate = 1000;
-	else if(drawrate < 100) drawrate = 100;
-	else if(drawrate > 3000) drawrate = 3000;
-
-	/* check arguments */
-	if (!strcmp(upload_id, "")) {
-		DEBUG("Q_UPLOAD_ID is invalid.");
-		return;
-	}
-	if (template == NULL) {
-		DEBUG("Q_UPLOAD_TEMPLATE query not found.");
-		return;
-	}
-
-	/* print out qDecoder logo */
-	qCgiResponseSetContentType(request, "text/html");
-
-	/* print template */
-	if(qSedFile(NULL, template, stdout) == 0) {
-		DEBUG("Can't open %s", template);
-		return;
-	}
-	if(fflush(stdout) != 0) return;
-
-	/* draw progress bar */
-	int failcnt = 0;
-	while(failcnt < 5) {
-		upload_tsize = upload_csize = 0;
-
-		int upload_status = _upload_getstatus(upload_id, upload_basepath, &upload_tsize, &upload_csize, upload_cname, sizeof(upload_cname));
-		if (upload_status < 0) {
-			break;
-		} if (upload_status == 0) {
-			failcnt++;
-			sleep(1);
-			continue;
-		}
-
-		/* check already done */
-		if (upload_tsize == 0 && upload_csize > 0) break; /* tsize file is removed. upload ended */
-		if (upload_tsize > 0 && upload_csize >= upload_tsize) break;
-
-		if (last_csize < upload_csize) {
-			qStrReplace("tr", upload_cname, "'", "`");
-
-			printf("<script language='JavaScript'>");
-			printf("if(qSetProgress)qSetProgress(%d,%d,'%s');", upload_tsize, upload_csize, upload_cname);
-			printf("</script>\n");
-
-			last_csize = upload_csize;
-			freezetime = 0;
-		} else if (last_csize == upload_csize) {
-			if (freezetime > 10000) {
-				break; /* maybe upload connection was closed */
-			}
-
-			if (upload_csize > 0) {
-				printf("<script language='JavaScript'>");
-				printf("if(qSetProgress)qSetProgress(%d,%d,'%s');", upload_tsize, upload_csize, upload_cname);
-				printf("</script>\n");
-			}
-
-			freezetime += drawrate;
-		} else {
-			break;
-		}
-
-		fflush(stdout);
-		usleep(drawrate * 1000);
-	}
-
-	printf("<script language='JavaScript'>");
-	printf("window.close();");
-	printf("</script>\n");
-
-	fflush(stdout);
-}
-
-// returns 1 : success
-// returns 0 : repository not created
-// returns -1 : finished session
-// returns -2 : unknown error
-static int _upload_getstatus(const char *upload_id, const char *upload_basepath, int *upload_tsize, int *upload_csize, char *upload_cname, size_t upload_cname_size) {
+static int _upload_clear_base(const char *upload_basepath, int upload_clearold) {
 #ifdef _WIN32
 	return false;
 #else
-	DIR     *dp;
-	struct  dirent *dirp;
-	char upload_savedir[PATH_MAX], tmppath[PATH_MAX];
-
-	/* get basepath */
-	if (_upload_getsavedir(upload_savedir, sizeof(upload_savedir), upload_id, upload_basepath) == NULL) {
-		DEBUG("Q_UPLOAD_ID is not set.");
-		return -2;
-	}
-
-	/* check finished session */
-	snprintf(tmppath, sizeof(tmppath), "%s/Q_UPLOAD_END", upload_savedir);
-	if(qCountRead(tmppath) > 0) {
-		return -1;
-	}
-
-	/* open upload folder */
-	dp = opendir(upload_savedir);
-	if (dp == NULL) {
-		DEBUG("Can't open %s", upload_savedir);
-		return 0;
-	}
-
-	/* clear variables */
-	if(upload_tsize != NULL) *upload_tsize = 0;
-	if(upload_csize != NULL) *upload_csize = 0;
-	if(upload_cname	!= NULL) upload_cname[0] = '\0';
-
-	/* read tsize */
-	snprintf(tmppath, sizeof(tmppath), "%s/Q_UPLOAD_TSIZE", upload_savedir);
-	*upload_tsize = qCountRead(tmppath);
-
-	/* read currnet upload filename */
-	snprintf(tmppath, sizeof(tmppath), "%s/Q_UPLOAD_FILE", upload_savedir);
-	char *upload_file = qFileLoad(tmppath, NULL);
-	if(upload_file != NULL) {
-		qStrCpy(upload_cname, upload_cname_size, upload_file);
-		free(upload_file);
-	} else {
-		qStrCpy(upload_cname, upload_cname_size, "-");
-	}
-
-	/* get csize */
-	*upload_csize = 0;
-	while ((dirp = readdir(dp)) != NULL) {
-		if (strncmp(dirp->d_name, "Q_FILE_", CONST_STRLEN("Q_FILE_"))) continue;
-
-		snprintf(tmppath, sizeof(tmppath), "%s/%s", upload_savedir, dirp->d_name);
-		*upload_csize += qFileGetSize(tmppath);
-	}
-	closedir(dp);
-
-	return 1;
-#endif
-}
-
-static bool _upload_clear_savedir(char *dirpath) {
-#ifdef _WIN32
-	return false;
-#else
-	/* open upload folder */
-	DIR     *dp;
-	if ((dp = opendir(dirpath)) == NULL) return false;
-
-	struct  dirent *dirp;
-	while ((dirp = readdir(dp)) != NULL) {
-		if (strncmp(dirp->d_name, "Q_", CONST_STRLEN("Q_"))) continue;
-
-		char filepath[PATH_MAX];
-		snprintf(filepath, sizeof(filepath), "%s/%s", dirpath, dirp->d_name);
-		_q_unlink(filepath);
-	}
-	closedir(dp);
-
-	if (rmdir(dirpath) != 0) return false;
-	return true;
-#endif
-}
-
-static bool _upload_clear_base(const char *upload_basepath, int upload_clearold) {
-#ifdef _WIN32
-	return false;
-#else
-	if (upload_clearold <= 0) return false;
-
-	bool haserror = false;
+	if (upload_clearold <= 0) return -1;
 
 	/* open upload folder */
 	DIR     *dp;
 	if ((dp = opendir(upload_basepath)) == NULL) return false;
 
-	time_t  now = time(NULL);
+	time_t now = time(NULL);
+	int removed = 0;
 	struct  dirent *dirp;
 	while ((dirp = readdir(dp)) != NULL) {
-		time_t starttime;
-
-		if (!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..") || strncmp(dirp->d_name, "Q_", 2) != 0) continue;
+		if (!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..") || strncmp(dirp->d_name, "q_", 2) != 0) continue;
 
 		char filepath[PATH_MAX];
-		snprintf(filepath, sizeof(filepath), "%s/%s/Q_UPLOAD_START", upload_basepath, dirp->d_name);
-		starttime = qCountRead(filepath);
-		if (starttime > 0 && now - starttime < upload_clearold) continue;
-
 		snprintf(filepath, sizeof(filepath), "%s/%s", upload_basepath, dirp->d_name);
-		if (_upload_clear_savedir(filepath) == false) {
-			haserror = true;
-			break;
-		}
+
+		// check file date
+		struct stat filestat;
+		if(stat(filepath, &filestat) != 0) continue;
+		if(filestat.st_mtime >= now + upload_clearold) continue;
+
+		// remove file
+		if(_qdecoder_unlink(filepath) == 0) removed++;
 	}
 	closedir(dp);
 
-	if(haserror == true) return false;
-	return true;
+	return removed;
 #endif
 }
 
-#endif /* _DOXYGEN_SKIP */
+static Q_ENTRY *_parse_query(Q_ENTRY *request, const char *query, char equalchar, char sepchar, int *count) {
+	if(request == NULL) {
+		request = qEntry();
+		if(request == NULL) return NULL;
+	}
 
-#endif /* DISABLE_CGI */
+	char *newquery = NULL;
+	int cnt = 0;
+
+	if(query != NULL) newquery = strdup(query);
+	while (newquery && *newquery) {
+		char *value = _qdecoder_makeword(newquery, sepchar);
+		char *name = _qdecoder_strtrim(_qdecoder_makeword(value, equalchar));
+		_qdecoder_urldecode(name);
+		_qdecoder_urldecode(value);
+
+		if(request->putStr(request, name, value, false) == true) cnt++;
+		free(name);
+		free(value);
+	}
+	if(newquery != NULL) free(newquery);
+	if(count != NULL) *count = cnt;
+
+	return request;
+}
+
+#endif /* _DOXYGEN_SKIP */

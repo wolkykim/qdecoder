@@ -33,7 +33,7 @@ PRGNAME		= qDecoder
 LIBNAME		= lib${PRGNAME}.a
 
 ## Shared Library Name
-SLIBVERSION	= 8
+SLIBVERSION	= 11
 SLIBNAME	= lib${PRGNAME}.so
 SLIBREALNAME	= ${SLIBNAME}.${SLIBVERSION}
 
@@ -58,36 +58,10 @@ RM		= @RM@
 
 ## Objects List
 OBJ		= qCgiRequest.o		\
-		qCgiResponse.o		\
-		qSession.o		\
-		qHtml.o			\
-					\
-		qSem.o			\
-		qShm.o			\
-		qDatabase.o		\
-					\
-		qEntry.o		\
-		qHashtbl.o		\
-		qHasharr.o		\
-		qQueue.o		\
-		qObstack.o		\
-					\
-		qConfig.o		\
-		qLog.o			\
-		qHttpClient.o		\
-					\
-		qIo.o			\
-		qSocket.o		\
-		qString.o		\
-		qFile.o			\
-		qEncode.o		\
-		qHash.o			\
-		qTime.o			\
-		qSystem.o		\
-		qUtil.o			\
-					\
-		qInternalCommon.o	\
-		md5/md5c.o
+		  qCgiResponse.o	\
+		  qSession.o		\
+		  qEntry.o		\
+		  qInternal.o
 
 ## Make Library
 all: qdecoder

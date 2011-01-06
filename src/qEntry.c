@@ -78,13 +78,9 @@
 #define _VAR_CMD	'!'
 #define _VAR_ENV	'%'
 
-static	void		_lock(Q_ENTRY *entry);
-static	void		_unlock(Q_ENTRY *entry);
-
 static bool		_put(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace);
 static bool		_putStr(Q_ENTRY *entry, const char *name, const char *str, bool replace);
 static bool		_putStrf(Q_ENTRY *entry, bool replace, const char *name, const char *format, ...);
-static bool		_putStrParsed(Q_ENTRY *entry, const char *name, const char *str, bool replace);
 static bool		_putInt(Q_ENTRY *entry, const char *name, int num, bool replace);
 
 static void*		_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem);
@@ -97,18 +93,17 @@ static char*		_getStrLast(Q_ENTRY *entry, const char *name, bool newmem);
 static int		_getInt(Q_ENTRY *entry, const char *name);
 static int		_getIntCase(Q_ENTRY *entry, const char *name);
 static int 		_getIntLast(Q_ENTRY *entry, const char *name);
-static bool		_getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newmem);
+static bool		_getNext(Q_ENTRY *entry, Q_ENTOBJ_T *obj, const char *name, bool newmem);
 
 static int		_remove(Q_ENTRY *entry, const char *name);
 
 static int 		_getNum(Q_ENTRY *entry);
 static int		_getNo(Q_ENTRY *entry, const char *name);
-static char*		_parseStr(Q_ENTRY *entry, const char *str);
 static void*		_merge(Q_ENTRY *entry, size_t *size);
 
 static bool		_truncate(Q_ENTRY *entry);
-static bool		_save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode);
-static int		_load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode);
+static bool		_save(Q_ENTRY *entry, const char *filepath);
+static int		_load(Q_ENTRY *entry, const char *filepath);
 static bool		_reverse(Q_ENTRY *entry);
 static bool		_print(Q_ENTRY *entry, FILE *out, bool print_data);
 static bool		_free(Q_ENTRY *entry);
@@ -131,13 +126,9 @@ Q_ENTRY *qEntry(void) {
 	memset((void *)entry, 0, sizeof(Q_ENTRY));
 
 	/* member methods */
-	entry->lock		= _lock;
-	entry->unlock		= _unlock;
-
 	entry->put		= _put;
 	entry->putStr		= _putStr;
 	entry->putStrf		= _putStrf;
-	entry->putStrParsed	= _putStrParsed;
 	entry->putInt		= _putInt;
 
 	entry->get		= _get;
@@ -158,7 +149,6 @@ Q_ENTRY *qEntry(void) {
 
 	entry->getNum		= _getNum;
 	entry->getNo		= _getNo;
-	entry->parseStr		= _parseStr;
 	entry->merge		= _merge;
 
 	entry->truncate		= _truncate;
@@ -168,28 +158,7 @@ Q_ENTRY *qEntry(void) {
 	entry->print		= _print;
 	entry->free		= _free;
 
-	/* initialize recrusive mutex */
-	Q_MUTEX_INIT(entry->qmutex, true);
-
 	return entry;
-}
-
-/**
- * Q_ENTRY->lock(): Enter critical section.
- *
- * @note
- * Q_ENTRY uses recursive mutex lock mechanism. And it uses lock at least as possible.
- * User can raise lock to proctect data modification during Q_ENTRY->getNext() operation.
- */
-static void _lock(Q_ENTRY *entry) {
-	Q_MUTEX_ENTER(entry->qmutex);
-}
-
-/**
- * Q_ENTRY->unlock(): Leave critical section.
- */
-static void _unlock(Q_ENTRY *entry) {
-	Q_MUTEX_LEAVE(entry->qmutex);
 }
 
 /**
@@ -220,7 +189,7 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size
 	memcpy(dup_data, data, size);
 
 	/* make new object entry */
-	Q_NLOBJ_T *obj = (Q_NLOBJ_T*)malloc(sizeof(Q_NLOBJ_T));
+	Q_ENTOBJ_T *obj = (Q_ENTOBJ_T*)malloc(sizeof(Q_ENTOBJ_T));
 	if(obj == NULL) {
 		free(dup_name);
 		free(dup_data);
@@ -230,8 +199,6 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size
 	obj->data = dup_data;
 	obj->size = size;
 	obj->next = NULL;
-
-	Q_MUTEX_ENTER(entry->qmutex);
 
 	/* if replace flag is set, remove same key */
 	if (replace == true) _remove(entry, dup_name);
@@ -245,8 +212,6 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size
 
 	entry->size += size;
 	entry->num++;
-
-	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return true;
 }
@@ -284,37 +249,6 @@ static bool _putStrf(Q_ENTRY *entry, bool replace, const char *name, const char 
 	bool ret = _putStr(entry, name, str, replace);
 	free(str);
 
-	return ret;
-}
-
-/**
- * Q_ENTRY->putStrParsed(): Add string object with parsed into linked-list structure.
- *
- * @param	entry	Q_ENTRY pointer
- * @param	name	key name.
- * @param	str	string value which may contain variables like ${...}
- * @param	replace	in case of false, just insert. in case of true, remove all same key then insert object if found.
- *
- * @return	true if successful, otherwise returns false.
- *
- * @code
- *   ${key_name}		variable replacement
- *   ${!system_command}		external command results
- *   ${%PATH}			get environments
- * @endcode
- *
- * @code
- *   entry->putStrParsed(entry, "BASE", "/usr/local", true);
- *   entry->putStrParsed(entry, "BIN", "${BASE}/bin", true);
- *   entry->putStrParsed(entry, "HOSTNAME", "${!/bin/hostname -s}", true);
- *   entry->putStrParsed(entry, "USER", "${%USER}", true);
- * @endcode
- */
-static bool _putStrParsed(Q_ENTRY *entry, const char *name, const char *str, bool replace) {
-	char *newstr = _parseStr(entry, str);
-	size_t size = (newstr!=NULL) ? (strlen(newstr) + 1) : 0;
-	bool ret = _put(entry, name, (const void *)newstr, size, replace);
-	if(newstr != NULL) free(newstr);
 	return ret;
 }
 
@@ -366,9 +300,8 @@ static bool _putInt(Q_ENTRY *entry, const char *name, int num, bool replace) {
 static void *_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 	if(entry == NULL || name == NULL) return NULL;
 
-	Q_MUTEX_ENTER(entry->qmutex);
 	void *data = NULL;
-	Q_NLOBJ_T *obj;
+	Q_ENTOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		if(!strcmp(obj->name, name)) {
 			if(size != NULL) *size = obj->size;
@@ -383,7 +316,6 @@ static void *_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 			break;
 		}
 	}
-	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return data;
 }
@@ -401,9 +333,8 @@ static void *_get(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 static void *_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 	if(entry == NULL || name == NULL) return NULL;
 
-	Q_MUTEX_ENTER(entry->qmutex);
 	void *data = NULL;
-	Q_NLOBJ_T *obj;
+	Q_ENTOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		if(!strcasecmp(name, obj->name)) {
 			if(size != NULL) *size = obj->size;
@@ -417,7 +348,6 @@ static void *_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newme
 			break;
 		}
 	}
-	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return data;
 }
@@ -439,10 +369,8 @@ static void *_getCase(Q_ENTRY *entry, const char *name, size_t *size, bool newme
 static void *_getLast(Q_ENTRY *entry, const char *name, size_t *size, bool newmem) {
 	if(entry == NULL || name == NULL) return NULL;
 
-	Q_MUTEX_ENTER(entry->qmutex);
-
-	Q_NLOBJ_T *lastobj = NULL;
-	Q_NLOBJ_T *obj;
+	Q_ENTOBJ_T *lastobj = NULL;
+	Q_ENTOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		if (!strcmp(name, obj->name)) lastobj = obj;
 	}
@@ -458,7 +386,6 @@ static void *_getLast(Q_ENTRY *entry, const char *name, size_t *size, bool newme
 		}
 	}
 
-	Q_MUTEX_LEAVE(entry->qmutex);
 	return data;
 }
 
@@ -596,43 +523,29 @@ static int _getIntLast(Q_ENTRY *entry, const char *name) {
  *   entry->putStr(entry, "key2", "hello world 2", false);
  *   entry->putStr(entry, "key3", "hello world 3", false);
  *
- *   // non-thread usages
- *   Q_NLOBJ_T obj;
+ *   Q_ENTOBJ_T obj;
  *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
  *   while(entry->getNext(entry, &obj, NULL, false) == true) {
  *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
  *   }
  *
- *   // thread model with specific key search
- *   Q_NLOBJ_T obj;
+ *   // with newmem flag
+ *   Q_ENTOBJ_T obj;
  *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
- *   entry->lock(entry);
- *   while(entry->getNext(entry, &obj, "key2", false) == true) {
- *     printf("NAME=%s, DATA=%s, SIZE=%zu", obj.name, obj.data, obj.size);
- *   }
- *   entry->unlock(entry);
- *
- *   // thread model 2 with newmem flag
- *   Q_NLOBJ_T obj;
- *   memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
- *   entry->lock(entry);
  *   while(entry->getNext(entry, &obj, NULL, true) == true) {
  *     printf("NAME=%s, DATA=%s", SIZE=%zu", obj.name, obj.data, obj.size);
  *     free(obj.name);
  *     free(obj.data);
  *   }
- *   entry->unlock(entry);
  * @endcode
  */
-static bool _getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newmem) {
+static bool _getNext(Q_ENTRY *entry, Q_ENTOBJ_T *obj, const char *name, bool newmem) {
 	if(entry == NULL || obj == NULL) return NULL;
-
-	Q_MUTEX_ENTER(entry->qmutex);
 
 	// if obj->name is NULL, it means this is first call.
 	if(obj->name == NULL) obj->next = entry->first;
 
-	Q_NLOBJ_T *cont;
+	Q_ENTOBJ_T *cont;
 	bool ret = false;
 	for(cont = obj->next; cont; cont = cont->next) {
 		if(name != NULL && strcmp(cont->name, name)) continue;
@@ -652,7 +565,6 @@ static bool _getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newm
 		break;
 	}
 
-	Q_MUTEX_LEAVE(entry->qmutex);
 	return ret;
 }
 
@@ -667,14 +579,12 @@ static bool _getNext(Q_ENTRY *entry, Q_NLOBJ_T *obj, const char *name, bool newm
 static int _remove(Q_ENTRY *entry, const char *name) {
 	if(entry == NULL || name == NULL) return 0;
 
-	Q_MUTEX_ENTER(entry->qmutex);
-
 	int removed = 0;
-	Q_NLOBJ_T *prev, *obj;
+	Q_ENTOBJ_T *prev, *obj;
 	for (prev = NULL, obj = entry->first; obj;) {
 		if (!strcmp(obj->name, name)) { /* found */
 			/* copy next chain */
-			Q_NLOBJ_T *next = obj->next;
+			Q_ENTOBJ_T *next = obj->next;
 
 			/* adjust counter */
 			entry->size -= obj->size;
@@ -702,7 +612,6 @@ static int _remove(Q_ENTRY *entry, const char *name) {
 		}
 	}
 
-	Q_MUTEX_LEAVE(entry->qmutex);
 	return removed;
 }
 
@@ -733,117 +642,16 @@ static int _getNum(Q_ENTRY *entry) {
 static int _getNo(Q_ENTRY *entry, const char *name) {
 	if(entry == NULL || name == NULL) return 0;
 
-	Q_MUTEX_ENTER(entry->qmutex);
 	int ret = 0;
 	int no;
-	Q_NLOBJ_T *obj;
+	Q_ENTOBJ_T *obj;
 	for(obj = entry->first, no = 1; obj; obj = obj->next, no++) {
 		if (!strcmp(name, obj->name)) {
 			ret = no;
 			break;
 		}
 	}
-	Q_MUTEX_LEAVE(entry->qmutex);
 	return ret;
-}
-
-/**
- * Q_ENTRY->parseStr(): Parse string with given entries.
- *
- * @param	entry	Q_ENTRY pointer
- * @param	str	string value which may contain variables like ${...}
- *
- * @return	malloced string if successful, otherwise returns NULL.
- *
- * @code
- *   ${key_name}          - variable replacement
- *   ${!system_command}   - external command results
- *   ${%PATH}             - get environments
- * @endcode
- *
- * @code
- *   char *info = entry->parseStr(entry, "${SOME_KEY} ${!uname -a} ${%PATH}", true);
- *   if(info != NULL) free(info);
- * @endcode
- */
-static char *_parseStr(Q_ENTRY *entry, const char *str) {
-	if(str == NULL) return NULL;
-	if(entry == NULL) return strdup(str);
-
-	Q_MUTEX_ENTER(entry->qmutex);
-
-	bool loop;
-	char *value = strdup(str);
-	do {
-		loop = false;
-
-		/* find ${ */
-		char *s, *e;
-		int openedbrakets;
-		for(s = value; *s != '\0'; s++) {
-			if(!(*s == _VAR && *(s+1) == _VAR_OPEN)) continue;
-
-			/* found ${, try to find }. s points $ */
-			openedbrakets = 1; /* braket open counter */
-			for(e = s + 2; *e != '\0'; e++) {
-				if(*e == _VAR && *(e+1) == _VAR_OPEN) { /* found internal ${ */
-					s = e - 1; /* e is always bigger than s, so negative overflow never occured */
-					break;
-				}
-				else if(*e == _VAR_OPEN) openedbrakets++;
-				else if(*e == _VAR_CLOSE) openedbrakets--;
-				else continue;
-
-				if(openedbrakets == 0) break;
-			}
-			if(*e == '\0') break; /* braket mismatch */
-			if(openedbrakets > 0) continue; /* found internal ${ */
-
-			/* pick string between ${, } */
-			int varlen = e - s - 2; /* length between ${ , } */
-			char *varstr = (char*)malloc(varlen + 3 + 1);
-			if(varstr == NULL) continue;
-			strncpy(varstr, s + 2, varlen);
-			varstr[varlen] = '\0';
-
-			/* get the new string to replace */
-			char *newstr = NULL;
-			switch (varstr[0]) {
-				case _VAR_CMD : {
-					if ((newstr = qStrTrim(qSysCmd(varstr + 1))) == NULL) newstr = strdup("");
-					break;
-				}
-				case _VAR_ENV : {
-					newstr = strdup(qSysGetEnv(varstr + 1, ""));
-					break;
-				}
-				default : {
-					if ((newstr = _getStr(entry, varstr, true)) == NULL) {
-						s = e; /* not found */
-						continue;
-					}
-					break;
-				}
-			}
-
-			/* replace */
-			strncpy(varstr, s, varlen + 3); /* ${str} */
-			varstr[varlen + 3] = '\0';
-
-			s = qStrReplace("sn", value, varstr, newstr);
-			free(newstr);
-			free(varstr);
-			free(value);
-			value = s;
-
-			loop = true;
-			break;
-		}
-	} while(loop == true);
-
-	Q_MUTEX_LEAVE(entry->qmutex);
-
-	return value;
 }
 
 /**
@@ -866,14 +674,12 @@ static void *_merge(Q_ENTRY *entry, size_t *size) {
 	if(final == NULL) return NULL;
 	void *dp = final;
 
-	Q_MUTEX_ENTER(entry->qmutex);
-	Q_NLOBJ_T *obj;
+	Q_ENTOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		memcpy(dp, obj->data, obj->size);
 		dp += obj->size;
 	}
 	*((char *)dp) = '\0';
-	Q_MUTEX_LEAVE(entry->qmutex);
 
 	if(size != NULL) *size = entry->size;
 	return final;
@@ -889,10 +695,9 @@ static void *_merge(Q_ENTRY *entry, size_t *size) {
 static bool _truncate(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
 
-	Q_MUTEX_ENTER(entry->qmutex);
-	Q_NLOBJ_T *obj;
+	Q_ENTOBJ_T *obj;
 	for(obj = entry->first; obj;) {
-		Q_NLOBJ_T *next = obj->next;
+		Q_ENTOBJ_T *next = obj->next;
 		free(obj->name);
 		free(obj->data);
 		free(obj);
@@ -903,7 +708,6 @@ static bool _truncate(Q_ENTRY *entry) {
 	entry->size = 0;
 	entry->first = NULL;
 	entry->last = NULL;
-	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return true;
 }
@@ -913,38 +717,32 @@ static bool _truncate(Q_ENTRY *entry) {
  *
  * @param	entry	Q_ENTRY pointer
  * @param	filepath save file path
- * @param	sepchar	separator character between name and value. normally '=' is used.
- * @param	encode	flag for encoding value object. false can be used if the value object
- *			is string or integer and has no new line. otherwise true must be set.
  *
  * @return	true if successful, otherwise returns false.
  */
-static bool _save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encode) {
+static bool _save(Q_ENTRY *entry, const char *filepath) {
 	if(entry == NULL) return false;
 
-	int fd;
-	if ((fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, DEF_FILE_MODE)) < 0) {
+	FILE *fd;
+	if ((fd = fopen(filepath, "w")) < 0) {
 		DEBUG("Q_ENTRY->save(): Can't open file %s", filepath);
 		return false;
 	}
 
-	char *gmtstr = qTimeGetGmtStr(0);
-	qIoPrintf(fd, 0, "# automatically generated by qDecoder at %s.\n", gmtstr);
-	qIoPrintf(fd, 0, "# %s\n", filepath);
-	free(gmtstr);
+	// change mode
+	fchmod(fileno(fd), DEF_FILE_MODE);
 
-	Q_MUTEX_ENTER(entry->qmutex);
-	Q_NLOBJ_T *obj;
+	fprintf(fd, "# Generated by " _Q_PRGNAME ".\n");
+	fprintf(fd, "# %s\n", filepath);
+
+	Q_ENTOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
-		char *encval;
-		if(encode == true) encval = qUrlEncode(obj->data, obj->size);
-		else encval = obj->data;
-		qIoPrintf(fd, 0, "%s%c%s\n", obj->name, sepchar, encval);
-		if(encode == true) free(encval);
+		char *encval = _qdecoder_urlencode(obj->data, obj->size);
+		fprintf(fd, "%s=%s\n", obj->name, encval);
+		free(encval);
 	}
-	Q_MUTEX_LEAVE(entry->qmutex);
 
-	close(fd);
+	fclose(fd);
 
 	return true;
 }
@@ -954,28 +752,29 @@ static bool _save(Q_ENTRY *entry, const char *filepath, char sepchar, bool encod
  *
  * @param	entry	Q_ENTRY pointer
  * @param	filepath save file path
- * @param	sepchar	separator character between name and value. normally '=' is used
- * @param	decode	flag for decoding value object
  *
  * @return	a number of loaded entries.
  */
-static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode) {
+static int _load(Q_ENTRY *entry, const char *filepath) {
 	if(entry == NULL) return 0;
 
-	Q_ENTRY *loaded;
-	if ((loaded = qConfigParseFile(NULL, filepath, sepchar)) == NULL) return false;
+	FILE *fp = fopen(filepath, "r");
+	if(fp == NULL) return 0;
 
-	Q_MUTEX_ENTER(entry->qmutex);
 	int cnt;
-	Q_NLOBJ_T *obj;
-	for(cnt = 0, obj = loaded->first; obj; obj = obj->next) {
-		if(decode == true) qUrlDecode(obj->data);
-		_put(entry, obj->name, obj->data, obj->size, false);
-		cnt++;
-	}
+	for(cnt = 0; ; cnt++) {
+		char *line = _qdecoder_fgetline(fp, MAX_LINEBUF);
+		if(line == NULL) break;
 
-	_free(loaded);
-	Q_MUTEX_LEAVE(entry->qmutex);
+		/* parse & store */
+		char *data = strdup(line);
+		char *name  = _qdecoder_makeword(data, '=');
+		_qdecoder_strtrim(data);
+		_qdecoder_strtrim(name);
+
+		size_t size = _qdecoder_urldecode(data);
+		_put(entry, name, data, size, false);
+	}
 
 	return cnt;
 }
@@ -994,10 +793,9 @@ static int _load(Q_ENTRY *entry, const char *filepath, char sepchar, bool decode
 static bool _reverse(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
 
-	Q_MUTEX_ENTER(entry->qmutex);
-	Q_NLOBJ_T *prev, *obj;
+	Q_ENTOBJ_T *prev, *obj;
 	for (prev = NULL, obj = entry->first; obj;) {
-		Q_NLOBJ_T *next = obj->next;
+		Q_ENTOBJ_T *next = obj->next;
 		obj->next = prev;
 		prev = obj;
 		obj = next;
@@ -1005,7 +803,6 @@ static bool _reverse(Q_ENTRY *entry) {
 
 	entry->last = entry->first;
 	entry->first = prev;
-	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return true;
 }
@@ -1021,12 +818,10 @@ static bool _reverse(Q_ENTRY *entry) {
 static bool _print(Q_ENTRY *entry, FILE *out, bool print_data) {
 	if(entry == NULL || out == NULL) return false;
 
-	Q_MUTEX_ENTER(entry->qmutex);
-	Q_NLOBJ_T *obj;
+	Q_ENTOBJ_T *obj;
 	for(obj = entry->first; obj; obj = obj->next) {
 		fprintf(out, "%s=%s (%zu)\n" , obj->name, (print_data?(char*)obj->data:"(data)"), obj->size);
 	}
-	Q_MUTEX_LEAVE(entry->qmutex);
 
 	return true;
 }
@@ -1042,7 +837,6 @@ static bool _free(Q_ENTRY *entry) {
 	if(entry == NULL) return false;
 
 	_truncate(entry);
-	Q_MUTEX_DESTROY(entry->qmutex);
 
 	free(entry);
 	return true;

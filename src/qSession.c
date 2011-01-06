@@ -29,14 +29,13 @@
  * @file qSession.c HTTP Session Handling API
  */
 
-#ifndef DISABLE_CGI
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <sys/time.h>
 #ifndef _WIN32
 #include <dirent.h>
 #endif
@@ -66,9 +65,10 @@
 
 #ifndef _DOXYGEN_SKIP
 
-static bool _clearRepository(const char *session_repository_path);
-static int _isValidSession(const char *filepath);
-static bool _updateTimeout(const char *filepath, time_t timeout_interval);
+static bool	_clearRepository(const char *session_repository_path);
+static int	_isValidSession(const char *filepath);
+static bool	_updateTimeout(const char *filepath, time_t timeout_interval);
+static char*	_genuniqid(void);
 
 #endif
 
@@ -102,7 +102,7 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 		sessionkey = request->getStr(request, SESSION_ID, true);
 		new_session = false;
 	} else { /* new session */
-		sessionkey = qStrUnique(getenv("REMOTE_ADDR"));
+		sessionkey = _genuniqid();
 		new_session = true;
 	}
 
@@ -112,8 +112,8 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 	char session_timeout_path[PATH_MAX];
 	time_t session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERVAL; /* seconds */
 
-	if (dirpath != NULL) qStrCpy(session_repository_path, sizeof(session_repository_path), dirpath);
-	else qStrCpy(session_repository_path, sizeof(session_repository_path), SESSION_DEFAULT_REPOSITORY);
+	if (dirpath != NULL) strncpy(session_repository_path, dirpath, sizeof(session_repository_path));
+	else strncpy(session_repository_path, SESSION_DEFAULT_REPOSITORY, sizeof(session_repository_path));
 	snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 	snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
@@ -122,13 +122,13 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 		int valid = _isValidSession(session_timeout_path);
 		if (valid <= 0) { /* expired or not found */
 			if(valid < 0) {
-				_q_unlink(session_storage_path);
-				_q_unlink(session_timeout_path);
+				_qdecoder_unlink(session_storage_path);
+				_qdecoder_unlink(session_timeout_path);
 			}
 
 			/* remake storage path */
 			free(sessionkey);
-			sessionkey = qStrUnique(getenv("REMOTE_ADDR"));
+			sessionkey = _genuniqid();
 			snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 			snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
@@ -155,7 +155,7 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 	} else { /* read session properties */
 
 		/* read exist session informations */
-		session->load(session, session_storage_path, '=', true);
+		session->load(session, session_storage_path);
 
 		/* update session informations */
 		int conns = session->getInt(session, INTER_CONNECTIONS);
@@ -230,7 +230,7 @@ bool qSessionSave(Q_ENTRY *session) {
 	snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 	snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
-	if (session->save(session, session_storage_path, '=', true) == false) {
+	if (session->save(session, session_storage_path) == false) {
 		DEBUG("Can't save session file %s", session_storage_path);
 		return false;
 	}
@@ -267,8 +267,8 @@ bool qSessionDestroy(Q_ENTRY *session) {
 	snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 	snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
-	_q_unlink(session_storage_path);
-	_q_unlink(session_timeout_path);
+	_qdecoder_unlink(session_storage_path);
+	_qdecoder_unlink(session_timeout_path);
 
 	if(session != NULL) session->free(session);
 	return true;
@@ -294,12 +294,12 @@ static bool _clearRepository(const char *session_repository_path) {
 			snprintf(timeoutpath, sizeof(timeoutpath), "%s/%s", session_repository_path, dirp->d_name);
 			if (_isValidSession(timeoutpath) <= 0) { /* expired */
 				/* remove timeout */
-				_q_unlink(timeoutpath);
+				_qdecoder_unlink(timeoutpath);
 
 				/* remove properties */
 				timeoutpath[strlen(timeoutpath) - strlen(SESSION_TIMEOUT_EXTENSION)] = '\0';
 				strcat(timeoutpath, SESSION_STORAGE_EXTENSION);
-				_q_unlink(timeoutpath);
+				_qdecoder_unlink(timeoutpath);
 			}
 		}
 	}
@@ -314,7 +314,7 @@ static int _isValidSession(const char *filepath) {
 	time_t timeout, timenow;
 	double timediff;
 
-	if ((timeout = (time_t)qCountRead(filepath)) == 0) return 0;
+	if ((timeout = (time_t)_qdecoder_countread(filepath)) == 0) return 0;
 
 	timenow = time(NULL);
 	timediff = difftime(timeout, timenow); /* return timeout - timenow */
@@ -327,10 +327,32 @@ static int _isValidSession(const char *filepath) {
 static bool _updateTimeout(const char *filepath, time_t timeout_interval) {
 	if(timeout_interval <= 0) return false;
 
-	if(qCountSave(filepath, (time(NULL) + timeout_interval)) == false) return false;
+	if(_qdecoder_countsave(filepath, (time(NULL) + timeout_interval)) == false) return false;
 	return true;
 }
 
-#endif /* _DOXYGEN_SKIP */
+static char *_genuniqid(void) {
+#ifdef _WIN32
+	unsigned int sec = time(NULL);
+	FILETIME ft;
+	GetSystemTimeAsFileTime(&ft);
+	unsigned int usec = ft.dwLowDateTime % 1000000;
+#else
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	unsigned int sec = tv.tv_sec;
+	unsigned int usec = tv.tv_usec;
+#endif
+	unsigned int port = 0;
+	const char *remote_port = getenv("REMOTE_PORT");
+	if(remote_port != NULL) {
+		port = atoi(remote_port);
+	}
 
-#endif /* DISABLE_CGI */
+	char *uniqid = (char*)malloc(5+5+4+4+1);
+	sprintf(uniqid, "%05x%05x%04x%04x", usec%0x100000, sec%0x100000, getpid()%0x10000, port%0x10000);
+
+	return uniqid;
+}
+
+#endif /* _DOXYGEN_SKIP */

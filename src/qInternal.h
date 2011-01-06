@@ -62,112 +62,9 @@ do {										\
 	}									\
 } while(0)
 
-// debug timer
-#include <sys/time.h>
-#define TIMER_START()									\
-	int _swno = 0;									\
-	struct timeval _tv1, _tv2;							\
-	gettimeofday(&_tv1, NULL)
-
-#define TIMER_STOP(prefix)	{							\
-	gettimeofday(&_tv2, NULL);							\
-	_swno++;									\
-	struct timeval _diff;								\
-	_diff.tv_sec = _tv2.tv_sec - _tv1.tv_sec;					\
-	if(_tv2.tv_usec >= _tv1.tv_usec) _diff.tv_usec = _tv2.tv_usec - _tv1.tv_usec;	\
-	else { _diff.tv_sec -= 1; _diff.tv_usec = 1000000 - _tv1.tv_usec + _tv2.tv_usec; }	\
-	printf("TIMER(%d,%s,%d): %zus %dus (%s:%d)\n", getpid(), prefix, _swno, _diff.tv_sec, (int)(_diff.tv_usec), __FILE__, __LINE__);	\
-	gettimeofday(&_tv1, NULL);							\
-}
-
-/*
- * Q_MUTEX Macros
- */
-#ifdef ENABLE_THREADSAFE
-
-#ifndef _MULTI_THREADED
-#define	_MULTI_THREADED
-#endif
-
-#include <time.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <errno.h>
-
-#define Q_MUTEX_INIT(x,r)								\
-do {											\
-	memset((void*)&x, 0, sizeof(Q_MUTEX_T));					\
-	pthread_mutexattr_t _mutexattr;							\
-	pthread_mutexattr_init(&_mutexattr);						\
-	if(r == true) {									\
-		pthread_mutexattr_settype(&_mutexattr, PTHREAD_MUTEX_RECURSIVE);	\
-	}										\
-	int _ret = pthread_mutex_init(&x.mutex, &_mutexattr);				\
-	pthread_mutexattr_destroy(&_mutexattr);						\
-	if(_ret != 0) {									\
-		char _errmsg[64];							\
-		strerror_r(_ret, _errmsg, sizeof(_errmsg));				\
-		DEBUG("Q_MUTEX: can't initialize mutex. [%d:%s]", _ret, _errmsg);	\
-		exit(EXIT_FAILURE);							\
-	}										\
-	DEBUG("Q_MUTEX: initialized.");							\
-} while(0)
-//pthread_mutexattr_setprotocol(&_mutexattr, PTHREAD_PRIO_INHERIT);
-
-#define	Q_MUTEX_LEAVE(x)								\
-do {											\
-	if(!pthread_equal(x.owner, pthread_self())) DEBUG("Q_MUTEX: unlock - owner mismatch.");	\
-	if((x.count--) < 0) x.count = 0;						\
-	pthread_mutex_unlock(&x.mutex);							\
-} while(0)
-//	DEBUG("Q_MUTEX: unlock, cnt=%d", x.count);
-
-#define MAX_MUTEX_LOCK_WAIT	(5000)
-#define	Q_MUTEX_ENTER(x)								\
-do {											\
-	while(true) {									\
-		int _ret, i;								\
- 		for(i = 0; (_ret = pthread_mutex_trylock(&x.mutex)) != 0 && i < MAX_MUTEX_LOCK_WAIT; i++) {	\
-			if(i == 0) DEBUG("Q_MUTEX: mutex is already locked - try again");	\
-			usleep(1);							\
-		}									\
-		if(_ret == 0) break;							\
-		char _errmsg[64];							\
-		strerror_r(_ret, _errmsg, sizeof(_errmsg));				\
-		DEBUG("Q_MUTEX: can't get lock - force to unlock. [%d:%s]", _ret, _errmsg);	\
-		Q_MUTEX_LEAVE(x);							\
-	}										\
-	x.count++;									\
-	x.owner = pthread_self();							\
-} while(0)
-//	DEBUG("Q_MUTEX: locked, cnt=%d", x.count);
-
-#define Q_MUTEX_DESTROY(x)								\
-do {											\
-	if(x.count != 0) DEBUG("Q_MUTEX: mutex counter is not 0.");			\
-	int _ret;									\
-	while((_ret = pthread_mutex_destroy(&x.mutex)) != 0) {				\
-		char _errmsg[64];							\
-		strerror_r(_ret, _errmsg, sizeof(_errmsg));				\
-		DEBUG("Q_MUTEX: force to unlock mutex. [%d:%s]", _ret, _errmsg);	\
-		Q_MUTEX_LEAVE(x);							\
-	}										\
-	DEBUG("Q_MUTEX: destroyed.");							\
-} while(0)
-
-#else
-
-#define	Q_MUTEX_INIT(x,y)
-#define	Q_MUTEX_LEAVE(x)
-#define	Q_MUTEX_ENTER(x)
-#define	Q_MUTEX_DESTROY(x)
-
-#endif	/* ENABLE_THREADSAFE */
-
 /*
  * Internal Definitions
  */
-#define QDECODER_PRIVATEKEY	"qDecoder-by-SEUNGYOUNG.KIM"
 #define	MAX_LINEBUF		(1023+1)
 #define	DEF_DIR_MODE		(S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #define	DEF_FILE_MODE		(S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
@@ -175,12 +72,21 @@ do {											\
 /*
  * qInternalCommon.c
  */
-extern	void	_q_die(const char *errstr);
-extern	void*	_q_malloc(size_t size);
-extern	char	_q_x2c(char hex_up, char hex_low);
-extern	char*	_q_makeword(char *str, char stop);
-extern	char*	_q_fgets(char *str, int size, FILE *stream);
-extern	int	_q_unlink(const char *pathname);
+extern	char	_qdecoder_x2c(char hex_up, char hex_low);
+extern	char*	_qdecoder_makeword(char *str, char stop);
+extern	char*	_qdecoder_urlencode(const void *bin, size_t size);
+extern	size_t	_qdecoder_urldecode(char *str);
+extern	char*	_qdecoder_fgets(char *str, size_t size, FILE *fp);
+extern	char*	_qdecoder_fgetline(FILE *fp, size_t initsize);
+extern	int	_qdecoder_unlink(const char *pathname);
+extern	char*	_qdecoder_strcpy(char *dst, size_t size, const char *src);
+extern	char*	_qdecoder_strtrim(char *str);
+extern	char*	_qdecoder_strunchar(char *str, char head, char tail);
+extern	char*	_qdecoder_filename(const char *filepath);
+extern	off_t	_qdecoder_filesize(const char *filepath);
+extern	off_t	_qdecoder_iosend(int outfd, int infd, off_t nbytes);
+extern	int	_qdecoder_countread(const char *filepath);
+extern	bool	_qdecoder_countsave(const char *filepath, int number);
 
 /*
  * To prevent compiler warning

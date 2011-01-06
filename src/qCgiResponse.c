@@ -29,8 +29,6 @@
  * @file qCgiResponse.c CGI Cookie Handling API
  */
 
-#ifndef DISABLE_CGI
-
 #ifdef ENABLE_FASTCGI
 #include "fcgi_stdio.h"
 #else
@@ -82,17 +80,20 @@ bool qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value
 	}
 
 	/* name=value */
-	char *encname = qUrlEncode(name, strlen(name));
-	char *encvalue = qUrlEncode(value, strlen(value));
+	char *encname = _qdecoder_urlencode(name, strlen(name));
+	char *encvalue = _qdecoder_urlencode(value, strlen(value));
 	char cookie[(4 * 1024) + 256];
 	snprintf(cookie, sizeof(cookie), "%s=%s", encname, encvalue);
 	free(encname), free(encvalue);
 
 	if (expire != 0) {
-		char *gmtstr = qTimeGetGmtStr(time(NULL) + expire);
+		char gmtstr[sizeof(char) * (CONST_STRLEN("Mon, 00 Jan 0000 00:00:00 GMT") + 1)];
+		time_t utctime = time(NULL);
+		struct tm *gmtm = gmtime(&utctime);
+		strftime(gmtstr, sizeof(gmtstr), "%a, %d %b %Y %H:%M:%S GMT", gmtm);
+
 		strcat(cookie, "; expires=");
 		strcat(cookie, gmtstr);
-		free(gmtstr);
 	}
 
 	if (path != NULL) {
@@ -243,19 +244,21 @@ int qCgiResponseDownload(Q_ENTRY *request, const char *filepath, const char *mim
 	if (!strcmp(mime, "application/octet-stream")) disposition = "attachment";
 	else disposition = "inline";
 
-	char *filename = qFileGetName(filepath);
+	char *filename = _qdecoder_filename(filepath);
+	off_t filesize = _qdecoder_filesize(filepath);
 
 	printf("Content-Disposition: %s;filename=\"%s\"\n", disposition, filename);
 	printf("Content-Transfer-Encoding: binary\n");
 	printf("Accept-Ranges: bytes\n");
-	printf("Content-Length: %zu\n", (size_t)qFileGetSize(filepath));
+	printf("Content-Length: %zu\n", (size_t)filesize);
 	printf("Connection: close\n");
 	qCgiResponseSetContentType(request, mime);
 
 	free(filename);
 
 	fflush(stdout);
-	int sent = qIoSend(fileno(stdout), fd, qFileGetSize(filepath), -1);
+
+	int sent = _qdecoder_iosend(fileno(stdout), fd, filesize);
 
 	close(fd);
 	return sent;
@@ -297,8 +300,6 @@ void qCgiResponseError(Q_ENTRY *request, char *format, ...) {
 	}
 
 	free(buf);
-	request->free(request);
+	if(request != NULL) request->free(request);
 	exit(EXIT_FAILURE);
 }
-
-#endif /* DISABLE_CGI */
