@@ -28,13 +28,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "qDecoder.h"
 
 #define BASEPATH	"upload"
+
+ssize_t savefile(const char *filepath, const void *buf, size_t size) {
+
+	int fd = open(filepath, O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+	if(fd < 0) return -1;
+
+	ssize_t count = write(fd, buf, size);
+	close(fd);
+
+	return count;
+}
+
 int main(void) {
 
 	/* Parse queries. */
-	Q_ENTRY *req = qCgiRequestParse(NULL);
+	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
 
 	/* get queries */
 	const char *text = req->getStr(req, "text", false);
@@ -50,7 +66,7 @@ int main(void) {
 	char  filepath[1024];
 	sprintf(filepath, "%s/%s", BASEPATH, filename);
 
-	if (qFileSave(filepath, filedata, filelength, false) < 0) {
+	if (savefile(filepath, filedata, filelength) < 0) {
 		qCgiResponseError(req, "File(%s) open fail. Please make sure CGI or directory has right permission.", filepath);
 	}
 
