@@ -127,8 +127,6 @@ struct _Q_ENTRY {
 	int		(*remove)	(Q_ENTRY *entry, const char *name);
 
 	int 		(*getNum)	(Q_ENTRY *entry);
-	int		(*getNo)	(Q_ENTRY *entry, const char *name);
-	void*		(*merge)	(Q_ENTRY *entry, size_t *size);
 
 	bool		(*truncate)	(Q_ENTRY *entry);
 	bool		(*save)		(Q_ENTRY *entry, const char *filepath);

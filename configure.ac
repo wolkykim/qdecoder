@@ -1,6 +1,6 @@
 ## qDecoder - http://www.qdecoder.org
 ##
-## Copyright 2010 The qDecoder Project. All rights reserved.
+## Copyright 2000-2010 The qDecoder Project. All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
 ## modification, are permitted provided that the following conditions
@@ -29,7 +29,7 @@ AC_COPYRIGHT([
 =============================================================================
 qDecoder - http://www.qdecoder.org
 
-Copyright 2010 The qDecoder Project. All rights reserved.
+Copyright 2000-2010 The qDecoder Project. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions

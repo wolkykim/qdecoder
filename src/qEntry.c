@@ -629,63 +629,6 @@ static int _getNum(Q_ENTRY *entry) {
 }
 
 /**
- * Q_ENTRY->getNo(): Get stored logical sequence number for the object.
- *
- * @param	entry	Q_ENTRY pointer
- * @param	name	key name
- *
- * @return	stored sequence number of the object if found, otherwise 0 will be returned.
- *
- * @note
- * Sequence number starts from 1.
- */
-static int _getNo(Q_ENTRY *entry, const char *name) {
-	if(entry == NULL || name == NULL) return 0;
-
-	int ret = 0;
-	int no;
-	Q_ENTOBJ_T *obj;
-	for(obj = entry->first, no = 1; obj; obj = obj->next, no++) {
-		if (!strcmp(name, obj->name)) {
-			ret = no;
-			break;
-		}
-	}
-	return ret;
-}
-
-/**
- * Q_ENTRY->merge(): Merge all objects data into single object.
- *
- * @param	entry	Q_ENTRY pointer
- * @param	size	if size is not NULL, merged object size will be stored.
- *
- * @return	a malloced pointer, otherwise(if there is no data to merge) returns NULL.
- *
- * @note
- * For the convenience, it allocates 1 byte more than actual total data size and store '\0' at the end.
- * But size parameter will have actual size(allocated size - 1).
- * Returned memory should be de-allocated by user.
- */
-static void *_merge(Q_ENTRY *entry, size_t *size) {
-	if(entry == NULL || entry->num <= 0) return NULL;
-
-	void *final = (void*)malloc(entry->size + 1);
-	if(final == NULL) return NULL;
-	void *dp = final;
-
-	Q_ENTOBJ_T *obj;
-	for(obj = entry->first; obj; obj = obj->next) {
-		memcpy(dp, obj->data, obj->size);
-		dp += obj->size;
-	}
-	*((char *)dp) = '\0';
-
-	if(size != NULL) *size = entry->size;
-	return final;
-}
-
-/**
  * Q_ENTRY->truncate(): Truncate Q_ENTRY
  *
  * @param	entry	Q_ENTRY pointer
