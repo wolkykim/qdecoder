@@ -64,7 +64,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "qDecoder.h"
+#include "qdecoder.h"
 #include "qInternal.h"
 
 /*
@@ -98,8 +98,6 @@ static bool		_getNext(Q_ENTRY *entry, Q_ENTOBJ_T *obj, const char *name, bool ne
 static int		_remove(Q_ENTRY *entry, const char *name);
 
 static int 		_getNum(Q_ENTRY *entry);
-static int		_getNo(Q_ENTRY *entry, const char *name);
-static void*		_merge(Q_ENTRY *entry, size_t *size);
 
 static bool		_truncate(Q_ENTRY *entry);
 static bool		_save(Q_ENTRY *entry, const char *filepath);
@@ -148,8 +146,6 @@ Q_ENTRY *qEntry(void) {
 	entry->remove		= _remove;
 
 	entry->getNum		= _getNum;
-	entry->getNo		= _getNo;
-	entry->merge		= _merge;
 
 	entry->truncate		= _truncate;
 	entry->save		= _save;
@@ -749,7 +745,6 @@ static bool _reverse(Q_ENTRY *entry) {
 
 	return true;
 }
-
 
 /**
  * Q_ENTRY->print(): Print out stored objects for debugging purpose.

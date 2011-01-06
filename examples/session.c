@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "qDecoder.h"
+#include "qdecoder.h"
 
 int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL, 0);

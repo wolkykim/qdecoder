@@ -39,7 +39,7 @@
 #ifndef _WIN32
 #include <dirent.h>
 #endif
-#include "qDecoder.h"
+#include "qdecoder.h"
 #include "qInternal.h"
 
 #ifdef _WIN32

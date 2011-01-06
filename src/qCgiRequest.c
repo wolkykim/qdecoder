@@ -162,7 +162,7 @@
 #ifndef _WIN32
 #include <dirent.h>	/* to use opendir() */
 #endif
-#include "qDecoder.h"
+#include "qdecoder.h"
 #include "qInternal.h"
 
 #ifndef _DOXYGEN_SKIP

@@ -43,7 +43,7 @@
 #include <libgen.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "qDecoder.h"
+#include "qdecoder.h"
 #include "qInternal.h"
 
 /**

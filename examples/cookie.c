@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include "qDecoder.h"
+#include "qdecoder.h"
 
 int main(void) {
 	/* Parse (GET/COOKIE/POST) queries. */

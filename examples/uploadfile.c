@@ -28,7 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "qDecoder.h"
+#include "qdecoder.h"
+
 #define BASEPATH	"upload"
 #define TMPPATH		"tmp"
 

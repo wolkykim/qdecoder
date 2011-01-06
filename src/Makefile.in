@@ -27,7 +27,7 @@ prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 
 ## Name
-PRGNAME		= qDecoder
+PRGNAME		= qdecoder
 
 ## Static Library Name
 LIBNAME		= lib${PRGNAME}.a
@@ -73,14 +73,14 @@ qdecoder: ${OBJ}
 	${LN_S} -f ${SLIBREALNAME} ${SLIBNAME}
 
 install: all
-	${INSTALL_DATA} qDecoder.h ${HEADERDIR}/qDecoder.h
+	${INSTALL_DATA} qdecoder.h ${HEADERDIR}/qdecoder.h
 	${INSTALL_DATA} ${LIBNAME} ${LIBDIR}/${LIBNAME}
 	${INSTALL_DATA} ${SLIBREALNAME} ${LIBDIR}/${SLIBREALNAME}
 	${LN_S} -f ${LIBDIR}/${SLIBREALNAME} ${LIBDIR}/${SLIBNAME}
 
 deinstall: uninstall
 uninstall:
-	${RM} -f ${HEADERDIR}/qDecoder.h
+	${RM} -f ${HEADERDIR}/qdecoder.h
 	${RM} -f ${LIBDIR}/${LIBNAME}
 	${RM} -f ${LIBDIR}/${SLIBREALNAME}
 	${RM} -f ${LIBDIR}/${SLIBNAME}

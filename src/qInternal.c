@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/file.h>
-#include "qDecoder.h"
+#include "qdecoder.h"
 #include "qInternal.h"
 
 // Change two hex character to one hex value.

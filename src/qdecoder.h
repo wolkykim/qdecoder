@@ -28,7 +28,7 @@
 /**
  * qDecoder Header file
  *
- * @file	qDecoder.h
+ * @file	qdecoder.h
  */
 
 #ifndef _QDECODER_H
