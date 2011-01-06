@@ -32,8 +32,7 @@ CFLAGS	= @CFLAGS@
 CPPFLAGS= -I../src/ @CPPFLAGS@
 LIBS	= ../src/libqDecoder.a @LIBS@
 
-TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi streamedit.cgi session.cgi config.cgi socket.cgi obstack.cgi \
-	hashtable.cgi
+TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi session.cgi
 
 ## Main
 all:	${TARGETS}
@@ -54,29 +53,14 @@ upload.cgi: upload.o
 uploadfile.cgi: uploadfile.o
 	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ uploadfile.o ${LIBS}
 	chmod 6755 uploadfile.cgi
-	mkdir -p -m 755 upload tmp
+	mkdir -p -m 777 upload tmp
 
 download.cgi: download.o
 	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ download.o ${LIBS}
 
-streamedit.cgi: streamedit.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ streamedit.o ${LIBS}
-
 session.cgi: session.o
 	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ session.o ${LIBS}
 	chmod 6755 session.cgi
-
-config.cgi: config.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ config.o ${LIBS}
-
-socket.cgi: socket.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ socket.o ${LIBS}
-
-obstack.cgi: obstack.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ obstack.o ${LIBS}
-
-hashtable.cgi: hashtable.o
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ hashtable.o ${LIBS}
 
 ## Clear Module
 clean:
