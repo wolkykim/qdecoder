@@ -1,6 +1,0 @@
-<html>
-<head>
-  <title>Example result of streamedit.cgi / NAME=${NAME}, HOBBY=${HOBBY}</title>
-</head>
-<body>
-<p>This is header file, <a href="streamedit-header.html.in">streamedit-header.html.in</a>.
