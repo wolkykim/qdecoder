@@ -32,12 +32,12 @@
 #include "qDecoder.h"
 
 int main(void) {
-	/* Parse (GET/COOKIE/POST) queries. */
-	Q_ENTRY *req = qCgiRequestParse(NULL);
+	/* Parse (COOKIE/GET/POST) queries. */
+	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
 	qCgiResponseSetContentType(req, "text/html");
 
 	printf("Your order : ");
-	Q_NLOBJ_T obj;
+	Q_ENTOBJ_T obj;
 	memset((void*)&obj, 0, sizeof(obj)); // must be cleared before call
 	while(req->getNext(req, &obj, "checklist", false) == true) {
 		printf("<b>%s</b> \n", (char *)obj.data);

@@ -31,7 +31,7 @@
 #include "qDecoder.h"
 
 int main(void) {
-	Q_ENTRY *req = qCgiRequestParse(NULL);
+	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
 
 	/* fetch queries */
 	time_t expire = (time_t)req->getInt(req, "expire");

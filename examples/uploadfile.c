@@ -34,20 +34,19 @@
 
 int main(void) {
 	// parse queries
-	Q_ENTRY *req = qCgiRequestParseOption(true, TMPPATH, (1 * 60 * 60));
+	Q_ENTRY *req = qCgiRequestSetOption(NULL, true, TMPPATH, 60);
 	if(req == NULL) qCgiResponseError(req, "Can't set option.");
-	req = qCgiRequestParse(req);
-	if(req == NULL) return 0;
+
+	req = qCgiRequestParse(req, 0);
+	if(req == NULL) qCgiResponseError(req, "Server error.");
 
 	// get queries
 	const char *text = req->getStr(req, "text", false);
-	if (text == NULL) return 0;
 	if (text == NULL) qCgiResponseError(req, "Invalid usages.");
 
 	// result out
 	qCgiResponseSetContentType(req, "text/html");
 	printf("You entered: <b>%s</b>\n", text);
-
 	int i;
 	for (i = 1; i <= 3; i++) {
 		char name[31+1];

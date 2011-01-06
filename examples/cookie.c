@@ -33,7 +33,7 @@
 
 int main(void) {
 	/* Parse (GET/COOKIE/POST) queries. */
-	Q_ENTRY *req = qCgiRequestParse(NULL);
+	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
 
 	const char *mode = req->getStr(req, "mode", false);
 	const char *name = req->getStr(req, "cname", false);

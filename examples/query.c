@@ -32,7 +32,7 @@
 
 int main(void) {
 	/* Parse queries. */
-	Q_ENTRY *req = qCgiRequestParse(NULL);
+	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
 
 	/* Get query */
 	char *value = (char *)req->getStr(req, "query", false);
