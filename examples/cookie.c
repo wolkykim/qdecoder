@@ -32,25 +32,25 @@
 #include "qdecoder.h"
 
 int main(void) {
-	/* Parse (GET/COOKIE/POST) queries. */
+	// Parse (GET/COOKIE/POST) queries.
 	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
 
 	const char *mode = req->getStr(req, "mode", false);
 	const char *name = req->getStr(req, "cname", false);
 	const char *value = req->getStr(req, "cvalue", false);
 
-	if (mode == NULL) { /* View Cookie */
+	if (mode == NULL) { // View Cookie
 		qCgiResponseSetContentType(req, "text/plain");
 		printf("Total %d entries\n", req->getNum(req));
 		req->print(req, stdout, true);
-	} else if (!strcmp(mode, "set")) { /* Set Cookie */
+	} else if (!strcmp(mode, "set")) { // Set Cookie
 		if (name == NULL || value == NULL) qCgiResponseError(req, "Query not found");
 		if (strlen(name) == 0) qCgiResponseError(req, "Empty cookie name can not be stored.");
 
 		qCgiResponseSetCookie(req, name, value, 0, NULL, NULL, false);
 		qCgiResponseSetContentType(req, "text/html");
 		printf("Cookie('%s'='%s') entry is stored.<br>Click <a href='cookie.cgi'>here</a> to view your cookies\n", name, value);
-	} else if (!strcmp(mode, "remove")) { /* Remove Cookie */
+	} else if (!strcmp(mode, "remove")) { // Remove Cookie
 		if (name == NULL) qCgiResponseError(req, "Query not found");
 		if (!strcmp(name, "")) qCgiResponseError(req, "Empty cookie name can not be removed.");
 

@@ -33,16 +33,16 @@
 int main(void) {
 	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
 
-	/* fetch queries */
+	// fetch queries
 	time_t expire = (time_t)req->getInt(req, "expire");
 	const char *mode = req->getStr(req, "mode", false);
 	const char *name   = req->getStr(req, "name", false);
 	const char *value  = req->getStr(req, "value", false);
 
-	/* start session. */
+	// start session.
 	Q_ENTRY *sess = qSessionInit(req, NULL);
 
-	/* Mose case, you don't need to set timeout. this is just example */
+	// Mose case, you don't need to set timeout. this is just example
 	if (expire > 0) qSessionSetTimeout(sess, expire);
 
 	switch (mode[0]) {
@@ -62,11 +62,11 @@ int main(void) {
 			break;
 		}
 	}
-	/* screen out */
+	// screen out
 	qCgiResponseSetContentType(req, "text/plain");
 	req->print(sess, stdout, true);
 
-	/* save session & free allocated memories */
+	// save session & free allocated memories
 	qSessionSave(sess);
 	sess->free(sess);
 	req->free(req);

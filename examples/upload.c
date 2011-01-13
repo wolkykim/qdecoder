@@ -48,18 +48,17 @@ ssize_t savefile(const char *filepath, const void *buf, size_t size) {
 }
 
 int main(void) {
-
-	/* Parse queries. */
+	// Parse queries.
 	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
 
-	/* get queries */
+	// get queries
 	const char *text = req->getStr(req, "text", false);
 	const char *filedata   = req->getStr(req, "binary", false);
 	int filelength = req->getInt(req, "binary.length");
 	const char *filename   = req->getStr(req, "binary.filename", false);
 	const char *contenttype = req->getStr(req, "binary.contenttype", false);
 
-	/* check queries */
+	// check queries
 	if (text == NULL) qCgiResponseError(req, "Invalid usages.");
 	if (filename == NULL || filelength == 0) qCgiResponseError(req, "Select file, please.");
 
@@ -70,17 +69,17 @@ int main(void) {
 		qCgiResponseError(req, "File(%s) open fail. Please make sure CGI or directory has right permission.", filepath);
 	}
 
-	/* result out */
+	// result out
 	qCgiResponseSetContentType(req, "text/html");
 	printf("You entered: <b>%s</b>\n", text);
 	printf("<br><a href=\"%s\">%s</a> (%d bytes, %s) saved.", filepath, filename, filelength, contenttype);
 
-	/* dump */
+	// dump
 	printf("\n<p><hr>--[ DUMP INTERNAL DATA STRUCTURE ]--\n<pre>");
 	req->print(req, stdout, false);
 	printf("\n</pre>\n");
 
-	/* de-allocate */
+	// de-allocate
 	req->free(req);
 	return 0;
 }

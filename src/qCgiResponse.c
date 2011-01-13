@@ -73,13 +73,11 @@
  * @endcode
  */
 bool qCgiResponseSetCookie(Q_ENTRY *request, const char *name, const char *value, int expire, const char *path, const char *domain, bool secure) {
-	/* check content flag */
 	if (qCgiResponseGetContentType(request) != NULL) {
 		DEBUG("Should be called before qCgiResponseSetContentType().");
 		return false;
 	}
 
-	/* name=value */
 	char *encname = _qdecoder_urlencode(name, strlen(name));
 	char *encvalue = _qdecoder_urlencode(value, strlen(value));
 	char cookie[(4 * 1024) + 256];

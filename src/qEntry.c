@@ -122,7 +122,7 @@ Q_ENTRY *qEntry(void) {
 
 	memset((void *)entry, 0, sizeof(Q_ENTRY));
 
-	/* member methods */
+	// member methods
 	entry->put		= _put;
 	entry->putStr		= _putStr;
 	entry->putStrf		= _putStrf;
@@ -168,14 +168,14 @@ Q_ENTRY *qEntry(void) {
  * @return	true if successful, otherwise returns false.
  */
 static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size, bool replace) {
-	/* check arguments */
+	// check arguments
 	if(entry == NULL || name == NULL || data == NULL || size <= 0) return false;
 
-	/* duplicate name */
+	// duplicate name
 	char *dup_name = strdup(name);
 	if(dup_name == NULL) return false;
 
-	/* duplicate object */
+	// duplicate object
 	void *dup_data = malloc(size);
 	if(dup_data == NULL) {
 		free(dup_name);
@@ -183,7 +183,7 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size
 	}
 	memcpy(dup_data, data, size);
 
-	/* make new object entry */
+	// make new object entry
 	Q_ENTOBJ_T *obj = (Q_ENTOBJ_T*)malloc(sizeof(Q_ENTOBJ_T));
 	if(obj == NULL) {
 		free(dup_name);
@@ -195,10 +195,10 @@ static bool _put(Q_ENTRY *entry, const char *name, const void *data, size_t size
 	obj->size = size;
 	obj->next = NULL;
 
-	/* if replace flag is set, remove same key */
+	// if replace flag is set, remove same key
 	if (replace == true) _remove(entry, dup_name);
 
-	/* make chain link */
+	// make chain link
 	if(entry->first == NULL) entry->first = entry->last = obj;
 	else {
 		entry->last->next = obj;
@@ -577,32 +577,32 @@ static int _remove(Q_ENTRY *entry, const char *name) {
 	int removed = 0;
 	Q_ENTOBJ_T *prev, *obj;
 	for (prev = NULL, obj = entry->first; obj;) {
-		if (!strcmp(obj->name, name)) { /* found */
-			/* copy next chain */
+		if (!strcmp(obj->name, name)) { // found
+			// copy next chain
 			Q_ENTOBJ_T *next = obj->next;
 
-			/* adjust counter */
+			// adjust counter
 			entry->size -= obj->size;
 			entry->num--;
 			removed++;
 
-			/* remove entry itself*/
+			// remove entry itself
 			free(obj->name);
 			free(obj->data);
 			free(obj);
 
-			/* adjust chain links */
-			if(next == NULL) entry->last = prev;	/* if the object is last one */
-			if(prev == NULL) entry->first = next;	/* if the object is first one */
-			else prev->next = next;			/* if the object is middle or last one */
+			// adjust chain links
+			if(next == NULL) entry->last = prev;	// if the object is last one
+			if(prev == NULL) entry->first = next;	// if the object is first one
+			else prev->next = next;			// if the object is middle or last one
 
-			/* set next entry */
+			// set next entry
 			obj = next;
 		} else {
-			/* remember prev object */
+			// remember prev object
 			prev = obj;
 
-			/* set next entry */
+			// set next entry
 			obj = obj->next;
 		}
 	}
@@ -704,7 +704,7 @@ static int _load(Q_ENTRY *entry, const char *filepath) {
 		char *line = _qdecoder_fgetline(fp, MAX_LINEBUF);
 		if(line == NULL) break;
 
-		/* parse & store */
+		// parse & store
 		char *data = strdup(line);
 		char *name  = _qdecoder_makeword(data, '=');
 		_qdecoder_strtrim(data);

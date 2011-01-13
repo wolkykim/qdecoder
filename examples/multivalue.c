@@ -32,7 +32,7 @@
 #include "qdecoder.h"
 
 int main(void) {
-	/* Parse (COOKIE/GET/POST) queries. */
+	// Parse (COOKIE/GET/POST) queries.
 	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
 	qCgiResponseSetContentType(req, "text/html");
 

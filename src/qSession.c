@@ -85,7 +85,7 @@ static char*	_genuniqid(void);
  * functions then finally call qSessionSave() to store updated session data.
  */
 Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
-	/* check content flag */
+	// check content flag
 	if (qCgiResponseGetContentType(request) != NULL) {
 		DEBUG("Should be called before qRequestSetContentType().");
 		return NULL;
@@ -94,54 +94,54 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 	Q_ENTRY *session = qEntry();
 	if(session == NULL) return NULL;
 
-	/* check session status & get session id */
+	// check session status & get session id
 	bool new_session;
 	char *sessionkey;
 	if(request->getStr(request, SESSION_ID, false) != NULL) {
 		sessionkey = request->getStr(request, SESSION_ID, true);
 		new_session = false;
-	} else { /* new session */
+	} else { // new session
 		sessionkey = _genuniqid();
 		new_session = true;
 	}
 
-	/* make storage path for session */
+	// make storage path for session
 	char session_repository_path[PATH_MAX];
 	char session_storage_path[PATH_MAX];
 	char session_timeout_path[PATH_MAX];
-	time_t session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERVAL; /* seconds */
+	time_t session_timeout_interval = (time_t)SESSION_DEFAULT_TIMEOUT_INTERVAL; // seconds
 
 	if (dirpath != NULL) strncpy(session_repository_path, dirpath, sizeof(session_repository_path));
 	else strncpy(session_repository_path, SESSION_DEFAULT_REPOSITORY, sizeof(session_repository_path));
 	snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 	snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
-	/* validate exist session */
+	// validate exist session
 	if (new_session == false) {
 		int valid = _isValidSession(session_timeout_path);
-		if (valid <= 0) { /* expired or not found */
+		if (valid <= 0) { // expired or not found
 			if(valid < 0) {
 				_qdecoder_unlink(session_storage_path);
 				_qdecoder_unlink(session_timeout_path);
 			}
 
-			/* remake storage path */
+			// remake storage path
 			free(sessionkey);
 			sessionkey = _genuniqid();
 			snprintf(session_storage_path, sizeof(session_storage_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_STORAGE_EXTENSION);
 			snprintf(session_timeout_path, sizeof(session_timeout_path), "%s/%s%s%s", session_repository_path, SESSION_PREFIX, sessionkey, SESSION_TIMEOUT_EXTENSION);
 
-			/* set flag */
+			// set flag
 			new_session = true;
 		}
 	}
 
-	/* if new session, set session id */
+	// if new session, set session id
 	if (new_session == true) {
 		qCgiResponseSetCookie(request, SESSION_ID, sessionkey, 0, "/", NULL, NULL);
-		request->putStr(request, SESSION_ID, sessionkey, true); /* force to add session_in to query list */
+		request->putStr(request, SESSION_ID, sessionkey, true); // force to add session_in to query list
 
-		/* save session informations */
+		// save session informations
 		char created_sec[10+1];
 		snprintf(created_sec, sizeof(created_sec), "%ld", (long int)time(NULL));
 		session->putStr(session, INTER_SESSIONID, sessionkey, false);
@@ -149,24 +149,24 @@ Q_ENTRY *qSessionInit(Q_ENTRY *request, const char *dirpath) {
 		session->putStr(session, INTER_CREATED_SEC, created_sec, false);
 		session->putInt(session, INTER_CONNECTIONS, 1, false);
 
-		/* set timeout interval */
+		// set timeout interval
 		qSessionSetTimeout(session, session_timeout_interval);
-	} else { /* read session properties */
+	} else { // read session properties
 
-		/* read exist session informations */
+		// read exist session informations
 		session->load(session, session_storage_path);
 
-		/* update session informations */
+		// update session informations
 		int conns = session->getInt(session, INTER_CONNECTIONS);
 		session->putInt(session, INTER_CONNECTIONS, ++conns, true);
 
-		/* set timeout interval */
+		// set timeout interval
 		qSessionSetTimeout(session, session->getInt(session, INTER_INTERVAL_SEC));
 	}
 
 	free(sessionkey);
 
-	/* set globals */
+	// set globals
 	return session;
 }
 
@@ -279,7 +279,7 @@ static bool _clearRepository(const char *session_repository_path) {
 #ifdef _WIN32
 	return false;
 #else
-	/* clear old session data */
+	// clear old session data
 	DIR *dp;
 	if ((dp = opendir(session_repository_path)) == NULL) {
 		DEBUG("Can't open session repository %s", session_repository_path);
@@ -291,11 +291,11 @@ static bool _clearRepository(const char *session_repository_path) {
 		if (strstr(dirp->d_name, SESSION_PREFIX) && strstr(dirp->d_name, SESSION_TIMEOUT_EXTENSION)) {
 			char timeoutpath[PATH_MAX];
 			snprintf(timeoutpath, sizeof(timeoutpath), "%s/%s", session_repository_path, dirp->d_name);
-			if (_isValidSession(timeoutpath) <= 0) { /* expired */
-				/* remove timeout */
+			if (_isValidSession(timeoutpath) <= 0) { // expired
+				// remove timeout
 				_qdecoder_unlink(timeoutpath);
 
-				/* remove properties */
+				// remove properties
 				timeoutpath[strlen(timeoutpath) - strlen(SESSION_TIMEOUT_EXTENSION)] = '\0';
 				strcat(timeoutpath, SESSION_STORAGE_EXTENSION);
 				_qdecoder_unlink(timeoutpath);
@@ -308,7 +308,7 @@ static bool _clearRepository(const char *session_repository_path) {
 #endif
 }
 
-/* session not found 0, session expired -1, session valid 1 */
+// session not found 0, session expired -1, session valid 1
 static int _isValidSession(const char *filepath) {
 	time_t timeout, timenow;
 	double timediff;
@@ -316,13 +316,13 @@ static int _isValidSession(const char *filepath) {
 	if ((timeout = (time_t)_qdecoder_countread(filepath)) == 0) return 0;
 
 	timenow = time(NULL);
-	timediff = difftime(timeout, timenow); /* return timeout - timenow */
+	timediff = difftime(timeout, timenow); // return timeout - timenow
 
-	if (timediff >= 0) return 1; /* valid */
-	return -1; /* expired */
+	if (timediff >= 0) return 1; // valid
+	return -1; // expired
 }
 
-/* success > 0, write fail 0 */
+// success > 0, write fail 0
 static bool _updateTimeout(const char *filepath, time_t timeout_interval) {
 	if(timeout_interval <= 0) return false;
 

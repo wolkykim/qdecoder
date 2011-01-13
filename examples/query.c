@@ -31,19 +31,18 @@
 #include "qdecoder.h"
 
 int main(void) {
-	/* Parse queries. */
+	// Parse queries.
 	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
 
-	/* Get query */
+	// Get values
 	char *value = (char *)req->getStr(req, "query", false);
 	if(value == NULL) value = "(nothing)";
 
-	/* Print out context type */
+	// Print out
 	qCgiResponseSetContentType(req, "text/html");
 	printf("You entered: <b>%s</b>\n", value);
 
-	/* De-allocate memories */
+	// De-allocate memories
 	req->free(req);
 	return 0;
 }
-

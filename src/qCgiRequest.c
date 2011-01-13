@@ -113,33 +113,6 @@
  *   binary.contenttype = application/vnd.ms-excel
  *   binary.savepath = tmp/q_wcktIq
  * @endcode
- *
- * If you want to activate progress mode. Please follow below steps
- * @li 1) copy "examples/qDecoder-upload/" folder under your Web Document Root.
- * @li 2) modify your HTML codes like below.
- * @code
- *   [HTML sample]
- *   <script language="JavaScript"
- *           src="/_(SOME_PATH)_/qDecoder-upload/qDecoder-upload.js"></script>
- *   <form method="post" action="your_program.cgi"
- *         enctype="multipart/form-data" onSubmit="return Q_UPLOAD(this);">
- *     <input type="hidden" name="Q_UPLOAD_ID" value="">
- *
- *     Input text: <input type="text" name="text">
- *     <br>Select file: <input type="file" name="binary1">
- *     <br>Another file: <input type="file" name="binary2">
- *     <br><input type="submit">
- *   </form>
- *   int main(...) {
- *     // the first line in main().
- *     Q_ENTRY *req = qCgiRequestSetOption(NULL, true, "/tmp", 86400);
- *     req = qCgiRequestParse(req, 0);
- *
- *     (...your codes here...)
- *
- *     req->free(req);
- *   }
- * @endcode
  */
 
 #ifdef ENABLE_FASTCGI
@@ -156,7 +129,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifndef _WIN32
-#include <dirent.h>	/* to use opendir() */
+// to use opendir()
+#include <dirent.h>
 #endif
 #include "qdecoder.h"
 #include "internal.h"
@@ -343,7 +317,6 @@ char *qCgiRequestGetQuery(Q_CGI_T method) {
 
 #ifndef _DOXYGEN_SKIP
 
-/* For decode multipart/form-data, used by qRequestInit() */
 static int _parse_multipart(Q_ENTRY *request) {
 #ifdef _WIN32
 	setmode(fileno(stdin), _O_BINARY);
@@ -357,7 +330,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 	 * For parse multipart/form-data method
 	 */
 
-	/* Force to check the boundary string length to defense overflow attack */
+	// Force to check the boundary string length to defense overflow attack
 	char boundary[256];
 	int maxboundarylen = CONST_STRLEN("--");
 	maxboundarylen += strlen(strstr(getenv("CONTENT_TYPE"), "boundary=") + CONST_STRLEN("boundary="));
@@ -368,14 +341,14 @@ static int _parse_multipart(Q_ENTRY *request) {
 		return amount;
 	}
 
-	/* find boundary string - Hidai Kenichi made this patch for handling quoted boundary string */
+	// find boundary string - Hidai Kenichi made this patch for handling quoted boundary string
 	char boundary_orig[256];
 	_qdecoder_strcpy(boundary_orig, sizeof(boundary_orig), strstr(getenv("CONTENT_TYPE"), "boundary=") + CONST_STRLEN("boundary="));
 	_qdecoder_strtrim(boundary_orig);
 	_qdecoder_strunchar(boundary_orig, '"', '"');
 	snprintf(boundary, sizeof(boundary), "--%s", boundary_orig);
 
-	/* If you want to observe the string from stdin, uncomment this section. */
+	// If you want to observe the string from stdin, uncomment this section.
 	/*
 	if (true) {
 		int i, j;
@@ -395,13 +368,13 @@ static int _parse_multipart(Q_ENTRY *request) {
 	}
 	*/
 
-	/* check boundary */
+	// check boundary
 	if (_qdecoder_fgets(buf, sizeof(buf), stdin) == NULL) {
 		DEBUG("Bbrowser sent a non-HTTP compliant message.");
 		return amount;
 	}
 
-	/* for explore 4.0 of NT, it sent \r\n before starting, fucking Micro$oft */
+	// for explore 4.0 of NT, it sent \r\n before starting.
 	if (!strcmp(buf, "\r\n")) _qdecoder_fgets(buf, sizeof(buf), stdin);
 
 	if (strncmp(buf, boundary, strlen(boundary)) != 0) {
@@ -409,8 +382,8 @@ static int _parse_multipart(Q_ENTRY *request) {
 		return amount;
 	}
 
-	/* check file save mode */
-	bool upload_filesave = false; /* false: save into memory, true: save into file */
+	// check file save mode
+	bool upload_filesave = false; // false: save into memory, true: save into file
 	const char *upload_basepath = request->getStr(request, "_Q_UPLOAD_BASEPATH", false);
 	if(upload_basepath != NULL) upload_filesave = true;
 
@@ -419,24 +392,24 @@ static int _parse_multipart(Q_ENTRY *request) {
 		char *name = NULL, *value = NULL, *filename = NULL, *contenttype = NULL;
 		int valuelen = 0;
 
-		/* get information */
+		// get information
 		while (_qdecoder_fgets(buf, sizeof(buf), stdin)) {
 			if (!strcmp(buf, "\r\n")) break;
 			else if (!strncasecmp(buf, "Content-Disposition: ", CONST_STRLEN("Content-Disposition: "))) {
 				int c_count;
 
-				/* get name field */
+				// get name field
 				name = strdup(buf + CONST_STRLEN("Content-Disposition: form-data; name=\""));
 				for (c_count = 0; (name[c_count] != '\"') && (name[c_count] != '\0'); c_count++);
 				name[c_count] = '\0';
 
-				/* get filename field */
+				// get filename field
 				if (strstr(buf, "; filename=\"") != NULL) {
 					int erase;
 					filename = strdup(strstr(buf, "; filename=\"") + CONST_STRLEN("; filename=\""));
 					for (c_count = 0; (filename[c_count] != '\"') && (filename[c_count] != '\0'); c_count++);
 					filename[c_count] = '\0';
-					/* remove directory from path, erase '\' */
+					// remove directory from path, erase '\'
 					for (erase = 0, c_count = strlen(filename) - 1; c_count >= 0; c_count--) {
 						if (erase == 1) filename[c_count] = ' ';
 						else {
@@ -448,7 +421,8 @@ static int _parse_multipart(Q_ENTRY *request) {
 					}
 					_qdecoder_strtrim(filename);
 
-					if(strlen(filename) == 0) { /* empty attachment */
+					// empty attachment
+					if(strlen(filename) == 0) {
 						free(filename);
 						filename = NULL;
 					}
@@ -459,13 +433,13 @@ static int _parse_multipart(Q_ENTRY *request) {
 			}
 		}
 
-		/* check */
+		// check
 		if(name == NULL) {
 			DEBUG("bug or invalid format.");
 			continue;
 		}
 
-		/* get value field */
+		// get value field
 		if (filename != NULL && upload_filesave == true) {
 			char *tp, *savename = strdup(filename);
 			for(tp = savename; *tp != '\0'; tp++) if(*tp == ' ') *tp = '_'; // replace ' ' to '_'
@@ -481,19 +455,19 @@ static int _parse_multipart(Q_ENTRY *request) {
 			else request->putStr(request, name, "(parsing failure)", false);
 		}
 
-		/* store some additional info */
+		// store some additional info
 		if (value != NULL && filename != NULL) {
 			char ename[255+10+1];
 
-			/* store data length, 'NAME.length'*/
+			// store data length, 'NAME.length'
 			snprintf(ename, sizeof(ename), "%s.length", name);
 			request->putInt(request, ename, valuelen, false);
 
-			/* store filename, 'NAME.filename'*/
+			// store filename, 'NAME.filename'
 			snprintf(ename, sizeof(ename), "%s.filename", name);
 			request->putStr(request, ename, filename, false);
 
-			/* store contenttype, 'NAME.contenttype'*/
+			// store contenttype, 'NAME.contenttype'
 			snprintf(ename, sizeof(ename), "%s.contenttype", name);
 			request->putStr(request, ename, ((contenttype!=NULL)?contenttype:""), false);
 
@@ -503,7 +477,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 			}
 		}
 
-		/* free stuffs */
+		// free stuffs
 		if(name != NULL) free(name);
 		if(value != NULL) free(value);
 		if(filename != NULL) free(filename);
@@ -523,7 +497,7 @@ static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, b
 	int  length;
 	int  c, c_count, mallocsize;
 
-	/* set boundary strings */
+	// set boundary strings
 	snprintf(boundaryEOF, sizeof(boundaryEOF), "%s--", boundary);
 	snprintf(rnboundaryEOF, sizeof(rnboundaryEOF), "\r\n%s", boundaryEOF);
 	snprintf(boundaryrn, sizeof(boundaryrn), "%s\r\n", boundary);
@@ -545,7 +519,7 @@ static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, b
 
 			mallocsize *= 2;
 
-			/* Here, we do not use realloc(). Because sometimes it is unstable. */
+			// Here, we do not use realloc(). Because sometimes it is unstable.
 			valuetmp = (char *)malloc(sizeof(char) * mallocsize);
 			if (valuetmp == NULL) {
 				DEBUG("Memory allocation fail.");
@@ -559,7 +533,7 @@ static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, b
 		}
 		value[c_count++] = (char)c;
 
-		/* check end */
+		// check end
 		if ((c == '\n') || (c == '-')) {
 			value[c_count] = '\0';
 
@@ -579,7 +553,7 @@ static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen, b
 				}
 			}
 
-			/* For Micro$oft Explore on MAC, they do not follow rules */
+			// For MS Explore on MAC
 			if ((c_count - (boundarylen + 2)) == 0) {
 				if (!strcmp(value, boundaryrn)) {
 					value[0] = '\0';
@@ -614,12 +588,12 @@ static char *_parse_multipart_value_into_disk(const char *boundary, const char *
 	char boundaryrn[256], rnboundaryrn[256];
 	int  boundarylen, boundaryEOFlen;
 
-	/* input */
+	// input
 	char buffer[_Q_MULTIPART_CHUNK_SIZE];
 	int  bufc;
 	int  c;
 
-	/* set boundary strings */
+	// set boundary strings
 	snprintf(boundaryEOF, sizeof(boundaryEOF), "%s--", boundary);
 	snprintf(rnboundaryEOF, sizeof(rnboundaryEOF), "\r\n%s", boundaryEOF);
 	snprintf(boundaryrn, sizeof(boundaryrn), "%s\r\n", boundary);
@@ -628,7 +602,7 @@ static char *_parse_multipart_value_into_disk(const char *boundary, const char *
 	boundarylen    = strlen(boundary);
 	boundaryEOFlen = strlen(boundaryEOF);
 
-	/* open temp file */
+	// open temp file
 	char upload_path[PATH_MAX];
 	snprintf(upload_path, sizeof(upload_path), "%s/q_XXXXXX", savedir);
 
@@ -639,14 +613,14 @@ static char *_parse_multipart_value_into_disk(const char *boundary, const char *
 		return NULL;
 	}
 
-	/* change permission */
+	// change permission
 	fchmod(upload_fd, DEF_FILE_MODE);
 
-	/* read stream */
+	// read stream
 	int  upload_length;
 	for (upload_length = 0, bufc = 0, upload_length = 0; (c = fgetc(stdin)) != EOF; ) {
 		if (bufc == sizeof(buffer) - 1) {
-			/* save */
+			// save
 			int leftsize = boundarylen + 8;
 			int savesize = bufc - leftsize;
 			write(upload_fd, buffer, savesize);
@@ -656,7 +630,7 @@ static char *_parse_multipart_value_into_disk(const char *boundary, const char *
 		buffer[bufc++] = (char)c;
 		upload_length++;
 
-		/* check end */
+		// check end
 		if ((c == '\n') || (c == '-')) {
 			buffer[bufc] = '\0';
 
@@ -676,7 +650,7 @@ static char *_parse_multipart_value_into_disk(const char *boundary, const char *
 				}
 			}
 
-			/* For Micro$oft Explore on MAC, they do not follow rules */
+			// For MS Explore on MAC
 			if (upload_length == bufc) {
 				if ((bufc - (boundarylen + 2)) == 0) {
 					if (!strcmp(buffer, boundaryrn)) {
@@ -703,7 +677,7 @@ static char *_parse_multipart_value_into_disk(const char *boundary, const char *
 		return NULL;
 	}
 
-	/* save rest */
+	// save rest
 	write(upload_fd, buffer, bufc);
 	close(upload_fd);
 
@@ -718,7 +692,7 @@ static int _upload_clear_base(const char *upload_basepath, int upload_clearold) 
 #else
 	if (upload_clearold <= 0) return -1;
 
-	/* open upload folder */
+	// open upload folder
 	DIR     *dp;
 	if ((dp = opendir(upload_basepath)) == NULL) return false;
 
