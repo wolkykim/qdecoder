@@ -180,6 +180,7 @@ bool qCgiResponseSetContentType(Q_ENTRY *request, const char *mimetype) {
  * @endcode
  */
 const char *qCgiResponseGetContentType(Q_ENTRY *request) {
+	if(request == NULL) return NULL;
 	return request->getStr(request, "_Q_CONTENTTYPE", false);
 }
 
