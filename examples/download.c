@@ -31,6 +31,7 @@
 #include "qdecoder.h"
 
 int main(void) {
-	qCgiResponseDownload(NULL, "download.c", "text/plain");
+	Q_ENTRY *req = qCgiRequestParse(NULL, 0);
+	qCgiResponseDownload(req, "download.c", "text/plain");
 	return 0;
 }
