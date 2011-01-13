@@ -26,7 +26,7 @@
  */
 
 /**
- * @file qCgiResponse.c CGI Cookie Handling API
+ * @file qCgiResponse.c CGI Response API
  */
 
 #ifdef ENABLE_FASTCGI

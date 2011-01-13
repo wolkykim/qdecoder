@@ -26,7 +26,7 @@
  */
 
 /**
- * @file qSession.c HTTP Session Handling API
+ * @file qSession.c CGI Session API
  */
 
 #include <stdio.h>
@@ -53,6 +53,9 @@
 #define SESSION_STORAGE_EXTENSION	".properties"
 #define SESSION_TIMEOUT_EXTENSION	".expire"
 #define SESSION_TIMETOCLEAR_FILENAME	"qsession-timetoclear"
+#define SESSION_DEFAULT_TIMEOUT_INTERVAL	(30 * 60)
+
+#ifndef _DOXYGEN_SKIP
 
 #define INTER_PREFIX			"_Q_"
 #define INTER_SESSIONID			INTER_PREFIX "SESSIONID"
@@ -60,10 +63,6 @@
 #define INTER_CREATED_SEC		INTER_PREFIX "CREATED"
 #define INTER_INTERVAL_SEC		INTER_PREFIX "INTERVAL"
 #define INTER_CONNECTIONS		INTER_PREFIX "CONNECTIONS"
-
-#define SESSION_DEFAULT_TIMEOUT_INTERVAL	(30 * 60)
-
-#ifndef _DOXYGEN_SKIP
 
 static bool	_clearRepository(const char *session_repository_path);
 static int	_isValidSession(const char *filepath);

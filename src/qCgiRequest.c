@@ -26,7 +26,7 @@
  */
 
 /**
- * @file qCgiRequest.c Web Query & Cookie Handling API
+ * @file qCgiRequest.c CGI Request Parsing API
  *
  * qDecoder supports parsing of
  *
