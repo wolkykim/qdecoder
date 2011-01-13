@@ -14,7 +14,7 @@
 <p><h1>qDecoder CGI Examples</h1>
 
 <i>
-<p>qDecoder is a development kit for C/C++ network programming includes CGI/FastCGI supports.
+<p>qDecoder is a CGI/FastCGI library for C/C++.
 <p>The qDecoder Project
 <br><a href="http://www.qdecoder.org/">http://www.qdecoder.org</a>
 </i>
@@ -39,7 +39,7 @@ POST method: application/x-www-form-urlencoded<br>
 </form>
 
 <!-- ex) cookie.cgi -->
-<p><hr noshade>
+<p><hr size="1" noshade>
 <h3>Example: <a href="cookie.c">cookie.c</a></h3>
 <form method="post" action="cookie.cgi">
   <input type="hidden" name="mode" value="set">
@@ -52,7 +52,9 @@ POST method: application/x-www-form-urlencoded<br>
   <input type="text" name="cname" value="Name" size="10">
   <input type="submit" value="REMOVE COOKIE">
 </form>
-<p>[<a href="cookie.cgi">View Cookie Variables</a>]
+<form method="post" action="cookie.cgi">
+  <input type="submit" value="VIEW COOKIES">
+</form>
 
 <!-- ex) multivalue.cgi -->
 <hr size="1" noshade>
@@ -95,38 +97,30 @@ So qDecoder uses smaller memory to handle huge size of file.
 <!-- ex) download.cgi -->
 <hr size="1" noshade>
 <h3>Example: <a href="download.c">download.c</a></h3>
-[<a href="download.cgi">Download example</a>]
-<p>
+
+<form method="get" action="download.cgi">
+  <input type="submit" value="DOWNLOAD download.c">
+</form>
 
 <!-- ex) session.cgi -->
 <hr size="1" noshade>
 <h3>Example: <a href="session.c">session.c</a></h3>
 <form method="post" action="session.cgi">
-  <input type="hidden" name="mode" value="string">
+  <input type="hidden" name="mode" value="set">
   <input type="text" name="name" value="Name" size="10">
   <input type="text" name="value" value="Value">
-  <input type="submit" value="ADD(SIMPLE)">
-</form>
-
-<form method="post" action="session.cgi">
-  <input type="text" name="name" value="Name" size="10">
-  <input type="text" name="value" value="Value">
-  <select name="mode">
-    <option value="string">STRING TYPE
-    <option value="integer">INTEGER
-  </select>
   <select name="expire">
     <option value="5">5 sec
     <option value="10">10 sec
     <option value="30">30 sec
     <option value="60">1 min
-    <option value="1800" selected>30 min (default)
+    <option value="1800" selected>default (30 min)
     <option value="3600">1 hour
     <option value="86400">1 day
     <option value="604800">1 week
     <option value="2592000">1 month
   </select>
-  <input type="submit" value="ADD(ADVANCED)">
+  <input type="submit" value="SET">
 </form>
 
 <form method="post" action="session.cgi">
@@ -135,8 +129,15 @@ So qDecoder uses smaller memory to handle huge size of file.
   <input type="submit" value="REMOVE">
 </form>
 
-[<a href="session.cgi?mode=view">View Session Variables</a>]
-[<a href="session.cgi?mode=destroy">Destroy Session</a>]
+<form method="post" action="session.cgi">
+  <input type="hidden" name="mode" value="destroy">
+  <input type="submit" value="DESTROY/CLEAR SESSION">
+</form>
+
+<form method="post" action="session.cgi">
+  <input type="hidden" name="mode" value="view">
+  <input type="submit" value="VIEW SESSION">
+</form>
 
 <!-- End of examples -->
 <hr noshade>

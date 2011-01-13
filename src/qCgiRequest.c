@@ -28,14 +28,14 @@
 /**
  * @file qCgiRequest.c Web Query & Cookie Handling API
  *
- * qDecoder supports parsing
+ * qDecoder supports parsing of
+ *
  *   @li COOKIE
  *   @li GET method
  *   @li POST method (application/x-www-form-urlencoded: default FORM encoding)
  *   @li POST method (multipart/form-data: especially used for file uploading)
  *
- * Anyway you don't care about this. You don't need to know which method
- * (COOKIE/GET/POST) is used for sending data.
+ * And parsed elements are stored in Q_ENTRY linked-list structure.
  *
  * @code
  *   [HTML sample]
@@ -51,10 +51,11 @@
  *   req->free(req);
  * @endcode
  *
- * The storing sequence is (1)COOKIE (2)GET (3)POST. Thus if same query names
- * (which are sent by different method) exist, COOKIE query will be returned.
+ * The sequence of parsing is (1)COOKIE (2)GET (3)POST.
+ * Thus if there is a same query name existing in different methods,
+ * COOKIE values will be stored first than GET or POST values.
  *
- * If you would like to get POST queries only. See below sample codes.
+ * You can parse queries only sent through a particular method. See below sample codes.
  * @code
  *   Q_ENTRY *req = qCgiRequestParse(NULL, Q_CGI_POST);
  *   const char *color = req->getStr(req, "color", false);
@@ -62,7 +63,7 @@
  *   req->free(req);
  * @endcode
  *
- * If you would like to get POST and COOKIE queries only. See below sample codes.
+ * If you want to parse only POST and COOKIE methods, you can do that like below.
  * @code
  *   Q_ENTRY *req = NULL;
  *   req = qCgiRequestParse(req, Q_CGI_COOKIE);
@@ -72,18 +73,13 @@
  *   req->free(req);
  * @endcode
 
- * In case of multipart/form-data encoding(used for file uploading), qDecoder
- * supports 2 modes for handling file uploading. I just made a name for that.
+ * In terms of multipart/form-data encoding(used for file uploading),
+ * qDecoder can handle that in two different ways internally.
  *
  * @li <b>default mode</b> : Uploading file will be processed only in memory.
  * (see examples/upload.c)
- * @li <b>file mode</b>	: Uploading file will be stored into unique temporary
- * file on the fly.
- * There is sub mode named <b>progress mode</b>. This is same as file mode.
- * But user can see the progress bar while uploading.
- * When file mode is turned on and if you add some specific HTML codes
- * in your uploading page, progressive window will be shown automatically.
- * (see examples/uploadprogress.c)
+ * @li <b>file mode</b>	: Uploading file will be stored directly into disk.
+ * (see examples/uploadfile.c)
  *
  * You can switch to file mode by calling qCgiRequestSetOption().
  * @code
@@ -111,11 +107,11 @@
  *   binary.contenttype = application/vnd.ms-excel
  *
  *   [file mode example]
- *   binary = tmp/Q_7b91698bc6d6ac7eaac93e71ce729b7c/1-hello.xls
+ *   binary = tmp/q_wcktIq
+ *   binary.length = 60014
  *   binary.filename = hello.xls
- *   binary.length = 3292
  *   binary.contenttype = application/vnd.ms-excel
- *   binary.savepath = tmp/Q_7b91698bc6d6ac7eaac93e71ce729b7c/1-hello.xls
+ *   binary.savepath = tmp/q_wcktIq
  * @endcode
  *
  * If you want to activate progress mode. Please follow below steps
@@ -163,7 +159,7 @@
 #include <dirent.h>	/* to use opendir() */
 #endif
 #include "qdecoder.h"
-#include "qInternal.h"
+#include "internal.h"
 
 #ifndef _DOXYGEN_SKIP
 static int  _parse_multipart(Q_ENTRY *request);
@@ -379,9 +375,9 @@ static int _parse_multipart(Q_ENTRY *request) {
 	_qdecoder_strunchar(boundary_orig, '"', '"');
 	snprintf(boundary, sizeof(boundary), "--%s", boundary_orig);
 
-	/* If you want to observe the string from stdin, enable this section. */
-	/* This section is made for debugging.                                */
-	if (false) {
+	/* If you want to observe the string from stdin, uncomment this section. */
+	/*
+	if (true) {
 		int i, j;
 		qCgiResponseSetContentType(request, "text/html");
 
@@ -397,6 +393,7 @@ static int _parse_multipart(Q_ENTRY *request) {
 		}
 		exit(EXIT_SUCCESS);
 	}
+	*/
 
 	/* check boundary */
 	if (_qdecoder_fgets(buf, sizeof(buf), stdin) == NULL) {

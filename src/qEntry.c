@@ -30,29 +30,28 @@
  *
  * @code
  *   [Code sample - String]
-*
- *   // sample data
- *   struct MY_OBJ *my_obj = getNewMyOjb(); // sample object
- *   char *my_str = "hello"; // sample string
- *   int my_int = 1; // sample integer
  *
- *   // store into linked-list
+ *   // init a linked-list.
  *   Q_ENTRY *entry = qEntry();
- *   entries = entry->put(entry, "obj", (void*)my_obj, sizeof(struct MY_OBJ), true);
- *   entries = entry->putStr(entry, "obj", my_str, true);
- *   entries = entry->putInt(entry, "obj", my_int, true);
  *
- *   // print out
+ *   // insert a string element
+ *   entry->putStr(entry, "str", "hello world", true);
+ *
+ *   // get the string.
+ *   char *str = entry->getStr(entry, "str", false);
+ *   if(str != NULL) {
+ *     printf("str = %s\n", str);
+ *     free(str);
+ *   }
+ *
+ *   // print out all elements in the list.
  *   entry->print(entry, stdout, false);
  *
- *   // free object
+ *   // free the list.
  *   entry->free(entry);
  *
  *   [Result]
  * @endcode
- *
- * @note
- * Use "--enable-threadsafe" configure script option to use under multi-threaded environments.
  */
 
 #include <stdio.h>
@@ -65,7 +64,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "qdecoder.h"
-#include "qInternal.h"
+#include "internal.h"
 
 /*
  * Member method protos

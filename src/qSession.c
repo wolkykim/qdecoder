@@ -40,7 +40,7 @@
 #include <dirent.h>
 #endif
 #include "qdecoder.h"
-#include "qInternal.h"
+#include "internal.h"
 
 #ifdef _WIN32
 #define	SESSION_DEFAULT_REPOSITORY	"C:\\Windows\\Temp"

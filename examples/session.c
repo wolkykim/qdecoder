@@ -50,10 +50,6 @@ int main(void) {
 			req->putStr(sess, name, value, true);
 			break;
 		}
-		case 'i': {
-			req->putInt(sess, name, atoi(value), true);
-			break;
-		}
 		case 'r': {
 			req->remove(sess, name);
 			break;
@@ -61,7 +57,7 @@ int main(void) {
 		case 'd': {
 			qSessionDestroy(sess);
 			qCgiResponseSetContentType(req, "text/html");
-			printf("Session destroied.\n");
+			printf("Session reinitialized.\n");
 			return 0;
 			break;
 		}

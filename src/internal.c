@@ -34,7 +34,7 @@
 #include <errno.h>
 #include <sys/file.h>
 #include "qdecoder.h"
-#include "qInternal.h"
+#include "internal.h"
 
 // Change two hex character to one hex value.
 char _qdecoder_x2c(char hex_up, char hex_low) {

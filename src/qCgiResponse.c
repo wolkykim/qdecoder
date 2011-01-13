@@ -44,7 +44,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "qdecoder.h"
-#include "qInternal.h"
+#include "internal.h"
 
 /**
  * Set cookie

@@ -30,7 +30,7 @@ exec_prefix	= @exec_prefix@
 CC	= @CC@
 CFLAGS	= @CFLAGS@
 CPPFLAGS= -I../src/ @CPPFLAGS@
-LIBS	= ../src/libqDecoder.a @LIBS@
+LIBS	= ../src/libqdecoder.a @LIBS@
 
 TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi session.cgi
 
