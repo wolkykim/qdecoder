@@ -258,8 +258,8 @@ static bool _putStrf(Q_ENTRY *entry, bool replace, const char *name, const char 
  * @return	true if successful, otherwise returns false.
  */
 static bool _putInt(Q_ENTRY *entry, const char *name, int num, bool replace) {
-	char str[10+1];
-	sprintf(str, "%d", num);
+	char str[20+1];
+	if(snprintf(str, 20+1, "%d", num) >= 20+1) str[20] = '\0';
 	return _put(entry, name, (void *)str, strlen(str) + 1, replace);
 }
 
@@ -452,8 +452,8 @@ static char *_getStrLast(Q_ENTRY *entry, const char *name, bool newmem) {
  * @return	a integer value of the integer object, otherwise returns 0.
  */
 static int _getInt(Q_ENTRY *entry, const char *name) {
-	char *str = _get(entry, name, NULL, true);
 	int n = 0;
+	char *str = _get(entry, name, NULL, true);
 	if(str != NULL) {
 		n = atoi(str);
 		free(str);

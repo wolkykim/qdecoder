@@ -349,7 +349,7 @@ static char *_genuniqid(void) {
 	}
 
 	char *uniqid = (char*)malloc(5+5+4+4+1);
-	sprintf(uniqid, "%05x%05x%04x%04x", usec%0x100000, sec%0x100000, getpid()%0x10000, port%0x10000);
+	if(snprintf(uniqid, 5+5+4+4+1, "%05x%05x%04x%04x", usec%0x100000, sec%0x100000, getpid()%0x10000, port%0x10000) >= 5+5+4+4+1) uniqid[5+5+4+4] = '\0';;
 
 	return uniqid;
 }
