@@ -176,7 +176,7 @@ Q_ENTRY *qCgiRequestSetOption(Q_ENTRY *request, bool filemode, const char *basep
 		}
 
 		// clear old files
-		if(_upload_clear_base(basepath, clearold) < 0) {
+		if(clearold > 0 && _upload_clear_base(basepath, clearold) < 0) {
 			request->free(request);
 			return NULL;
 		}
