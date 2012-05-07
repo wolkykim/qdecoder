@@ -46,6 +46,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <time.h>
 
 /*
  * Types and definitions
