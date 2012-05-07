@@ -1,57 +1,61 @@
+################################################################################
 ## qDecoder - http://www.qdecoder.org
 ##
-## Copyright 2000-2010 The qDecoder Project. All rights reserved.
+## Copyright (c) 2000-2012 Seungyoung Kim.
+## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
-## modification, are permitted provided that the following conditions
-## are met:
+## modification, are permitted provided that the following conditions are met:
 ##
-## 1. Redistributions of source code must retain the above copyright
-##    notice, this list of conditions and the following disclaimer.
-## 2. Redistributions in binary form must reproduce the above copyright
-##    notice, this list of conditions and the following disclaimer in the
-##    documentation and/or other materials provided with the distribution.
+## 1. Redistributions of source code must retain the above copyright notice,
+##    this list of conditions and the following disclaimer.
+## 2. Redistributions in binary form must reproduce the above copyright notice,
+##    this list of conditions and the following disclaimer in the documentation
+##    and/or other materials provided with the distribution.
 ##
-## THIS SOFTWARE IS PROVIDED BY THE QDECODER PROJECT ``AS IS'' AND ANY
-## EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-## WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-## DISCLAIMED. IN NO EVENT SHALL THE QDECODER PROJECT BE LIABLE FOR ANY
-## DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-## (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-## LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-## ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-## THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##
+## THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+## AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+## IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+## ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+## LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+################################################################################
 ## $Id$
+################################################################################
 
 AC_COPYRIGHT([
-=============================================================================
-qDecoder - http://www.qdecoder.org
+==============================================================================
+ qDecoder - http://www.qdecoder.org
 
-Copyright 2000-2010 The qDecoder Project. All rights reserved.
+ Copyright (c) 2000-2012 Seungyoung Kim.
+ All rights reserved.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
 
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE QDECODER PROJECT ``AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE QDECODER PROJECT BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-=============================================================================
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+==============================================================================
 ])
 
 ## Internal functions
@@ -72,7 +76,7 @@ AC_DEFUN([Q_ARG_DISABLE], [
 ])
 
 ## Initialize
-AC_INIT([qDecoder], [11 RELEASE], [http://www.qdecoder.org/])
+AC_INIT([qDecoder], [12 RELEASE], [http://www.qdecoder.org/])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile])
@@ -92,7 +96,11 @@ AC_PROG_CC
 if test $ac_compiler_gnu = yes; then
 	CFLAGS="-Wall -fPIC"
 #else
-#	AC_MSG_FAILURE([GCC is required to compile qDecoder.])
+#	AC_MSG_FAILURE([GCC is required.])
+fi
+AC_PROG_CC_C99
+if test $ac_cv_prog_cc_c99 = no; then
+	AC_MSG_FAILURE([Compiler does not support C99 mode.])
 fi
 
 AC_PROG_INSTALL
@@ -120,13 +128,6 @@ AC_TYPE_OFF_T
 ## Checks for library functions.
 #AC_CHECK_FUNCS([socket sendfile])
 
-Q_ARG_ENABLE([debug], [enable debugging output (development mode)], [-DBUILD_DEBUG])
-if test "$enableval" = yes; then
-	CFLAGS="$CFLAGS -g -O2"
-else
-	CFLAGS="$CFLAGS -g -O2"
-fi
-
 AC_ARG_ENABLE([fastcgi],[AS_HELP_STRING([--enable-fastcgi=/FASTCGI_INCLUDE_DIR_PATH/], [enable FastCGI supports])],[enableval=yes],[enableval=no])
 if test "$enableval" = yes; then
 	AC_CHECK_FILE([$enable_fastcgi/fcgi_stdio.h],[enableval=yes],[enableval=no])
@@ -136,6 +137,13 @@ if test "$enableval" = yes; then
 	else
 		AC_MSG_FAILURE([can't find 'fcgi_stdio.h' header file in '$enable_fastcgi' directory. can't enable fastcgi support.])
 	fi
+fi
+
+Q_ARG_ENABLE([debug], [enable debugging output (development mode)], [-DBUILD_DEBUG])
+if test "$enableval" = yes; then
+	CFLAGS="$CFLAGS -g"
+else
+	CFLAGS="$CFLAGS -g"
 fi
 
 AC_MSG_NOTICE([CFLAGS $CFLAGS])
