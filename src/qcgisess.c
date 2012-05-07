@@ -44,6 +44,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
+#include <limits.h>
 #ifndef _WIN32
 #include <dirent.h>
 #endif
