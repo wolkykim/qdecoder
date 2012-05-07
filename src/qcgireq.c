@@ -131,6 +131,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <limits.h>
 #ifndef _WIN32
 #include <dirent.h>
 #endif
