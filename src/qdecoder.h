@@ -56,10 +56,10 @@ typedef struct qentry_s qentry_t;
 typedef struct qentobj_s qentobj_t;
 
 typedef enum {
-    Q_CGI_ALL = 0,
-    Q_CGI_COOKIE,
-    Q_CGI_GET,
-    Q_CGI_POST
+    Q_CGI_ALL    = 0,
+    Q_CGI_COOKIE = 0x01,
+    Q_CGI_POST   = 0x02,
+    Q_CGI_GET    = 0x04
 } Q_CGI_T;
 
 /*
