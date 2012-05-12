@@ -49,8 +49,13 @@
  *
  *   [Your Source]
  *   qentry_t *req = qcgireq_parse(NULL, 0);  // 0 is equivalent to Q_CGI_ALL.
- *   const char *color = req->getstr(req, "color", false);
- *   printf("color = %s\n", color);
+ *
+ *   qcgires_setcontenttype(req, "text/plain");
+ *   char *color = req->getstr(req, "color", false);
+ *   if (color != NULL) {
+ *     printf("Color = %s\n", color);
+ *   }
+ *
  *   req->free(req);
  * @endcode
  *
@@ -59,13 +64,10 @@
  * COOKIE values will be stored first than POST, GET values will be added
  * at the very last into a qentry linked-list.
  *
- * Below example shows how to parse a one particular methods.
- * @code
- *   qentry_t *req = qcgireq_parse(NULL, Q_CGI_POST);
- * @endcode
+ * Below is an example to parse only two given methods. Please note that
+ * when multiple methods are specified, it'll be parsed in the order of
+ * COOKIE, POST and GET.
  *
- * This is an example for parsing two methods. When multiple methods are
- * specified, it'll be parsed in the order of COOKIE, POST and GET.
  * @code
  *   qentry_t *req = qcgireq_parse(req, Q_CGI_COOKIE | Q_CGI_POST);
  * @endcode
@@ -214,7 +216,7 @@ qentry_t *qcgireq_setoption(qentry_t *request, bool filemode,
  * @param request   qentry_t container pointer that parsed key/value pairs
  *                  will be stored. NULL can be used to create a new container.
  * @param method    Target mask consists of one or more of Q_CGI_COOKIE,
- *                  Q_CGI_POST or Q_CGI_GET. Q_CGI_ALL or 0 can be used for
+ *                  Q_CGI_POST and Q_CGI_GET. Q_CGI_ALL or 0 can be used for
  *                  parsing all of those types.
  *
  * @return qentry_t* handle if successful, NULL if there was insufficient
@@ -222,14 +224,15 @@ qentry_t *qcgireq_setoption(qentry_t *request, bool filemode,
  *
  * @code
  *   qentry_t *req = qcgireq_parse(NULL, 0);
- *   char *name = req->getstr(req, "name", false);
- *   if(name != NULL) printf("%s\n", name);
- *   req->free(req);
+ * @endcode
+ *
+ * @code
+ *   qentry_t *req = qcgireq_parse(req, Q_CGI_COOKIE | Q_CGI_POST);
  * @endcode
  *
  * @note
  * When multiple methods are specified, it'll be parsed in the order of
- * (1)COOKIE, (2)POST (3)GET.
+ * (1)COOKIE, (2)POST (3)GET unless you call it separately multiple times.
  */
 qentry_t *qcgireq_parse(qentry_t *request, Q_CGI_T method)
 {

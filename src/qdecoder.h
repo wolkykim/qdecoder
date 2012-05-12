@@ -38,7 +38,7 @@
 #define _QDECODER_H
 
 #define _Q_PRGNAME  "qDecoder"
-#define _Q_VERSION  "12.0.0"
+#define _Q_VERSION  "12.0.1"
 
 #ifdef __cplusplus
 extern "C" {
