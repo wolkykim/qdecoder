@@ -67,7 +67,8 @@ int main(void)
     // check queries
     if (text == NULL) qcgires_error(req, "Invalid usages.");
     if (filename == NULL || filelength == 0) {
-        qcgires_error(req, "Select file, please.");
+        // qcgires_error(req, "Select file, please.");
+        return 1;
     }
 
     char  filepath[1024];
