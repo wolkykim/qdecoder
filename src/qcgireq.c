@@ -358,9 +358,10 @@ static int _parse_multipart(qentry_t *request)
     /*
      * For parse multipart/form-data method
      */
+    char boundary_orig[256];
+    char boundary[256], boundaryEOF[256];
 
     // Force to check the boundary string length to defense overflow attack
-    char boundary[256];
     int maxboundarylen = CONST_STRLEN("--");
     maxboundarylen += strlen(strstr(getenv("CONTENT_TYPE"), "boundary=")
                              + CONST_STRLEN("boundary="));
@@ -372,12 +373,12 @@ static int _parse_multipart(qentry_t *request)
     }
 
     // find boundary string - Hidai Kenichi made this patch for handling quoted boundary string
-    char boundary_orig[256];
     _q_strcpy(boundary_orig, sizeof(boundary_orig),
               strstr(getenv("CONTENT_TYPE"), "boundary=") + CONST_STRLEN("boundary="));
     _q_strtrim(boundary_orig);
     _q_strunchar(boundary_orig, '"', '"');
     snprintf(boundary, sizeof(boundary), "--%s", boundary_orig);
+    snprintf(boundaryEOF, sizeof(boundaryEOF), "--%s--", boundary_orig);
 
     // If you want to observe the string from stdin, uncomment this section.
     /*
@@ -400,32 +401,37 @@ static int _parse_multipart(qentry_t *request)
     */
 
     // check boundary
-    if (_q_fgets(buf, sizeof(buf), stdin) == NULL) {
-        DEBUG("Bbrowser sent a non-HTTP compliant message.");
+    do {
+        if (_q_fgets(buf, sizeof(buf), stdin) == NULL) {
+            DEBUG("Bbrowser sent a non-HTTP compliant message.");
+            return amount;
+        }
+        _q_strtrim(buf);
+    } while (!strcmp(buf, "")); // skip blank lines
+
+    // check starting boundary mark
+    if (strcmp(buf, boundaryEOF) == 0) {
+        // empty contents
         return amount;
-    }
-
-    // for explore 4.0 of NT, it sent \r\n before starting.
-    if (!strcmp(buf, "\r\n")) _q_fgets(buf, sizeof(buf), stdin);
-
-    if (strncmp(buf, boundary, strlen(boundary)) != 0) {
+    } else if (strcmp(buf, boundary) != 0) {
         DEBUG("Invalid string format.");
         return amount;
     }
 
     // check file save mode
-    bool upload_filesave = false; // false: save into memory, true: save into file
+    bool upload_filesave = false; // false: into memory, true: into file
     const char *upload_basepath = request->getstr(request, "_Q_UPLOAD_BASEPATH", false);
     if (upload_basepath != NULL) upload_filesave = true;
 
-    bool  finish;
+    bool finish;
     for (finish = false; finish == false; amount++) {
         char *name = NULL, *value = NULL, *filename = NULL, *contenttype = NULL;
         int valuelen = 0;
 
-        // get information
+        // parse header
         while (_q_fgets(buf, sizeof(buf), stdin)) {
-            if (!strcmp(buf, "\r\n")) break;
+            _q_strtrim(buf);
+            if (!strcmp(buf, "")) break;
             else if (!strncasecmp(buf, "Content-Disposition: ", CONST_STRLEN("Content-Disposition: "))) {
                 int c_count;
 
@@ -453,7 +459,7 @@ static int _parse_multipart(qentry_t *request)
                     _q_strtrim(filename);
 
                     // empty attachment
-                    if (strlen(filename) == 0) {
+                    if (!strcmp(filename, "")) {
                         free(filename);
                         filename = NULL;
                     }
@@ -470,7 +476,7 @@ static int _parse_multipart(qentry_t *request)
             continue;
         }
 
-        // get value field
+        // get value
         if (filename != NULL && upload_filesave == true) {
             char *tp, *savename = strdup(filename);
             for (tp = savename; *tp != '\0'; tp++) {
@@ -489,7 +495,7 @@ static int _parse_multipart(qentry_t *request)
             else request->putstr(request, name, "(parsing failure)", false);
         }
 
-        // store some additional info
+        // store additional information
         if (value != NULL && filename != NULL) {
             char ename[255+10+1];
 
@@ -511,7 +517,7 @@ static int _parse_multipart(qentry_t *request)
             }
         }
 
-        // free stuffs
+        // free resources
         if (name != NULL) free(name);
         if (value != NULL) free(value);
         if (filename != NULL) free(filename);
@@ -535,7 +541,7 @@ static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen,
 
     // set boundary strings
     snprintf(boundaryEOF, sizeof(boundaryEOF), "%s--", boundary);
-    snprintf(rnboundaryEOF, sizeof(rnboundaryEOF), "\r\n%s", boundaryEOF);
+    snprintf(rnboundaryEOF, sizeof(rnboundaryEOF), "\r\n%s--", boundary);
     snprintf(boundaryrn, sizeof(boundaryrn), "%s\r\n", boundary);
     snprintf(rnboundaryrn, sizeof(rnboundaryrn), "\r\n%s\r\n", boundary);
 
@@ -634,7 +640,7 @@ static char *_parse_multipart_value_into_disk(const char *boundary,
 
     // set boundary strings
     snprintf(boundaryEOF, sizeof(boundaryEOF), "%s--", boundary);
-    snprintf(rnboundaryEOF, sizeof(rnboundaryEOF), "\r\n%s", boundaryEOF);
+    snprintf(rnboundaryEOF, sizeof(rnboundaryEOF), "\r\n%s--", boundary);
     snprintf(boundaryrn, sizeof(boundaryrn), "%s\r\n", boundary);
     snprintf(rnboundaryrn, sizeof(rnboundaryrn), "\r\n%s\r\n", boundary);
 
