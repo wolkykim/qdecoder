@@ -527,7 +527,7 @@ static int _parse_multipart(qentry_t *request)
     return amount;
 }
 
-#define _Q_MULTIPART_CHUNK_SIZE     (64 * 1024)
+#define _Q_MULTIPART_CHUNK_SIZE     (16 * 1024)
 static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen,
         bool *finish)
 {
