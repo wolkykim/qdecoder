@@ -662,14 +662,18 @@ static char *_parse_multipart_value_into_disk(const char *boundary,
     fchmod(upload_fd, DEF_FILE_MODE);
 
     // read stream
-    int  upload_length;
-    for (upload_length = 0, bufc = 0, upload_length = 0; (c = fgetc(stdin)) != EOF; ) {
+    bool ioerror = false;
+    int upload_length;
+    for (upload_length = 0, bufc = 0; (c = fgetc(stdin)) != EOF; ) {
         if (bufc == sizeof(buffer) - 1) {
             // save
             ssize_t leftsize = boundarylen + 8;
             ssize_t savesize = bufc - leftsize;
             ssize_t saved = write(upload_fd, buffer, savesize);
-            if (saved <= 0) continue;
+            if (saved <= 0) {
+                ioerror = true; 
+                break;
+            }
             leftsize = bufc - saved;
             memcpy(buffer, buffer+saved, leftsize);
             bufc = leftsize;
@@ -718,21 +722,26 @@ static char *_parse_multipart_value_into_disk(const char *boundary,
         }
     }
 
-    if (c == EOF) {
-        DEBUG("Broken stream.");
+    // save rest
+    while (bufc > 0) {
+        ssize_t saved = write(upload_fd, buffer, bufc);
+        if (saved <= 0) {
+            ioerror = true;
+            break;
+        }
+        bufc -= saved;
+    }
+    close(upload_fd);
+
+    // error occured
+    if (c == EOF || ioerror == true) {
+        DEBUG("I/O error. (errno=%d)", (ioerror == true) ? errno : 0);
         *finish = true;
         return NULL;
     }
 
-    // save rest
-    while (bufc > 0) {
-        ssize_t saved = write(upload_fd, buffer, bufc);
-        if (saved > 0) bufc -= saved;
-    }
-    close(upload_fd);
-
+    // succeed
     *filelen = upload_length;
-
     return strdup(upload_path);
 }
 
