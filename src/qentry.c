@@ -784,7 +784,7 @@ static int _load(qentry_t *entry, const char *filepath)
         if (line == NULL) break;
 
         // parse & store
-        char *data = strdup(line);
+        char *data = line;
         char *name  = _q_makeword(data, '=');
         _q_strtrim(data);
         _q_strtrim(name);
