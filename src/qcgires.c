@@ -61,7 +61,7 @@
  *
  * @code
  *   // Apply cookie in the current domain and directory for 1 day.
- *   qcgires_setcookie(req, "NAME", "qDecoder", 86400, NULL, NULL, false);
+ *   qcgires_setcookie(req, "NAME", "VALUE", 86400, NULL, NULL, false);
  *
  *   // Apply cookie to the "/" directory of "*.qdecoder.org" until the
  *   // browser is closed.
@@ -88,7 +88,7 @@ bool qcgires_setcookie(qentry_t *request, const char *name, const char *value,
 
     if (expire != 0) {
         char gmtstr[sizeof(char) * (CONST_STRLEN("Mon, 00 Jan 0000 00:00:00 GMT") + 1)];
-        time_t utctime = time(NULL);
+        time_t utctime = time(NULL) + expire;
         struct tm *gmtm = gmtime(&utctime);
         strftime(gmtstr, sizeof(gmtstr), "%a, %d %b %Y %H:%M:%S GMT", gmtm);
 
