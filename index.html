@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>qDecoder by wolkykim</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>qDecoder</h1>
+        <h2>qDecoder is a simple and powerful CGI library for C/C++ programming language.</h2>
+        <a href="https://github.com/wolkykim/qdecoder" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h2>
+<a name="whats-qdecoder" class="anchor" href="#whats-qdecoder"><span class="octicon octicon-link"></span></a>What's qDecoder?</h2>
+
+<p>qDecoder is a CGI library for C/C++ programming language which has been developed since 1996.</p>
+
+<h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>Supports parsing a request encoded by GET/POST method</li>
+<li>Supports parsing multipart/form-data encoding. (in-memory and direct disk)</li>
+<li>Supports COOKIE handling.</li>
+<li>Supports Session management.</li>
+<li>Supports FastCGI</li>
+</ul><p>===== How easy making CGI applications in C/C++ =====</p>
+
+<pre><code>  [HTML sample]
+  &lt;form action="your_program.cgi"&gt;
+    &lt;input type="text" name="color"&gt;
+    &lt;input type="submit"&gt;
+  &lt;/form&gt;
+
+  [Your Code]
+  qentry_t *req = qcgireq_parse(NULL, 0);
+
+  qcgires_setcontenttype(req, "text/plain");
+  const char *color = req-&gt;getstr(req, "color", false);
+  if (color != NULL) {
+    printf("color = %s\n", color);
+  }
+
+  req-&gt;free(req);
+</code></pre>
+
+<p>The order of parsing sequence is (1)COOKIE (2)POST (3)GET. Thus if there is a same query name existing in different methods, COOKIE values will be stored first than POST, GET values will be added at the very last into a qentry linked-list.</p>
+
+<p>Below is an example to parse only two given methods. Please note that when multiple methods are specified, it'll be parsed in the order of COOKIE, POST and GET.</p>
+
+<pre><code>  qentry_t *req = qcgireq_parse(req, Q_CGI_COOKIE | Q_CGI_POST);
+</code></pre>
+
+<p>To change the order of parsing sequence, you can call qcgireq_parse() multiple times in the order that you want as below.</p>
+
+<pre><code>  qentry_t *req;
+  req = qcgireq_parse(req, Q_CGI_POST);
+  req = qcgireq_parse(req, Q_CGI_GET);
+  req = qcgireq_parse(req, Q_CGI_COOKIE);
+</code></pre>
+
+<p>In terms of multipart/form-data encoding(used for file uploading), qDecoder can handle that in two different ways internally.</p>
+
+<ul>
+<li>default mode : Uploading file will be processed only in memory. (see examples/upload.c) </li>
+<li>file mode : Uploading file will be stored directly into disk. (see examples/uploadfile.c)</li>
+</ul><p>You can switch to file mode by calling qCgiRequestSetOption(). </p>
+
+<pre><code>  Q_ENTRY *req = qcgireq_setoption(NULL, true, "/tmp", 86400);
+  req = qcgireq_parse(req, 0);
+  // ...your codes here...
+  req-&gt;free(req);
+</code></pre>
+
+<p>Basically, when file is uploaded qDecoder store it's meta information like below. </p>
+
+<ul>
+<li>(VARIABLE_NAME) - In the default mode, this is binary data. In the file mode this value is same as "(VARIABLE_NAME).savepath". </li>
+<li>(VARIABLE_NAME).filename - File name itself, path information will be removed. </li>
+<li>(VARIABLE_NAME).length - File size, the number of bytes. </li>
+<li>(VARIABLE_NAME).contenttype - Mime type like 'text/plain'. </li>
+<li>(VARIABLE_NAME).savepath - Only appended only in file mode. The file path where the uploaded file is saved.</li>
+</ul><pre><code>  [default mode example]
+  binary = (...binary data...)
+  binary.filename = hello.xls
+  binary.length = 3292
+  binary.contenttype = application/vnd.ms-excel
+
+  [file mode example]
+  binary = tmp/q_wcktIq
+  binary.length = 60014
+  binary.filename = hello.xls
+  binary.contenttype = application/vnd.ms-excel
+  binary.savepath = tmp/q_wcktIq
+</code></pre>
+
+<p>Please refer the examples included in the source package for more detailed samples.</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/wolkykim/qdecoder/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/wolkykim/qdecoder/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/wolkykim/qdecoder"></a> is maintained by <a href="https://github.com/wolkykim">wolkykim</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
