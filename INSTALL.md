@@ -1,4 +1,5 @@
-# Installing qDecoder
+Installing qDecoder
+===================
 
 ## Get qDecoder Package
 
