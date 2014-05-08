@@ -810,8 +810,16 @@ static bool _print(qentry_t *entry, FILE *out, bool print_data)
 
     qentobj_t *obj;
     for (obj = entry->first; obj; obj = obj->next) {
-        fprintf(out, "%s=%s (%zu)\n",
-                obj->name, (print_data?(char *)obj->data:"(data)"), obj->size);
+#ifdef ENABLE_FASTCGI
+        // libfcgi printf does not support "%z" modifier, casting unsigned long
+        fprintf(out, "%s=%s (%lu)\n", obj->name,
+                (print_data?(char *)obj->data:"(data)"),
+                (unsigned long)obj->size);
+#else
+        fprintf(out, "%s=%s (%zu)\n", obj->name,
+                (print_data?(char *)obj->data:"(data)"),
+                (size_t)obj->size);
+#endif
     }
 
     return true;
