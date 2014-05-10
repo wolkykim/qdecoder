@@ -24,11 +24,13 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************
- * $Id: uploadfile.c 636 2012-05-07 23:40:43Z seungyoung.kim $
  ******************************************************************************/
 
+#ifdef ENABLE_FASTCGI
+#include "fcgi_stdio.h"
+#else
 #include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <stdbool.h>
 #include "qdecoder.h"
@@ -38,6 +40,9 @@
 
 int main(void)
 {
+#ifdef ENABLE_FASTCGI
+    while(FCGI_Accept() >= 0) {
+#endif
     // parse queries
     qentry_t *req = qcgireq_setoption(NULL, true, TMPPATH, 60);
     if (req == NULL) qcgires_error(req, "Can't set option.");
@@ -83,6 +88,8 @@ int main(void)
 
     // de-allocate
     req->free(req);
-
+#ifdef ENABLE_FASTCGI
+    }
+#endif
     return 0;
 }
