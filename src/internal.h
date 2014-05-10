@@ -31,8 +31,6 @@
 #ifndef _QINTERNAL_H
 #define _QINTERNAL_H
 
-#include <fcntl.h>
-
 /*
  * Internal Macros
  */
@@ -68,7 +66,8 @@
 /*
  * Internal Definitions
  */
-#define MAX_LINEBUF   (1023+1)
+#define CRLF "\r\n"
+#define MAX_LINEBUF (1023+1)
 #define DEF_DIR_MODE  (S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #define DEF_FILE_MODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 
@@ -90,10 +89,5 @@ extern off_t _q_filesize(const char *filepath);
 extern off_t _q_iosend(int outfd, int infd, off_t nbytes);
 extern int _q_countread(const char *filepath);
 extern bool _q_countsave(const char *filepath, int number);
-
-/*
- * To prevent compiler warning
- */
-// extern char *strptime(const char *, const char *, struct tm *);
 
 #endif  /* _QINTERNAL_H */

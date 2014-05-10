@@ -43,6 +43,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <fcntl.h>
 #include "qdecoder.h"
 #include "internal.h"
 
@@ -118,7 +119,7 @@ bool qcgires_setcookie(qentry_t *request, const char *name, const char *value,
         strcat(cookie, "; secure");
     }
 
-    printf("Set-Cookie: %s\n", cookie);
+    printf("Set-Cookie: %s" CRLF, cookie);
 
     return true;
 }
@@ -168,7 +169,7 @@ bool qcgires_setcontenttype(qentry_t *request, const char *mimetype)
         return false;
     }
 
-    printf("Content-Type: %s\n\n", mimetype);
+    printf("Content-Type: %s" CRLF CRLF, mimetype);
 
     if (request != NULL) {
         request->putstr(request, "_Q_CONTENTTYPE", mimetype, true);
@@ -213,7 +214,7 @@ bool qcgires_redirect(qentry_t *request, const char *uri)
         return false;
     }
 
-    printf("Location: %s\n\n", uri);
+    printf("Location: %s" CRLF CRLF, uri);
     return true;
 }
 
@@ -259,11 +260,11 @@ int qcgires_download(qentry_t *request, const char *filepath,
     char *filename = _q_filename(filepath);
     off_t filesize = _q_filesize(filepath);
 
-    printf("Content-Disposition: %s;filename=\"%s\"\n", disposition, filename);
-    printf("Content-Transfer-Encoding: binary\n");
-    printf("Accept-Ranges: bytes\n");
-    printf("Content-Length: %zu\n", (size_t)filesize);
-    printf("Connection: close\n");
+    printf("Content-Disposition: %s;filename=\"%s\"" CRLF, disposition, filename);
+    printf("Content-Transfer-Encoding: binary" CRLF);
+    printf("Accept-Ranges: bytes" CRLF);
+    printf("Content-Length: %zu" CRLF, (size_t)filesize);
+    printf("Connection: close" CRLF);
     qcgires_setcontenttype(request, mime);
 
     free(filename);
