@@ -134,7 +134,7 @@ if test "$enableval" = yes; then
 	if test "$enableval" = yes; then
 		AC_MSG_NOTICE(['fastcgi' feature is enabled])
 		CPPFLAGS="$CPPFLAGS -DENABLE_FASTCGI -I$enable_fastcgi"
-		LIBS="$LIBS -l:libfcgi.a"
+		LIBS="$LIBS -lfcgi"
 	else
 		AC_MSG_FAILURE([can't find 'fcgi_stdio.h' header file in '$enable_fastcgi' directory. can't enable fastcgi support.])
 	fi
