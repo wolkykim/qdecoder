@@ -278,12 +278,16 @@ off_t _q_filesize(const char *filepath)
     return finfo.st_size;
 }
 
-off_t _q_iosend(int outfd, int infd, off_t nbytes)
-{
+#define QIOSEND_CHUNK_SIZE (1024 * 4)
+off_t _q_iosend(int outfd, int infd, off_t nbytes) {
     if (nbytes == 0) return 0;
 
-    unsigned char buf[1024 * 4];
+#ifdef ENABLE_FASTCGI
+    FILE* outfp = fdopen(outfd, "w");
+    if (outfp == NULL) return -1;
+#endif
 
+    unsigned char buf[QIOSEND_CHUNK_SIZE];
     off_t total = 0; // total size sent
     while (total < nbytes) {
         size_t chunksize; // this time sending size
@@ -296,7 +300,11 @@ off_t _q_iosend(int outfd, int infd, off_t nbytes)
         DEBUG("read %zd", rsize);
 
         // write
+#ifdef ENABLE_FASTCGI
+        size_t wsize = fwrite(buf, rsize, 1, outfp);
+#else
         ssize_t wsize = write(outfd, buf, rsize);
+#endif
         if (wsize <= 0) break;
         DEBUG("write %zd", wsize);
 
