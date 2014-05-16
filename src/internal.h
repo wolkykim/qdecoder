@@ -86,7 +86,7 @@ extern char *_q_strtrim(char *str);
 extern char *_q_strunchar(char *str, char head, char tail);
 extern char *_q_filename(const char *filepath);
 extern off_t _q_filesize(const char *filepath);
-extern off_t _q_iosend(int outfd, int infd, off_t nbytes);
+extern off_t _q_iosend(FILE *outfp, FILE *infp, off_t nbytes);
 extern int _q_countread(const char *filepath);
 extern bool _q_countsave(const char *filepath, int number);
 
