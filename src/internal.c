@@ -279,13 +279,8 @@ off_t _q_filesize(const char *filepath)
 }
 
 #define QIOSEND_CHUNK_SIZE (1024 * 4)
-off_t _q_iosend(int outfd, int infd, off_t nbytes) {
+off_t _q_iosend(FILE *outfp, FILE *infp, off_t nbytes) {
     if (nbytes == 0) return 0;
-
-#ifdef ENABLE_FASTCGI
-    FILE* outfp = fdopen(outfd, "w");
-    if (outfp == NULL) return -1;
-#endif
 
     unsigned char buf[QIOSEND_CHUNK_SIZE];
     off_t total = 0; // total size sent
@@ -295,22 +290,18 @@ off_t _q_iosend(int outfd, int infd, off_t nbytes) {
         else chunksize = sizeof(buf);
 
         // read
-        ssize_t rsize = read(infd, buf, chunksize);
-        if (rsize <= 0) break;
-        DEBUG("read %zd", rsize);
+        size_t rsize = fread(buf, 1, chunksize, infp);
+        if (rsize == 0) break;
+        DEBUG("read %zu", rsize);
 
         // write
-#ifdef ENABLE_FASTCGI
-        size_t wsize = fwrite(buf, rsize, 1, outfp);
-#else
-        ssize_t wsize = write(outfd, buf, rsize);
-#endif
-        if (wsize <= 0) break;
-        DEBUG("write %zd", wsize);
+        size_t wsize = fwrite(buf, 1, rsize, outfp);
+        if (wsize == 0) break;
+        DEBUG("write %zu", wsize);
 
         total += wsize;
         if (rsize != wsize) {
-            DEBUG("size mismatch. read:%zd, write:%zd", rsize, wsize);
+            DEBUG("size mismatch. read:%zu, write:%zu", rsize, wsize);
             break;
         }
     }

@@ -243,8 +243,8 @@ int qcgires_download(qentry_t *request, const char *filepath,
         return -1;
     }
 
-    int fd;
-    if (filepath == NULL || (fd = open(filepath, O_RDONLY, 0)) < 0) {
+    FILE *fp;
+    if (filepath == NULL || (fp = fopen(filepath, "r")) == NULL) {
         DEBUG("Can't open file.");
         return -1;
     }
@@ -263,7 +263,7 @@ int qcgires_download(qentry_t *request, const char *filepath,
     printf("Content-Disposition: %s;filename=\"%s\"" CRLF, disposition, filename);
     printf("Content-Transfer-Encoding: binary" CRLF);
     printf("Accept-Ranges: bytes" CRLF);
-    printf("Content-Length: %zu" CRLF, (size_t)filesize);
+    printf("Content-Length: %lu" CRLF, (unsigned long)filesize);
     printf("Connection: close" CRLF);
     qcgires_setcontenttype(request, mime);
 
@@ -271,9 +271,9 @@ int qcgires_download(qentry_t *request, const char *filepath,
 
     fflush(stdout);
 
-    int sent = _q_iosend(fileno(stdout), fd, filesize);
+    int sent = _q_iosend(stdout, fp, filesize);
 
-    close(fd);
+    fclose(fp);
     return sent;
 }
 
