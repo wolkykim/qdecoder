@@ -24,18 +24,26 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************
- * $Id: download.c 636 2012-05-07 23:40:43Z seungyoung.kim $
  ******************************************************************************/
 
+#ifdef ENABLE_FASTCGI
+#include "fcgi_stdio.h"
+#else
 #include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <stdbool.h>
 #include "qdecoder.h"
 
 int main(void)
 {
+#ifdef ENABLE_FASTCGI
+    while(FCGI_Accept() >= 0) {
+#endif
     qentry_t *req = qcgireq_parse(NULL, 0);
     qcgires_download(req, "download.c", "text/plain");
+#ifdef ENABLE_FASTCGI
+    }
+#endif
     return 0;
 }

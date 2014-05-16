@@ -24,11 +24,13 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************
- * $Id: upload.c 651 2012-08-25 09:59:41Z seungyoung.kim $
  ******************************************************************************/
 
+#ifdef ENABLE_FASTCGI
+#include "fcgi_stdio.h"
+#else
 #include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
@@ -54,6 +56,9 @@ ssize_t savefile(const char *filepath, const void *buf, size_t size)
 
 int main(void)
 {
+#ifdef ENABLE_FASTCGI
+    while(FCGI_Accept() >= 0) {
+#endif
     // Parse queries.
     qentry_t *req = qcgireq_parse(NULL, 0);
 
@@ -91,5 +96,8 @@ int main(void)
 
     // de-allocate
     req->free(req);
+#ifdef ENABLE_FASTCGI
+    }
+#endif
     return 0;
 }
