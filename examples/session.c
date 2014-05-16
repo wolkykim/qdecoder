@@ -24,24 +24,29 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************
- * $Id: session.c 639 2012-05-07 23:44:19Z seungyoung.kim $
  ******************************************************************************/
 
+#ifdef ENABLE_FASTCGI
+#include "fcgi_stdio.h"
+#else
 #include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <stdbool.h>
 #include "qdecoder.h"
 
 int main(void)
 {
+#ifdef ENABLE_FASTCGI
+    while(FCGI_Accept() >= 0) {
+#endif
     qentry_t *req = qcgireq_parse(NULL, 0);
 
     // fetch queries
     time_t expire = (time_t)req->getint(req, "expire");
-    const char *mode = req->getstr(req, "mode", false);
-    const char *name   = req->getstr(req, "name", false);
-    const char *value  = req->getstr(req, "value", false);
+    char *mode  = req->getstr(req, "mode", false);
+    char *name  = req->getstr(req, "name", false);
+    char *value = req->getstr(req, "value", false);
 
     // start session.
     qentry_t *sess = qcgisess_init(req, NULL);
@@ -49,22 +54,23 @@ int main(void)
     // Mose case, you don't need to set timeout. this is just example
     if (expire > 0) qcgisess_settimeout(sess, expire);
 
+    if (mode) {
     switch (mode[0]) {
-        case 's': {
+        case 's': // set
             req->putstr(sess, name, value, true);
             break;
-        }
-        case 'r': {
+        case 'r': // remove
             req->remove(sess, name);
             break;
-        }
-        case 'd': {
+        case 'd': // destroy
             qcgisess_destroy(sess);
             qcgires_setcontenttype(req, "text/html");
             printf("Session reinitialized.\n");
-            return 0;
+            continue;
+        case 'v': // view
+        default:
             break;
-        }
+    }
     }
     // screen out
     qcgires_setcontenttype(req, "text/plain");
@@ -74,5 +80,8 @@ int main(void)
     qcgisess_save(sess);
     sess->free(sess);
     req->free(req);
+#ifdef ENABLE_FASTCGI
+    }
+#endif
     return 0;
 }
