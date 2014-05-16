@@ -94,9 +94,11 @@ Please refer the examples included in the source package for more detailed sampl
 
 ## Contributors
 
-The following people have helped with suggestions, ideas, code or fixing bugs: (in alphabetical order by first name)
+The following people have helped with suggestions, ideas, code or fixing bugs:
+(in alphabetical order by first name)
 
-    nyob
-    Seungyoung Kim
+* nyob
+* Seungyoung Kim
 
 If we have forgotten your name or spelled not in the way you want, please let us know.
+
