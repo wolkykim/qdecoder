@@ -55,22 +55,26 @@ int main(void)
     if (expire > 0) qcgisess_settimeout(sess, expire);
 
     if (mode) {
-    switch (mode[0]) {
-        case 's': // set
-            req->putstr(sess, name, value, true);
-            break;
-        case 'r': // remove
-            req->remove(sess, name);
-            break;
-        case 'd': // destroy
-            qcgisess_destroy(sess);
-            qcgires_setcontenttype(req, "text/html");
-            printf("Session reinitialized.\n");
-            continue;
-        case 'v': // view
-        default:
-            break;
-    }
+        switch (mode[0]) {
+            case 's': // set
+                req->putstr(sess, name, value, true);
+                break;
+            case 'r': // remove
+                req->remove(sess, name);
+                break;
+            case 'd': // destroy
+                qcgisess_destroy(sess);
+                qcgires_setcontenttype(req, "text/plain");
+                printf("Session destroyed.\n");
+#ifdef ENABLE_FASTCGI
+                continue;
+#else
+                return 0;
+#endif
+            case 'v': // view
+            default:
+                break;
+        }
     }
     // screen out
     qcgires_setcontenttype(req, "text/plain");
