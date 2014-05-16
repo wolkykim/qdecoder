@@ -91,3 +91,12 @@ Basically, when file is uploaded qDecoder store it's meta information like below
 ```
 
 Please refer the examples included in the source package for more detailed samples.
+
+## Contributors
+
+The following people have helped with suggestions, ideas, code or fixing bugs: (in alphabetical order by first name)
+
+    nyob
+    Seungyoung Kim
+
+If we have forgotten your name or spelled not in the way you want, please let us know.
