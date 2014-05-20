@@ -263,12 +263,7 @@ int qcgires_download(qentry_t *request, const char *filepath,
     printf("Content-Disposition: %s;filename=\"%s\"" CRLF, disposition, filename);
     printf("Content-Transfer-Encoding: binary" CRLF);
     printf("Accept-Ranges: bytes" CRLF);
-#ifdef ENABLE_FASTCGI
-    // libfcgi printf does not support "%ll" modifier, casting unsigned long
     printf("Content-Length: %lu" CRLF, (unsigned long)filesize);
-#else
-    printf("Content-Length: %lld" CRLF, (long long)filesize);
-#endif
     printf("Connection: close" CRLF);
     qcgires_setcontenttype(request, mime);
 
