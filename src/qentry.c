@@ -810,8 +810,9 @@ static bool _print(qentry_t *entry, FILE *out, bool print_data)
 
     qentobj_t *obj;
     for (obj = entry->first; obj; obj = obj->next) {
-        fprintf(out, "%s=%s (%zu)\n",
-                obj->name, (print_data?(char *)obj->data:"(data)"), obj->size);
+        fprintf(out, "%s=%s (%lu)\n", obj->name,
+                (print_data?(char *)obj->data:"(data)"),
+                (unsigned long)obj->size);
     }
 
     return true;
