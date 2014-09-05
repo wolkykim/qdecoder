@@ -60,6 +60,8 @@ INSTALL_DATA	= @INSTALL_DATA@
 LN_S		= @LN_S@
 RANLIB		= @RANLIB@
 RM		= @RM@
+MKDIR		= @MKDIR@
+RMDIR		= @RMDIR@
 
 ## Objects List
 OBJ		= qcgireq.o		\
@@ -78,6 +80,8 @@ qdecoder: ${OBJ}
 	${LN_S} -f ${SLIBREALNAME} ${SLIBNAME}
 
 install: all
+	${MKDIR} -p ${HEADERDIR}
+	${MKDIR} -p ${LIBDIR}
 	${INSTALL_DATA} qdecoder.h ${HEADERDIR}/qdecoder.h
 	${INSTALL_DATA} ${LIBNAME} ${LIBDIR}/${LIBNAME}
 	${INSTALL_DATA} ${SLIBREALNAME} ${LIBDIR}/${SLIBREALNAME}
@@ -89,6 +93,8 @@ uninstall:
 	${RM} -f ${LIBDIR}/${LIBNAME}
 	${RM} -f ${LIBDIR}/${SLIBREALNAME}
 	${RM} -f ${LIBDIR}/${SLIBNAME}
+	${RMDIR} -p --ignore-fail-on-non-empty ${HEADERDIR}
+	${RMDIR} -p --ignore-fail-on-non-empty ${LIBDIR}
 
 doc:
 	doxygen doxygen.conf

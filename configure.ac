@@ -112,6 +112,8 @@ AC_PATH_PROG(AR, ar)
 AC_PATH_PROG(CHMOD, chmod)
 AC_PATH_PROG(LD, ld)
 AC_PATH_PROG(RM, rm)
+AC_PATH_PROG(MKDIR, mkdir)
+AC_PATH_PROG(RMDIR, rmdir)
 
 ## Checks for header files.
 AC_HEADER_STDC
