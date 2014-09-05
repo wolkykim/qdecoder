@@ -139,6 +139,7 @@
 #ifndef _WIN32
 #include <dirent.h>
 #endif
+#include <errno.h>
 #include "qdecoder.h"
 #include "internal.h"
 
