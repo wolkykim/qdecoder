@@ -34,6 +34,9 @@ exec_prefix	= @exec_prefix@
 ## Name
 PRGNAME		= qdecoder
 
+## pkgconfig filename
+PKGCONFIGNAME   = qdecoder.pc
+
 ## Static Library Name
 LIBNAME		= lib${PRGNAME}.a
 
@@ -45,6 +48,7 @@ SLIBREALNAME	= ${SLIBNAME}.${SLIBVERSION}
 ## System library directory
 LIBDIR		= @libdir@
 HEADERDIR	= @includedir@
+PKGCONFIGDIR    = ${LIBDIR}/pkgconfig
 
 ## Which compiler & options for release
 CC		= @CC@
@@ -82,9 +86,11 @@ qdecoder: ${OBJ}
 install: all
 	${MKDIR} -p ${HEADERDIR}
 	${MKDIR} -p ${LIBDIR}
+	${MKDIR} -p ${PKGCONFIGDIR}
 	${INSTALL_DATA} qdecoder.h ${HEADERDIR}/qdecoder.h
 	${INSTALL_DATA} ${LIBNAME} ${LIBDIR}/${LIBNAME}
 	${INSTALL_DATA} ${SLIBREALNAME} ${LIBDIR}/${SLIBREALNAME}
+	${INSTALL_DATA} ${PKGCONFIGNAME} ${PKGCONFIGDIR}/${PKGCONFIGNAME}
 	( cd ${LIBDIR}; ${LN_S} -f ${SLIBREALNAME} ${SLIBNAME} )
 
 deinstall: uninstall
@@ -93,7 +99,9 @@ uninstall:
 	${RM} -f ${LIBDIR}/${LIBNAME}
 	${RM} -f ${LIBDIR}/${SLIBREALNAME}
 	${RM} -f ${LIBDIR}/${SLIBNAME}
+	${RM} -f ${PKGCONFIGDIR}/${PKGCONFIGNAME}
 	${RMDIR} -p --ignore-fail-on-non-empty ${HEADERDIR}
+	${RMDIR} -p --ignore-fail-on-non-empty ${PKGCONFIGDIR}
 	${RMDIR} -p --ignore-fail-on-non-empty ${LIBDIR}
 
 doc:
