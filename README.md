@@ -17,14 +17,16 @@ qDecoder is a CGI library for C/C++ programming language which has been develope
 
 ## How easy making CGI applications in C/C++
 
-```
-  [HTML sample]
+[HTML example]
+```HTML
   <form action="your_program.cgi">
     <input type="text" name="color">
     <input type="submit">
   </form>
+```
 
-  [Your Code]
+[Code example]
+```C
   qentry_t *req = qcgireq_parse(NULL, 0);
 
   qcgires_setcontenttype(req, "text/plain");
@@ -40,13 +42,13 @@ The order of parsing sequence is (1)COOKIE (2)POST (3)GET. Thus if there is a sa
 
 Below is an example to parse only two given methods. Please note that when multiple methods are specified, it'll be parsed in the order of COOKIE, POST and GET.
 
-```
+```C
   qentry_t *req = qcgireq_parse(req, Q_CGI_COOKIE | Q_CGI_POST);
 ```
 
 To change the order of parsing sequence, you can call qcgireq_parse() multiple times in the order that you want as below.
 
-```
+```C
   qentry_t *req;
   req = qcgireq_parse(req, Q_CGI_POST);
   req = qcgireq_parse(req, Q_CGI_GET);
@@ -60,7 +62,7 @@ In terms of multipart/form-data encoding(used for file uploading), qDecoder can 
 
 You can switch to file mode by calling qCgiRequestSetOption(). 
 
-```
+```C
   Q_ENTRY *req = qcgireq_setoption(NULL, true, "/tmp", 86400);
   req = qcgireq_parse(req, 0);
   // ...your codes here...
@@ -75,7 +77,7 @@ Basically, when file is uploaded qDecoder store it's meta information like below
   * (VARIABLE_NAME).contenttype - Mime type like 'text/plain'. 
   * (VARIABLE_NAME).savepath - Only appended only in file mode. The file path where the uploaded file is saved.
 
-```
+```INI
   [default mode example]
   binary = (...binary data...)
   binary.filename = hello.xls
