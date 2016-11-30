@@ -740,7 +740,7 @@ static bool _save(qentry_t *entry, const char *filepath)
     if (entry == NULL) return false;
 
     FILE *fd;
-    if ((fd = fopen(filepath, "w")) < 0) {
+    if ((fd = fopen(filepath, "w")) == NULL) {
         DEBUG("qentry_t->save(): Can't open file %s", filepath);
         return false;
     }
