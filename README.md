@@ -100,8 +100,8 @@ The following people have helped with suggestions, ideas, code or fixing bugs:
 (in alphabetical order by first name)
 
 * [Seungyoung "Steve" Kim](https://github.com/wolkykim) - Author
-* [nyov](https://github.com/nyov)
 * [Jonh Wendell](https://github.com/jwendell)
+* [nyov](https://github.com/nyov)
 * [TaeDong Kim](https://github.com/ktd2004)
 
 If we have forgotten your name or spelled not in the way you want, please let us know.
