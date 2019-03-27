@@ -83,8 +83,11 @@ AC_CONFIG_FILES([Makefile src/qdecoder.pc src/Makefile examples/Makefile])
 
 ## Set path
 PATH="$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
-CPPFLAGS="$CPPFLAGS -I/usr/include -I/usr/local/include -I./ -D_GNU_SOURCE"
-LDFLAGS="$LDFLAGS -L/usr/lib -L/usr/local/lib"
+CPPFLAGS="$CPPFLAGS -I./ -D_GNU_SOURCE"
+if test "x$cross_compiling" != "xyes"; then
+	CPPFLAGS="$CPPFLAGS -I/usr/include -I/usr/local/include"
+	LDFLAGS="$LDFLAGS -L/usr/lib -L/usr/local/lib"
+fi
 
 ## Set autoconf setting
 #AC_CANONICAL_TARGET
