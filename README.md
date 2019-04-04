@@ -105,4 +105,3 @@ The following people have helped with suggestions, ideas, code or fixing bugs:
 * [TaeDong Kim](https://github.com/ktd2004)
 
 If we have forgotten your name or spelled not in the way you want, please let us know.
-
