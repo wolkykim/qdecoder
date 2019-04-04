@@ -1,0 +1,8 @@
+title: qDecoder
+description: qDecoder is a simple and powerful CGI library for C/C++ programming language.
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-architect
+
+gems:
+  - jekyll-mentions
