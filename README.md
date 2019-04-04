@@ -99,9 +99,12 @@ Please refer the examples included in the source package for more detailed sampl
 The following people have helped with suggestions, ideas, code or fixing bugs:
 (in alphabetical order by first name)
 
-* [Seungyoung "Steve" Kim](https://github.com/wolkykim) - Author
+* [Seungyoung "Steve" Kim](https://github.com/wolkykim) - Project Lead
+* [Fabrice Fontaine](https://github.com/ffontaine)
 * [Jonh Wendell](https://github.com/jwendell)
 * [nyov](https://github.com/nyov)
 * [TaeDong Kim](https://github.com/ktd2004)
+* [Weongyo Jeong](https://github.com/weongyo)
 
 If we have forgotten your name or spelled not in the way you want, please let us know.
+
