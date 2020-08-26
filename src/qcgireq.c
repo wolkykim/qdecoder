@@ -143,6 +143,10 @@
 #include "qdecoder.h"
 #include "internal.h"
 
+#if defined(__MINGW32__) && defined(_WIN32) && !defined(__CYGWIN__)
+#include "msw_missing.h"
+#endif
+
 #ifndef _DOXYGEN_SKIP
 static int  _parse_multipart(qentry_t *request);
 static char *_parse_multipart_value_into_memory(char *boundary, int *valuelen,
@@ -660,7 +664,11 @@ static char *_parse_multipart_value_into_disk(const char *boundary,
     }
 
     // change permission
+#if defined(__MINGW32__) && defined(_WIN32) && !defined(__CYGWIN__)
+    chmod(upload_path, DEF_FILE_MODE);
+#else
     fchmod(upload_fd, DEF_FILE_MODE);
+#endif
 
     // read stream
     bool ioerror = false;

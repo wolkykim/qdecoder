@@ -51,6 +51,10 @@
 #include "qdecoder.h"
 #include "internal.h"
 
+#if defined(__MINGW32__) && defined(_WIN32) && !defined(__CYGWIN__)
+#include "msw_missing.h"
+#endif
+
 #ifdef _WIN32
 #define SESSION_DEFAULT_REPOSITORY  "C:\\Windows\\Temp"
 #else
