@@ -39,6 +39,10 @@
 #include <sys/stat.h>
 #include "qdecoder.h"
 
+#if defined(__MINGW32__) && defined(_WIN32) && !defined(__CYGWIN__)
+#include "msw_missing.h"
+#endif
+
 #define BASEPATH    "upload"
 
 ssize_t savefile(const char *filepath, const void *buf, size_t size)

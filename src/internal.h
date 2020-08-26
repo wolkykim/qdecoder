@@ -66,7 +66,12 @@
 /*
  * Internal Definitions
  */
+#if defined(__MINGW32__) && defined(_WIN32) && !defined(__CYGWIN__)
+#define CRLF "\n"
+#else
 #define CRLF "\r\n"
+#endif
+
 #define MAX_LINEBUF (1023+1)
 #define DEF_DIR_MODE  (S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #define DEF_FILE_MODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)

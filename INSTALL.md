@@ -67,3 +67,13 @@ And "index.html" file is provided for your tests.
 
 Analyzing the example codes is probably best starting point.
 But be aware that the examples were written as simple as it can be just to give you straight-forward ideas, so please refer included API document for more details.
+
+## Windows
+
+Windows native MinGW compiler/toolchain (i.e. not using Cygwin or MSYS/MSYS2) support has been added to qDecoder and tested with TDM64-GCC 4.7.1 in Windows 7 64-bit.
+
+These Windows shell scripts will respectively build the 64-bit flavors of qdecoder.dll and the qDecoder's examples towards a "bin" directory. If you need or prefer to target a 32-bit architecture, simply replace "-m64" with "-m32" in these batch files.
+```
+$ build_dll.bat
+$ build_examples.bat
+```

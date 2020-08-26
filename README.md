@@ -100,6 +100,7 @@ The following people have helped with suggestions, ideas, code or fixing bugs:
 (in alphabetical order by first name)
 
 * [Seungyoung "Steve" Kim](https://github.com/wolkykim) - Project Lead
+* [Eric Lequien Esposti](https://github.com/eanon)
 * [Fabrice Fontaine](https://github.com/ffontaine)
 * [Jonh Wendell](https://github.com/jwendell)
 * [nyov](https://github.com/nyov)
