@@ -47,6 +47,10 @@
 #include "qdecoder.h"
 #include "internal.h"
 
+#if defined(__MINGW32__) && defined(_WIN32) && !defined(__CYGWIN__)
+#include "msw_missing.h"
+#endif
+
 // Change two hex character to one hex value.
 char _q_x2c(char hex_up, char hex_low)
 {
