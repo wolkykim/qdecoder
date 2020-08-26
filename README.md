@@ -105,6 +105,7 @@ The following people have helped with suggestions, ideas, code or fixing bugs:
 * [nyov](https://github.com/nyov)
 * [TaeDong Kim](https://github.com/ktd2004)
 * [Weongyo Jeong](https://github.com/weongyo)
+* [Eric Lequien Esposti](https://github.com/eanon)
 
 If we have forgotten your name or spelled not in the way you want, please let us know.
 
