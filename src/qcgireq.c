@@ -368,8 +368,12 @@ static int _parse_multipart(qentry_t *request)
 
     // Force to check the boundary string length to defense overflow attack
     int maxboundarylen = CONST_STRLEN("--");
-    maxboundarylen += strlen(strstr(getenv("CONTENT_TYPE"), "boundary=")
-                             + CONST_STRLEN("boundary="));
+    char *boundaryfieldname = strstr(getenv("CONTENT_TYPE"), "boundary=");
+    if (boundaryfieldname == NULL) {
+        DEBUG("The boundary string is not specified. stopping process.");
+        return amount;
+    }
+    maxboundarylen += strlen(boundaryfieldname + CONST_STRLEN("boundary="));
     maxboundarylen += CONST_STRLEN("--");
     maxboundarylen += CONST_STRLEN("\r\n");
     if (maxboundarylen >= sizeof(boundary)) {
