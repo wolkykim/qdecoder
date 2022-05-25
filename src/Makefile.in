@@ -80,7 +80,7 @@ all: qdecoder
 qdecoder: ${OBJ}
 	${AR} ${ARFLAGS} ${LIBNAME} ${OBJ}
 	${RANLIB} ${LIBNAME}
-	${CC} -shared -Wl,-soname,${SLIBREALNAME} -o ${SLIBREALNAME} ${OBJ}
+	${CC} -shared -o ${SLIBREALNAME} ${OBJ}
 	${LN_S} -f ${SLIBREALNAME} ${SLIBNAME}
 
 install: all
