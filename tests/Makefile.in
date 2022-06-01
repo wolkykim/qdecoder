@@ -40,7 +40,7 @@ CPPFLAGS	= @CPPFLAGS@ -I${QDECODER_INCDIR}
 
 TARGETS		= \
 		test_q_urldecode
-QUNIT_OBJ   = qunit.o
+QUNIT_OBJS	= qunit.o
 LIBQDECODER	= ${QDECODER_LIBDIR}/libqdecoder.a
 
 ## Main
@@ -50,8 +50,8 @@ run:	test
 test:	all
 	@./launcher.sh ${TARGETS}
 
-test_q_urldecode: test_q_urldecode.o ${QUNIT_OBJ}
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ test_q_urldecode.o ${QUNIT_OBJ} ${LIBQDECODER}
+test_q_urldecode: test_q_urldecode.o ${QUNIT_OBJS}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ test_q_urldecode.o ${QUNIT_OBJS} ${LIBQDECODER}
 
 ## Clear Module
 clean:
