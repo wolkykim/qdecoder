@@ -77,7 +77,7 @@ AC_DEFUN([Q_ARG_DISABLE], [
 AC_INIT([qDecoder], [12 RELEASE], [http://www.qdecoder.org/])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
-AC_CONFIG_FILES([Makefile src/qdecoder.pc src/Makefile examples/Makefile])
+AC_CONFIG_FILES([Makefile src/qdecoder.pc src/Makefile examples/Makefile tests/Makefile])
 
 ## Set path
 PATH="$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"

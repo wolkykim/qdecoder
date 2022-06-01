@@ -26,35 +26,37 @@
 ## POSSIBILITY OF SUCH DAMAGE.
 ################################################################################
 
-RM	= @RM@
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
 
-all:
-	@for DIR in src; do \
-		echo "===> $${DIR}"; \
-		(cd $${DIR}; make all); \
-		echo "<=== $${DIR}"; \
-	done
+## qDecoder definitions
+QDECODER_INCDIR		= ../src
+QDECODER_LIBDIR		= ../src
 
-install:
-	(cd src/; make install)
+## Compiler options
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+CPPFLAGS	= @CPPFLAGS@ -I${QDECODER_INCDIR}
 
-deinstall: uninstall
-uninstall:
-	(cd src/; make deinstall)
+TARGETS		= \
+		test_q_urldecode
+QUNIT_OBJ   = qunit.o
+LIBQDECODER	= ${QDECODER_LIBDIR}/libqdecoder.a
 
+## Main
+all:	${TARGETS}
+
+run:	test
+test:	all
+	@./launcher.sh ${TARGETS}
+
+test_q_urldecode: test_q_urldecode.o ${QUNIT_OBJ}
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ test_q_urldecode.o ${QUNIT_OBJ} ${LIBQDECODER}
+
+## Clear Module
 clean:
-	@for DIR in src; do \
-		echo "===> $${DIR}"; \
-		(cd $${DIR}; make clean); \
-		echo "<=== $${DIR}"; \
-	done
+	${RM} -f *.o ${TARGETS}
 
-distclean: clean
-	@for DIR in src examples tests; do \
-		echo "===> $${DIR}"; \
-		(cd $${DIR}; make clean; ${RM} Makefile); \
-		echo "<=== $${DIR}"; \
-	done
-	${RM} -rf autom4te.cache
-	${RM} -f configure.lineno config.log config.status config.h *~
-	${RM} -f Makefile src/qdecoder.pc
+## Compile Module
+.c.o:
+	${CC} ${CFLAGS} ${CPPFLAGS} -c -o $@ $<
