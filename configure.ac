@@ -1,7 +1,7 @@
 ################################################################################
 ## qDecoder - http://www.qdecoder.org
 ##
-## Copyright (c) 2000-2012 Seungyoung Kim.
+## Copyright (c) 2000-2022 Seungyoung Kim.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -25,14 +25,12 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 ################################################################################
-## $Id: configure.ac 636 2012-05-07 23:40:43Z seungyoung.kim $
-################################################################################
 
 AC_COPYRIGHT([
 ==============================================================================
  qDecoder - http://www.qdecoder.org
 
- Copyright (c) 2000-2012 Seungyoung Kim.
+ Copyright (c) 2000-2022 Seungyoung Kim.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without

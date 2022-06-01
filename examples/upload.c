@@ -1,7 +1,7 @@
 /******************************************************************************
  * qDecoder - http://www.qdecoder.org
  *
- * Copyright (c) 2000-2012 Seungyoung Kim.
+ * Copyright (c) 2000-2022 Seungyoung Kim.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@
 #include "qdecoder.h"
 
 #if defined(__MINGW32__) && defined(_WIN32) && !defined(__CYGWIN__)
-#include "msw_missing.h"
+#include "compat/msw_missing.h"
 #endif
 
 #define BASEPATH    "upload"
