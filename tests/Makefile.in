@@ -55,7 +55,7 @@ test_q_urldecode: test_q_urldecode.o ${QUNIT_OBJS}
 
 ## Clear Module
 clean:
-	${RM} -f *.o ${TARGETS}
+	${RM} *.o ${TARGETS}
 
 ## Compile Module
 .c.o:
