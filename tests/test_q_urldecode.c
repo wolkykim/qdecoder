@@ -48,7 +48,7 @@ TEST("Test urlencoded strings")
     "`~!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?");
 }
 
-TEST("Test exceptions")
+TEST("Test improper encodings")
 {
     // ending with '%' character
     test_urldecode("Hello%20World%21%40%", "Hello World!@%");
