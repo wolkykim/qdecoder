@@ -1,7 +1,7 @@
 /******************************************************************************
  * qDecoder - http://www.qdecoder.org
  *
- * Copyright (c) 2000-2012 Seungyoung Kim.
+ * Copyright (c) 2000-2022 Seungyoung Kim.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

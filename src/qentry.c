@@ -1,7 +1,7 @@
 /******************************************************************************
  * qDecoder - http://www.qdecoder.org
  *
- * Copyright (c) 2000-2012 Seungyoung Kim.
+ * Copyright (c) 2000-2022 Seungyoung Kim.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,8 +24,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************
- * $Id: qentry.c 653 2012-12-01 08:01:19Z seungyoung.kim $
  ******************************************************************************/
 
 /**
@@ -72,7 +70,7 @@
 #include "internal.h"
 
 #if defined(__MINGW32__) && defined(_WIN32) && !defined(__CYGWIN__)
-#include "msw_missing.h"
+#include "compat/msw_missing.h"
 #endif
 
 /*
