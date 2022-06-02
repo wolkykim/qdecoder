@@ -93,11 +93,11 @@ install: all
 
 deinstall: uninstall
 uninstall:
-	${RM} ${HEADERDIR}/qdecoder.h
-	${RM} ${LIBDIR}/${LIBNAME}
-	${RM} ${LIBDIR}/${SLIBREALNAME}
-	${RM} ${LIBDIR}/${SLIBNAME}
-	${RM} ${PKGCONFIGDIR}/${PKGCONFIGNAME}
+	${RM} -f ${HEADERDIR}/qdecoder.h
+	${RM} -f ${LIBDIR}/${LIBNAME}
+	${RM} -f ${LIBDIR}/${SLIBREALNAME}
+	${RM} -f ${LIBDIR}/${SLIBNAME}
+	${RM} -f ${PKGCONFIGDIR}/${PKGCONFIGNAME}
 	${RMDIR} -p --ignore-fail-on-non-empty ${HEADERDIR}
 	${RMDIR} -p --ignore-fail-on-non-empty ${PKGCONFIGDIR}
 	${RMDIR} -p --ignore-fail-on-non-empty ${LIBDIR}
@@ -109,7 +109,7 @@ cleandoc:
 	${RM} -rf ../doc/html
 
 clean:
-	${RM} ${OBJ} ${LIBNAME} ${SLIBREALNAME} ${SLIBNAME}
+	${RM} -f ${OBJ} ${LIBNAME} ${SLIBREALNAME} ${SLIBNAME}
 
 ## Compile
 .c.o:

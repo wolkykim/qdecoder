@@ -56,5 +56,5 @@ distclean: clean
 		echo "<=== $${DIR}"; \
 	done
 	${RM} -rf autom4te.cache
-	${RM} configure.lineno config.log config.status config.h *~
-	${RM} Makefile src/qdecoder.pc
+	${RM} -f configure.lineno config.log config.status config.h
+	${RM} -f Makefile src/qdecoder.pc

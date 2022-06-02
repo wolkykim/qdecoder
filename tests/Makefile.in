@@ -37,6 +37,7 @@ QDECODER_LIBDIR		= ../src
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 CPPFLAGS	= @CPPFLAGS@ -I${QDECODER_INCDIR}
+RM		= @RM@
 
 TARGETS		= \
 		test_q_urldecode
@@ -55,7 +56,7 @@ test_q_urldecode: test_q_urldecode.o ${QUNIT_OBJS}
 
 ## Clear Module
 clean:
-	${RM} *.o ${TARGETS}
+	${RM} -f *.o ${TARGETS}
 
 ## Compile Module
 .c.o:

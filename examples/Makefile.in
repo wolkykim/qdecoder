@@ -34,6 +34,7 @@ CC	= @CC@
 CFLAGS	= @CFLAGS@
 CPPFLAGS= -I../src/ @CPPFLAGS@
 LIBS	= ../src/libqdecoder.a @LIBS@
+RM	= @RM@
 
 TARGETS	= query.cgi cookie.cgi multivalue.cgi upload.cgi uploadfile.cgi download.cgi session.cgi
 
@@ -67,8 +68,8 @@ session.cgi: session.o
 
 ## Clear Module
 clean:
-	rm -f *.o ${TARGETS}
-	rm -rf upload tmp
+	${RM} -f *.o ${TARGETS}
+	${RM} -rf upload tmp
 
 ## Compile Module
 .c.o:
