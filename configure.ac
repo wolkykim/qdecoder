@@ -1,5 +1,5 @@
 ################################################################################
-## qDecoder - http://www.qdecoder.org
+## qDecoder
 ##
 ## Copyright (c) 2000-2022 Seungyoung Kim.
 ## All rights reserved.
@@ -28,7 +28,7 @@
 
 AC_COPYRIGHT([
 ==============================================================================
- qDecoder - http://www.qdecoder.org
+ qDecoder
 
  Copyright (c) 2000-2022 Seungyoung Kim.
  All rights reserved.
@@ -74,7 +74,7 @@ AC_DEFUN([Q_ARG_DISABLE], [
 ])
 
 ## Initialize
-AC_INIT([qDecoder], [12 RELEASE], [http://www.qdecoder.org/])
+AC_INIT([qDecoder], [12 RELEASE], [https://github.com/wolkykim/qdecoder])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile src/qdecoder.pc src/Makefile examples/Makefile tests/Makefile])

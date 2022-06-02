@@ -1,5 +1,5 @@
 /******************************************************************************
- * qDecoder - http://www.qdecoder.org
+ * qDecoder
  *
  * Copyright (c) 2000-2022 Seungyoung Kim.
  * All rights reserved.
@@ -62,9 +62,9 @@
  *   // Apply cookie in the current domain and directory for 1 day.
  *   qcgires_setcookie(req, "NAME", "VALUE", 86400, NULL, NULL, false);
  *
- *   // Apply cookie to the "/" directory of "*.qdecoder.org" until the
+ *   // Apply cookie to the "/" directory of "*.foo.bar" until the
  *   // browser is closed.
- *   qcgires_setcookie(req, name, value, 0, "/", ".qdecoder.org", false);
+ *   qcgires_setcookie(req, name, value, 0, "/", ".foo.bar", false);
  *
  *   // As for the followings, cookies will be set up only when security
  *   // requirements are satisfied.
@@ -137,8 +137,8 @@ bool qcgires_setcookie(qentry_t *request, const char *name, const char *value,
  *   qcgires_setcookie(req, "NAME", "VALUE", 0, NULL, NULL, NULL);
  *   qcgires_removecookie(req, "NAME", NULL, NULL, NULL);
  *
- *   qcgires_setcookie(req, "NAME", "VALUE", 0, "/", "www.qdecoder.org", NULL);
- *   qcgires_removecookie(req, "NAME", "/", "www.qdecoder.org", NULL);
+ *   qcgires_setcookie(req, "NAME", "VALUE", 0, "/", "www.foo.bar", NULL);
+ *   qcgires_removecookie(req, "NAME", "/", "www.foo.bar", NULL);
  * @endcode
  */
 bool qcgires_removecookie(qentry_t *request, const char *name, const char *path,
@@ -202,7 +202,7 @@ const char *qcgires_getcontenttype(qentry_t *request)
  * @return      true in case of success, otherwise returns false
  *
  * @code
- *   qcgires_redirect(req, "http://www.qdecoder.org/");
+ *   qcgires_redirect(req, "http://www.foo.bar/");
  * @endcode
  */
 bool qcgires_redirect(qentry_t *request, const char *uri)
