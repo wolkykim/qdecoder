@@ -103,6 +103,7 @@ The following people have helped with suggestions, ideas, code or fixing bugs:
 * [Eric Lequien Esposti](https://github.com/eanon)
 * [Fabrice Fontaine](https://github.com/ffontaine)
 * [Jonh Wendell](https://github.com/jwendell)
+* [Melanie at Red](https://github.com/MelanieRed)
 * [nyov](https://github.com/nyov)
 * [TaeDong Kim](https://github.com/ktd2004)
 * [Weongyo Jeong](https://github.com/weongyo)
