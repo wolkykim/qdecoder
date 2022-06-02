@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include <string.h>
 #include <unistd.h>
 #include <libgen.h>
@@ -49,7 +50,7 @@
 #include "compat/msw_missing.h"
 #endif
 
-// Change two hex character to one hex value.
+// Change two hex characters to one hex value.
 char _q_x2c(char hex_up, char hex_low)
 {
     char digit;
@@ -140,8 +141,13 @@ size_t _q_urldecode(char *str)
                 break;
             }
             case '%': {
-                *pBinPt++ = _q_x2c(*(pEncPt + 1), *(pEncPt + 2));
-                pEncPt += 2;
+                if (*(pEncPt + 1) != '\0' && isxdigit(*(pEncPt + 1)) \
+                    && *(pEncPt + 2) != '\0' && isxdigit(*(pEncPt + 2))) {
+                    *pBinPt++ = _q_x2c(*(pEncPt + 1), *(pEncPt + 2));
+                    pEncPt += 2;
+                } else {
+                    *pBinPt++ = *pEncPt;
+                }
                 break;
             }
             default: {
